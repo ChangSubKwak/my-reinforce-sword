@@ -1,0 +1,3610 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>검(劍) — 강화의 도</title>
+<style>
+  :root {
+    --bg: #1f1a14;
+    --bg-2: #2a221b;
+    --fg: #f0ece0;
+    --dim: #968d80;
+    --accent: #e8c454;
+    --danger: #d04830;
+    --safe: #6a9a6a;
+    --line: #3a322a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: radial-gradient(ellipse at 50% 30%, var(--bg-2) 0%, var(--bg) 80%);
+    color: var(--fg);
+    font-family: "Noto Serif KR", "Apple SD Gothic Neo", serif;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 4s ease;
+  }
+  /* v27 季節 — body 배경 색조 (따뜻한 변화) */
+  body.season-spring { background: radial-gradient(ellipse at 50% 30%, #2a261d 0%, #1f1a14 80%); }
+  body.season-summer { background: radial-gradient(ellipse at 50% 30%, #322a1d 0%, #221b14 80%); }
+  body.season-autumn { background: radial-gradient(ellipse at 50% 30%, #3a2a1c 0%, #221710 80%); }
+  body.season-winter { background: radial-gradient(ellipse at 50% 30%, #232a30 0%, #161a1f 80%); }
+  #season-mark {
+    position: fixed;
+    top: 14px;
+    right: 18px;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 5px;
+    opacity: 0.55;
+    transition: color 2s, opacity 2s;
+    pointer-events: none;
+    z-index: 25;
+  }
+  #season-mark.season-summer { color: #d4af37; opacity: 0.6; }
+  #season-mark.season-autumn { color: #c0883a; opacity: 0.7; }
+  #season-mark.season-winter { color: #6a8a9a; opacity: 0.75; }
+  #game {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 18px;
+    position: relative;
+  }
+  header {
+    text-align: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 {
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 6px;
+    color: var(--dim);
+  }
+  header h1 span { color: var(--accent); }
+
+  /* 視覺 — stage 분위기 */
+  #stage::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.04), transparent 60%);
+    pointer-events: none;
+    transition: background 1.5s, opacity 1.5s;
+    z-index: 0;
+  }
+  #stage.aura-mid::before { background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.10), transparent 65%); }
+  #stage.aura-high::before { background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.18), rgba(212, 175, 55, 0.03) 50%, transparent 75%); }
+  #stage.aura-divine::before {
+    background: radial-gradient(circle at 50% 50%, rgba(255, 240, 180, 0.28), rgba(212, 175, 55, 0.08) 50%, transparent 80%);
+    animation: aura-breathe 4s infinite ease-in-out;
+  }
+  @keyframes aura-breathe {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  /* 도전 등장 시 어둠 펄스 */
+  #stage.darken { animation: darken-pulse 0.7s forwards; }
+  @keyframes darken-pulse {
+    0% { filter: brightness(1); }
+    40% { filter: brightness(0.55); }
+    100% { filter: brightness(1); }
+  }
+  /* 떠다니는 황금 입자 */
+  .dust {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    box-shadow: 0 0 4px var(--accent);
+  }
+
+  /* 검 표시 영역 */
+  #stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: 220px;
+  }
+  #sword-wrap {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s;
+    cursor: default;
+  }
+  #sword-svg {
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform-origin: 50% 90%;
+  }
+  #sword-wrap.shake { animation: shake 0.4s; }
+  #sword-wrap.flash { animation: flash 0.5s; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+    20%, 40%, 60%, 80% { transform: translateX(8px); }
+  }
+  @keyframes flash {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(3) drop-shadow(0 0 40px var(--accent)); }
+    100% { filter: brightness(1); }
+  }
+  #sword-svg {
+    width: 100%;
+    height: 100%;
+  }
+  #level-badge {
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 28px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+  }
+  .glow-0 { filter: none; }
+  .glow-low { filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.3)); }
+  .glow-mid { filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.6)); }
+  .glow-high { filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.9)) drop-shadow(0 0 30px rgba(255, 200, 100, 0.4)); }
+  .glow-divine {
+    filter: drop-shadow(0 0 25px rgba(255, 230, 150, 1)) drop-shadow(0 0 50px rgba(212, 175, 55, 0.7));
+    animation: divine 2s infinite alternate;
+  }
+  /* v39 정점 검 — 本/道 명문 검의 발산 */
+  #sword-wrap.transcendent {
+    animation: transcendent-breathe 3.5s infinite ease-in-out;
+  }
+  @keyframes transcendent-breathe {
+    0%, 100% { filter: drop-shadow(0 0 0 rgba(212, 175, 55, 0)); }
+    50% { filter: drop-shadow(0 0 25px rgba(255, 245, 192, 0.4)); }
+  }
+  @keyframes divine {
+    from { filter: drop-shadow(0 0 25px rgba(255, 230, 150, 1)) drop-shadow(0 0 50px rgba(212, 175, 55, 0.7)); }
+    to { filter: drop-shadow(0 0 40px rgba(255, 250, 200, 1)) drop-shadow(0 0 80px rgba(212, 175, 55, 1)); }
+  }
+
+  /* 빈 검집 — 파괴 후 화면 */
+  #void {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, rgba(192, 57, 43, 0.08), transparent 70%);
+  }
+  #void.active { display: flex; }
+  #void-msg {
+    color: var(--danger);
+    font-size: 14px;
+    letter-spacing: 4px;
+    margin-bottom: 24px;
+    opacity: 0.8;
+  }
+  #rescue-circle {
+    width: 80px;
+    height: 80px;
+    border: 2px solid var(--danger);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--fg);
+    font-size: 11px;
+    text-align: center;
+    transition: transform 0.2s;
+    animation: heartbeat 1.2s infinite;
+    position: relative;
+  }
+  #rescue-circle:hover { transform: scale(1.1); }
+  #rescue-circle:active { transform: scale(0.95); }
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.6); }
+    50% { transform: scale(1.08); box-shadow: 0 0 0 12px rgba(192, 57, 43, 0); }
+  }
+  #rescue-timer {
+    position: absolute;
+    bottom: -22px;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+
+  /* 통계 바 */
+  #stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .stat { text-align: center; }
+  .stat-label { color: var(--dim); font-size: 10px; letter-spacing: 2px; }
+  .stat-value { color: var(--fg); font-size: 16px; margin-top: 2px; }
+
+  /* 액션 영역 */
+  #actions {
+    padding: 14px 0 8px;
+  }
+  #odds {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: var(--dim);
+    line-height: 1.6;
+  }
+  #odds .success { color: var(--safe); }
+  #odds .destroy { color: var(--danger); }
+  #odds .cost { color: var(--accent); }
+
+  .protect-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: var(--dim);
+    cursor: pointer;
+  }
+  .protect-row input { accent-color: var(--accent); cursor: pointer; }
+  .protect-row.disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #btn-enhance {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(180deg, var(--bg-2), var(--bg));
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: inherit;
+    font-size: 15px;
+    letter-spacing: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  #btn-enhance:hover:not(:disabled) {
+    background: linear-gradient(180deg, #3a3026, #2a221b);
+    box-shadow: 0 0 20px rgba(232, 196, 84, 0.3);
+  }
+  #btn-enhance:active:not(:disabled) { transform: scale(0.98); }
+  #btn-enhance:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #btn-seal-direct {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--dim);
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  #btn-seal-direct:not(:disabled) {
+    border-color: rgba(212, 175, 55, 0.4);
+    color: var(--accent);
+  }
+  #btn-seal-direct:hover:not(:disabled) {
+    background: rgba(212, 175, 55, 0.08);
+    border-color: var(--accent);
+  }
+  #btn-seal-direct:active:not(:disabled) { transform: scale(0.98); }
+  #btn-seal-direct:disabled { opacity: 0.45; cursor: not-allowed; }
+  #btn-seal-direct .seal-reward {
+    color: var(--accent);
+    margin-left: 4px;
+  }
+  #btn-seal-direct:disabled .seal-reward { color: var(--dim); }
+
+  /* 하단 버튼 */
+  #footer {
+    display: flex;
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  /* v38 우상단 메뉴 */
+  #menu-toggle {
+    position: fixed;
+    top: 14px;
+    left: 18px;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--dim);
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 30;
+    transition: all 0.15s;
+  }
+  #menu-toggle:hover { border-color: var(--dim); color: var(--fg); }
+  #menu-drop {
+    position: fixed;
+    top: 52px;
+    left: 18px;
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    padding: 8px;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 31;
+    min-width: 140px;
+  }
+  #menu-drop.open { display: flex; }
+  #menu-drop button {
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--dim);
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    text-align: left;
+  }
+  #menu-drop button:hover { border-color: var(--dim); color: var(--fg); }
+  .footer-btn {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--dim);
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .footer-btn:hover { border-color: var(--dim); color: var(--fg); }
+
+  /* 로그 */
+  #log {
+    position: absolute;
+    top: 50px;
+    right: 18px;
+    width: 140px;
+    max-height: 200px;
+    overflow: hidden;
+    pointer-events: none;
+    text-align: right;
+  }
+  .log-entry {
+    font-size: 10px;
+    color: var(--dim);
+    line-height: 1.6;
+    opacity: 0;
+    animation: fadein 0.3s forwards, fadeout 1s 3s forwards;
+  }
+  .log-entry.success { color: var(--safe); }
+  .log-entry.fail { color: #b8862f; }
+  .log-entry.destroy { color: var(--danger); }
+  @keyframes fadein { to { opacity: 1; } }
+  @keyframes fadeout { to { opacity: 0; } }
+
+  /* 魂 — 검 아래 게이지 */
+  #soul-bar {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 3px;
+    background: var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  #soul-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s ease, background 0.4s;
+    background: linear-gradient(90deg, #4a6a7a, #6a8a9a);
+  }
+  #soul-fill.wake {
+    background: linear-gradient(90deg, #6a8a9a, #d4af37);
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.5);
+  }
+  #soul-fill.true {
+    background: linear-gradient(90deg, #d4af37, #fff5c0);
+    box-shadow: 0 0 12px rgba(255, 245, 192, 0.7);
+  }
+  #soul-stage-label {
+    position: absolute;
+    bottom: -48px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 5px;
+    white-space: nowrap;
+  }
+  #soul-stage-label.wake { color: #6a8a9a; }
+  #soul-stage-label.true { color: var(--accent); text-shadow: 0 0 8px rgba(212, 175, 55, 0.6); }
+
+  /* 道魂 — 봉인된 검의 시구가 떠오른다 */
+  #ancestor-whisper {
+    position: fixed;
+    top: 80px;
+    right: 18px;
+    max-width: 200px;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    line-height: 1.9;
+    text-align: right;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 30;
+    text-shadow: 0 0 4px rgba(212, 175, 55, 0.4);
+  }
+  #ancestor-whisper.active { animation: whisper-fade 5s forwards; }
+  #ancestor-whisper .who {
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 4px;
+    margin-bottom: 4px;
+  }
+  @keyframes whisper-fade {
+    0% { opacity: 0; transform: translateX(20px); }
+    15% { opacity: 0.9; transform: translateX(0); }
+    80% { opacity: 0.9; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(-10px); }
+  }
+
+  /* 銘 — 검 위 명문 표시 */
+  #sword-inscriptions {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 5px;
+    white-space: nowrap;
+    opacity: 0.75;
+    text-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+    pointer-events: none;
+  }
+  /* 게임 오버 — 검도 조각도 모두 잃은 끝 */
+  #gameover-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, #2a1818 0%, #0a0608 80%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    color: var(--fg);
+    text-align: center;
+    padding: 30px;
+    opacity: 0;
+    overflow-y: auto;
+  }
+  #gameover-overlay.active {
+    display: flex;
+    animation: gameover-fade-in 1.2s forwards;
+  }
+  @keyframes gameover-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  #gameover-title {
+    font-size: 48px;
+    color: #ff6655;
+    letter-spacing: 14px;
+    margin-bottom: 18px;
+    text-shadow:
+      0 0 30px rgba(255, 102, 85, 0.8),
+      0 0 60px rgba(192, 57, 43, 0.5);
+    animation: gameover-pulse 3s ease-in-out infinite;
+  }
+  @keyframes gameover-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
+  #gameover-msg {
+    color: #c8c8c8;
+    font-size: 14px;
+    letter-spacing: 4px;
+    margin-bottom: 24px;
+    line-height: 2;
+  }
+  #gameover-stats {
+    color: var(--accent);
+    font-size: 13px;
+    letter-spacing: 2px;
+    margin-bottom: 28px;
+    line-height: 1.9;
+    border-top: 1px solid rgba(212,175,55,0.4);
+    border-bottom: 1px solid rgba(212,175,55,0.4);
+    padding: 14px 28px;
+    background: rgba(0,0,0,0.3);
+  }
+  #gameover-stats .label { color: #aaa; margin-right: 12px; }
+  /* 다시 시작 — 매우 두드러진 솔리드 황금 버튼 */
+  #gameover-restart {
+    padding: 18px 48px;
+    background: linear-gradient(180deg, #f4cc50 0%, #d4af37 50%, #a88820 100%);
+    border: 2px solid #fff5c0;
+    color: #1a0a0a;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow:
+      0 0 30px rgba(212, 175, 55, 0.6),
+      0 0 60px rgba(212, 175, 55, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    margin-bottom: 18px;
+    animation: gameover-btn-glow 2s ease-in-out infinite;
+  }
+  @keyframes gameover-btn-glow {
+    0%, 100% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.6), 0 0 60px rgba(212, 175, 55, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
+    50% { box-shadow: 0 0 40px rgba(255, 245, 192, 0.85), 0 0 80px rgba(212, 175, 55, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5); }
+  }
+  #gameover-restart:hover {
+    background: linear-gradient(180deg, #fff5c0 0%, #f4cc50 50%, #d4af37 100%);
+    transform: scale(1.06);
+  }
+  #gameover-restart:active {
+    transform: scale(0.98);
+  }
+  /* 완전 초기화 버튼 (보조) */
+  #gameover-fullreset {
+    margin-top: 6px;
+    padding: 8px 18px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--dim);
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  #gameover-fullreset:hover { border-color: var(--dim); color: var(--fg); }
+
+  /* 儀式 — 道 검 봉인 컷씬 */
+  #ritual-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, #0a0810 0%, #000 70%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    color: var(--fg);
+    opacity: 0;
+    text-align: center;
+    padding: 40px;
+  }
+  /* 의식 빛 광선 (회전) */
+  #ritual-overlay::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background:
+      conic-gradient(from 0deg,
+        rgba(212, 175, 55, 0.18) 0deg, transparent 30deg,
+        rgba(212, 175, 55, 0.10) 60deg, transparent 90deg,
+        rgba(212, 175, 55, 0.18) 120deg, transparent 150deg,
+        rgba(212, 175, 55, 0.10) 180deg, transparent 210deg,
+        rgba(212, 175, 55, 0.18) 240deg, transparent 270deg,
+        rgba(212, 175, 55, 0.10) 300deg, transparent 330deg);
+    border-radius: 50%;
+    animation: ritual-rays 8s linear infinite;
+    pointer-events: none;
+    opacity: 0;
+  }
+  #ritual-overlay::after {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    box-shadow: 0 0 60px rgba(212, 175, 55, 0.3), inset 0 0 60px rgba(212, 175, 55, 0.2);
+    pointer-events: none;
+    opacity: 0;
+    animation: ritual-circle 6s ease-in-out infinite;
+  }
+  #ritual-overlay.active::before, #ritual-overlay.active::after { opacity: 1; }
+  @keyframes ritual-rays {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes ritual-circle {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.08); opacity: 0.8; }
+  }
+  #ritual-overlay.active {
+    display: flex;
+    animation: ritual-fade 5.5s forwards;
+  }
+  #ritual-overlay > div { position: relative; z-index: 1; }
+  #ritual-form {
+    font-size: 64px;
+    color: var(--accent);
+    letter-spacing: 12px;
+    margin-bottom: 16px;
+    text-shadow:
+      0 0 40px rgba(212, 175, 55, 0.9),
+      0 0 80px rgba(212, 175, 55, 0.5),
+      0 0 120px rgba(255, 245, 192, 0.3);
+    position: relative;
+    z-index: 1;
+    animation: ritual-name-breathe 3s ease-in-out infinite;
+  }
+  @keyframes ritual-name-breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
+  #ritual-title {
+    font-size: 18px;
+    color: var(--fg);
+    letter-spacing: 8px;
+    margin-bottom: 36px;
+    opacity: 0.85;
+  }
+  #ritual-verse {
+    font-size: 14px;
+    color: var(--dim);
+    line-height: 2.2;
+    letter-spacing: 4px;
+    max-width: 340px;
+  }
+  #ritual-verse .accent { color: var(--accent); }
+  #ritual-end {
+    margin-top: 36px;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 6px;
+    opacity: 0.6;
+  }
+  @keyframes ritual-fade {
+    0% { opacity: 0; }
+    8% { opacity: 1; }
+    88% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* 銘 — 새겨질 때 화면 페이드 애니 */
+  #inscribe-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 200;
+    opacity: 0;
+  }
+  #inscribe-overlay.active { animation: inscribe-fade 1.2s forwards; }
+  #inscribe-kanji {
+    font-size: 96px;
+    color: var(--accent);
+    letter-spacing: 12px;
+    text-shadow:
+      0 0 30px rgba(212, 175, 55, 0.9),
+      0 0 60px rgba(212, 175, 55, 0.5);
+    font-weight: 400;
+  }
+  #inscribe-label {
+    font-size: 13px;
+    color: var(--fg);
+    letter-spacing: 8px;
+    margin-top: 18px;
+    opacity: 0.85;
+  }
+  #inscribe-sub {
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 4px;
+    margin-top: 6px;
+  }
+  @keyframes inscribe-fade {
+    0% { opacity: 0; transform: scale(1.25); }
+    20% { opacity: 1; transform: scale(1); }
+    70% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.96); }
+  }
+
+  /* 一閃 — 도전 overlay */
+  #challenge {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 70% 50%, rgba(192, 57, 43, 0.12), transparent 60%);
+    z-index: 5;
+  }
+  #challenge.active { display: flex; }
+  #challenge-scene {
+    width: 100%;
+    height: 180px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+  }
+  #challenge-sword {
+    width: 90px;
+    height: 160px;
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  #challenge-sword.strike { transform: translateX(160px) rotate(15deg); }
+  #challenge-shadow {
+    width: 100px;
+    height: 140px;
+    position: relative;
+  }
+  #shadow-form {
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at 50% 40%, #1a1a1f 0%, #0b0b0d 60%, transparent 100%);
+    border-radius: 45% 55% 50% 50% / 60% 50% 50% 40%;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(192, 57, 43, 0.3);
+    animation: shadow-pulse 2s infinite ease-in-out;
+    position: relative;
+  }
+  /* 변종: 逃影 (작고 빠름) */
+  #shadow-form.flee-type {
+    width: 70%;
+    height: 70%;
+    margin: 15%;
+    animation: shadow-flee 0.9s infinite ease-in-out;
+    background: radial-gradient(ellipse at 50% 40%, #1a1a25 0%, #0b0b0d 60%, transparent 100%);
+  }
+  @keyframes shadow-flee {
+    0%, 100% { transform: translateX(0) scale(1); opacity: 0.85; }
+    25% { transform: translateX(-12px) scale(0.95); opacity: 1; }
+    75% { transform: translateX(10px) scale(0.95); opacity: 1; }
+  }
+  /* 변종: 鋼影 (크고 각진) */
+  #shadow-form.steel-type {
+    border-radius: 18% 18% 18% 18%;
+    background: linear-gradient(135deg, #2a2a35 0%, #0b0b0d 70%);
+    box-shadow: 0 0 24px rgba(80, 100, 120, 0.5), inset 0 0 16px rgba(60, 70, 90, 0.6);
+    animation: shadow-steel 2.6s infinite ease-in-out;
+    transform: scale(1.15);
+  }
+  @keyframes shadow-steel {
+    0%, 100% { transform: scale(1.15) rotate(0deg); }
+    50% { transform: scale(1.18) rotate(2deg); }
+  }
+  /* 변종: 劍鬼 (길쭉, 붉은 눈, 발톱) */
+  #shadow-form.demon-type {
+    height: 130%;
+    margin-top: -15%;
+    border-radius: 50% 50% 30% 30% / 60% 60% 40% 40%;
+    background: radial-gradient(ellipse at 50% 35%, #2a0a0a 0%, #0b0b0d 70%);
+    box-shadow: 0 0 40px rgba(192, 57, 43, 0.6), inset 0 0 24px rgba(192, 57, 43, 0.5);
+    animation: shadow-demon 1.5s infinite ease-in-out;
+  }
+  @keyframes shadow-demon {
+    0%, 100% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.04) translateY(-3px); }
+  }
+  #shadow-form.demon-type::before {
+    top: 25%;
+    left: 32%;
+    width: 10px;
+    height: 10px;
+    box-shadow: 22px 0 0 var(--danger), 0 0 12px var(--danger), 22px 0 12px var(--danger);
+  }
+  /* v41 검귀 SVG (얼굴/발톱) */
+  #demon-detail {
+    position: absolute;
+    inset: 0;
+    display: none;
+    pointer-events: none;
+  }
+  #demon-detail.active { display: block; }
+  #shadow-form::before {
+    content: '';
+    position: absolute;
+    top: 30%;
+    left: 30%;
+    width: 8px;
+    height: 8px;
+    background: var(--danger);
+    border-radius: 50%;
+    box-shadow: 24px 0 0 var(--danger);
+    opacity: 0.8;
+  }
+  #shadow-form.cleaved { animation: cleave 0.6s forwards; }
+  @keyframes shadow-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.05); opacity: 1; }
+  }
+  @keyframes cleave {
+    0% { transform: scale(1); opacity: 1; }
+    40% { transform: scaleX(1.4) scaleY(0.3); opacity: 0.6; filter: blur(2px); }
+    100% { transform: scale(0); opacity: 0; }
+  }
+  #shadow-strength {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    color: var(--danger);
+    letter-spacing: 3px;
+    white-space: nowrap;
+  }
+  #slash-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+  #slash-line.active {
+    animation: slash 0.3s forwards;
+  }
+  @keyframes slash {
+    0% { opacity: 0; transform: scaleX(0); }
+    30% { opacity: 1; transform: scaleX(1); }
+    100% { opacity: 0; transform: scaleX(1); }
+  }
+  #challenge-info {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 13px;
+    color: var(--fg);
+    line-height: 1.8;
+  }
+  #challenge-info .title {
+    color: var(--danger);
+    font-size: 16px;
+    letter-spacing: 8px;
+    margin-bottom: 8px;
+  }
+  #challenge-info .stakes {
+    color: var(--dim);
+    font-size: 11px;
+  }
+  #challenge-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .challenge-btn {
+    padding: 12px 24px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .challenge-btn:hover { background: rgba(212, 175, 55, 0.1); }
+  .challenge-btn.flee {
+    border-color: var(--line);
+    color: var(--dim);
+    letter-spacing: 4px;
+  }
+  .challenge-btn.flee:hover { border-color: var(--dim); color: var(--fg); background: transparent; }
+  .challenge-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* 모달 */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal.active { display: flex; }
+  .modal-box {
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    padding: 24px;
+    max-width: 380px;
+    width: 100%;
+  }
+  .modal-box h2 {
+    font-size: 14px;
+    letter-spacing: 6px;
+    color: var(--accent);
+    text-align: center;
+    margin-bottom: 16px;
+    font-weight: 400;
+  }
+  .modal-box p {
+    font-size: 12px;
+    color: var(--dim);
+    text-align: center;
+    margin-bottom: 18px;
+    line-height: 1.6;
+  }
+  .recipe {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .recipe-text { color: var(--fg); }
+  .recipe-text small { color: var(--dim); font-size: 10px; display: block; margin-top: 2px; }
+  .recipe-btn {
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    letter-spacing: 2px;
+  }
+  .recipe-btn:hover:not(:disabled) { background: rgba(212, 175, 55, 0.1); }
+  .recipe-btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: var(--line); color: var(--dim); }
+  .modal-close {
+    width: 100%;
+    margin-top: 16px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--dim);
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 4px;
+    font-size: 11px;
+  }
+  .modal-close:hover { color: var(--fg); border-color: var(--dim); }
+
+  /* 파티클 */
+  .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div id="season-mark"></div>
+<button id="menu-toggle">≡</button>
+<div id="menu-drop">
+  <button id="btn-stats">기 록</button>
+  <button id="btn-help">안 내</button>
+  <button id="btn-mute">소 리  끄 기</button>
+  <button id="btn-reset">초 기 화</button>
+</div>
+<div id="game">
+  <header>
+    <h1>검  강 화  ·  劍</h1>
+  </header>
+
+  <div id="stage">
+    <div id="sword-wrap">
+      <div id="sword-inscriptions"></div>
+      <svg id="sword-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- 메탈 칼날 그라데이션 (tier 1 — 거친 강철) -->
+          <linearGradient id="blade-grad-1" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#5a5a5a"/>
+            <stop offset="45%" stop-color="#cfcfcf"/>
+            <stop offset="55%" stop-color="#cfcfcf"/>
+            <stop offset="100%" stop-color="#5a5a5a"/>
+          </linearGradient>
+          <!-- tier 2 — 광택 강철 -->
+          <linearGradient id="blade-grad-2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#7a7a7a"/>
+            <stop offset="35%" stop-color="#f0f0f0"/>
+            <stop offset="50%" stop-color="#ffffff"/>
+            <stop offset="65%" stop-color="#f0f0f0"/>
+            <stop offset="100%" stop-color="#7a7a7a"/>
+          </linearGradient>
+          <!-- tier 3 — 황금 가미 강철 -->
+          <linearGradient id="blade-grad-3" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#8a7030"/>
+            <stop offset="40%" stop-color="#f4e8a0"/>
+            <stop offset="50%" stop-color="#ffffff"/>
+            <stop offset="60%" stop-color="#f4e8a0"/>
+            <stop offset="100%" stop-color="#8a7030"/>
+          </linearGradient>
+          <!-- tier 4 — 빛나는 백금 -->
+          <linearGradient id="blade-grad-4" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#7a5a20"/>
+            <stop offset="30%" stop-color="#fce080"/>
+            <stop offset="50%" stop-color="#fffadc"/>
+            <stop offset="70%" stop-color="#fce080"/>
+            <stop offset="100%" stop-color="#7a5a20"/>
+          </linearGradient>
+          <!-- tier 5 — 신성 황금 -->
+          <linearGradient id="blade-grad-5" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#aa8030"/>
+            <stop offset="25%" stop-color="#fff5c0"/>
+            <stop offset="50%" stop-color="#ffffff"/>
+            <stop offset="75%" stop-color="#fff5c0"/>
+            <stop offset="100%" stop-color="#aa8030"/>
+          </linearGradient>
+          <!-- 가드 그라데이션 -->
+          <linearGradient id="guard-grad-low" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#8b6238"/>
+            <stop offset="100%" stop-color="#5a3820"/>
+          </linearGradient>
+          <linearGradient id="guard-grad-mid" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#d4af37"/>
+            <stop offset="100%" stop-color="#7a5a20"/>
+          </linearGradient>
+          <linearGradient id="guard-grad-high" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fff5c0"/>
+            <stop offset="50%" stop-color="#d4af37"/>
+            <stop offset="100%" stop-color="#aa8030"/>
+          </linearGradient>
+          <!-- 보석 라디얼 그라데이션 -->
+          <radialGradient id="gem-red" cx="0.35" cy="0.35">
+            <stop offset="0%" stop-color="#ff9080"/>
+            <stop offset="40%" stop-color="#e04040"/>
+            <stop offset="100%" stop-color="#5a1010"/>
+          </radialGradient>
+          <radialGradient id="gem-green" cx="0.35" cy="0.35">
+            <stop offset="0%" stop-color="#80e0a0"/>
+            <stop offset="40%" stop-color="#3a8050"/>
+            <stop offset="100%" stop-color="#0a3018"/>
+          </radialGradient>
+          <radialGradient id="gem-blue" cx="0.35" cy="0.35">
+            <stop offset="0%" stop-color="#90c0e8"/>
+            <stop offset="40%" stop-color="#3060a0"/>
+            <stop offset="100%" stop-color="#0a1838"/>
+          </radialGradient>
+          <radialGradient id="gem-white" cx="0.35" cy="0.35">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="40%" stop-color="#f0e8b0"/>
+            <stop offset="100%" stop-color="#a08030"/>
+          </radialGradient>
+          <radialGradient id="gem-purple" cx="0.35" cy="0.35">
+            <stop offset="0%" stop-color="#e0a0ff"/>
+            <stop offset="40%" stop-color="#7030b0"/>
+            <stop offset="100%" stop-color="#2a0838"/>
+          </radialGradient>
+          <!-- 손잡이 가죽/황금 -->
+          <linearGradient id="grip-leather" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#1a0f08"/>
+            <stop offset="50%" stop-color="#5a3818"/>
+            <stop offset="100%" stop-color="#1a0f08"/>
+          </linearGradient>
+          <linearGradient id="grip-gold" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#7a5a20"/>
+            <stop offset="50%" stop-color="#d4af37"/>
+            <stop offset="100%" stop-color="#7a5a20"/>
+          </linearGradient>
+          <!-- 글로우 필터 -->
+          <filter id="strong-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <filter id="divine-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3.5" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <!-- 단계별 검 본체 (동적 — buildSwordBody가 채움) -->
+        <g id="sword-body"></g>
+        <!-- 정점 명문 마크 (정적 — v23) -->
+        <line id="mark-way" x1="50" y1="20" x2="50" y2="138" stroke="#fff5c0" stroke-width="1.6" opacity="0" style="filter: drop-shadow(0 0 3px #d4af37);"/>
+        <circle id="mark-demon" cx="50" cy="22" r="1.8" fill="#c0392b" opacity="0"/>
+        <polygon id="mark-honest" points="50,12 51.5,14 50,16 48.5,14" fill="#6a8a9a" opacity="0"/>
+      </svg>
+      <div id="level-badge">+0</div>
+      <div id="soul-bar"><div id="soul-fill"></div></div>
+      <div id="soul-stage-label"></div>
+    </div>
+    <div id="void">
+      <div id="void-msg">검 이 부 서 졌 다</div>
+      <div id="rescue-circle">
+        조각<br>줍기
+        <div id="rescue-timer">5.0</div>
+      </div>
+    </div>
+    <div id="challenge">
+      <div id="challenge-info">
+        <div class="title">도 전</div>
+        <div>그림자가 나타났다</div>
+        <div class="stakes" id="challenge-stakes"></div>
+      </div>
+      <div id="challenge-scene">
+        <svg id="challenge-sword" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="50,8 56,140 50,148 44,140" id="c-blade" fill="#dcdcdc"/>
+          <line x1="50" y1="14" x2="50" y2="138" stroke="#fff" stroke-width="0.8" opacity="0.6"/>
+          <rect x="32" y="146" width="36" height="6" fill="#6b4f2a"/>
+          <rect x="46" y="152" width="8" height="34" fill="#3d2416"/>
+          <circle cx="50" cy="190" r="6" fill="#6b4f2a"/>
+        </svg>
+        <div id="slash-line"></div>
+        <div id="challenge-shadow">
+          <div id="shadow-form"></div>
+          <svg id="demon-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+            <!-- 어둠의 핵 (가슴 보석) -->
+            <polygon points="50,75 58,90 50,105 42,90" fill="#3a0a0a" stroke="#c0392b" stroke-width="0.8"/>
+            <polygon points="50,80 54,90 50,100 46,90" fill="#c0392b" opacity="0.7"/>
+            <!-- 발톱 왼쪽 -->
+            <path d="M 22 95 L 18 105 L 25 108 L 23 112 L 28 110 Z" fill="#0a0a0d" stroke="#3a0a0a" stroke-width="0.4"/>
+            <!-- 발톱 오른쪽 -->
+            <path d="M 78 95 L 82 105 L 75 108 L 77 112 L 72 110 Z" fill="#0a0a0d" stroke="#3a0a0a" stroke-width="0.4"/>
+            <!-- 빛나는 핏줄 -->
+            <path d="M 50 30 Q 45 50 48 70" fill="none" stroke="#c0392b" stroke-width="0.4" opacity="0.6"/>
+            <path d="M 50 30 Q 55 50 52 70" fill="none" stroke="#c0392b" stroke-width="0.4" opacity="0.6"/>
+            <!-- 어둠의 입 (호 모양) -->
+            <path d="M 42 55 Q 50 60 58 55" fill="none" stroke="#3a0a0a" stroke-width="1.2"/>
+          </svg>
+          <div id="shadow-strength">강도 +0</div>
+        </div>
+      </div>
+      <div id="challenge-actions">
+        <button class="challenge-btn" id="btn-slay">베 기</button>
+        <button class="challenge-btn flee" id="btn-flee">도 망</button>
+      </div>
+    </div>
+    <div id="log"></div>
+  </div>
+
+  <div id="stats">
+    <div class="stat">
+      <div class="stat-label">조각</div>
+      <div class="stat-value" id="stat-shards">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">보호권</div>
+      <div class="stat-value" id="stat-protections">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">최고</div>
+      <div class="stat-value" id="stat-best">+0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">베어냄</div>
+      <div class="stat-value" id="stat-slain">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">파괴</div>
+      <div class="stat-value" id="stat-destroyed">0</div>
+    </div>
+  </div>
+
+  <div id="actions">
+    <div id="odds">
+      <span class="success" id="odds-success">성공률 100%</span>
+      &nbsp;·&nbsp;
+      <span id="odds-fail">실패 시 유지</span>
+      <br>
+      <span class="cost" id="odds-cost">조각 0 소모</span>
+    </div>
+    <label class="protect-row" id="protect-row">
+      <input type="checkbox" id="protect-check">
+      <span id="protect-label">보호권 사용 (실패해도 검 유지)</span>
+    </label>
+    <label id="auto-row" style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;color:var(--dim);margin-bottom:8px;cursor:pointer">
+      <input type="checkbox" id="auto-check">
+      <span id="auto-label">修練 (안전한 단계까지 자동 강화)</span>
+    </label>
+    <div id="stone-row" style="display:flex;gap:12px;justify-content:center;font-size:11px;color:var(--dim);margin-bottom:10px">
+      <label id="whet-row" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="whet-check"><span id="whet-label">砥 (성공 +25%)</span>
+      </label>
+      <label id="spirit-row" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="spirit-check"><span id="spirit-label">靈 (파괴 차단)</span>
+      </label>
+    </div>
+    <button id="btn-enhance">강 &nbsp; 화</button>
+    <button id="btn-seal-direct" title="검을 팔아 조각을 얻습니다">검  팔 기<span class="seal-reward" id="seal-reward-label"></span></button>
+  </div>
+
+  <div id="footer">
+    <button class="footer-btn" id="btn-forge">조 합 소</button>
+    <button class="footer-btn" id="btn-legacy">지난 검들</button>
+    <button class="footer-btn" id="btn-anthology">검의 노래</button>
+  </div>
+</div>
+
+<!-- 조합소 모달 -->
+<div class="modal" id="forge-modal">
+  <div class="modal-box">
+    <h2>조 합 소</h2>
+    <p>모은 조각으로 도구와 검을 만듭니다</p>
+    <div class="recipe">
+      <div class="recipe-text">보호권 1개<small>조각 15 · 실패해도 검 유지</small></div>
+      <button class="recipe-btn" data-recipe="protection">만 들 기</button>
+    </div>
+    <div class="recipe">
+      <div class="recipe-text">보호권 10개 묶음<small>조각 130 · 할인</small></div>
+      <button class="recipe-btn" data-recipe="protection10">만 들 기</button>
+    </div>
+    <div class="recipe">
+      <div class="recipe-text">새 검<small>조각 50 · 검을 잃었을 때</small></div>
+      <button class="recipe-btn" data-recipe="newsword">만 들 기</button>
+    </div>
+    <div class="recipe">
+      <div class="recipe-text">숫돌<small>조각 8 · 다음 강화 성공률 +25%</small></div>
+      <button class="recipe-btn" data-recipe="whetstone">만 들 기</button>
+    </div>
+    <div class="recipe">
+      <div class="recipe-text">영석<small>조각 25 · 다음 강화 파괴 차단</small></div>
+      <button class="recipe-btn" data-recipe="spiritstone">만 들 기</button>
+    </div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- 命名 / 봉인 미리 보기 모달 -->
+<div class="modal" id="name-modal">
+  <div class="modal-box">
+    <h2>검 이름 · 팔기</h2>
+    <div id="name-preview" style="padding:8px 4px 14px;font-size:11px;color:var(--dim);line-height:1.9;letter-spacing:2px;border-bottom:1px solid var(--line);margin-bottom:14px;text-align:center"></div>
+    <p id="name-prompt-text">이 검에 직접 이름을 지어주시겠습니까?</p>
+    <input id="name-input" type="text" maxlength="16" placeholder=""
+      style="width:100%;padding:12px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:16px;letter-spacing:6px;text-align:center;margin-bottom:14px;outline:none;"
+      autocomplete="off">
+    <div style="display:flex;gap:8px">
+      <button class="modal-close" id="name-cancel" style="flex:1;margin:0">자 동 이 름</button>
+      <button class="modal-close" id="name-confirm" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)">이 름 새 김 · 팔 기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 詩集 모달 — 道 검 일생시 모음 -->
+<div class="modal" id="anthology-modal">
+  <div class="modal-box" style="max-width: 420px;">
+    <h2>검의 노래</h2>
+    <p>도(道)에 이른 검들의 일생을 시구로</p>
+    <div id="anthology-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- 통계 모달 -->
+<div class="modal" id="stats-modal">
+  <div class="modal-box">
+    <h2>기 록</h2>
+    <div id="stats-list" style="font-size:12px;color:var(--fg);line-height:2"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- 계보 모달 -->
+<div class="modal" id="legacy-modal">
+  <div class="modal-box">
+    <h2>지나간 검들</h2>
+    <p id="legacy-summary">선대의 강기 0 · 시작 보너스 +0</p>
+    <div id="legacy-filter" style="display:flex;gap:6px;justify-content:center;padding:4px 0 10px;flex-wrap:wrap"></div>
+    <div id="legacy-list" style="max-height: 300px; overflow-y: auto;"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- 검 회고 모달 -->
+<div class="modal" id="sword-detail-modal">
+  <div class="modal-box" style="max-width: 420px;">
+    <h2 id="detail-name">劍</h2>
+    <div id="detail-body" style="font-size:12px;line-height:1.9;letter-spacing:2px;color:var(--fg)"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- 게임 오버 -->
+<div id="gameover-overlay">
+  <div id="gameover-title">길의 끝</div>
+  <div id="gameover-msg">
+    검도 조각도 모두 잃었습니다.<br>
+    아래 <span style="color:var(--accent);font-weight:700">다시 시작</span> 버튼을 누르세요.
+  </div>
+  <div id="gameover-stats"></div>
+  <button id="gameover-restart">다 시  시 작</button>
+  <button id="gameover-fullreset">전 체  초 기 화 (계보까지 지움)</button>
+</div>
+
+<!-- 儀式 — 道 검 봉인 컷씬 -->
+<div id="ritual-overlay">
+  <div id="ritual-form"></div>
+  <div id="ritual-title"></div>
+  <div id="ritual-verse"></div>
+  <div id="ritual-end">— 검은 잠들다 —</div>
+</div>
+
+<!-- 道魂 — 봉인된 검의 시구 페이드 -->
+<div id="ancestor-whisper">
+  <div class="who" id="whisper-who"></div>
+  <div id="whisper-line"></div>
+</div>
+
+<!-- 銘 새겨짐 오버레이 -->
+<div id="inscribe-overlay">
+  <div id="inscribe-kanji"></div>
+  <div id="inscribe-label"></div>
+  <div id="inscribe-sub">검에 명문이 새겨졌다</div>
+</div>
+
+<!-- 도움말 모달 (최초 1회) -->
+<div class="modal" id="help-modal">
+  <div class="modal-box">
+    <h2>검 강화</h2>
+    <p>
+      <span style="color:var(--accent)">처음 조각 50개로 시작합니다.<br>
+      첫 강화 (+0 → +1) 는 무료입니다.</span><br><br>
+      검을 강화합니다.<br>
+      단계가 오를수록 성공이 어려워지고<br>
+      실패하면 검이 망가지거나 단계가 떨어집니다.<br><br>
+      <span style="color:var(--accent)">검을 팔면 조각(돈)을 얻습니다.</span><br>
+      판 검은 사라지지만, 그 힘은 다음 검에 흐릅니다.<br><br>
+      검이 부서지면 5초 안에 조각을 주워야 합니다.<br>
+      조각을 모아 보호권을 만들면<br>
+      실패해도 검이 망가지지 않습니다.<br><br>
+      때로 그림자가 나타납니다 — 베거나 도망치세요.<br><br>
+      검은 자라면서 한자 자국(명문)을 모읍니다.<br>
+      가장 높은 +15까지 키운 검은<br>
+      파는 값이 1.5배가 됩니다.<br><br>
+      <span style="display:inline-block;text-align:left;color:var(--dim);font-size:11px;letter-spacing:2px;line-height:1.9">
+      스페이스 · 강화 / 베기 / 줍기<br>
+      Esc · 도전에서 도망<br>
+      P · 보호권 켜기/끄기<br>
+      M · 소리 끄기/켜기
+      </span>
+    </p>
+    <button class="modal-close" data-close>시 작</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // === 강화 테이블 ===
+  // 각 단계는 현재 레벨에서 +1로 갈 때의 룰
+  // success: 성공률, destroy: 파괴 확률 (실패 시), downgrade: 하락 확률 (실패 시), cost: 조각 비용
+  // 실패의 결과는 destroy + downgrade <= 1, 나머지는 유지
+  const TABLE = [
+    { success: 1.00, destroy: 0.00, downgrade: 0.00, cost: 0 },   // 0→1
+    { success: 0.95, destroy: 0.00, downgrade: 0.00, cost: 1 },   // 1→2
+    { success: 0.90, destroy: 0.00, downgrade: 0.00, cost: 2 },   // 2→3
+    { success: 0.80, destroy: 0.00, downgrade: 0.30, cost: 3 },   // 3→4
+    { success: 0.70, destroy: 0.00, downgrade: 0.50, cost: 5 },   // 4→5
+    { success: 0.60, destroy: 0.05, downgrade: 0.60, cost: 8 },   // 5→6
+    { success: 0.50, destroy: 0.10, downgrade: 0.70, cost: 12 },  // 6→7
+    { success: 0.40, destroy: 0.20, downgrade: 0.70, cost: 18 },  // 7→8
+    { success: 0.30, destroy: 0.30, downgrade: 0.60, cost: 26 },  // 8→9
+    { success: 0.22, destroy: 0.40, downgrade: 0.55, cost: 38 },  // 9→10
+    { success: 0.15, destroy: 0.55, downgrade: 0.40, cost: 54 },  // 10→11
+    { success: 0.10, destroy: 0.65, downgrade: 0.30, cost: 76 },  // 11→12
+    { success: 0.07, destroy: 0.75, downgrade: 0.22, cost: 108 }, // 12→13
+    { success: 0.04, destroy: 0.85, downgrade: 0.13, cost: 150 }, // 13→14
+    { success: 0.02, destroy: 0.93, downgrade: 0.05, cost: 210 }, // 14→15
+  ];
+  const MAX_LEVEL = TABLE.length;
+
+  // 방지권 비용: 강화하려는 단계에 따라 증가
+  function protectCost(currentLevel) {
+    if (currentLevel < 3) return 1;
+    if (currentLevel < 6) return 1;
+    if (currentLevel < 9) return 2;
+    if (currentLevel < 12) return 3;
+    return 5;
+  }
+
+  // 회수 가능한 조각 (파괴된 검의 레벨)
+  function rescueShards(level) {
+    return Math.max(3, Math.floor(level * level * 0.7));
+  }
+
+  // === 상태 ===
+  const SAVE_KEY = 'reinforce_sword_v1';
+  let state = {
+    level: 0,
+    shards: 50,
+    protections: 0,
+    hasSword: true,
+    bestLevel: 0,
+    totalDestroyed: 0,
+    totalSlain: 0,
+    sealedSwords: [],
+    currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0 },
+    whetstones: 0,
+    spiritstones: 0,
+    firstWayReached: false,  // v16 始祖 — 첫 道 도달 시 true, 영구
+    shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
+    heritageInscription: null,  // v33 — 道 검 봉인 후 다음 검에 전수될 명문 (1개)
+    milestonesShown: {},  // v35 — 한 번씩만 표시되는 안내
+    stats: {
+      enhanceAttempts: 0, enhanceSuccess: 0,
+      challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0,
+      fled: 0, evaded: 0,
+      rescued: 0, rescueFailed: 0,
+      sealed: 0, wayReached: 0,
+    },
+    seenHelp: false,
+  };
+
+  function save() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function bumpStat(key) {
+    if (!state.stats) return;
+    state.stats[key] = (state.stats[key] || 0) + 1;
+  }
+
+  // v35 신규 마일스톤 안내 (한 번씩만)
+  function maybeMilestone(key, kanji, hint) {
+    if (!state.milestonesShown) state.milestonesShown = {};
+    if (state.milestonesShown[key]) return;
+    state.milestonesShown[key] = true;
+    inscribeQueue.push({ key: kanji, label: hint });
+    if (!inscribeRunning) runInscribeQueue();
+  }
+  function load() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (raw) state = Object.assign(state, JSON.parse(raw));
+      if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
+      if (!state.currentSword || typeof state.currentSword !== 'object') {
+        state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [] };
+      }
+      if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
+      if (state.currentSword.form === undefined) state.currentSword.form = null;
+      if (typeof state.currentSword.soul !== 'number') state.currentSword.soul = 0;
+      // v45+ 무한 팔기 차단: 기존 저장 데이터는 startLevel을 현재 level로 (기존 검은 그 자리에서 팔기 허용)
+      if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
+      if (typeof state.whetstones !== 'number') state.whetstones = 0;
+      if (typeof state.spiritstones !== 'number') state.spiritstones = 0;
+      if (typeof state.firstWayReached !== 'boolean') state.firstWayReached = false;
+      if (!state.shadowOriginsSlain || typeof state.shadowOriginsSlain !== 'object') state.shadowOriginsSlain = {};
+      if (state.heritageInscription === undefined) state.heritageInscription = null;
+      if (!state.milestonesShown || typeof state.milestonesShown !== 'object') state.milestonesShown = {};
+      if (!state.stats || typeof state.stats !== 'object') {
+        state.stats = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0 };
+      }
+    } catch (e) {}
+  }
+
+  // === 季節 — 누적 강화 시도 기반 시간감 + 미세 효과 ===
+  function getSeason() {
+    const n = (state.stats && state.stats.enhanceAttempts) || 0;
+    if (n >= 400) return { key: 'winter', name: '冬', costMul: 1.00, challengeMul: 1.00, sealMul: 1.00, rescueSec: 1.0 };
+    if (n >= 150) return { key: 'autumn', name: '秋', costMul: 1.00, challengeMul: 1.00, sealMul: 1.05, rescueSec: 0 };
+    if (n >= 50) return { key: 'summer', name: '夏', costMul: 1.00, challengeMul: 1.05, sealMul: 1.00, rescueSec: 0 };
+    return { key: 'spring', name: '春', costMul: 0.95, challengeMul: 1.00, sealMul: 1.00, rescueSec: 0 };
+  }
+
+  // === 久/古 — 검의 노쇠 효과 ===
+  function getAgeEffect() {
+    if (!state.hasSword || !state.currentSword.inscriptions) return { costMul: 1, sealMul: 1 };
+    const ins = state.currentSword.inscriptions;
+    if (ins.includes('古')) return { costMul: 1.10, sealMul: 1.10 };
+    if (ins.includes('久')) return { costMul: 1.05, sealMul: 1.05 };
+    return { costMul: 1, sealMul: 1 };
+  }
+  function applySeason() {
+    const s = getSeason();
+    const body = document.body;
+    const mark = $('season-mark');
+    body.classList.remove('season-spring', 'season-summer', 'season-autumn', 'season-winter');
+    body.classList.add('season-' + s.key);
+    if (mark) {
+      mark.classList.remove('season-spring', 'season-summer', 'season-autumn', 'season-winter');
+      mark.classList.add('season-' + s.key);
+      mark.textContent = s.name;
+    }
+  }
+
+  // === 響 — Web Audio 톤 합성 ===
+  let audioCtx = null;
+  let muted = false;
+  try { muted = localStorage.getItem('reinforce_sword_muted') === '1'; } catch (e) {}
+
+  function getAudio() {
+    if (muted) return null;
+    if (audioCtx) return audioCtx;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      audioCtx = new Ctx();
+      return audioCtx;
+    } catch (e) { return null; }
+  }
+
+  function tone(freq, dur, type, vol, freqEnd) {
+    const ctx = getAudio();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, ctx.currentTime + dur);
+    gain.gain.setValueAtTime((vol || 0.2), ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + dur);
+  }
+  function noise(dur, vol) {
+    const ctx = getAudio();
+    if (!ctx) return;
+    const bufferSize = Math.floor(ctx.sampleRate * dur);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const gain = ctx.createGain();
+    gain.gain.value = vol || 0.3;
+    src.connect(gain); gain.connect(ctx.destination);
+    src.start();
+  }
+
+  // 화음 — 여러 톤 동시 재생
+  function chord(freqs, dur, type, vol) {
+    freqs.forEach((f, i) => tone(f, dur, type, vol / freqs.length, null));
+  }
+
+  const SFX = {
+    // 강화 성공: 도-미-솔 화음 → 옥타브 위
+    enhanceSuccess: () => {
+      chord([523, 659, 784], 0.18, 'sine', 0.5);   // C-E-G 메이저 화음
+      setTimeout(() => chord([784, 988, 1175], 0.25, 'sine', 0.4), 100); // G-B-D 상승
+    },
+    enhanceFail:    () => { tone(160, 0.22, 'sawtooth', 0.15); tone(120, 0.22, 'sawtooth', 0.1); },
+    destroy:        () => { noise(0.4, 0.35); tone(80, 0.5, 'sawtooth', 0.2); tone(60, 0.6, 'sawtooth', 0.15); },
+    rescueTick:     () => tone(70, 0.04, 'sine', 0.12),
+    rescueSave:     () => {
+      chord([330, 415, 494], 0.12, 'sine', 0.45);  // E-G#-B 화음 안도
+      setTimeout(() => chord([660, 831, 988], 0.22, 'sine', 0.4), 80);
+    },
+    slash:          () => { tone(2000, 0.12, 'triangle', 0.2, 200); tone(1500, 0.1, 'triangle', 0.15, 150); },
+    challengeAppear: () => { tone(240, 0.4, 'triangle', 0.18, 180); tone(200, 0.4, 'sine', 0.12, 140); },
+    seal:           () => {
+      chord([277, 349, 415], 0.45, 'sine', 0.6);   // C#-F-G# 화음
+      setTimeout(() => chord([415, 523, 622], 0.7, 'sine', 0.5), 120);
+    },
+    inscribe:       () => {
+      chord([1200, 1568], 0.22, 'triangle', 0.4);  // D6-G6 차임
+      setTimeout(() => tone(1976, 0.3, 'triangle', 0.18), 80);
+    },
+    // 道 의식: 5화음 + 저음 풀
+    ritual:         () => {
+      chord([130, 196, 261, 330, 392], 2.5, 'sine', 0.7); // C3 메이저 펜타토닉
+      setTimeout(() => chord([196, 261, 330, 392, 523], 2.2, 'sine', 0.55), 250);
+      setTimeout(() => chord([330, 392, 523, 659, 784], 1.8, 'sine', 0.45), 600);
+      setTimeout(() => tone(80, 3.0, 'sine', 0.3), 0); // 저음 풀
+    },
+    forge:          () => { tone(520, 0.15, 'sine', 0.16); tone(659, 0.15, 'sine', 0.10); },
+    formDecide:     () => {
+      chord([440, 554, 659], 0.15, 'sine', 0.4);   // A-C#-E 화음
+      setTimeout(() => chord([554, 698, 831], 0.25, 'sine', 0.3), 100);
+    },
+  };
+
+  function toggleMute() {
+    muted = !muted;
+    try { localStorage.setItem('reinforce_sword_muted', muted ? '1' : '0'); } catch (e) {}
+    const btn = $('btn-mute');
+    if (btn) btn.textContent = muted ? '소 리  켜 기' : '소 리  끄 기';
+    log(muted ? '소리 끔' : '소리 켬', 'fail');
+  }
+
+  // === DOM ===
+  const $ = (id) => document.getElementById(id);
+  const swordWrap = $('sword-wrap');
+  const swordSvg = $('sword-svg');
+  const blade = $('blade');
+  const bladeShine = $('blade-shine');
+  const guardDeco = $('guard-deco');
+  const pommel = $('pommel');
+  const levelBadge = $('level-badge');
+  const voidEl = $('void');
+  const rescueCircle = $('rescue-circle');
+  const rescueTimer = $('rescue-timer');
+  const oddsSuccess = $('odds-success');
+  const oddsFail = $('odds-fail');
+  const oddsCost = $('odds-cost');
+  const protectRow = $('protect-row');
+  const protectCheck = $('protect-check');
+  const protectLabel = $('protect-label');
+  const btnEnhance = $('btn-enhance');
+  const logEl = $('log');
+  const statShards = $('stat-shards');
+  const statProtections = $('stat-protections');
+  const statBest = $('stat-best');
+  const statSlain = $('stat-slain');
+  const statDestroyed = $('stat-destroyed');
+  const challengeEl = $('challenge');
+  const shadowForm = $('shadow-form');
+  const shadowStrength = $('shadow-strength');
+  const slashLine = $('slash-line');
+  const challengeSword = $('challenge-sword');
+  const challengeStakes = $('challenge-stakes');
+  const swordInscriptions = $('sword-inscriptions');
+  const inscribeOverlay = $('inscribe-overlay');
+  const inscribeKanji = $('inscribe-kanji');
+  const inscribeLabel = $('inscribe-label');
+
+  // === 렌더 ===
+  function render() {
+    statShards.textContent = state.shards;
+    statProtections.textContent = state.protections;
+    statBest.textContent = '+' + state.bestLevel;
+    statSlain.textContent = state.totalSlain;
+    statDestroyed.textContent = state.totalDestroyed;
+    renderInscriptions();
+    applyFormVisual();
+    applyLevelVisual();
+    applyInscriptionVisual();
+    renderSoul();
+    renderSealButton();
+    applySeason();
+    checkGameOver();
+
+    if (!state.hasSword) {
+      // 검 없음 — 강화 버튼을 "새 검 빚기"로 전환 (조합소 거치지 않음)
+      swordSvg.style.opacity = 0.15;
+      levelBadge.textContent = '—';
+      levelBadge.style.color = 'var(--dim)';
+      const NEWSWORD_COST = 50;
+      btnEnhance.dataset.mode = 'newsword';
+      const canAffordNew = state.shards >= NEWSWORD_COST;
+      btnEnhance.disabled = !canAffordNew;
+      btnEnhance.textContent = canAffordNew
+        ? '새  검  빚 기  ·  조각 ' + NEWSWORD_COST
+        : '조 각  부 족  (조각 ' + NEWSWORD_COST + ' 필요 / 보유 ' + state.shards + ')';
+      oddsSuccess.innerHTML = '<span style="color:var(--danger)">검을 잃었다</span>';
+      oddsFail.textContent = '새 검을 빚어 다시 시작하라';
+      oddsCost.textContent = '';
+      protectRow.classList.add('disabled');
+      protectCheck.disabled = true;
+      // 숫돌·영석 토글도 잠금
+      const wc = $('whet-check'), sc = $('spirit-check');
+      if (wc) { wc.disabled = true; wc.checked = false; }
+      if (sc) { sc.disabled = true; sc.checked = false; }
+      // 게임 오버 체크 — return 전에 반드시 호출
+      checkGameOver();
+      return;
+    }
+    btnEnhance.dataset.mode = 'enhance';
+
+    swordSvg.style.opacity = 1;
+    // v45 단계별 한자 이름 + 강화도
+    const tierName = state.level === 0 ? '始 (시작)'
+                   : state.level <= 2 ? '初 (초기)'
+                   : state.level <= 5 ? '鍊 (수련)'
+                   : state.level <= 9 ? '強 (강한 검)'
+                   : state.level <= 13 ? '靈 (영의 검)'
+                   : state.level < MAX_LEVEL ? '聖 (성스러운 검)'
+                   : '道 (최고의 검)';
+    levelBadge.innerHTML = '+' + state.level + ' <span style="font-size:10px;color:var(--dim);letter-spacing:2px">' + tierName + '</span>';
+    levelBadge.style.color = 'var(--accent)';
+
+    // 검 외형 변화 — applyLevelVisual로 통합 (v40+ 단계별 누적 화려함)
+    const lv = state.level;
+    swordWrap.className = '';
+    // applyLevelVisual은 render() 끝에서 호출됨
+
+    // 강화 정보
+    // stage aura — 강화도별 분위기
+    const stage = $('stage');
+    stage.classList.remove('aura-mid', 'aura-high', 'aura-divine');
+    if (lv >= MAX_LEVEL) stage.classList.add('aura-divine');
+    else if (lv >= 10) stage.classList.add('aura-high');
+    else if (lv >= 5) stage.classList.add('aura-mid');
+
+    if (lv >= MAX_LEVEL) {
+      btnEnhance.disabled = true;
+      btnEnhance.textContent = '도 (道)';
+      oddsSuccess.textContent = '극한에 이르렀다';
+      oddsFail.textContent = '';
+      oddsCost.textContent = '';
+      protectRow.classList.add('disabled');
+      protectCheck.disabled = true;
+      return;
+    }
+
+    const t = TABLE[lv];
+    const f = getForm();
+    const formCostMul = (f && f.costMul) || 1;
+    const seasonCostMul = getSeason().costMul;
+    const ageCostMul = getAgeEffect().costMul;
+    const successBonus = (f && f.successBonus) || 0;
+    const destroyReduce = (f && f.destroyReduce) || 0;
+    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul);
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus();
+    const showSuccess = Math.min(1, t.success + totalBonus);
+    const showDestroy = Math.max(0, t.destroy - destroyReduce - schoolDestroyReduce());
+
+    const canAfford = state.shards >= actualCost;
+    btnEnhance.disabled = !canAfford;
+    btnEnhance.textContent = canAfford
+      ? '강 화  →  +' + (lv + 1)
+      : '조 각  부 족  (' + actualCost + ' 필요 / 보유 ' + state.shards + ')';
+
+    const breathStr = breathLabel();
+    // 첫 강화(+0→+1)는 무료임을 강조
+    const freeNote = (lv === 0 && actualCost === 0)
+      ? '  <span style="color:var(--safe);font-size:10px">· 무료</span>'
+      : '';
+    oddsSuccess.innerHTML = '성공률 ' + Math.round(showSuccess * 100) + '%' + freeNote +
+      (breathStr ? '  <span style="color:#6a8a9a;font-size:10px">· ' + breathStr + '</span>' : '');
+    let failMsg = '';
+    if (showDestroy > 0) {
+      failMsg = '실패 시 파괴 ' + Math.round(showDestroy * 100) + '% · 하락 ' + Math.round(t.downgrade * 100) + '%';
+    } else if (t.downgrade > 0) {
+      failMsg = '실패 시 하락 ' + Math.round(t.downgrade * 100) + '%';
+    } else {
+      failMsg = '실패 시 유지';
+    }
+    oddsFail.innerHTML = failMsg.replace('파괴', '<span class="destroy">파괴</span>');
+    oddsCost.textContent = '조각 ' + actualCost + ' 소모';
+
+    // 방지권
+    const pCost = protectCost(lv);
+    const hasEnoughProtections = state.protections >= pCost;
+    if (t.destroy === 0 && t.downgrade === 0) {
+      protectRow.classList.add('disabled');
+      protectCheck.disabled = true;
+      protectCheck.checked = false;
+      protectLabel.textContent = '보호권 불필요';
+    } else {
+      protectRow.classList.toggle('disabled', !hasEnoughProtections);
+      protectCheck.disabled = !hasEnoughProtections;
+      if (!hasEnoughProtections) protectCheck.checked = false;
+      protectLabel.textContent = '보호권 ' + pCost + '개 사용 (실패해도 검 유지)';
+    }
+    // 숫돌·영석 토글
+    const whetCheck = $('whet-check'), spiritCheck = $('spirit-check');
+    const whetLabel = $('whet-label'), spiritLabel = $('spirit-label');
+    if (whetCheck) {
+      whetCheck.disabled = state.whetstones === 0;
+      if (whetCheck.disabled) whetCheck.checked = false;
+      whetLabel.textContent = '砥 ×' + state.whetstones + ' (성공 +25%)';
+      whetLabel.style.color = state.whetstones > 0 ? 'var(--accent)' : 'var(--dim)';
+    }
+    if (spiritCheck) {
+      const hasDestroyRisk = t.destroy > 0;
+      spiritCheck.disabled = state.spiritstones === 0 || !hasDestroyRisk;
+      if (spiritCheck.disabled) spiritCheck.checked = false;
+      spiritLabel.textContent = '靈 ×' + state.spiritstones + (hasDestroyRisk ? ' (파괴 차단)' : ' (파괴 위험 없음)');
+      spiritLabel.style.color = (state.spiritstones > 0 && hasDestroyRisk) ? 'var(--accent)' : 'var(--dim)';
+    }
+  }
+
+  // === 로그 ===
+  function log(msg, cls) {
+    const e = document.createElement('div');
+    e.className = 'log-entry' + (cls ? ' ' + cls : '');
+    e.textContent = msg;
+    logEl.appendChild(e);
+    setTimeout(() => e.remove(), 4500);
+  }
+
+  // === 파티클 ===
+  function burstParticles(color, count) {
+    const rect = swordWrap.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.background = color;
+      p.style.left = cx + 'px';
+      p.style.top = cy + 'px';
+      document.body.appendChild(p);
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 80 + Math.random() * 120;
+      const dx = Math.cos(angle) * speed;
+      const dy = Math.sin(angle) * speed;
+      p.animate([
+        { transform: 'translate(0,0)', opacity: 1 },
+        { transform: 'translate(' + dx + 'px,' + dy + 'px)', opacity: 0 }
+      ], { duration: 700 + Math.random() * 400, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+      setTimeout(() => p.remove(), 1200);
+    }
+  }
+
+  // === 강화 ===
+  let rescueWindow = null;
+
+  function enhance() {
+    if (challenge || rescueWindow) return;
+    if (!state.hasSword || state.level >= MAX_LEVEL) return;
+    const lv = state.level;
+    const t = TABLE[lv];
+    const form = getForm();
+    const formCostMul = (form && form.costMul) || 1;
+    const seasonCostMul = getSeason().costMul;
+    const ageCostMul = getAgeEffect().costMul;
+    const successBonus = (form && form.successBonus) || 0;
+    const destroyReduce = (form && form.destroyReduce) || 0;
+    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul);
+    if (state.shards < actualCost) return;
+
+    const useProtect = protectCheck.checked && !protectCheck.disabled;
+    const pCost = protectCost(lv);
+    if (useProtect && state.protections < pCost) return;
+    const whetCheck = $('whet-check');
+    const spiritCheck = $('spirit-check');
+    const useWhet = whetCheck && whetCheck.checked && !whetCheck.disabled && state.whetstones > 0;
+    const useSpirit = spiritCheck && spiritCheck.checked && !spiritCheck.disabled && state.spiritstones > 0;
+
+    // 비용 차감
+    state.shards -= actualCost;
+    if (useProtect) state.protections -= pCost;
+    if (useWhet) state.whetstones--;
+    if (useSpirit) state.spiritstones--;
+    state.currentSword.enhanceAttempts++;
+    bumpStat('enhanceAttempts');
+
+    // 첫 강화 시 검의 형 결정
+    if (!state.currentSword.form) decideForm();
+
+    // 주사위 (형 + 숫돌 + 魂 + 유파 + 호흡 보너스 반영)
+    const whetBonus = useWhet ? 0.25 : 0;
+    const soulBonus = soulEffects().successBonus;
+    const schoolBonus = schoolSuccessBonus();
+    const breath = breathBonus();
+    addSoul(1); // 강화 시도 자체로 혼 +1
+    lastEnhanceTime = Date.now(); // 호흡 리셋
+    const roll = Math.random();
+    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath) {
+      // 성공
+      state.level++;
+      if (state.level > state.bestLevel) state.bestLevel = state.level;
+      swordWrap.classList.remove('shake');
+      swordWrap.classList.add('flash');
+      setTimeout(() => swordWrap.classList.remove('flash'), 500);
+      burstParticles('#d4af37', 12 + lv * 2);
+      SFX.enhanceSuccess();
+      bumpStat('enhanceSuccess');
+      // v35 첫 강화 / 첫 +5(봉인 가능) 마일스톤
+      if (state.level === 1) maybeMilestone('first1', '一', '첫 강화 — 검의 이야기가 시작됩니다');
+      if (state.level === SEAL_MIN_LEVEL) maybeMilestone('firstSeal', '팔기', '+' + SEAL_MIN_LEVEL + ' 도달 — 이제 검을 팔 수 있습니다');
+      log('+' + state.level + ' 성공', 'success');
+      // 강화 성공 → 일대기 점검 (百鍊·剛體·道)
+      checkInscriptions();
+      // 그림자가 비칠 수 있다
+      protectCheck.checked = false;
+      if ($('whet-check')) $('whet-check').checked = false;
+      if ($('spirit-check')) $('spirit-check').checked = false;
+      save();
+      render();
+      maybeTriggerChallenge();
+      return;
+    } else {
+      // 실패
+      swordWrap.classList.remove('flash');
+      swordWrap.classList.add('shake');
+      setTimeout(() => swordWrap.classList.remove('shake'), 400);
+
+      const failRoll = Math.random();
+      // 영석: 파괴 차단 / 유파 보너스도 destroy 감소
+      const effectiveDestroy = useSpirit ? 0 : Math.max(0, t.destroy - destroyReduce - schoolDestroyReduce());
+      if (failRoll < effectiveDestroy && !useProtect) {
+        // 파괴
+        state.totalDestroyed++;
+        state.hasSword = false;
+        const destroyedLevel = state.level;
+        state.level = 0;
+        log('검이 부서졌다 (+' + destroyedLevel + ')', 'destroy');
+        burstParticles('#c0392b', 30);
+        SFX.destroy();
+        maybeMilestone('firstDestroy', '부서짐', '검이 부서졌습니다 — 5초 안에 조각을 주우세요');
+        showVoid(destroyedLevel);
+      } else if (failRoll < effectiveDestroy + t.downgrade && !useProtect) {
+        // 하락
+        state.level = Math.max(0, state.level - 1);
+        log('실패 — 하락 (+' + state.level + ')', 'fail');
+        SFX.enhanceFail();
+      } else {
+        // 유지 (또는 방지권 발동)
+        if (useProtect) {
+          log('보호권 사용 (+' + state.level + ')', 'fail');
+        } else {
+          log('실패 — 유지', 'fail');
+        }
+        SFX.enhanceFail();
+      }
+    }
+
+    // 체크 해제
+    protectCheck.checked = false;
+    if ($('whet-check')) $('whet-check').checked = false;
+    if ($('spirit-check')) $('spirit-check').checked = false;
+    // 실패 분기에서도 百鍊 카운트 확인 (강화 시도 자체로 누적)
+    checkInscriptions();
+    save();
+    render();
+  }
+
+  // === 파괴 후 회수 윈도우 ===
+  function showVoid(destroyedLevel) {
+    const shardReward = rescueShards(destroyedLevel);
+    voidEl.classList.add('active');
+    swordWrap.style.opacity = 0;
+    const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec; // 速流 + 冬 보너스
+    let timeLeft = totalSec;
+    rescueTimer.textContent = timeLeft.toFixed(1) + '초 안에  ·  +' + shardReward + ' 조각';
+
+    let rescued = false;
+    const tickInterval = setInterval(() => {
+      timeLeft -= 0.1;
+      if (timeLeft <= 0) {
+        clearInterval(tickInterval);
+        clearTimeout(failTimeout);
+        if (!rescued) endVoid(false);
+      } else {
+        rescueTimer.textContent = timeLeft.toFixed(1) + '초 안에  ·  +' + shardReward + ' 조각';
+      }
+    }, 100);
+
+    const failTimeout = setTimeout(() => {
+      clearInterval(tickInterval);
+      if (!rescued) endVoid(false);
+    }, totalSec * 1000);
+
+    rescueWindow = {
+      rescue: () => {
+        if (rescued) return;
+        rescued = true;
+        clearInterval(tickInterval);
+        clearTimeout(failTimeout);
+        state.shards += shardReward;
+        bumpStat('rescued');
+        SFX.rescueSave();
+        log('조각 +' + shardReward + ' 주웠다', 'success');
+        endVoid(true);
+      }
+    };
+  }
+
+  function endVoid(rescued) {
+    voidEl.classList.remove('active');
+    swordWrap.style.opacity = 1;
+    rescueWindow = null;
+    if (!rescued) {
+      bumpStat('rescueFailed');
+      log('조각도 모두 잃었다', 'destroy');
+      // 검 + 조각 모두 잃었음을 페이드로 강조 — 다음 흐름 안내
+      inscribeQueue.push({ key: '失', label: '검을 잃었다 · 새 검을 만드세요' });
+      if (!inscribeRunning) runInscribeQueue();
+    }
+    save();
+    render();
+  }
+
+  rescueCircle.addEventListener('click', () => {
+    if (rescueWindow) rescueWindow.rescue();
+  });
+
+  // === 道魂 — 봉인된 道 검이 후세에 시구를 전한다 ===
+  function whisperFromAncestor(currentForm) {
+    const sealed = state.sealedSwords.filter(s => s.verse && Array.isArray(s.verse));
+    if (sealed.length === 0) return;
+    // 같은 형 우선, 없으면 임의
+    let candidates = sealed.filter(s => s.form === currentForm);
+    if (candidates.length === 0) candidates = sealed;
+    const ancestor = candidates[Math.floor(Math.random() * candidates.length)];
+    // 시구 4행 중 1행 (인덱스 1 또는 2 — 정점 행 우선)
+    const lineIdx = Math.random() < 0.5 ? 1 : 2;
+    const line = ancestor.verse[lineIdx] || ancestor.verse[0];
+    const who = $('whisper-who');
+    const lineEl = $('whisper-line');
+    const wrap = $('ancestor-whisper');
+    who.textContent = '— ' + (ancestor.name || '지난 검') + ' —';
+    lineEl.textContent = line;
+    wrap.classList.remove('active');
+    void wrap.offsetWidth;
+    wrap.classList.add('active');
+    setTimeout(() => wrap.classList.remove('active'), 5000);
+  }
+
+  // === 敵流 — 그림자 학파 (4개) ===
+  const SHADOW_ORIGINS = {
+    '夜流': { whisper: '밤에서 온 그림자' },
+    '霧流': { whisper: '안개 속에서 솟은 그림자' },
+    '骨流': { whisper: '뼈와 같이 마른 그림자' },
+    '焰流': { whisper: '꺼진 불에서 남은 그림자' },
+  };
+  const ORIGIN_KEYS = Object.keys(SHADOW_ORIGINS);
+
+  function rollShadowOrigin() {
+    return ORIGIN_KEYS[Math.floor(Math.random() * ORIGIN_KEYS.length)];
+  }
+
+  // === 一閃 — 도전 (휘발성, 저장 안 함) ===
+  const CHALLENGE_BASE_CHANCE = 0.13;
+  const CHALLENGE_LEVEL_BONUS = 0.018;
+  const CHALLENGE_MAX_CHANCE = 0.45;
+  const CHALLENGE_MIN_LEVEL = 1;
+  const FLEE_COST = 3;
+  let challenge = null;
+
+  // v5: 그림자 종류 — 각 type은 시각·메커니즘·보상 변형
+  const SHADOW_TYPES = [
+    {
+      key: 'normal', name: '그림자', weight: 0.65,
+      strengthMul: 1.0, rewardMul: 1.0,
+      desc: '평범한 그림자',
+    },
+    {
+      key: 'flee', name: '도망 그림자', weight: 0.22,
+      strengthMul: 0.85, rewardMul: 1.8,
+      desc: '베어도 35%는 도망친다 — 베어내면 보상은 크다',
+      slayEvade: 0.35,
+    },
+    {
+      key: 'steel', name: '강철 그림자', weight: 0.10,
+      strengthMul: 1.0, rewardMul: 1.5, strengthAdd: 3,
+      desc: '단단한 그림자 — 강도 +3, 보상 1.5배',
+    },
+    {
+      key: 'demon', name: '검귀', weight: 0.03,
+      strengthMul: 1.0, rewardMul: 1.0,
+      desc: '검귀 — 가장 강하지만 베면 큰 보상과 자국',
+      isDemon: true,
+    },
+  ];
+
+  function rollShadowType() {
+    const r = Math.random();
+    let acc = 0;
+    for (const t of SHADOW_TYPES) {
+      acc += t.weight;
+      if (r < acc) return t;
+    }
+    return SHADOW_TYPES[0];
+  }
+  function rollChallengeStrength() {
+    const base = Math.max(1, Math.floor(state.bestLevel * 0.65));
+    return base + Math.floor(Math.random() * 4);
+  }
+  function challengeReward(strength) {
+    return Math.floor(strength * 4) + 6;
+  }
+
+  function maybeTriggerChallenge() {
+    if (!state.hasSword) return;
+    if (state.level < CHALLENGE_MIN_LEVEL) return;
+    if (challenge) return;
+    const seasonMul = getSeason().challengeMul;
+    const chance = Math.min(CHALLENGE_MAX_CHANCE, (CHALLENGE_BASE_CHANCE + state.level * CHALLENGE_LEVEL_BONUS) * seasonMul);
+    if (Math.random() >= chance) return;
+    const type = rollShadowType();
+    let strength, reward;
+    if (type.isDemon) {
+      strength = state.bestLevel + 5;
+      reward = strength * 7;
+    } else {
+      strength = Math.max(1, Math.floor(rollChallengeStrength() * type.strengthMul) + (type.strengthAdd || 0));
+      reward = Math.floor(challengeReward(strength) * type.rewardMul);
+    }
+    // 形 + 魂 보너스
+    const f = getForm();
+    if (f && f.rewardMul) reward = Math.floor(reward * f.rewardMul);
+    const sMul = soulEffects().rewardMul;
+    if (sMul !== 1) reward = Math.floor(reward * sMul);
+    const origin = rollShadowOrigin();
+    challenge = { strength, reward, type, origin };
+    bumpStat('challengesAppeared');
+    maybeMilestone('firstChallenge', '그림자', '그림자가 나타났습니다 — 베거나 도망치세요');
+    SFX.challengeAppear();
+    // v26 道魂: 1.2초 후 봉인된 道 검의 시구 한 줄 페이드
+    setTimeout(() => {
+      if (challenge) whisperFromAncestor(state.currentSword.form);
+    }, 1200);
+    if (type.isDemon) {
+      const stage = $('stage');
+      stage.classList.remove('darken');
+      void stage.offsetWidth;
+      stage.classList.add('darken');
+      setTimeout(() => stage.classList.remove('darken'), 800);
+    }
+    showChallenge();
+  }
+
+  // === 劍舞 — 검 hover 시 미세 흔들림 ===
+  function setSwordTilt(angle) {
+    if (challenge || rescueWindow || !state.hasSword) return;
+    swordSvg.style.transform = 'rotate(' + angle + 'deg)';
+  }
+  swordWrap.addEventListener('mousemove', (e) => {
+    if (challenge || rescueWindow) return;
+    const rect = swordWrap.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    setSwordTilt(x * 8);
+  });
+  swordWrap.addEventListener('mouseleave', () => {
+    if (swordSvg) swordSvg.style.transform = 'rotate(0deg)';
+  });
+  swordWrap.addEventListener('touchmove', (e) => {
+    if (challenge || rescueWindow) return;
+    const t = e.touches[0]; if (!t) return;
+    const rect = swordWrap.getBoundingClientRect();
+    const x = (t.clientX - rect.left) / rect.width - 0.5;
+    setSwordTilt(x * 8);
+  }, { passive: true });
+  swordWrap.addEventListener('touchend', () => {
+    if (swordSvg) swordSvg.style.transform = 'rotate(0deg)';
+  });
+
+  // === 황금 입자 떠다님 (강화도 ≥ 8) ===
+  function spawnDust() {
+    if (!state.hasSword || state.level < 8) return;
+    const stage = $('stage');
+    const rect = stage.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const d = document.createElement('div');
+    d.className = 'dust';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 60 + Math.random() * 40;
+    const sx = cx + Math.cos(angle) * dist;
+    const sy = cy + Math.sin(angle) * dist;
+    d.style.left = sx + 'px';
+    d.style.top = sy + 'px';
+    document.body.appendChild(d);
+    const driftX = (Math.random() - 0.5) * 40;
+    const driftY = -30 - Math.random() * 60;
+    d.animate([
+      { opacity: 0, transform: 'translate(0, 0)' },
+      { opacity: 0.7, offset: 0.2 },
+      { opacity: 0, transform: 'translate(' + driftX + 'px, ' + driftY + 'px)' },
+    ], { duration: 3000 + Math.random() * 2000, easing: 'cubic-bezier(0.25, 0.6, 0.5, 1)' });
+    setTimeout(() => d.remove(), 5500);
+  }
+  setInterval(spawnDust, 900);
+
+  // 呼吸 단계 변화 감지용 — 매 3초 odds 갱신
+  let lastBreathTier = -1;
+  setInterval(() => {
+    const b = breathBonus();
+    const tier = b >= 0.10 ? 3 : b >= 0.05 ? 2 : b >= 0.02 ? 1 : 0;
+    if (tier !== lastBreathTier && state.hasSword && !challenge && !rescueWindow) {
+      lastBreathTier = tier;
+      render();
+    }
+  }, 3000);
+
+  function showChallenge() {
+    const t = challenge.type;
+    // 검 종류별 시각 클래스
+    shadowForm.className = '';
+    if (t.key === 'flee') shadowForm.classList.add('flee-type');
+    else if (t.key === 'steel') shadowForm.classList.add('steel-type');
+    else if (t.key === 'demon') shadowForm.classList.add('demon-type');
+    // v41 검귀 SVG 디테일 토글
+    const demonDetail = $('demon-detail');
+    if (demonDetail) demonDetail.classList.toggle('active', t.key === 'demon');
+    shadowStrength.textContent = (challenge.origin ? challenge.origin + ' · ' : '') + t.name + ' · 강도 +' + challenge.strength;
+    const verdict = state.level >= challenge.strength
+      ? '<span style="color:var(--safe)">충분히 강하다 — 한 번에 베어진다</span>'
+      : '<span style="color:var(--danger)">검이 약하다 — 흔들릴 수 있다</span>';
+    const typeNote = t.desc
+      ? '<span style="color:var(--accent);font-size:11px">' + t.desc + '</span><br>'
+      : '';
+    challengeStakes.innerHTML =
+      typeNote +
+      '베면 조각 +' + challenge.reward + '<br>' +
+      verdict + '<br>' +
+      '<span style="opacity:0.6">도망 — 조각 ' + FLEE_COST + ' 잃음</span>';
+    shadowForm.classList.remove('cleaved');
+    slashLine.classList.remove('active');
+    challengeSword.classList.remove('strike');
+    challengeEl.classList.add('active');
+    swordWrap.style.opacity = 0;
+    levelBadge.style.opacity = 0;
+  }
+
+  function endChallenge() {
+    challengeEl.classList.remove('active');
+    swordWrap.style.opacity = 1;
+    levelBadge.style.opacity = 1;
+    challenge = null;
+  }
+
+  function slay() {
+    if (!challenge) return;
+    const c = challenge;
+    challenge = null;
+    if (state.level >= c.strength) {
+      // 逃影: 베기 시 회피 확률
+      if (c.type.slayEvade && Math.random() < c.type.slayEvade) {
+        bumpStat('evaded');
+        log(c.type.name + ' 도망쳤다', 'fail');
+        challengeEl.classList.remove('active');
+        swordWrap.style.opacity = 1;
+        levelBadge.style.opacity = 1;
+        setTimeout(() => { save(); render(); }, 300);
+        return;
+      }
+      // 베어냄
+      SFX.slash();
+      slashLine.classList.add('active');
+      setTimeout(() => shadowForm.classList.add('cleaved'), 120);
+      challengeSword.classList.add('strike');
+      state.shards += c.reward;
+      state.totalSlain++;
+      state.currentSword.slainCount++;
+      addSoul(6); // 베기 성공 +6
+      // v34 一閃 결과 페이드 (의식)
+      inscribeQueue.push({ key: '斬', label: c.type.name + ' · 조각 +' + c.reward });
+      if (!inscribeRunning) runInscribeQueue();
+      // 통계: type별 격파 수
+      if (c.type.key === 'normal') bumpStat('slainNormal');
+      else if (c.type.key === 'flee') bumpStat('slainFlee');
+      else if (c.type.key === 'steel') bumpStat('slainSteel');
+      else if (c.type.key === 'demon') bumpStat('slainDemon');
+      // v30 학파별 통계 + 4학파 모두 베면 斷魔 명문
+      if (c.origin) {
+        state.shadowOriginsSlain[c.origin] = (state.shadowOriginsSlain[c.origin] || 0) + 1;
+        const allFour = ORIGIN_KEYS.every(k => (state.shadowOriginsSlain[k] || 0) > 0);
+        if (allFour) grantInscription('斷魔');
+      }
+      if (c.type.isDemon) {
+        grantInscription('鬼斬');
+        addSoul(10); // 검귀 추가 +10
+      }
+      checkInscriptions();
+      log(c.type.name + ' 베어냄 +' + c.reward + ' 조각', 'success');
+      burstParticles(c.type.isDemon ? '#c0392b' : '#d4af37', c.type.isDemon ? 30 : 18);
+      // 큰 도전엔 보너스 방지권
+      if (c.strength >= 8 && Math.random() < 0.35) {
+        state.protections++;
+        setTimeout(() => log('보호권 +1', 'success'), 200);
+      }
+      setTimeout(() => { endChallenge(); save(); render(); }, 900);
+    } else {
+      // 베기 실패 — 검 흔들림
+      const guardCost = Math.max(1, Math.ceil((c.strength - state.level) / 2));
+      const hasGuard = state.protections >= guardCost;
+      challengeEl.classList.remove('active');
+      swordWrap.style.opacity = 1;
+      levelBadge.style.opacity = 1;
+      swordWrap.classList.add('shake');
+      setTimeout(() => swordWrap.classList.remove('shake'), 400);
+      burstParticles('#c0392b', 14);
+      if (hasGuard) {
+        state.protections -= guardCost;
+        log('보호권 ' + guardCost + ' — 흔들림 막음', 'fail');
+        inscribeQueue.push({ key: '盾', label: '보호권 ' + guardCost + ' — 흔들림 막음' });
+        if (!inscribeRunning) runInscribeQueue();
+      } else {
+        state.level = Math.max(0, state.level - 1);
+        log('베기 실패 — 검 단계 -1', 'destroy');
+        inscribeQueue.push({ key: '失', label: '베기 실패 · 검 단계 -1' });
+        if (!inscribeRunning) runInscribeQueue();
+      }
+      setTimeout(() => { save(); render(); }, 500);
+    }
+  }
+
+  function flee() {
+    if (!challenge) return;
+    const f = getForm();
+    const cost = (f && f.fleeFree) ? 0 : FLEE_COST;
+    if (state.shards < cost) {
+      log('조각 부족 — 물러날 수 없다', 'destroy');
+      return;
+    }
+    state.shards -= cost;
+    bumpStat('fled');
+    log(cost ? ('도망 (조각 -' + cost + ')') : '바람처럼 도망', 'fail');
+    endChallenge();
+    save();
+    render();
+  }
+
+  $('btn-slay').addEventListener('click', slay);
+  $('btn-flee').addEventListener('click', flee);
+
+  // === 魂 — 검의 후천적 의식 (게이지 0~100) ===
+  const SOUL_MAX = 100;
+  const SOUL_AWAKEN = 34;  // 覺 진입
+  const SOUL_TRUE = 67;    // 本 진입
+
+  function getSoulStage() {
+    if (!state.hasSword) return 'none';
+    const s = state.currentSword.soul || 0;
+    if (s >= SOUL_TRUE) return 'true';   // 本
+    if (s >= SOUL_AWAKEN) return 'wake'; // 覺
+    return 'plain';
+  }
+  function soulEffects() {
+    const stage = getSoulStage();
+    if (stage === 'true') return { successBonus: 0.04, rewardMul: 1.15 };
+    if (stage === 'wake') return { successBonus: 0.02, rewardMul: 1.0 };
+    return { successBonus: 0, rewardMul: 1.0 };
+  }
+  function addSoul(amount) {
+    if (!state.hasSword) return;
+    const before = state.currentSword.soul || 0;
+    const after = Math.min(SOUL_MAX, before + amount);
+    state.currentSword.soul = after;
+    // 단계 진입 시 명문 자동 부여
+    if (before < SOUL_AWAKEN && after >= SOUL_AWAKEN) grantInscription('覺');
+    if (before < SOUL_TRUE && after >= SOUL_TRUE) grantInscription('本');
+  }
+
+  // === 形 — 검의 천성 (첫 강화 시 결정) ===
+  const SWORD_FORMS = {
+    '直': { name: '直', label: '곧은 검 — 강화 성공 +3%', successBonus: 0.03 },
+    '曲': { name: '曲', label: '굽은 검 — 파괴 확률 -3%', destroyReduce: 0.03 },
+    '重': { name: '重', label: '무거운 검 — 강화 비용 +10%, 그림자 보상 +20%', costMul: 1.10, rewardMul: 1.20 },
+    '速': { name: '速', label: '빠른 검 — 도전 도망 무료', fleeFree: true },
+  };
+  const FORM_KEYS = Object.keys(SWORD_FORMS);
+
+  function decideForm() {
+    if (!state.hasSword) return;
+    if (state.currentSword.form) return;
+    state.currentSword.form = FORM_KEYS[Math.floor(Math.random() * FORM_KEYS.length)];
+    const def = SWORD_FORMS[state.currentSword.form];
+    announceInscription(def.name, def.label);
+    SFX.formDecide();
+  }
+
+  function getForm() {
+    if (!state.currentSword || !state.currentSword.form) return null;
+    return SWORD_FORMS[state.currentSword.form] || null;
+  }
+
+  // v23 정점 명문을 검 SVG에 새김 + v39 정점 검 발산
+  function applyInscriptionVisual() {
+    const ins = (state.hasSword && state.currentSword.inscriptions) || [];
+    const wayEl = $('mark-way');
+    const demonEl = $('mark-demon');
+    const honestEl = $('mark-honest');
+    if (wayEl) wayEl.setAttribute('opacity', ins.includes('道') ? '0.85' : '0');
+    if (demonEl) demonEl.setAttribute('opacity', ins.includes('鬼斬') ? '0.9' : '0');
+    if (honestEl) honestEl.setAttribute('opacity', ins.includes('本') ? '0.7' : '0');
+    // 本 또는 道 명문 보유 시 검 전체에 호흡 발산
+    if (swordWrap) {
+      const isTranscendent = ins.includes('本') || ins.includes('道');
+      swordWrap.classList.toggle('transcendent', isTranscendent);
+    }
+  }
+
+  // === 단계별 검 디자인 — 5 Tier 퀀텀 변경 (gradient + filter 사용) ===
+  function getTier(lv) {
+    if (lv >= 14) return 5;
+    if (lv >= 10) return 4;
+    if (lv >= 6) return 3;
+    if (lv >= 3) return 2;
+    return 1;
+  }
+
+  // 칼날 path — form별 곡선 + tier별 길이/두께
+  function bladePath(tier, form) {
+    // tier별 칼끝/가드 위치 + 두께
+    let tipY, gardY, halfW;
+    if (tier === 1) { tipY = 28; gardY = 140; halfW = 4; }
+    else if (tier === 2) { tipY = 14; gardY = 142; halfW = 5; }
+    else if (tier === 3) { tipY = 8; gardY = 144; halfW = 6; }
+    else if (tier === 4) { tipY = 4; gardY = 144; halfW = 7; }
+    else { tipY = 2; gardY = 144; halfW = 8; }
+    const midY = Math.floor((tipY + gardY) / 2);
+    const L = 50 - halfW, R = 50 + halfW;
+    const tipDip = gardY + 8; // 칼날 바닥점
+    // 형별 path
+    if (form === '曲') {
+      // 굽은 검 — Bézier 곡선
+      return 'M 50 ' + tipY +
+        ' Q ' + (R + 3) + ' ' + midY + ' ' + (R - 1) + ' ' + gardY +
+        ' L 50 ' + tipDip +
+        ' L ' + (L + 1) + ' ' + gardY +
+        ' Q ' + (L - 3) + ' ' + midY + ' 50 ' + tipY + ' Z';
+    }
+    if (form === '重') {
+      // 무거운 검 — 평행 곡선
+      return 'M 50 ' + tipY +
+        ' Q ' + (R + 1) + ' ' + (tipY + 8) + ' ' + (R + 3) + ' ' + gardY +
+        ' L 50 ' + tipDip +
+        ' L ' + (L - 3) + ' ' + gardY +
+        ' Q ' + (L - 1) + ' ' + (tipY + 8) + ' 50 ' + tipY + ' Z';
+    }
+    if (form === '速') {
+      // 가는 검 — 잎 모양
+      return 'M 50 ' + tipY +
+        ' Q ' + (50 + 1.5) + ' ' + midY + ' ' + (50 + 2) + ' ' + gardY +
+        ' L 50 ' + tipDip +
+        ' L ' + (50 - 2) + ' ' + gardY +
+        ' Q ' + (50 - 1.5) + ' ' + midY + ' 50 ' + tipY + ' Z';
+    }
+    // 直 또는 기본 — 부드러운 잎 모양
+    return 'M 50 ' + tipY +
+      ' Q ' + (R + 0.5) + ' ' + midY + ' ' + R + ' ' + gardY +
+      ' L 50 ' + tipDip +
+      ' L ' + L + ' ' + gardY +
+      ' Q ' + (L - 0.5) + ' ' + midY + ' 50 ' + tipY + ' Z';
+  }
+
+  // 칼날 fuller (피흘림 홈) — 칼날 중앙 수직선
+  function bladeFuller(tier) {
+    if (tier === 1) return '<line x1="50" y1="32" x2="50" y2="135" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>';
+    if (tier === 2) return '<line x1="50" y1="18" x2="50" y2="138" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>';
+    if (tier === 3) return '<line x1="50" y1="12" x2="50" y2="140" stroke="rgba(212,175,55,0.4)" stroke-width="1"/>';
+    if (tier === 4) return '<line x1="50" y1="8" x2="50" y2="140" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>';
+    return '<line x1="50" y1="6" x2="50" y2="140" stroke="rgba(255,255,255,0.65)" stroke-width="1.4"/>';
+  }
+
+  // tier별 가드 SVG (정교한 형태 + gradient)
+  function buildGuard(tier) {
+    if (tier === 1) {
+      // 단순 십자 가드 — 미세 라운드 끝
+      return '<rect x="38" y="139" width="24" height="5" rx="1" fill="url(#guard-grad-low)" stroke="#3d2c18" stroke-width="0.5"/>' +
+        '<circle cx="38" cy="141.5" r="1" fill="#5a3820"/>' +
+        '<circle cx="62" cy="141.5" r="1" fill="#5a3820"/>';
+    }
+    if (tier === 2) {
+      // 우아한 곡선 가드 — D자형 + 보석
+      return '<path d="M 28 144 Q 32 138 38 141 Q 50 137 62 141 Q 68 138 72 144 Q 68 147 62 145 Q 50 148 38 145 Q 32 147 28 144 Z" fill="url(#guard-grad-low)" stroke="#5a3820" stroke-width="0.6"/>' +
+        '<circle cx="50" cy="142.5" r="2.2" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.3"/>' +
+        '<circle cx="49" cy="141.5" r="0.8" fill="#ffd0c0" opacity="0.8"/>';
+    }
+    if (tier === 3) {
+      // 룬 가드 — 큰 십자 + 양쪽 곡선 + 가운데 큰 보석
+      return '<path d="M 22 144 Q 28 134 36 140 Q 44 136 50 140 Q 56 136 64 140 Q 72 134 78 144 L 78 150 Q 72 152 64 149 Q 56 152 50 148 Q 44 152 36 149 Q 28 152 22 150 Z" fill="url(#guard-grad-mid)" stroke="#7a5a20" stroke-width="0.7"/>' +
+        // 가운데 큰 보석
+        '<rect x="45" y="140" width="10" height="10" rx="2" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.4"/>' +
+        '<circle cx="48" cy="143" r="1.2" fill="#ffd0c0" opacity="0.8"/>' +
+        // 양쪽 작은 황금 장식
+        '<circle cx="28" cy="144" r="1.5" fill="#fff5c0" stroke="#d4af37" stroke-width="0.3"/>' +
+        '<circle cx="72" cy="144" r="1.5" fill="#fff5c0" stroke="#d4af37" stroke-width="0.3"/>' +
+        // 깃털 디테일
+        '<line x1="34" y1="139" x2="34" y2="143" stroke="#d4af37" stroke-width="0.5"/>' +
+        '<line x1="66" y1="139" x2="66" y2="143" stroke="#d4af37" stroke-width="0.5"/>';
+    }
+    if (tier === 4) {
+      // 보석 가드 — 천사 날개 (4 곡선) + 다보석
+      return '<path d="M 16 144 Q 22 130 32 138 Q 40 132 46 140 L 50 136 L 54 140 Q 60 132 68 138 Q 78 130 84 144 L 84 152 Q 78 154 68 150 Q 60 154 54 150 L 50 156 L 46 150 Q 40 154 32 150 Q 22 154 16 152 Z" fill="url(#guard-grad-high)" stroke="#9a7c20" stroke-width="0.7" filter="url(#strong-glow)"/>' +
+        // 가운데 큰 다이아 보석
+        '<polygon points="50,136 56,144 50,154 44,144" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.5"/>' +
+        '<polygon points="50,138 53,144 50,150 47,144" fill="#ff9080" opacity="0.6"/>' +
+        // 양쪽 큰 녹색 보석
+        '<circle cx="22" cy="143" r="2.2" fill="url(#gem-green)" stroke="#0a3018" stroke-width="0.4"/>' +
+        '<circle cx="78" cy="143" r="2.2" fill="url(#gem-green)" stroke="#0a3018" stroke-width="0.4"/>' +
+        // 중간 작은 흰 보석
+        '<circle cx="36" cy="138" r="1.4" fill="url(#gem-white)"/>' +
+        '<circle cx="64" cy="138" r="1.4" fill="url(#gem-white)"/>' +
+        // 가드 윤곽 빛
+        '<path d="M 16 144 Q 22 130 32 138 Q 40 132 46 140 L 50 136 L 54 140 Q 60 132 68 138 Q 78 130 84 144" fill="none" stroke="#fff5c0" stroke-width="0.4" opacity="0.6"/>';
+    }
+    // tier 5 신검 — 거대한 천사 날개 + 깃털 디테일
+    return '<path d="M 8 146 Q 16 124 28 134 Q 36 126 42 138 L 50 132 L 58 138 Q 64 126 72 134 Q 84 124 92 146 L 92 156 Q 84 158 72 152 Q 64 158 58 154 L 50 160 L 42 154 Q 36 158 28 152 Q 16 158 8 156 Z" fill="url(#guard-grad-high)" stroke="#c8a830" stroke-width="0.8" filter="url(#divine-glow)"/>' +
+      // 윤곽 빛
+      '<path d="M 8 146 Q 16 124 28 134 Q 36 126 42 138 L 50 132 L 58 138 Q 64 126 72 134 Q 84 124 92 146" fill="none" stroke="#fff5c0" stroke-width="0.5" opacity="0.9"/>' +
+      // 깃털 라인 (양쪽 4개씩)
+      '<line x1="18" y1="138" x2="22" y2="146" stroke="#fff5c0" stroke-width="0.4" opacity="0.7"/>' +
+      '<line x1="24" y1="135" x2="28" y2="146" stroke="#fff5c0" stroke-width="0.4" opacity="0.7"/>' +
+      '<line x1="32" y1="134" x2="34" y2="146" stroke="#fff5c0" stroke-width="0.4" opacity="0.7"/>' +
+      '<line x1="38" y1="134" x2="40" y2="146" stroke="#fff5c0" stroke-width="0.4" opacity="0.7"/>' +
+      '<line x1="82" y1="138" x2="78" y2="146" stroke="#fff5c0" stroke-width="0.4" opacity="0.7"/>' +
+      '<line x1="76" y1="135" x2="72" y2="146" stroke="#fff5c0" stroke-width="0.4" opacity="0.7"/>' +
+      '<line x1="68" y1="134" x2="66" y2="146" stroke="#fff5c0" stroke-width="0.4" opacity="0.7"/>' +
+      '<line x1="62" y1="134" x2="60" y2="146" stroke="#fff5c0" stroke-width="0.4" opacity="0.7"/>' +
+      // 가운데 큰 다이아
+      '<polygon points="50,130 58,144 50,162 42,144" fill="url(#gem-purple)" stroke="#2a0838" stroke-width="0.5" filter="url(#strong-glow)"/>' +
+      '<polygon points="50,134 54,144 50,158 46,144" fill="#e0a0ff" opacity="0.6"/>' +
+      // 다이아 가운데 빛
+      '<circle cx="48" cy="142" r="1.5" fill="#ffffff" opacity="0.85"/>' +
+      // 양쪽 큰 보석
+      '<circle cx="14" cy="146" r="2.5" fill="url(#gem-blue)" stroke="#0a1838" stroke-width="0.5"/>' +
+      '<circle cx="86" cy="146" r="2.5" fill="url(#gem-blue)" stroke="#0a1838" stroke-width="0.5"/>' +
+      '<circle cx="30" cy="136" r="1.6" fill="url(#gem-white)"/>' +
+      '<circle cx="70" cy="136" r="1.6" fill="url(#gem-white)"/>' +
+      '<circle cx="44" cy="134" r="1.2" fill="url(#gem-red)"/>' +
+      '<circle cx="56" cy="134" r="1.2" fill="url(#gem-red)"/>';
+  }
+
+  // tier별 손잡이 (감기 패턴 + 보석)
+  function buildGrip(tier) {
+    if (tier === 1) {
+      // 단순 짧은 가죽
+      return '<rect x="46" y="144" width="8" height="26" rx="1.5" fill="url(#grip-leather)" stroke="#1a0f08" stroke-width="0.5"/>' +
+        '<line x1="46" y1="149" x2="54" y2="149" stroke="#1a0f08" stroke-width="0.5"/>' +
+        '<line x1="46" y1="155" x2="54" y2="155" stroke="#1a0f08" stroke-width="0.5"/>' +
+        '<line x1="46" y1="161" x2="54" y2="161" stroke="#1a0f08" stroke-width="0.5"/>' +
+        '<line x1="46" y1="167" x2="54" y2="167" stroke="#1a0f08" stroke-width="0.5"/>';
+    }
+    if (tier === 2) {
+      // 정교한 가죽 감기 (다이아 패턴)
+      return '<rect x="45.5" y="148" width="9" height="34" rx="1.5" fill="url(#grip-leather)" stroke="#1a0f08" stroke-width="0.5"/>' +
+        '<line x1="45.5" y1="153" x2="54.5" y2="156" stroke="#1a0f08" stroke-width="0.4"/>' +
+        '<line x1="54.5" y1="153" x2="45.5" y2="156" stroke="#1a0f08" stroke-width="0.4"/>' +
+        '<line x1="45.5" y1="159" x2="54.5" y2="162" stroke="#1a0f08" stroke-width="0.4"/>' +
+        '<line x1="54.5" y1="159" x2="45.5" y2="162" stroke="#1a0f08" stroke-width="0.4"/>' +
+        '<line x1="45.5" y1="165" x2="54.5" y2="168" stroke="#1a0f08" stroke-width="0.4"/>' +
+        '<line x1="54.5" y1="165" x2="45.5" y2="168" stroke="#1a0f08" stroke-width="0.4"/>' +
+        '<line x1="45.5" y1="171" x2="54.5" y2="174" stroke="#1a0f08" stroke-width="0.4"/>' +
+        '<line x1="54.5" y1="171" x2="45.5" y2="174" stroke="#1a0f08" stroke-width="0.4"/>' +
+        '<line x1="45.5" y1="177" x2="54.5" y2="180" stroke="#1a0f08" stroke-width="0.4"/>' +
+        '<line x1="54.5" y1="177" x2="45.5" y2="180" stroke="#1a0f08" stroke-width="0.4"/>';
+    }
+    if (tier === 3) {
+      // 황금 링 가죽
+      return '<rect x="45" y="150" width="10" height="34" rx="2" fill="url(#grip-leather)" stroke="#1a0f08" stroke-width="0.5"/>' +
+        '<rect x="44.5" y="154" width="11" height="2.5" fill="url(#grip-gold)"/>' +
+        '<rect x="44.5" y="161" width="11" height="2.5" fill="url(#grip-gold)"/>' +
+        '<rect x="44.5" y="168" width="11" height="2.5" fill="url(#grip-gold)"/>' +
+        '<rect x="44.5" y="175" width="11" height="2.5" fill="url(#grip-gold)"/>' +
+        '<rect x="44.5" y="182" width="11" height="1.5" fill="url(#grip-gold)"/>';
+    }
+    if (tier === 4) {
+      // 보석 박힌 황금 손잡이
+      return '<rect x="44" y="150" width="12" height="34" rx="2" fill="url(#grip-leather)" stroke="#1a0f08" stroke-width="0.5"/>' +
+        '<rect x="43.5" y="154" width="13" height="2" fill="url(#grip-gold)"/>' +
+        '<rect x="43.5" y="178" width="13" height="2" fill="url(#grip-gold)"/>' +
+        '<polygon points="50,158 56,167 50,176 44,167" fill="url(#gem-white)" stroke="#a08030" stroke-width="0.4"/>' +
+        '<polygon points="50,161 53,167 50,173 47,167" fill="#ffffff" opacity="0.6"/>';
+    }
+    // tier 5 신검 — 황금 감싸기 + 큰 보석
+    return '<rect x="43" y="150" width="14" height="34" rx="2" fill="url(#grip-gold)" stroke="#7a5a20" stroke-width="0.5"/>' +
+      // 가죽 띠 (가운데 가로 두 줄)
+      '<rect x="42.5" y="153" width="15" height="2" fill="url(#grip-leather)"/>' +
+      '<rect x="42.5" y="179" width="15" height="2" fill="url(#grip-leather)"/>' +
+      // 가운데 큰 보석
+      '<polygon points="50,158 58,168 50,178 42,168" fill="url(#gem-purple)" stroke="#2a0838" stroke-width="0.5"/>' +
+      '<polygon points="50,162 54,168 50,174 46,168" fill="#e0a0ff" opacity="0.7"/>' +
+      '<circle cx="48" cy="166" r="1" fill="#ffffff" opacity="0.85"/>';
+  }
+
+  // tier별 폼멜 (단순 원 → 별 + 빛)
+  function buildPommel(tier) {
+    if (tier === 1) {
+      return '<circle cx="50" cy="172" r="4" fill="url(#guard-grad-low)" stroke="#3d2c18" stroke-width="0.5"/>' +
+        '<circle cx="48.5" cy="170.5" r="1" fill="#a08050" opacity="0.6"/>';
+    }
+    if (tier === 2) {
+      return '<circle cx="50" cy="184" r="5" fill="url(#guard-grad-low)" stroke="#3d2c18" stroke-width="0.5"/>' +
+        '<circle cx="50" cy="184" r="2.5" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.3"/>' +
+        '<circle cx="49" cy="183" r="0.8" fill="#ffd0c0" opacity="0.8"/>';
+    }
+    if (tier === 3) {
+      return '<circle cx="50" cy="186" r="6" fill="url(#guard-grad-mid)" stroke="#7a5a20" stroke-width="0.5"/>' +
+        '<circle cx="50" cy="186" r="3.5" fill="#fff5c0" stroke="#d4af37" stroke-width="0.3"/>' +
+        '<circle cx="50" cy="186" r="2" fill="url(#gem-red)"/>' +
+        '<circle cx="49" cy="185" r="0.6" fill="#ffd0c0" opacity="0.8"/>';
+    }
+    if (tier === 4) {
+      // 다이아 폼멜
+      return '<polygon points="50,178 58,186 50,196 42,186" fill="url(#guard-grad-high)" stroke="#9a7c20" stroke-width="0.6"/>' +
+        '<polygon points="50,181 55,186 50,193 45,186" fill="#fff5c0" opacity="0.7"/>' +
+        '<circle cx="50" cy="186" r="2.5" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.4"/>' +
+        '<circle cx="49" cy="185" r="0.8" fill="#ffd0c0" opacity="0.85"/>';
+    }
+    // tier 5 신검 폼멜 — 8각별 + 발광
+    return '<polygon points="50,176 53,184 61,184 55,189 58,197 50,193 42,197 45,189 39,184 47,184" fill="url(#guard-grad-high)" stroke="#c8a830" stroke-width="0.6" filter="url(#strong-glow)"/>' +
+      '<polygon points="50,178 52.5,184 58,184.5 53.5,188 55.5,194 50,191 44.5,194 46.5,188 42,184.5 47.5,184" fill="#fff5c0" opacity="0.85"/>' +
+      '<circle cx="50" cy="187" r="2.5" fill="url(#gem-purple)" stroke="#2a0838" stroke-width="0.4"/>' +
+      '<circle cx="49" cy="186" r="1" fill="#ffffff" opacity="0.9"/>';
+  }
+
+  // tier별 칼날 디테일 (룬, 보석, 별)
+  function buildBladeDecor(tier) {
+    if (tier === 1) return '';
+    if (tier === 2) {
+      // fuller (이미 별도) + 작은 칼끝 마름모
+      return '<polygon points="50,20 51.5,24 50,28 48.5,24" fill="#fff" opacity="0.85"/>';
+    }
+    if (tier === 3) {
+      // 룬 3개 + 칼끝 룬
+      return '<polygon points="50,16 52,20 50,24 48,20" fill="url(#gem-white)" stroke="#a08030" stroke-width="0.3"/>' +
+        '<polygon points="50,52 53,57 50,62 47,57" fill="#d4af37" filter="url(#strong-glow)"/>' +
+        '<polygon points="50,82 53,87 50,92 47,87" fill="#d4af37" filter="url(#strong-glow)"/>' +
+        '<polygon points="50,112 53,117 50,122 47,117" fill="#d4af37" filter="url(#strong-glow)"/>';
+    }
+    if (tier === 4) {
+      // 다보석 + 칼끝 별 시작
+      return '<polygon points="50,9 52,13 56,13 53,16 54,20 50,17 46,20 47,16 44,13 48,13" fill="#fff5c0" stroke="#d4af37" stroke-width="0.3"/>' +
+        // 큰 가운데 보석 (다이아)
+        '<polygon points="50,38 58,52 50,66 42,52" fill="url(#gem-white)" stroke="#a08030" stroke-width="0.5" filter="url(#strong-glow)"/>' +
+        '<polygon points="50,42 54,52 50,62 46,52" fill="#ffffff" opacity="0.6"/>' +
+        // 위 작은 보석
+        '<polygon points="50,22 53,26 50,30 47,26" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.3"/>' +
+        // 아래 보석들
+        '<polygon points="50,82 53,86 50,90 47,86" fill="url(#gem-green)"/>' +
+        '<polygon points="50,102 53,106 50,110 47,106" fill="url(#gem-blue)"/>' +
+        '<polygon points="50,122 53,126 50,130 47,126" fill="#d4af37"/>';
+    }
+    // tier 5 신검 — 모든 화려 요소 누적
+    return '' +
+      // 큰 칼끝 별
+      '<polygon points="50,2 53,8 60,8 54.5,13 57,20 50,16 43,20 45.5,13 40,8 47,8" fill="#fff5c0" stroke="#d4af37" stroke-width="0.5" filter="url(#divine-glow)"/>' +
+      '<polygon points="50,5 52,9 56,9 53,12 54,16 50,14 46,16 47,12 44,9 48,9" fill="#ffffff" opacity="0.9"/>' +
+      // 큰 가운데 보석 (이중 다이아)
+      '<polygon points="50,30 62,50 50,70 38,50" fill="url(#gem-purple)" stroke="#2a0838" stroke-width="0.6" filter="url(#strong-glow)"/>' +
+      '<polygon points="50,34 58,50 50,66 42,50" fill="#e0a0ff" opacity="0.6"/>' +
+      '<polygon points="50,42 53,50 50,58 47,50" fill="#ffffff" opacity="0.8"/>' +
+      // 위 보석
+      '<polygon points="50,22 54,27 50,32 46,27" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.4"/>' +
+      '<polygon points="50,24 52,27 50,30 48,27" fill="#ff9080" opacity="0.7"/>' +
+      // 칼날 룬 (3개)
+      '<polygon points="50,78 53,83 50,88 47,83" fill="#d4af37" filter="url(#strong-glow)"/>' +
+      '<polygon points="50,96 53,101 50,106 47,101" fill="url(#gem-green)" stroke="#0a3018" stroke-width="0.3"/>' +
+      '<polygon points="50,114 53,119 50,124 47,119" fill="url(#gem-blue)" stroke="#0a1838" stroke-width="0.3"/>' +
+      // 가운데 보석 양쪽 빛 광선
+      '<line x1="38" y1="50" x2="32" y2="50" stroke="#fff5c0" stroke-width="0.8" opacity="0.5"/>' +
+      '<line x1="62" y1="50" x2="68" y2="50" stroke="#fff5c0" stroke-width="0.8" opacity="0.5"/>';
+  }
+
+  // 검 본체 통째 빌드
+  function buildSwordBody(lv, form) {
+    const tier = getTier(lv);
+    const bladeFill = 'url(#blade-grad-' + tier + ')';
+    let svg = '';
+    // 칼날 path + fuller + decor
+    svg += '<path id="blade" d="' + bladePath(tier, form) + '" fill="' + bladeFill + '" stroke="#3a3a3a" stroke-width="0.5"' + (tier >= 4 ? ' filter="url(#strong-glow)"' : '') + '/>';
+    svg += bladeFuller(tier);
+    svg += buildBladeDecor(tier);
+    // 가드 / 손잡이 / 폼멜
+    svg += buildGuard(tier);
+    svg += buildGrip(tier);
+    svg += buildPommel(tier);
+    return svg;
+  }
+
+  // 단계별 검 시각 통합 — 본체 재생성
+  function applyLevelVisual() {
+    if (!state.hasSword) return;
+    const lv = Math.min(MAX_LEVEL, Math.max(0, state.level));
+    const form = state.currentSword.form || null;
+    const body = $('sword-body');
+    if (body) body.innerHTML = buildSwordBody(lv, form);
+    // 칼날 광채 (glow class)
+    swordSvg.setAttribute('class', '');
+    if (lv >= MAX_LEVEL) swordSvg.setAttribute('class', 'glow-divine');
+    else if (lv >= 12) swordSvg.setAttribute('class', 'glow-high');
+    else if (lv >= 8) swordSvg.setAttribute('class', 'glow-mid');
+    else if (lv >= 4) swordSvg.setAttribute('class', 'glow-low');
+    else swordSvg.setAttribute('class', 'glow-0');
+  }
+
+  // applyFormVisual — buildSwordBody가 form+tier 통합 처리 (no-op)
+  function applyFormVisual() { /* 이제 buildSwordBody 내부에서 처리됨 */ }
+
+  // === 一生詩 — 道 검 봉인 시 일생을 4행 시구로 응축 ===
+  function generateVerse(form, inscriptions, level, slainCount, reward, soul) {
+    const formLine = ({
+      '直': '강직의 검 한 자루',
+      '曲': '유연의 검 한 자루',
+      '重': '무거운 검 한 자루',
+      '速': '바람의 검 한 자루',
+    })[form] || '이름 없는 검 한 자루';
+
+    let insLine;
+    if (inscriptions.includes('鬼斬') && inscriptions.includes('本')) {
+      insLine = '본질을 깨우고 검귀의 피를 받아';
+    } else if (inscriptions.includes('鬼斬')) {
+      insLine = '검귀의 그림자를 베고';
+    } else if (inscriptions.includes('本')) {
+      insLine = '본질에 이르러';
+    } else if (inscriptions.includes('剛體')) {
+      insLine = '강철의 몸으로 단련되어';
+    } else if (inscriptions.includes('覺')) {
+      insLine = '깨어나 빛을 보았으며';
+    } else if (inscriptions.includes('百鍊')) {
+      insLine = '백 번 두들기고';
+    } else {
+      insLine = '조용히 단련되어';
+    }
+
+    let slainLine;
+    if (slainCount === 0) slainLine = '그림자 한 마리도 만나지 않은 채';
+    else if (slainCount === 1) slainLine = '단 한 마리의 그림자를 베고';
+    else if (slainCount < 5) slainLine = slainCount + '의 그림자를 베어내며';
+    else if (slainCount < 10) slainLine = '여러 그림자를 거듭 갈라놓고';
+    else slainLine = '수많은 그림자를 침묵에 잠재우며';
+
+    const closingLine = '+' + level + ' 의 길로 마무리되다';
+
+    return [formLine, insLine, slainLine, closingLine];
+  }
+
+  // === 修練 — 자동 강화 (안전 단계까지) ===
+  let autoEnhanceEnabled = false;
+  let autoEnhanceTimer = null;
+  const AUTO_INTERVAL = 800;
+
+  function stopAutoEnhance(reason) {
+    autoEnhanceEnabled = false;
+    if (autoEnhanceTimer) { clearTimeout(autoEnhanceTimer); autoEnhanceTimer = null; }
+    const cb = $('auto-check');
+    if (cb) cb.checked = false;
+    if (reason) log(reason, 'fail');
+  }
+  function startAutoEnhance() {
+    autoEnhanceEnabled = true;
+    scheduleAutoStep();
+  }
+  function scheduleAutoStep() {
+    if (autoEnhanceTimer) clearTimeout(autoEnhanceTimer);
+    autoEnhanceTimer = setTimeout(autoStep, AUTO_INTERVAL);
+  }
+  function autoStep() {
+    if (!autoEnhanceEnabled) return;
+    // 자동 중지 조건들
+    if (!state.hasSword) { stopAutoEnhance('修練 중지 — 검 없음'); return; }
+    if (challenge || rescueWindow) { scheduleAutoStep(); return; } // 일시 대기
+    const lv = state.level;
+    if (lv >= MAX_LEVEL) { stopAutoEnhance('修練 중지 — 도(道) 도달'); return; }
+    const t = TABLE[lv];
+    // 핵심 안전 조건: 파괴 위험이 있는 단계는 자동 금지
+    if (t.destroy > 0) { stopAutoEnhance('修練 중지 — 위험 단계'); return; }
+    // 비용 부족 시 자동 중지
+    const f = getForm();
+    const formCostMul = (f && f.costMul) || 1;
+    const actualCost = Math.ceil(t.cost * formCostMul * getSeason().costMul * getAgeEffect().costMul);
+    if (state.shards < actualCost) { stopAutoEnhance('修練 중지 — 조각 부족'); return; }
+    // 강화 실행
+    enhance();
+    scheduleAutoStep();
+  }
+  // 이벤트는 init 부분에서 연결 (DOM ready 후)
+
+  // === 呼吸 — 강화 사이 대기 시간 보너스 ===
+  let lastEnhanceTime = 0; // 휘발성, 새로고침 시 0으로 (가장 큰 보너스 가능)
+
+  function breathBonus() {
+    if (!lastEnhanceTime) return 0.10; // 새로고침 직후 / 첫 강화 = 최대
+    const elapsed = (Date.now() - lastEnhanceTime) / 1000;
+    if (elapsed >= 60) return 0.10;
+    if (elapsed >= 20) return 0.05;
+    if (elapsed >= 8) return 0.02;
+    return 0;
+  }
+  function breathLabel() {
+    const b = breathBonus();
+    if (b >= 0.10) return '깊은 호흡 (+10%)';
+    if (b >= 0.05) return '호흡 (+5%)';
+    if (b >= 0.02) return '얕은 호흡 (+2%)';
+    return '';
+  }
+
+  // === 流派 — 같은 형 3자루 봉인 시 등극 ===
+  const SCHOOL_THRESHOLD = 3;
+  const SCHOOLS = {
+    '直': { name: '直流 (곧은 검 학파)', desc: '같은 형 3자루 판매 — 강화 성공 +1%',     schoolBonusSuccess: 0.01 },
+    '曲': { name: '曲流 (굽은 검 학파)', desc: '같은 형 3자루 판매 — 파괴 확률 -1%',     schoolBonusDestroyReduce: 0.01 },
+    '重': { name: '重流 (무거운 검 학파)', desc: '같은 형 3자루 판매 — 판매가 +10%',     schoolBonusSealMul: 1.10 },
+    '速': { name: '速流 (빠른 검 학파)', desc: '같은 형 3자루 판매 — 줍기 시간 +1초',   schoolBonusRescueSec: 1.0 },
+  };
+
+  function getFormCounts() {
+    const counts = {};
+    for (const s of state.sealedSwords) {
+      if (s.form) counts[s.form] = (counts[s.form] || 0) + 1;
+    }
+    return counts;
+  }
+  function getActiveSchools() {
+    const counts = getFormCounts();
+    return Object.keys(SCHOOLS).filter(f => (counts[f] || 0) >= SCHOOL_THRESHOLD);
+  }
+  function schoolSuccessBonus() {
+    return getActiveSchools().reduce((a, f) => a + (SCHOOLS[f].schoolBonusSuccess || 0), 0);
+  }
+  function schoolDestroyReduce() {
+    return getActiveSchools().reduce((a, f) => a + (SCHOOLS[f].schoolBonusDestroyReduce || 0), 0);
+  }
+  function schoolSealMul() {
+    return getActiveSchools().reduce((a, f) => a * (SCHOOLS[f].schoolBonusSealMul || 1), 1);
+  }
+  function schoolRescueSec() {
+    return getActiveSchools().reduce((a, f) => a + (SCHOOLS[f].schoolBonusRescueSec || 0), 0);
+  }
+
+  // === 銘名 — 봉인 시 검의 비명 ===
+  // 우선순위: 道 > 鬼斬 > 本 > 剛體 > 覺 > 강화도 숫자
+  // 형이 있으면 prefix, 없으면 無
+  const NAME_SUFFIX = [
+    { key: '道',   word: '道' },
+    { key: '鬼斬', word: '魔' },
+    { key: '本',   word: '本' },
+    { key: '剛體', word: '剛' },
+    { key: '覺',   word: '覺' },
+    { key: '古',   word: '古' },
+    { key: '久',   word: '久' },
+  ];
+  const NUM_KANJI = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五'];
+
+  function makeSwordName(form, inscriptions, level) {
+    const prefix = form || '無';
+    for (const def of NAME_SUFFIX) {
+      if (inscriptions.includes(def.key)) return prefix + def.word;
+    }
+    // 명문이 약하면 강화도 한자
+    return prefix + (NUM_KANJI[level] || ('+' + level));
+  }
+
+  // === 銘 — 검의 명문 (일대기) ===
+  // 각 명문: trigger(검 상태 + state) → 조건, label/sub → 표시 텍스트
+  const INSCRIPTIONS = [
+    { key: '初刃', label: '첫 그림자를 베어냈다',          verse: '검이 처음으로 어둠을 갈랐다',     trigger: () => state.currentSword.slainCount >= 1 },
+    { key: '百鍊', label: '10번 강화한 검',                verse: '많은 두들김이 검을 키웠다',         trigger: () => state.currentSword.enhanceAttempts >= 10 },
+    { key: '剛體', label: '+10 단계에 도달',               verse: '검의 몸이 단단해졌다',              trigger: () => state.level >= 10 },
+    { key: '回魔', label: '그림자를 5번 베어냈다',         verse: '검이 어둠을 거듭 물리쳤다',         trigger: () => state.currentSword.slainCount >= 5 },
+    { key: '道',   label: '최고 단계 +15 도달',            verse: '검과 사람이 하나의 길이 되었다',     trigger: () => state.level >= MAX_LEVEL },
+    { key: '鬼斬', label: '검귀를 베어냈다',               verse: '검귀의 피가 칼끝에 묻었다',         trigger: () => false },
+    { key: '覺',   label: '검이 깨어났다',                  verse: '검의 의식이 처음으로 열렸다',       trigger: () => false },
+    { key: '本',   label: '본질에 이르렀다',               verse: '검의 본질이 검 안에 머물렀다',       trigger: () => false },
+    { key: '始祖', label: '선조의 흔적이 깃들었다',         verse: '선조의 길이 새 검에 흐른다',         trigger: () => false },
+    { key: '達人', label: '도(道) 5번 달성',                verse: '다섯 길의 흔적이 검에 깃들었다',     trigger: () => false },
+    { key: '聖',   label: '도(道) 10번 달성',               verse: '검은 성인의 무게를 가진다',         trigger: () => false },
+    { key: '斷魔', label: '네 종류 그림자 모두 베어냈다',   verse: '검이 모든 어둠을 알아본다',         trigger: () => false },
+    { key: '久',   label: '50번 강화한 오랜 검',            verse: '검에 세월의 빛이 깃들었다',         trigger: () => state.currentSword.enhanceAttempts >= 50 },
+    { key: '古',   label: '100번 강화한 아주 오랜 검',      verse: '검은 잊혀진 시대를 기억한다',       trigger: () => state.currentSword.enhanceAttempts >= 100 },
+  ];
+
+  function grantInscription(key) {
+    if (!state.hasSword) return;
+    if (state.currentSword.inscriptions.includes(key)) return;
+    const def = INSCRIPTIONS.find(i => i.key === key);
+    if (!def) return;
+    state.currentSword.inscriptions.push(key);
+    announceInscription(key, def.label);
+  }
+
+  function checkInscriptions() {
+    if (!state.hasSword) return;
+    const ins = state.currentSword.inscriptions;
+    for (const def of INSCRIPTIONS) {
+      if (ins.includes(def.key)) continue;
+      if (def.trigger()) {
+        ins.push(def.key);
+        announceInscription(def.key, def.label);
+      }
+    }
+  }
+
+  let inscribeQueue = [];
+  let inscribeRunning = false;
+  function announceInscription(key, label) {
+    inscribeQueue.push({ key, label });
+    if (!inscribeRunning) runInscribeQueue();
+  }
+  function runInscribeQueue() {
+    if (inscribeQueue.length === 0) { inscribeRunning = false; return; }
+    inscribeRunning = true;
+    // 큐가 쌓이면 최신 3개만 유지 — 검 시각과 페이드 동기화
+    if (inscribeQueue.length > 3) {
+      inscribeQueue = inscribeQueue.slice(-3);
+    }
+    const { key, label } = inscribeQueue.shift();
+    inscribeKanji.textContent = key;
+    // label 아래 시구 한 줄 (있으면)
+    const def = INSCRIPTIONS.find(i => i.key === key);
+    const verse = def && def.verse ? def.verse : '';
+    inscribeLabel.innerHTML = label + (verse ? '<div style="margin-top:6px;font-size:11px;color:var(--dim);letter-spacing:3px;opacity:0.8">' + verse + '</div>' : '');
+    inscribeOverlay.classList.remove('active');
+    void inscribeOverlay.offsetWidth;
+    inscribeOverlay.classList.add('active');
+    SFX.inscribe();
+    // 1.2초 페이드 + 100ms 간격 → 다음 1.3초 후 다음 페이드
+    setTimeout(runInscribeQueue, 1300);
+  }
+
+  function renderSealButton() {
+    const btn = $('btn-seal-direct');
+    const lbl = $('seal-reward-label');
+    if (!btn) return;
+    if (!state.hasSword) {
+      btn.disabled = true;
+      btn.firstChild.textContent = '검  팔 기';
+      lbl.textContent = '  (검 없음)';
+      return;
+    }
+    const minLv = minSealLevel();
+    if (state.level < minLv) {
+      btn.disabled = true;
+      btn.firstChild.textContent = '검  팔 기';
+      const startLv = state.currentSword.startLevel || 0;
+      // 시작 단계 보너스가 있는 경우 — "한 번 더 강화하세요" 안내
+      if (startLv > 0 && state.level === startLv) {
+        lbl.textContent = '  (선대 시작 +' + startLv + ' — 최소 +' + minLv + ' 강화 필요)';
+      } else {
+        lbl.textContent = '  (+' + minLv + ' 이상부터 가능)';
+      }
+      return;
+    }
+    const ins = state.currentSword.inscriptions || [];
+    const form = state.currentSword.form;
+    let reward = sealReward(state.level);
+    if (ins.includes('道')) reward = Math.floor(reward * 1.5);
+    reward = Math.floor(reward * schoolSealMul());
+    reward = Math.floor(reward * getSeason().sealMul);
+    if (ins.includes('古')) reward = Math.floor(reward * 1.10);
+    else if (ins.includes('久')) reward = Math.floor(reward * 1.05);
+    const autoName = makeSwordName(form, ins, state.level);
+    btn.disabled = false;
+    // 팔기 시 자동 검명도 함께 — 검 정체성 미리 보기
+    btn.firstChild.textContent = '팔 기  ·  ' + autoName + '  ';
+    lbl.textContent = '+' + reward + ' 조각';
+  }
+
+  function renderSoul() {
+    const fill = $('soul-fill');
+    const label = $('soul-stage-label');
+    if (!state.hasSword) {
+      fill.style.width = '0%';
+      label.textContent = '';
+      fill.className = '';
+      label.className = '';
+      return;
+    }
+    const soul = state.currentSword.soul || 0;
+    fill.style.width = soul + '%';
+    const stage = getSoulStage();
+    fill.className = stage === 'true' ? 'true' : stage === 'wake' ? 'wake' : '';
+    label.className = fill.className;
+    if (stage === 'true') label.textContent = '本 · ' + soul;
+    else if (stage === 'wake') label.textContent = '覺 · ' + soul;
+    else label.textContent = soul > 0 ? ('魂 ' + soul) : '';
+  }
+
+  function renderInscriptions() {
+    if (!state.hasSword) { swordInscriptions.textContent = ''; return; }
+    const parts = [];
+    if (state.currentSword.form) parts.push(state.currentSword.form);
+    parts.push(...state.currentSword.inscriptions);
+    swordInscriptions.textContent = parts.join(' · ');
+  }
+
+  // === 封印 / 剛氣 — 검의 계보 ===
+  const SEAL_MIN_LEVEL = 3;
+  const START_BONUS_CAP = 6;
+  const START_BONUS_DIVISOR = 25;
+
+  function legacyStrength() {
+    return state.sealedSwords.reduce((a, s) => a + (s.level || 0), 0);
+  }
+  function startBonus(extraLegacy) {
+    const total = legacyStrength() + (extraLegacy || 0);
+    return Math.min(START_BONUS_CAP, Math.floor(total / START_BONUS_DIVISOR));
+  }
+  function sealReward(level) {
+    return Math.floor(Math.pow(level, 1.65) * 3) + level;
+  }
+  function newSword() {
+    state.hasSword = true;
+    state.level = startBonus();
+    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: state.level };
+    // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
+    const ways = (state.stats && state.stats.wayReached) || 0;
+    if (state.firstWayReached) {
+      state.currentSword.inscriptions.push('始祖');
+      state.currentSword.soul = Math.max(state.currentSword.soul, 10);
+    }
+    if (ways >= 5) {
+      state.currentSword.inscriptions.push('達人');
+      state.currentSword.soul = Math.max(state.currentSword.soul, 20);
+    }
+    if (ways >= 10) {
+      state.currentSword.inscriptions.push('聖');
+      state.currentSword.soul = Math.max(state.currentSword.soul, 30);
+    }
+    // v33 傳授: 도(道) 검 봉인 직후 전수된 명문 적용 (한 번만 — null로 비움)
+    if (state.heritageInscription) {
+      if (!state.currentSword.inscriptions.includes(state.heritageInscription)) {
+        state.currentSword.inscriptions.push(state.heritageInscription);
+      }
+      state.heritageInscription = null;
+    }
+    if (state.level > state.bestLevel) state.bestLevel = state.level;
+    checkInscriptions();
+  }
+  const NEWSWORD_COST = 50;
+
+  // === 게임 오버 — 검 없음 + 새 검 빚을 조각도 없음 ===
+  let gameOverShown = false;
+  function checkGameOver() {
+    if (gameOverShown) return;
+    // state 손상 방어 — 숫자 아닌 값이면 0으로 간주
+    const shardsNum = (typeof state.shards === 'number' && !isNaN(state.shards)) ? state.shards : 0;
+    const hasSwordBool = state.hasSword === true;
+    if (!hasSwordBool && shardsNum < NEWSWORD_COST) {
+      showGameOver();
+    }
+  }
+  // 안전장치: 1초마다 자동 체크 — render 누락 / 외부 에러에도 대응
+  setInterval(checkGameOver, 1000);
+  function showGameOver() {
+    gameOverShown = true;
+    // 자동 강화 중지
+    if (typeof stopAutoEnhance === 'function') stopAutoEnhance();
+    const s = state.stats || {};
+    $('gameover-stats').innerHTML =
+      '<div><span class="label">팔린 검</span>' + state.sealedSwords.length + '</div>' +
+      '<div><span class="label">도(道) 도달</span>' + (s.wayReached || 0) + '</div>' +
+      '<div><span class="label">베어낸 그림자</span>' + (state.totalSlain || 0) + '</div>' +
+      '<div><span class="label">검 파괴</span>' + (state.totalDestroyed || 0) + '</div>';
+    $('gameover-overlay').classList.add('active');
+    if (typeof SFX !== 'undefined' && SFX.destroy) SFX.destroy();
+  }
+  function restartFromGameOver() {
+    // 자비로운 재시작 — 검·조각 회복, 계보/통계 보존
+    state.shards = NEWSWORD_COST;
+    newSword();
+    gameOverShown = false;
+    $('gameover-overlay').classList.remove('active');
+    save();
+    render();
+    if (typeof SFX !== 'undefined' && SFX.forge) SFX.forge();
+  }
+
+  // 팔기 가능 최소 단계 — startLevel + 1 또는 SEAL_MIN_LEVEL 중 큰 값
+  function minSealLevel() {
+    if (!state.hasSword) return SEAL_MIN_LEVEL;
+    const startLv = (state.currentSword && state.currentSword.startLevel) || 0;
+    return Math.max(SEAL_MIN_LEVEL, startLv + 1);
+  }
+
+  function sealSword() {
+    if (challenge || rescueWindow) return;
+    if (!state.hasSword || state.level < minSealLevel()) return;
+    const lv = state.level;
+    const ins = (state.currentSword.inscriptions || []).slice();
+    const form = state.currentSword.form || null;
+    const isWay = ins.includes('道');
+    const autoName = makeSwordName(form, ins, lv);
+    // v24 in-app 명명 의식: +5 이상 또는 道이면 모달, 그 외 자동
+    if (lv >= 5 || isWay) {
+      // 미리 보기: 회수 조각, 시구
+      let preReward = sealReward(lv);
+      if (isWay) preReward = Math.floor(preReward * 1.5);
+      preReward = Math.floor(preReward * schoolSealMul());
+      const slainHere = state.currentSword.slainCount || 0;
+      const preVerse = isWay ? generateVerse(form, ins, lv, slainHere, preReward, state.currentSword.soul || 0) : null;
+      askName(autoName, form, ins, lv, preReward, preVerse,
+        (userName) => doSeal(form, ins, lv, isWay, userName || autoName));
+    } else {
+      doSeal(form, ins, lv, isWay, autoName);
+    }
+  }
+
+  function doSeal(form, ins, lv, isWay, swordName) {
+    let reward = sealReward(lv);
+    if (isWay) reward = Math.floor(reward * 1.5);
+    reward = Math.floor(reward * schoolSealMul());
+    // v37 季節·久古 봉인 보상 보너스
+    reward = Math.floor(reward * getSeason().sealMul);
+    // 久/古 효과는 *봉인 시점*의 ins로 계산 (이미 정점 명문 보유 시)
+    if (ins.includes('古')) reward = Math.floor(reward * 1.10);
+    else if (ins.includes('久')) reward = Math.floor(reward * 1.05);
+    const schoolsBefore = getActiveSchools();
+    const slainHere = state.currentSword.slainCount || 0;
+    const verse = isWay
+      ? generateVerse(form, ins, lv, slainHere, reward, state.currentSword.soul || 0)
+      : null;
+    state.sealedSwords.push({
+      level: lv, inscriptions: ins, form,
+      soul: state.currentSword.soul || 0, name: swordName,
+      slainCount: slainHere, verse,
+    });
+    const schoolsAfter = getActiveSchools();
+    const newSchool = schoolsAfter.find(s => !schoolsBefore.includes(s));
+    if (newSchool) {
+      const def = SCHOOLS[newSchool];
+      announceInscription(def.name, def.desc);
+    }
+    state.shards += reward;
+    bumpStat('sealed');
+    if (isWay) bumpStat('wayReached');
+    log('판매 +' + lv + ' — 조각 ' + reward, 'success');
+    burstParticles('#d4af37', isWay ? 40 : 20);
+    if (isWay) {
+      SFX.ritual();
+      playRitual(form, ins, lv, reward);
+      if (!state.firstWayReached) {
+        state.firstWayReached = true;
+        setTimeout(() => announceInscription('始祖', '첫 도(道) 달성 — 선조의 길이 열렸다'), 5800);
+      }
+      const ways = (state.stats && state.stats.wayReached) || 0;
+      if (ways === 5) setTimeout(() => announceInscription('達人', '도(道) 5번 달성 — 달인의 경지'), 6200);
+      if (ways === 10) setTimeout(() => announceInscription('聖', '도(道) 10번 달성 — 성인의 경지'), 6600);
+      // v33 傳授: 道 검 봉인 시 희귀 명문 1개 다음 검에 전수
+      const heritageOrder = ['斷魔', '鬼斬', '古', '久'];
+      const heritage = heritageOrder.find(k => ins.includes(k));
+      if (heritage) {
+        state.heritageInscription = heritage;
+        setTimeout(() => announceInscription(heritage, '다음 검에 자국이 전해진다'), 7000);
+      } else {
+        state.heritageInscription = null;
+      }
+    } else {
+      SFX.seal();
+    }
+    newSword();
+    save();
+    render();
+    updateForgeButtons();
+  }
+
+  function askName(autoName, form, ins, lv, reward, verse, callback) {
+    const modal = $('name-modal');
+    const input = $('name-input');
+    const promptText = $('name-prompt-text');
+    const preview = $('name-preview');
+    // 미리 보기: 형 + 명문 + 회수 + 시구
+    const formStr = form ? '<span style="color:var(--accent);letter-spacing:4px">' + form + '</span>' : '<span style="color:var(--dim)">無</span>';
+    const insStr = ins.length
+      ? '<span style="color:var(--accent);opacity:0.85;letter-spacing:3px">' + ins.join(' · ') + '</span>'
+      : '<span style="color:var(--dim)">— 명문 없음 —</span>';
+    let html =
+      formStr + '  ·  <span style="color:var(--accent)">+' + lv + '</span><br>' +
+      insStr + '<br><br>' +
+      '<span style="color:var(--accent);font-size:13px;letter-spacing:4px">팔면 ' + reward + ' 조각 획득</span>';
+    if (verse && Array.isArray(verse)) {
+      html += '<br><br><div style="color:var(--dim);font-size:10px;line-height:2;letter-spacing:2px;opacity:0.75">' +
+        verse.map(line => '<div>' + line + '</div>').join('') +
+        '</div>';
+    }
+    preview.innerHTML = html;
+    promptText.innerHTML = '자동 이름 <span style="color:var(--accent);letter-spacing:5px;font-size:14px">' + autoName + '</span><br>다른 이름을 짓고 싶으면 아래에 입력하세요';
+    input.placeholder = autoName;
+    input.value = '';
+    modal.classList.add('active');
+    setTimeout(() => input.focus(), 100);
+
+    const confirmBtn = $('name-confirm');
+    const cancelBtn = $('name-cancel');
+    function cleanup() {
+      modal.classList.remove('active');
+      confirmBtn.removeEventListener('click', onConfirm);
+      cancelBtn.removeEventListener('click', onCancel);
+      input.removeEventListener('keydown', onKey);
+    }
+    function onConfirm() { const v = input.value.trim().slice(0, 16); cleanup(); callback(v); }
+    function onCancel() { cleanup(); callback(''); }
+    function onKey(e) {
+      if (e.key === 'Enter') { e.preventDefault(); onConfirm(); }
+      if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
+    }
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', onCancel);
+    input.addEventListener('keydown', onKey);
+  }
+
+  // === 儀式 — 道 검 봉인 컷씬 (v15부터 一生詩 표시) ===
+  function playRitual(form, inscriptions, level, reward) {
+    const ritualEl = $('ritual-overlay');
+    const formEl = $('ritual-form');
+    const titleEl = $('ritual-title');
+    const verseEl = $('ritual-verse');
+    formEl.textContent = makeSwordName(form, inscriptions, level);
+    titleEl.textContent = '+' + level + ' · 道';
+    const slainHere = state.currentSword.slainCount || 0;
+    const verse = generateVerse(form, inscriptions, level, slainHere, reward, state.currentSword.soul || 0);
+    verseEl.innerHTML =
+      '<span class="accent">' + verse[0] + '</span><br>' +
+      '<span>' + verse[1] + '</span><br>' +
+      '<span>' + verse[2] + '</span><br>' +
+      '<span class="accent">' + verse[3] + '</span><br><br>' +
+      '<span style="color:var(--accent);letter-spacing:6px;font-size:12px">조각 ' + reward + ' 획득</span>';
+    ritualEl.classList.remove('active');
+    void ritualEl.offsetWidth;
+    ritualEl.classList.add('active');
+    setTimeout(() => ritualEl.classList.remove('active'), 5500);
+  }
+
+  // === 조합소 ===
+  const recipes = {
+    protection: { cost: 15, run: () => { state.protections++; } },
+    protection10: { cost: 130, run: () => { state.protections += 10; } },
+    whetstone: { cost: 8, run: () => { state.whetstones++; } },
+    spiritstone: { cost: 25, run: () => { state.spiritstones++; } },
+    newsword: {
+      cost: 50,
+      check: () => !state.hasSword,
+      run: () => { newSword(); }
+    },
+  };
+
+  function updateForgeButtons() {
+    document.querySelectorAll('.recipe-btn').forEach(btn => {
+      const key = btn.dataset.recipe;
+      const r = recipes[key];
+      if (!r) return;
+      const enough = r.isSpecial ? true : state.shards >= r.cost;
+      const ok = r.check ? r.check() : true;
+      btn.disabled = !(enough && ok);
+    });
+  }
+
+  document.querySelectorAll('.recipe-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.recipe;
+      const r = recipes[key];
+      if (state.shards < r.cost) return;
+      if (r.check && !r.check()) return;
+      state.shards -= r.cost;
+      r.run();
+      SFX.forge();
+      log('만들었다', 'success');
+      save();
+      render();
+      updateForgeButtons();
+    });
+  });
+
+  // === 검 회고 모달 (v32) ===
+  function showSwordDetail(s, index) {
+    const ins = s.inscriptions || [];
+    const formLabel = ({ '直': '강직', '曲': '유연', '重': '무거움', '速': '빠름' })[s.form] || '無';
+    $('detail-name').textContent = s.name || ('검 #' + index);
+    const insBlock = ins.length
+      ? ins.map(k => {
+          const def = INSCRIPTIONS.find(d => d.key === k);
+          const v = def && def.verse ? def.verse : '';
+          return '<div style="padding:6px 0;border-bottom:1px dashed rgba(212,175,55,0.15)">' +
+            '<span style="color:var(--accent);letter-spacing:5px;font-size:14px">' + k + '</span>' +
+            '<span style="color:var(--dim);font-size:10px;margin-left:10px">' + (def && def.label || '') + '</span>' +
+            (v ? '<div style="font-size:10px;color:var(--dim);opacity:0.7;margin-top:2px">' + v + '</div>' : '') +
+            '</div>';
+        }).join('')
+      : '<div style="color:var(--dim);font-size:11px;text-align:center;padding:8px 0">— 명문 없음 —</div>';
+    const verseBlock = (s.verse && Array.isArray(s.verse))
+      ? '<div style="margin:14px 0;padding:14px 8px;background:rgba(212,175,55,0.04);border-left:2px solid var(--accent);font-size:12px;line-height:2;letter-spacing:3px;color:var(--fg)">' +
+          s.verse.map(line => '<div>' + line + '</div>').join('') +
+        '</div>'
+      : '';
+    $('detail-body').innerHTML =
+      '<div style="text-align:center;color:var(--dim);font-size:11px;margin-bottom:14px;letter-spacing:3px">검 #' + index + '</div>' +
+      '<div style="display:flex;justify-content:space-around;padding:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:14px;font-size:11px">' +
+        '<div><span style="color:var(--dim)">형</span> <span style="color:var(--accent);margin-left:6px">' + (s.form || '無') + '</span> <span style="color:var(--dim);font-size:10px">(' + formLabel + ')</span></div>' +
+        '<div><span style="color:var(--dim)">강화도</span> <span style="color:var(--accent);margin-left:6px">+' + s.level + '</span></div>' +
+      '</div>' +
+      verseBlock +
+      '<div style="color:var(--dim);font-size:11px;margin-bottom:6px;letter-spacing:3px">— 명문 —</div>' +
+      insBlock +
+      '<div style="display:flex;justify-content:space-around;padding:10px 0;margin-top:14px;border-top:1px solid var(--line);font-size:11px">' +
+        '<div><span style="color:var(--dim)">魂</span> <span style="color:#6a8a9a;margin-left:6px">' + (s.soul || 0) + '</span></div>' +
+        '<div><span style="color:var(--dim)">베어낸 그림자</span> <span style="color:var(--accent);margin-left:6px">' + (s.slainCount || 0) + '</span></div>' +
+      '</div>';
+    $('sword-detail-modal').classList.add('active');
+  }
+
+  // === 계보 (v33 필터 + v32 클릭하여 회고) ===
+  let legacyFilter = 'all'; // all / 直 / 曲 / 重 / 速 / 道
+  function renderLegacy() {
+    const list = $('legacy-list');
+    const filterEl = $('legacy-filter');
+    const sealed = state.sealedSwords;
+    // 필터 버튼 렌더
+    if (filterEl && sealed.length > 0) {
+      const counts = getFormCounts();
+      const wayCount = sealed.filter(s => (s.inscriptions || []).includes('道')).length;
+      const filters = [
+        { key: 'all', label: '전체', count: sealed.length },
+        { key: '直', label: '直', count: counts['直'] || 0 },
+        { key: '曲', label: '曲', count: counts['曲'] || 0 },
+        { key: '重', label: '重', count: counts['重'] || 0 },
+        { key: '速', label: '速', count: counts['速'] || 0 },
+        { key: '道', label: '道', count: wayCount },
+      ].filter(f => f.count > 0 || f.key === 'all');
+      filterEl.innerHTML = filters.map(f => {
+        const active = legacyFilter === f.key;
+        return '<button data-filter="' + f.key + '" style="padding:4px 10px;background:transparent;border:1px solid ' +
+          (active ? 'var(--accent)' : 'var(--line)') + ';color:' +
+          (active ? 'var(--accent)' : 'var(--dim)') +
+          ';font-family:inherit;font-size:10px;letter-spacing:2px;cursor:pointer">' + f.label + ' ' + f.count + '</button>';
+      }).join('');
+      // 필터 클릭 이벤트
+      filterEl.querySelectorAll('button[data-filter]').forEach(btn => {
+        btn.addEventListener('click', () => { legacyFilter = btn.dataset.filter; renderLegacy(); });
+      });
+    } else if (filterEl) {
+      filterEl.innerHTML = '';
+    }
+    if (sealed.length === 0) {
+      list.innerHTML = '<p style="text-align:center;color:var(--dim);font-size:12px;padding:24px 0;line-height:1.8">아직 판 검이 없습니다.<br><br>+' + SEAL_MIN_LEVEL + ' 이상의 검을 팔면<br>그 힘과 자국이 계보에 남습니다.</p>';
+    } else {
+      // 필터 적용
+      const filtered = sealed.map((s, originalIdx) => ({s, originalIdx}))
+        .filter(({s}) => {
+          if (legacyFilter === 'all') return true;
+          if (legacyFilter === '道') return (s.inscriptions || []).includes('道');
+          return s.form === legacyFilter;
+        });
+      if (filtered.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:var(--dim);font-size:12px;padding:20px 0">— 해당 검 없음 —</p>';
+        $('legacy-summary').innerHTML = $('legacy-summary').innerHTML; // 유지
+        return;
+      }
+      const items = filtered.slice().reverse().map(({s, originalIdx}) => {
+        const i = originalIdx + 1;
+        const ins = (s.inscriptions || []);
+        const hasWay = ins.includes('道');
+        const name = s.name || makeSwordName(s.form, ins, s.level);
+        const insHTML = ins.length
+          ? '<div style="margin-top:4px;font-size:11px;letter-spacing:3px;color:var(--accent);opacity:0.85">' + ins.join(' · ') + '</div>'
+          : '<div style="margin-top:4px;font-size:10px;color:var(--dim);opacity:0.5">— 명문 없음</div>';
+        const badge = hasWay ? '<span style="color:#fff5c0;font-size:10px;letter-spacing:2px;margin-right:6px">道</span>' : '';
+        const soulStr = (typeof s.soul === 'number' && s.soul > 0)
+          ? '<span style="color:#6a8a9a;font-size:10px;margin-left:8px">魂 ' + s.soul + '</span>'
+          : '';
+        const verseHTML = (s.verse && Array.isArray(s.verse))
+          ? '<div style="margin-top:6px;padding:6px 0;font-size:10px;line-height:1.8;color:var(--dim);letter-spacing:2px;opacity:0.75;border-top:1px dashed rgba(212,175,55,0.2)">' +
+            s.verse.map(line => '<div>' + line + '</div>').join('') +
+            '</div>'
+          : '';
+        return '<div class="legacy-item" data-sword-idx="' + originalIdx + '" style="padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer;transition:background 0.15s">' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px">' +
+            '<span><span style="color:var(--accent);letter-spacing:4px;font-size:15px">' + name + '</span><span style="color:var(--dim);font-size:10px;margin-left:8px">#' + i + '</span>' + soulStr + '</span>' +
+            '<span style="letter-spacing:2px">' + badge + '<span style="color:var(--accent)">+' + s.level + '</span></span>' +
+          '</div>' + insHTML + verseHTML +
+          '</div>';
+      });
+      list.innerHTML = items.join('');
+    }
+    // 봉인 검 클릭 → 회고 모달
+    list.querySelectorAll('.legacy-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const idx = parseInt(item.dataset.swordIdx, 10);
+        if (isNaN(idx) || idx < 0 || idx >= state.sealedSwords.length) return;
+        showSwordDetail(state.sealedSwords[idx], idx + 1);
+      });
+      item.addEventListener('mouseenter', () => { item.style.background = 'rgba(212,175,55,0.05)'; });
+      item.addEventListener('mouseleave', () => { item.style.background = 'transparent'; });
+    });
+    const active = getActiveSchools();
+    const counts = getFormCounts();
+    let summary = '선대의 강기 ' + legacyStrength() + ' · 시작 +' + startBonus();
+    if (active.length) {
+      summary += '<br><span style="color:var(--accent);letter-spacing:4px">' + active.map(f => SCHOOLS[f].name).join(' · ') + '</span>';
+    }
+    // 형 진행도 (3자루 미만)
+    const progress = Object.keys(SCHOOLS).filter(f => !active.includes(f) && (counts[f] || 0) > 0)
+      .map(f => '<span style="opacity:0.55">' + f + ' ' + (counts[f] || 0) + '/' + SCHOOL_THRESHOLD + '</span>')
+      .join('  ·  ');
+    if (progress) summary += '<br><span style="font-size:10px">' + progress + '</span>';
+    $('legacy-summary').innerHTML = summary;
+  }
+
+  // === 모달 ===
+  $('btn-forge').addEventListener('click', () => {
+    $('forge-modal').classList.add('active');
+    updateForgeButtons();
+  });
+  $('btn-legacy').addEventListener('click', () => {
+    renderLegacy();
+    $('legacy-modal').classList.add('active');
+  });
+  $('btn-mute').addEventListener('click', () => { toggleMute(); $('menu-drop').classList.remove('open'); });
+  $('gameover-restart').addEventListener('click', restartFromGameOver);
+  $('gameover-fullreset').addEventListener('click', () => {
+    if (!confirm('계보·통계 포함 모든 진행을 지웁니다. 진행할까요?')) return;
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+    location.reload();
+  });
+  // ESC 키로도 다시 시작
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && gameOverShown) { e.preventDefault(); restartFromGameOver(); }
+  });
+  // v38 햄버거 메뉴
+  $('menu-toggle').addEventListener('click', (e) => {
+    e.stopPropagation();
+    $('menu-drop').classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#menu-drop') && !e.target.closest('#menu-toggle')) {
+      $('menu-drop').classList.remove('open');
+    }
+  });
+  // 메뉴 내 버튼은 클릭 후 자동 닫힘
+  ['btn-stats', 'btn-help', 'btn-reset'].forEach(id => {
+    const b = $(id);
+    if (b) b.addEventListener('click', () => $('menu-drop').classList.remove('open'));
+  });
+  $('btn-stats').addEventListener('click', () => {
+    renderStats();
+    $('stats-modal').classList.add('active');
+  });
+  $('btn-anthology').addEventListener('click', () => {
+    renderAnthology();
+    $('anthology-modal').classList.add('active');
+  });
+  $('btn-help').addEventListener('click', () => {
+    $('help-modal').classList.add('active');
+  });
+
+  function renderAnthology() {
+    const list = $('anthology-list');
+    const dao = state.sealedSwords.filter(s => s.verse && Array.isArray(s.verse));
+    if (dao.length === 0) {
+      list.innerHTML = '<p style="text-align:center;color:var(--dim);font-size:12px;padding:32px 0;line-height:1.8">아직 도(道)에 이른 검이 없습니다.<br><br>최고 단계 +' + MAX_LEVEL + '까지 키운 검을 팔면<br>그 검의 일생이 시구로 새겨집니다.</p>';
+      return;
+    }
+    // 최근 순
+    const items = dao.slice().reverse().map((s, ri) => {
+      const i = dao.length - ri;
+      const name = s.name || ('검 #' + i);
+      const verseHtml = s.verse.map(line => '<div>' + line + '</div>').join('');
+      return '<div style="padding:18px 8px;border-bottom:1px solid var(--line);text-align:center">' +
+        '<div style="color:var(--accent);letter-spacing:6px;font-size:18px;margin-bottom:14px">' + name + '</div>' +
+        '<div style="color:var(--fg);font-size:13px;line-height:2.2;letter-spacing:3px;opacity:0.9">' + verseHtml + '</div>' +
+        '<div style="color:var(--dim);font-size:10px;margin-top:10px;letter-spacing:2px">— 道 #' + i + ' —</div>' +
+        '</div>';
+    });
+    list.innerHTML = items.join('');
+  }
+
+  function renderStats() {
+    const s = state.stats || {};
+    const rate = s.enhanceAttempts > 0 ? Math.round((s.enhanceSuccess / s.enhanceAttempts) * 100) : 0;
+    const row = (label, val, color) => '<div style="display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px solid var(--line)"><span style="color:var(--dim);letter-spacing:2px">' + label + '</span><span style="color:' + (color || 'var(--accent)') + ';letter-spacing:3px">' + val + '</span></div>';
+    const bar = (label, val, max, color) => {
+      const pct = max > 0 ? Math.round((val / max) * 100) : 0;
+      return '<div style="padding:6px 4px;border-bottom:1px solid var(--line)">' +
+        '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--dim);letter-spacing:2px">' + label + '</span><span style="color:' + (color || 'var(--accent)') + '">' + val + '</span></div>' +
+        '<div style="height:4px;background:var(--line);border-radius:2px;overflow:hidden"><div style="height:100%;background:' + (color || 'var(--accent)') + ';width:' + pct + '%;transition:width 0.4s"></div></div>' +
+        '</div>';
+    };
+    // 그림자 type 4종 — 가장 많이 베어낸 것 기준 비율
+    const slainMax = Math.max(s.slainNormal || 0, s.slainFlee || 0, s.slainSteel || 0, s.slainDemon || 0, 1);
+    $('stats-list').innerHTML =
+      '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:6px 0 4px;margin-top:4px">강 화</div>' +
+      bar('성공률', rate + '% (' + (s.enhanceSuccess || 0) + '/' + (s.enhanceAttempts || 0) + ')',
+          100, 'var(--safe)').replace(/>(\d+)% \(/, '><span style="font-size:10px">$1% (') +
+      row('강화 시도', (s.enhanceAttempts || 0) + ' 회') +
+      '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">그 림 자</div>' +
+      bar('그림자', (s.slainNormal || 0) + ' 회', slainMax) +
+      bar('도망 그림자', (s.slainFlee || 0) + ' 회', slainMax, '#aac0c8') +
+      bar('강철 그림자', (s.slainSteel || 0) + ' 회', slainMax, '#888aa8') +
+      bar('검귀', (s.slainDemon || 0) + ' 회', slainMax, '#fff5c0') +
+      row('도망 그림자에게 놓침', (s.evaded || 0) + ' 회', 'var(--dim)') +
+      row('도전에서 도망', (s.fled || 0) + ' 회', 'var(--dim)') +
+      '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">생 사</div>' +
+      row('조각 줍기 성공', (s.rescued || 0) + ' 회') +
+      row('조각 줍기 실패', (s.rescueFailed || 0) + ' 회', 'var(--danger)') +
+      row('검 파괴', (state.totalDestroyed || 0) + ' 회', 'var(--danger)') +
+      '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">정 점</div>' +
+      row('검 판매', (s.sealed || 0) + ' 회') +
+      row('도(道) 달성', (s.wayReached || 0) + ' 회', '#fff5c0');
+  }
+  // 초기 라벨 반영
+  if (muted) { const mb = $('btn-mute'); if (mb) mb.textContent = '소 리  켜 기'; }
+  document.querySelectorAll('[data-close]').forEach(el => {
+    el.addEventListener('click', () => {
+      el.closest('.modal').classList.remove('active');
+    });
+  });
+
+  // === 초기화 ===
+  $('btn-reset').addEventListener('click', () => {
+    if (!confirm('모든 진행도를 지운다. 정말로?')) return;
+    localStorage.removeItem(SAVE_KEY);
+    state = {
+      level: 0, shards: 50, protections: 0, hasSword: true,
+      bestLevel: 0, totalDestroyed: 0, totalSlain: 0,
+      sealedSwords: [],
+      currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0 },
+      whetstones: 0, spiritstones: 0,
+      firstWayReached: false,
+      shadowOriginsSlain: {},
+      heritageInscription: null,
+      milestonesShown: {},
+      stats: { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0 },
+      seenHelp: true,
+    };
+    inscribeQueue = [];
+    gameOverShown = false;
+    $('gameover-overlay').classList.remove('active');
+    if (challenge) endChallenge();
+    save();
+    render();
+  });
+
+  // === 修練 토글 이벤트 ===
+  const autoCheck = $('auto-check');
+  if (autoCheck) {
+    autoCheck.addEventListener('change', () => {
+      if (autoCheck.checked) startAutoEnhance();
+      else stopAutoEnhance();
+    });
+  }
+
+  // === 강화 / 봉인 / 새 검 버튼 ===
+  btnEnhance.addEventListener('click', () => {
+    if (btnEnhance.disabled) return;
+    if (btnEnhance.dataset.mode === 'newsword') {
+      const NEWSWORD_COST = 50;
+      if (state.shards < NEWSWORD_COST) return;
+      state.shards -= NEWSWORD_COST;
+      newSword();
+      SFX.forge();
+      log('새 검을 빚었다', 'success');
+      save();
+      render();
+      return;
+    }
+    enhance();
+  });
+  const btnSealDirect = $('btn-seal-direct');
+  const sealRewardLabel = $('seal-reward-label');
+  if (btnSealDirect) {
+    btnSealDirect.addEventListener('click', () => {
+      if (btnSealDirect.disabled) return;
+      // 큰 검(+10 이상)은 확인 한 번 — 실수 방지
+      if (state.level >= 10) {
+        if (!confirm('+' + state.level + ' 검을 팔겠습니까?\n(이 검은 사라지고 조각으로 바뀝니다)')) return;
+      }
+      sealSword();
+    });
+  }
+
+  // 키보드 단축키
+  document.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      if (challenge) slay();
+      else if (rescueWindow) rescueWindow.rescue();
+      else if (!btnEnhance.disabled) enhance();
+    }
+    if (e.key === 'Escape' && challenge) flee();
+    if (e.key === 'p' || e.key === 'P') {
+      if (!protectCheck.disabled) protectCheck.checked = !protectCheck.checked;
+    }
+    if (e.key === 'm' || e.key === 'M') toggleMute();
+  });
+
+  // === 시작 ===
+  load();
+  if (!state.seenHelp) {
+    $('help-modal').classList.add('active');
+    state.seenHelp = true;
+    save();
+  }
+  render();
+  // 초기 진입 시 게임 오버 상황(저장된 데이터로) 즉시 감지
+  checkGameOver();
+})();
+</script>
+</body>
+</html>
