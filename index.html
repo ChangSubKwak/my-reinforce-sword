@@ -942,7 +942,15 @@
     background: radial-gradient(circle at 70% 50%, rgba(192, 57, 43, 0.12), transparent 60%);
     z-index: 5;
   }
-  #challenge.active { display: flex; }
+  #challenge.active {
+    display: flex;
+    animation: challenge-appear 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes challenge-appear {
+    0%   { opacity: 0; transform: scale(0.88); }
+    60%  { opacity: 1; transform: scale(1.02); }
+    100% { opacity: 1; transform: scale(1); }
+  }
   #challenge-scene {
     width: 100%;
     height: 180px;
