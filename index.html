@@ -1317,18 +1317,36 @@
         <div id="challenge-shadow">
           <div id="shadow-form"></div>
           <svg id="demon-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
-            <!-- 어둠의 핵 (가슴 보석) -->
             <polygon points="50,75 58,90 50,105 42,90" fill="#3a0a0a" stroke="#c0392b" stroke-width="0.8"/>
             <polygon points="50,80 54,90 50,100 46,90" fill="#c0392b" opacity="0.7"/>
-            <!-- 발톱 왼쪽 -->
             <path d="M 22 95 L 18 105 L 25 108 L 23 112 L 28 110 Z" fill="#0a0a0d" stroke="#3a0a0a" stroke-width="0.4"/>
-            <!-- 발톱 오른쪽 -->
             <path d="M 78 95 L 82 105 L 75 108 L 77 112 L 72 110 Z" fill="#0a0a0d" stroke="#3a0a0a" stroke-width="0.4"/>
-            <!-- 빛나는 핏줄 -->
             <path d="M 50 30 Q 45 50 48 70" fill="none" stroke="#c0392b" stroke-width="0.4" opacity="0.6"/>
             <path d="M 50 30 Q 55 50 52 70" fill="none" stroke="#c0392b" stroke-width="0.4" opacity="0.6"/>
-            <!-- 어둠의 입 (호 모양) -->
             <path d="M 42 55 Q 50 60 58 55" fill="none" stroke="#3a0a0a" stroke-width="1.2"/>
+          </svg>
+          <!-- v58 逃影 디테일 (작은 눈 + 작은 발) -->
+          <svg id="flee-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;display:none;pointer-events:none">
+            <ellipse cx="40" cy="55" rx="3" ry="2" fill="#aac0c8" opacity="0.85"/>
+            <ellipse cx="60" cy="55" rx="3" ry="2" fill="#aac0c8" opacity="0.85"/>
+            <ellipse cx="35" cy="100" rx="3" ry="5" fill="#1a1a25"/>
+            <ellipse cx="65" cy="100" rx="3" ry="5" fill="#1a1a25"/>
+            <path d="M 44 65 Q 50 68 56 65" fill="none" stroke="#1a1a1f" stroke-width="0.8"/>
+          </svg>
+          <!-- v58 鋼影 디테일 (갑옷 패턴) -->
+          <svg id="steel-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;display:none;pointer-events:none">
+            <rect x="35" y="40" width="30" height="6" fill="none" stroke="#5a6a7a" stroke-width="0.6" opacity="0.7"/>
+            <rect x="35" y="50" width="30" height="6" fill="none" stroke="#5a6a7a" stroke-width="0.6" opacity="0.7"/>
+            <rect x="35" y="60" width="30" height="6" fill="none" stroke="#5a6a7a" stroke-width="0.6" opacity="0.7"/>
+            <rect x="35" y="70" width="30" height="6" fill="none" stroke="#5a6a7a" stroke-width="0.6" opacity="0.7"/>
+            <rect x="35" y="80" width="30" height="6" fill="none" stroke="#5a6a7a" stroke-width="0.6" opacity="0.7"/>
+            <circle cx="50" cy="55" r="1.2" fill="#7a8898" opacity="0.6"/>
+            <circle cx="50" cy="75" r="1.2" fill="#7a8898" opacity="0.6"/>
+          </svg>
+          <!-- v58 影 디테일 (소용돌이) -->
+          <svg id="normal-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;display:none;pointer-events:none">
+            <path d="M 50 60 Q 60 55 60 65 Q 60 75 50 75 Q 40 75 40 65 Q 40 55 50 55" fill="none" stroke="#3a3a45" stroke-width="0.8" opacity="0.7"/>
+            <path d="M 50 60 Q 55 58 55 64 Q 55 70 50 70 Q 45 70 45 64" fill="none" stroke="#5a5a65" stroke-width="0.6" opacity="0.6"/>
           </svg>
           <div id="shadow-strength">강도 +0</div>
         </div>
@@ -2428,9 +2446,15 @@
     if (t.key === 'flee') shadowForm.classList.add('flee-type');
     else if (t.key === 'steel') shadowForm.classList.add('steel-type');
     else if (t.key === 'demon') shadowForm.classList.add('demon-type');
-    // v41 검귀 SVG 디테일 토글
+    // v41/v58 그림자 종류별 SVG 디테일 토글
     const demonDetail = $('demon-detail');
     if (demonDetail) demonDetail.classList.toggle('active', t.key === 'demon');
+    const fleeDetail = $('flee-detail');
+    if (fleeDetail) fleeDetail.style.display = t.key === 'flee' ? 'block' : 'none';
+    const steelDetail = $('steel-detail');
+    if (steelDetail) steelDetail.style.display = t.key === 'steel' ? 'block' : 'none';
+    const normalDetail = $('normal-detail');
+    if (normalDetail) normalDetail.style.display = t.key === 'normal' ? 'block' : 'none';
     shadowStrength.textContent = (challenge.origin ? challenge.origin + ' · ' : '') + t.name + ' · 강도 +' + challenge.strength;
     // 베기 버튼에 보상 표시
     const slayRewardLabel = $('slay-reward-label');
