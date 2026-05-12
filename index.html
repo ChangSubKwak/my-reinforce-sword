@@ -763,6 +763,158 @@
     text-shadow: 0 0 12px rgba(212, 175, 55, 0.8);
   }
 
+  /* v84 聖 엔딩 — 道 10번 봉인 시 풀스크린 컷씬 */
+  #ending-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, #0a0808 0%, #000 80%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 600;
+    color: var(--fg);
+    text-align: center;
+    padding: 40px;
+    opacity: 0;
+    overflow: hidden;
+  }
+  #ending-overlay.active { display: flex; animation: ending-frame 14s forwards; }
+  @keyframes ending-frame {
+    0%, 100% { opacity: 0; }
+    5%, 95% { opacity: 1; }
+  }
+  /* 회전 빛 광선 (계속) */
+  #ending-overlay::before {
+    content: '';
+    position: absolute;
+    width: 1000px;
+    height: 1000px;
+    background:
+      conic-gradient(from 0deg,
+        rgba(212, 175, 55, 0.20) 0deg, transparent 25deg,
+        rgba(255, 245, 192, 0.18) 50deg, transparent 75deg,
+        rgba(212, 175, 55, 0.15) 100deg, transparent 125deg,
+        rgba(255, 245, 192, 0.18) 150deg, transparent 175deg,
+        rgba(212, 175, 55, 0.20) 200deg, transparent 225deg,
+        rgba(255, 245, 192, 0.18) 250deg, transparent 275deg,
+        rgba(212, 175, 55, 0.15) 300deg, transparent 325deg);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    animation: ending-rays 14s linear forwards;
+  }
+  #ending-overlay::after {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 0 80px rgba(212, 175, 55, 0.4), inset 0 0 80px rgba(212, 175, 55, 0.25);
+    pointer-events: none;
+    opacity: 0;
+    animation: ending-circle 14s ease-in-out forwards;
+  }
+  @keyframes ending-rays {
+    0% { transform: rotate(0deg); opacity: 0; }
+    15% { opacity: 1; }
+    85% { opacity: 1; }
+    100% { transform: rotate(540deg); opacity: 0; }
+  }
+  @keyframes ending-circle {
+    0% { transform: scale(0.8); opacity: 0; }
+    20% { transform: scale(1); opacity: 0.7; }
+    80% { transform: scale(1.05); opacity: 0.8; }
+    100% { transform: scale(1.15); opacity: 0; }
+  }
+  /* 페이즈 1~5 컨테이너 */
+  .ending-phase {
+    position: relative;
+    z-index: 1;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+  #ending-kanji {
+    font-size: 160px;
+    color: #fff5c0;
+    letter-spacing: 28px;
+    margin-left: 28px;
+    line-height: 1;
+    text-shadow:
+      0 0 40px rgba(255, 245, 192, 1),
+      0 0 80px rgba(212, 175, 55, 0.8),
+      0 0 160px rgba(212, 175, 55, 0.5);
+    animation: ending-kanji 14s forwards;
+  }
+  @keyframes ending-kanji {
+    0%, 7% { opacity: 0; transform: scale(0.5); }
+    18% { opacity: 1; transform: scale(1.05); }
+    28% { opacity: 1; transform: scale(1); }
+    32% { opacity: 0.7; transform: scale(0.95); font-size: 40px; }
+    100% { opacity: 0.7; transform: scale(0.95); font-size: 40px; }
+  }
+  #ending-cascade {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    pointer-events: none;
+  }
+  .ending-cascade-name {
+    color: var(--accent);
+    font-size: 18px;
+    letter-spacing: 8px;
+    margin: 6px 0;
+    opacity: 0;
+    text-shadow: 0 0 12px rgba(212, 175, 55, 0.6);
+  }
+  #ending-stats {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--fg);
+    font-size: 16px;
+    letter-spacing: 4px;
+    line-height: 2.2;
+    opacity: 0;
+    animation: ending-stats-fade 14s forwards;
+    z-index: 1;
+  }
+  @keyframes ending-stats-fade {
+    0%, 53% { opacity: 0; }
+    58% { opacity: 1; }
+    73% { opacity: 1; }
+    78% { opacity: 0; }
+    100% { opacity: 0; }
+  }
+  #ending-stats .label { color: var(--dim); margin-right: 16px; }
+  #ending-stats .num { color: var(--accent); font-size: 22px; letter-spacing: 6px; }
+  #ending-verse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff5c0;
+    font-size: 22px;
+    letter-spacing: 8px;
+    line-height: 2.4;
+    text-shadow: 0 0 16px rgba(255, 245, 192, 0.6);
+    opacity: 0;
+    animation: ending-verse-fade 14s forwards;
+    z-index: 1;
+  }
+  @keyframes ending-verse-fade {
+    0%, 75% { opacity: 0; }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    88% { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
+    95% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; }
+  }
   /* 게임 오버 — 검도 조각도 모두 잃은 끝 */
   #gameover-overlay {
     position: fixed;
@@ -1304,6 +1456,7 @@
   <button id="btn-cloud-pull" style="display:none">☁ 클라우드 복원</button>
   <button id="btn-cloud-logout" style="display:none">☁ 로그아웃</button>
   <button id="btn-leaderboard">🏆 리 더 보 드</button>
+  <button id="btn-replay-ending" style="display:none">🌟 엔딩 다시 보기</button>
   <div style="height:1px;background:var(--line);margin:4px 0"></div>
   <button id="btn-backup">진행도 백업 (파일)</button>
   <button id="btn-restore">진행도 복원 (파일)</button>
@@ -1749,6 +1902,14 @@
   <button class="view-btn" id="seal-card-view">계보 보기</button>
 </div>
 
+<!-- v84 聖 엔딩 -->
+<div id="ending-overlay">
+  <div id="ending-kanji" class="ending-phase">聖</div>
+  <div id="ending-cascade"></div>
+  <div id="ending-stats"></div>
+  <div id="ending-verse">검의 길에 끝은 없으나<br>그대는 이미 도달했다</div>
+</div>
+
 <!-- 게임 오버 -->
 <div id="gameover-overlay">
   <div id="gameover-title">길의 끝</div>
@@ -1868,6 +2029,7 @@
     whetstones: 0,
     spiritstones: 0,
     firstWayReached: false,  // v16 始祖 — 첫 道 도달 시 true, 영구
+    endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     heritageInscription: null,  // v33 — 道 검 봉인 후 다음 검에 전수될 명문 (1개)
     guardianIdx: null,  // v52 — 수호자로 지정된 봉인 검의 인덱스 (선택적)
@@ -1931,6 +2093,7 @@
       if (typeof state.whetstones !== 'number') state.whetstones = 0;
       if (typeof state.spiritstones !== 'number') state.spiritstones = 0;
       if (typeof state.firstWayReached !== 'boolean') state.firstWayReached = false;
+      if (typeof state.endingShown !== 'boolean') state.endingShown = false;
       if (!state.shadowOriginsSlain || typeof state.shadowOriginsSlain !== 'object') state.shadowOriginsSlain = {};
       if (state.heritageInscription === undefined) state.heritageInscription = null;
       if (state.guardianIdx === undefined) state.guardianIdx = null;
@@ -3930,6 +4093,12 @@
       const ways = (state.stats && state.stats.wayReached) || 0;
       if (ways === 5) setTimeout(() => announceInscription('達人', '도(道) 5번 달성 — 달인의 경지'), 6200);
       if (ways === 10) setTimeout(() => announceInscription('聖', '도(道) 10번 달성 — 성인의 경지'), 6600);
+      // v84 聖 도달 시 엔딩 컷씬 (한 번만)
+      if (ways >= 10 && !state.endingShown) {
+        state.endingShown = true;
+        // 의식 컷씬(5.5s) + 명문 페이드 후 엔딩 시작
+        setTimeout(() => playEnding(), 8000);
+      }
       // v83 道 도달 시 로그인된 사용자에게 점수 등록 안내
       if (sbClient) {
         sbGetUser().then(user => {
@@ -4038,6 +4207,58 @@
     confirmBtn.addEventListener('click', onConfirm);
     cancelBtn.addEventListener('click', onCancel);
     input.addEventListener('keydown', onKey);
+  }
+
+  // === v84 聖 엔딩 — 道 10번 봉인 시 컷씬 ===
+  function playEnding() {
+    const overlay = $('ending-overlay');
+    if (!overlay) return;
+    // 봉인 검 중 道 명문 보유한 것들의 검명 cascade
+    const daoSwords = state.sealedSwords.filter(s => (s.inscriptions || []).includes('道'));
+    const cascadeNames = daoSwords.slice(-12).reverse(); // 최근 12개
+    const cascade = $('ending-cascade');
+    if (cascade) {
+      cascade.innerHTML = cascadeNames.map((s, i) => {
+        const name = s.name || makeSwordName(s.form, s.inscriptions || [], s.level);
+        // 각 검명이 다른 시점에 fade in
+        const start = 32 + (i * 1.8); // 4.5초~7.5초 사이 분포 (전체 14초 기준 %)
+        const duration = 100 - start - 60; // 사라지는 시점 (78% 정도)
+        return '<div class="ending-cascade-name" style="animation:ending-cascade-' + i + ' 14s forwards"></div>' +
+          '<style>@keyframes ending-cascade-' + i + ' {' +
+            '0%, ' + start + '% { opacity: 0; transform: translateY(-30px); }' +
+            (start + 4) + '% { opacity: 1; transform: translateY(0); }' +
+            '70% { opacity: 1; transform: translateY(0); }' +
+            '78% { opacity: 0; transform: translateY(20px); }' +
+            '100% { opacity: 0; }' +
+          '}</style>' +
+          '<div class="ending-cascade-name" style="animation: ending-cascade-' + i + ' 14s forwards">' + name + '</div>';
+      }).join('');
+    }
+    // 통계 표시
+    const stats = state.stats || {};
+    const ss = $('ending-stats');
+    if (ss) {
+      ss.innerHTML =
+        '<div><span class="label">총 강화 시도</span><span class="num">' + (stats.enhanceAttempts || 0) + '</span></div>' +
+        '<div><span class="label">베어낸 그림자</span><span class="num">' + (state.totalSlain || 0) + '</span></div>' +
+        '<div><span class="label">봉인한 검</span><span class="num">' + state.sealedSwords.length + '</span></div>' +
+        '<div><span class="label">도(道) 도달</span><span class="num">' + (stats.wayReached || 0) + '</span></div>';
+    }
+    overlay.classList.remove('active');
+    void overlay.offsetWidth;
+    overlay.classList.add('active');
+    // 음향 — 깊은 종 + 화음
+    try {
+      tone(110, 5.0, 'sine', 0.4);
+      setTimeout(() => chord([220, 277, 330, 415, 523], 4.5, 'sine', 0.5), 200);
+      setTimeout(() => chord([330, 415, 523, 622, 784], 4.0, 'sine', 0.4), 1500);
+      setTimeout(() => chord([523, 622, 784, 988, 1175], 3.5, 'sine', 0.35), 3500);
+      setTimeout(() => tone(80, 6.0, 'sine', 0.25), 6000);
+      setTimeout(() => chord([130, 196, 261], 4.0, 'sine', 0.4), 9000);
+    } catch (e) {}
+    // 14초 후 자동 종료
+    setTimeout(() => overlay.classList.remove('active'), 14000);
+    log('🌟 聖에 이르다 — 그대는 도달했다', 'success');
   }
 
   // === 儀式 — 道 검 봉인 컷씬 (v15부터 一生詩 표시) ===
@@ -4414,8 +4635,12 @@
   $('menu-toggle').addEventListener('click', (e) => {
     e.stopPropagation();
     $('menu-drop').classList.toggle('open');
-    // 메뉴 열릴 때 클라우드 메뉴 상태 최신화
-    if ($('menu-drop').classList.contains('open') && sbClient) updateCloudMenu();
+    // 메뉴 열릴 때 클라우드 메뉴 + 엔딩 다시 보기 상태 최신화
+    if ($('menu-drop').classList.contains('open')) {
+      if (sbClient) updateCloudMenu();
+      const re = $('btn-replay-ending');
+      if (re) re.style.display = state.endingShown ? '' : 'none';
+    }
   });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#menu-drop') && !e.target.closest('#menu-toggle')) {
@@ -4575,6 +4800,11 @@
   });
 
   // 리더보드 열기
+  // 엔딩 다시 보기 (聖 도달 후만 표시)
+  $('btn-replay-ending').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    playEnding();
+  });
   $('btn-leaderboard').addEventListener('click', async () => {
     $('leaderboard-modal').classList.add('active');
     $('lb-list').innerHTML = '<div style="text-align:center;color:var(--dim);padding:20px">불러오는 중...</div>';
@@ -4959,6 +5189,7 @@
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0] },
       whetstones: 0, spiritstones: 0,
       firstWayReached: false,
+      endingShown: false,
       shadowOriginsSlain: {},
       heritageInscription: null,
       guardianIdx: null,
