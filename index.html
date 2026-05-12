@@ -427,6 +427,26 @@
   @keyframes fadein { to { opacity: 1; } }
   @keyframes fadeout { to { opacity: 0; } }
 
+  /* v57 道 진행 점 — 검 아래 15단계 진행 표시 */
+  #way-progress {
+    position: absolute;
+    bottom: -68px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 3px;
+    pointer-events: none;
+  }
+  #way-progress .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--line);
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  #way-progress .dot.active { background: var(--accent); }
+  #way-progress .dot.way { background: #fff5c0; box-shadow: 0 0 6px #fff5c0; }
+
   /* 魂 — 검 아래 게이지 */
   #soul-bar {
     position: absolute;
@@ -1270,6 +1290,7 @@
       <div id="level-badge">+0</div>
       <div id="soul-bar"><div id="soul-fill"></div></div>
       <div id="soul-stage-label"></div>
+      <div id="way-progress"></div>
     </div>
     <div id="void">
       <div id="void-msg">검 이 부 서 졌 다</div>
@@ -1840,6 +1861,7 @@
     applyLevelVisual();
     applyInscriptionVisual();
     renderSoul();
+    renderWayProgress();
     renderSealButton();
     applySeason();
     renderGuardianDisplay();
@@ -1873,7 +1895,7 @@
     btnEnhance.dataset.mode = 'enhance';
 
     swordSvg.style.opacity = 1;
-    // v45 단계별 한자 이름 + 강화도
+    // v45 단계별 한자 이름 + v57 道까지 거리
     const tierName = state.level === 0 ? '始 (시작)'
                    : state.level <= 2 ? '初 (초기)'
                    : state.level <= 5 ? '鍊 (수련)'
@@ -1881,7 +1903,9 @@
                    : state.level <= 13 ? '靈 (영의 검)'
                    : state.level < MAX_LEVEL ? '聖 (성스러운 검)'
                    : '道 (최고의 검)';
-    levelBadge.innerHTML = '+' + state.level + ' <span style="font-size:10px;color:var(--dim);letter-spacing:2px">' + tierName + '</span>';
+    const remaining = MAX_LEVEL - state.level;
+    const distNote = remaining > 0 ? ' · 道까지 ' + remaining : '';
+    levelBadge.innerHTML = '+' + state.level + ' <span style="font-size:10px;color:var(--dim);letter-spacing:2px">' + tierName + distNote + '</span>';
     levelBadge.style.color = 'var(--accent)';
 
     // 검 외형 변화 — applyLevelVisual로 통합 (v40+ 단계별 누적 화려함)
@@ -3221,6 +3245,20 @@
     // 팔기 시 자동 검명도 함께 — 검 정체성 미리 보기
     btn.firstChild.textContent = '팔 기  ·  ' + autoName + '  ';
     lbl.textContent = '+' + reward + ' 조각';
+  }
+
+  function renderWayProgress() {
+    const wrap = $('way-progress');
+    if (!wrap) return;
+    if (!state.hasSword) { wrap.innerHTML = ''; return; }
+    let html = '';
+    for (let i = 1; i <= MAX_LEVEL; i++) {
+      let cls = '';
+      if (i === MAX_LEVEL && state.level >= MAX_LEVEL) cls = 'way';
+      else if (i <= state.level) cls = 'active';
+      html += '<div class="dot ' + cls + '"></div>';
+    }
+    wrap.innerHTML = html;
   }
 
   function renderSoul() {
