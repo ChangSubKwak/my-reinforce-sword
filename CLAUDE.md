@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 새 인스턴스가 첫 5분 안에 잡을 그림:
 
-- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v56 누적 약 112KB JS / 174KB total. git 추적 (`main` 브랜치, GitHub remote).
+- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v62 누적 약 116KB JS / 178KB total. git 추적 (`main` 브랜치, GitHub remote).
 - **루프**: 강화(`enhance`) → 파괴 시 5초 회수(`showVoid`) → 강화 성공 시 그림자(`maybeTriggerChallenge`, 4종 변종) → 베기(`slay`) → 자발 봉인(`sealSword`, 道 검은 컷씬) → 새 검(`newSword`) + 명문(`checkInscriptions`) + 첫 강화 시 검의 形(`decideForm`).
 - **결정 차원**: 강화 / 방지권 / 회수 / 베기 / 물러남 / 봉인 / 숫돌(砥) / 영석(靈).
 - **상태 진입점**: `let state = {...}` 한 객체. `localStorage['reinforce_sword_v1']`. 음소거는 별도 키 `reinforce_sword_muted`.
@@ -516,6 +516,20 @@ footer 7개 버튼 → 3개 (조합소·계보·詩集) + 우상단 ≡ 메뉴 (
 **v55 명문 사전 모달** (`renderCodex`): 14종 명문 전체 — 한자/라벨/조건/시구/상태. 미획득은 opacity 0.35. 상단 진척도 (N/14). 메뉴 진입.
 
 **v56 도전 결정 명료**: 베기 버튼에 보상 텍스트 (`+N 조각`) + challenge-stakes에 검/그림자 강도 막대 비교.
+
+### v57+ 진행 가시화
+
+**v57 道 카운터**: `level-badge`에 `道까지 N` 표시 + 검 아래 `#way-progress` 15 dot (현재까지 황금, MAX_LEVEL=흰 발광).
+
+**v58 그림자 3종 SVG**: 검귀 외 逃影(작은 눈+발), 鋼影(갑옷 5줄), 影(소용돌이) — `#flee-detail`/`#steel-detail`/`#normal-detail` SVG, `showChallenge`에서 type별 toggle.
+
+**v59 봉인 검 정렬**: `legacySort` 모듈 변수 — recent/level-desc/level-asc/inscriptions 4종. 필터 후 정렬 적용. 계보 모달 정렬 버튼.
+
+**v60 강화 성공 큰 파티클**: 강화도별 차등 — 기본 `12+lv*2`, +10~12: 40, +13~14: 60+25 흰, +15(道): 80+50 흰+30 주황 3중 폭발.
+
+**v61 첫 진입 인트로**: `seenHelp=false` 시 도움말 *전*에 `劍 → 始` 페이드 (2.8초) 후 도움말 모달.
+
+**v62 道 도달 stage 황금 빛**: `#stage.way-flash` 5초 keyframe — rgba(255,245,192,0.7) → 점진 약화. 道 도달 시에만 발동.
 
 ### 봉인 균형 곡선 (참고)
 
