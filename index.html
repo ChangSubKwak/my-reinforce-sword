@@ -1820,12 +1820,19 @@
   <div class="modal-box">
     <h2>☁  로 그 인</h2>
     <div id="login-step1">
-      <p>이메일로 6자리 코드를 받아 로그인합니다.<br>비밀번호 없음 · 진행도 클라우드 저장 가능.</p>
+      <p>이메일로 코드를 받아 로그인합니다.<br>비밀번호 없음 · 진행도 클라우드 저장 가능.</p>
       <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"
         style="width:100%;padding:12px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:14px;text-align:center;margin-bottom:12px;outline:none;">
       <div style="display:flex;gap:8px">
         <button class="modal-close" data-close style="flex:1;margin:0">취 소</button>
         <button id="login-send" style="flex:1;padding:10px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:13px;letter-spacing:4px;cursor:pointer">코드 보내기</button>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);text-align:center">
+        <p style="font-size:10px;color:var(--dim);margin-bottom:8px;line-height:1.6">
+          이메일이 없으시다면?<br>
+          <span style="opacity:0.7">익명 게스트로 시작 (캐시 지우면 잃음 주의)</span>
+        </p>
+        <button id="login-anon" style="width:100%;padding:8px;background:transparent;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:4px;cursor:pointer">👤  익명 게스트로 시작</button>
       </div>
     </div>
     <div id="login-step2" style="display:none">
@@ -4676,7 +4683,9 @@
     if (lq) lq.style.display = loggedIn ? '' : 'none';
     if (lo) {
       lo.style.display = loggedIn ? '' : 'none';
-      lo.textContent = loggedIn ? '☁ ' + (user.email || '') + ' · 로그아웃' : '☁ 로그아웃';
+      const isAnon = !!(user && user.is_anonymous);
+      const label = isAnon ? '익명 게스트' : (user && user.email) || '';
+      lo.textContent = loggedIn ? '☁ ' + label + ' · 로그아웃' : '☁ 로그아웃';
     }
   }
 
@@ -4720,6 +4729,25 @@
     setTimeout(() => $('login-otp-code').focus(), 100);
     log('이메일에서 6자리 코드를 확인하세요', 'success');
   });
+  // 익명 게스트 가입
+  $('login-anon').addEventListener('click', async () => {
+    showLoginError(null);
+    const btn = $('login-anon');
+    btn.disabled = true;
+    btn.textContent = '가입 중...';
+    const { error } = await sbSignInAnonymously();
+    btn.disabled = false;
+    btn.textContent = '👤  익명 게스트로 시작';
+    if (error) {
+      showLoginError(error);
+      return;
+    }
+    $('login-modal').classList.remove('active');
+    log('익명 게스트로 로그인됨', 'success');
+    SFX.forge();
+    updateCloudMenu();
+  });
+
   $('login-back').addEventListener('click', () => {
     $('login-step2').style.display = 'none';
     $('login-step1').style.display = '';
@@ -5347,6 +5375,27 @@
   async function sbSignOut() {
     if (!sbClient) return;
     try { await sbClient.auth.signOut(); } catch (e) {}
+  }
+
+  // 익명 게스트 가입 (이메일 없는 사용자용)
+  async function sbSignInAnonymously() {
+    if (!sbClient) return { error: 'Supabase 미연결' };
+    try {
+      const { data, error } = await sbClient.auth.signInAnonymously();
+      if (error) {
+        console.error('[Supabase] 익명 가입 에러:', error);
+        // Supabase Dashboard에서 Anonymous Sign-ins 활성화 안 된 경우 안내
+        const msg = error.message || '';
+        if (msg.toLowerCase().includes('anonymous') || msg.toLowerCase().includes('disabled')) {
+          return { error: '익명 가입 비활성화됨. Supabase Dashboard에서 Authentication → Settings → Allow Anonymous Sign-ins 활성화 필요.' };
+        }
+        return { error: msg };
+      }
+      return { data };
+    } catch (e) {
+      console.error('[Supabase] 익명 가입 예외:', e);
+      return { error: e.message };
+    }
   }
 
   // 진행도 클라우드 저장
