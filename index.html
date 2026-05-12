@@ -56,6 +56,28 @@
     padding: 16px 18px;
     position: relative;
   }
+  /* v54 화면 흔들림 */
+  #game.screen-shake-light { animation: screen-shake-light 0.35s; }
+  #game.screen-shake-heavy { animation: screen-shake-heavy 0.55s; }
+  @keyframes screen-shake-light {
+    0%, 100% { transform: translate(0); }
+    20% { transform: translate(-3px, 1px); }
+    40% { transform: translate(3px, -1px); }
+    60% { transform: translate(-2px, 2px); }
+    80% { transform: translate(2px, -1px); }
+  }
+  @keyframes screen-shake-heavy {
+    0%, 100% { transform: translate(0); }
+    10% { transform: translate(-6px, 3px); }
+    20% { transform: translate(6px, -3px); }
+    30% { transform: translate(-5px, 2px); }
+    40% { transform: translate(5px, -2px); }
+    50% { transform: translate(-4px, 3px); }
+    60% { transform: translate(4px, -2px); }
+    70% { transform: translate(-3px, 1px); }
+    80% { transform: translate(3px, -1px); }
+    90% { transform: translate(-1px, 1px); }
+  }
   header {
     text-align: center;
     padding-bottom: 8px;
@@ -2064,6 +2086,7 @@
         log('검이 부서졌다 (+' + destroyedLevel + ')', 'destroy');
         burstParticles('#c0392b', 30);
         SFX.destroy();
+        screenShake(true);  // 검 파괴 — 큰 흔들림
         maybeMilestone('firstDestroy', '부서짐', '검이 부서졌습니다 — 5초 안에 조각을 주우세요');
         showVoid(destroyedLevel);
       } else if (failRoll < effectiveDestroy + t.downgrade && !useProtect) {
@@ -2285,6 +2308,7 @@
       void stage.offsetWidth;
       stage.classList.add('darken');
       setTimeout(() => stage.classList.remove('darken'), 800);
+      screenShake(true);  // 검귀 등장 — 큰 흔들림
     }
     showChallenge();
   }
@@ -2313,6 +2337,16 @@
   swordWrap.addEventListener('touchend', () => {
     if (swordSvg) swordSvg.style.transform = 'rotate(0deg)';
   });
+
+  // === 화면 흔들림 (v54) ===
+  function screenShake(heavy) {
+    const g = $('game');
+    if (!g) return;
+    g.classList.remove('screen-shake-light', 'screen-shake-heavy');
+    void g.offsetWidth;
+    g.classList.add(heavy ? 'screen-shake-heavy' : 'screen-shake-light');
+    setTimeout(() => g.classList.remove('screen-shake-light', 'screen-shake-heavy'), heavy ? 600 : 400);
+  }
 
   // === 황금 입자 떠다님 (강화도 ≥ 8) ===
   function spawnDust() {
@@ -2467,6 +2501,7 @@
       } else {
         state.level = Math.max(0, state.level - 1);
         log('베기 실패 — 검 단계 -1', 'destroy');
+        screenShake(false);  // 베기 실패 — 작은 흔들림
         inscribeQueue.push({ key: '失', label: '베기 실패 · 검 단계 -1' });
         if (!inscribeRunning) runInscribeQueue();
       }
