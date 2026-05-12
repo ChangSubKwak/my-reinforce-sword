@@ -4179,7 +4179,7 @@
       const kanjiColor = earned ? 'var(--accent)' : 'var(--dim)';
       const kanjiOpacity = earned ? '1' : '0.35';
       return '<div style="padding:10px 6px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px">' +
-        '<div style="font-size:28px;color:' + kanjiColor + ';letter-spacing:4px;opacity:' + kanjiOpacity + ';flex-shrink:0;width:50px;text-align:center">' + ins.key + '</div>' +
+        '<div class="codex-kanji" data-codex-key="' + ins.key + '" data-codex-label="' + ins.label + '" style="font-size:28px;color:' + kanjiColor + ';letter-spacing:4px;opacity:' + kanjiOpacity + ';flex-shrink:0;width:50px;text-align:center;cursor:pointer;transition:transform 0.15s">' + ins.key + '</div>' +
         '<div style="flex:1;font-size:11px;line-height:1.6">' +
           '<div style="color:var(--fg);letter-spacing:2px">' + ins.label + '</div>' +
           '<div style="color:var(--dim);font-size:10px;margin-top:2px">조건: ' + cond + '</div>' +
@@ -4194,6 +4194,17 @@
       '<div style="text-align:center;color:var(--accent);font-size:12px;letter-spacing:3px;padding:6px 0 10px;border-bottom:1px solid var(--line);margin-bottom:6px">' +
         earnedCount + ' / ' + totalCount + ' 획득' +
       '</div>' + list;
+    // 한자 클릭 시 페이드 미리 보기
+    document.querySelectorAll('.codex-kanji').forEach(el => {
+      el.addEventListener('mouseenter', () => { el.style.transform = 'scale(1.15)'; });
+      el.addEventListener('mouseleave', () => { el.style.transform = 'scale(1)'; });
+      el.addEventListener('click', () => {
+        const k = el.dataset.codexKey;
+        const lbl = el.dataset.codexLabel;
+        inscribeQueue.push({ key: k, label: lbl + ' (미리 보기)' });
+        if (!inscribeRunning) runInscribeQueue();
+      });
+    });
   }
   $('btn-help').addEventListener('click', () => {
     $('help-modal').classList.add('active');
