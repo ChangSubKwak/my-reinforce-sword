@@ -4331,6 +4331,32 @@
     };
     // 그림자 type 4종 — 가장 많이 베어낸 것 기준 비율
     const slainMax = Math.max(s.slainNormal || 0, s.slainFlee || 0, s.slainSteel || 0, s.slainDemon || 0, 1);
+    // v72 검명 컬렉션 — 4 form × 7 suffix
+    const forms = ['直', '曲', '重', '速'];
+    const suffixes = NAME_SUFFIX.map(s => s.word); // 道/魔/本/剛/覺/古/久
+    const collectedNames = new Set();
+    state.sealedSwords.forEach(s => {
+      // 자동 검명 재계산 (form + 정점 명문)
+      if (s.form && s.inscriptions) {
+        for (const def of NAME_SUFFIX) {
+          if (s.inscriptions.includes(def.key)) {
+            collectedNames.add(s.form + def.word);
+            break;
+          }
+        }
+      }
+    });
+    const totalSlots = forms.length * suffixes.length; // 28
+    const collectionGrid = '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:14px 0 6px">검 명  컬 렉 션 (' + collectedNames.size + ' / ' + totalSlots + ')</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:4px 0">' +
+        forms.map(f => suffixes.map(suf => {
+          const name = f + suf;
+          const got = collectedNames.has(name);
+          return '<div style="padding:6px 2px;text-align:center;font-size:11px;letter-spacing:2px;border:1px solid ' +
+            (got ? 'var(--accent)' : 'var(--line)') + ';color:' +
+            (got ? 'var(--accent)' : 'var(--dim)') + ';opacity:' + (got ? '1' : '0.4') + '">' + name + '</div>';
+        }).join('')).join('') +
+      '</div>';
     const personas = getPersonas();
     const personasHTML = '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:6px 0 6px">검 사 의  길</div>' +
       personas.map(p =>
@@ -4339,7 +4365,7 @@
         '<div style="color:var(--dim);font-size:10px;letter-spacing:2px;margin-top:2px">' + p.desc + '</div>' +
         '</div>'
       ).join('');
-    $('stats-list').innerHTML = personasHTML +
+    $('stats-list').innerHTML = personasHTML + collectionGrid +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:14px 0 4px;margin-top:4px">강 화</div>' +
       bar('성공률', rate + '% (' + (s.enhanceSuccess || 0) + '/' + (s.enhanceAttempts || 0) + ')',
           100, 'var(--safe)').replace(/>(\d+)% \(/, '><span style="font-size:10px">$1% (') +
