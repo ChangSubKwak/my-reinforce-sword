@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 새 인스턴스가 첫 5분 안에 잡을 그림:
 
-- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v70 누적 약 122KB JS / 184KB total. git 추적 (`main` 브랜치, GitHub remote).
+- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v75 누적 약 128KB JS / 192KB total. git 추적 (`main` 브랜치, GitHub remote).
 - **루프**: 강화(`enhance`) → 파괴 시 5초 회수(`showVoid`) → 강화 성공 시 그림자(`maybeTriggerChallenge`, 4종 변종) → 베기(`slay`) → 자발 봉인(`sealSword`, 道 검은 컷씬) → 새 검(`newSword`) + 명문(`checkInscriptions`) + 첫 강화 시 검의 形(`decideForm`).
 - **결정 차원**: 강화 / 방지권 / 회수 / 베기 / 물러남 / 봉인 / 숫돌(砥) / 영석(靈).
 - **상태 진입점**: `let state = {...}` 한 객체. `localStorage['reinforce_sword_v1']`. 음소거는 별도 키 `reinforce_sword_muted`.
@@ -546,6 +546,18 @@ footer 7개 버튼 → 3개 (조합소·계보·詩集) + 우상단 ≡ 메뉴 (
 **v68 명문 사전 페이드 미리 보기**: 한자 클릭 시 `inscribeQueue` push → 새겨질 때 페이드 재생. hover scale 1.15.
 
 **v69/v70 칼날 한자 새김**: `#mark-kanji` SVG text — 칼날 중앙(y=80, 10px) 한자 새김. 우선순위 `getPrimaryKanji`: 道(흰) > 鬼斬(주황) > 本(푸른) > 聖 > 斷魔. 메인 검 + 회고 모달 + 명명 미리 보기 모두 일관 적용.
+
+### v71+ 진행 가시화 / 컬렉션
+
+**v71 메인 미니 그래프** (`renderCurrentChart`): stats 아래 280x24 SVG sparkline — `state.currentSword.levelHistory` 실시간 반영. history ≥ 4 일 때만 표시 (의미있는 흐름).
+
+**v72 검명 컬렉션**: 4 form × 7 suffix = 28 슬롯 그리드 (통계 모달). 봉인된 검에서 검명 재구성 → `collectedNames` Set 비교. 획득은 황금, 미획득 흐림.
+
+**v73 베기 보상 시각화** (`spawnRewardShards`): 베기 성공 시 그림자 위치 → stats 조각 카운터로 입자 흐름. 보상 크기에 따라 5~15개, 30ms 지연 순차.
+
+**v74 명문 새김 칼날 빛**: `#sword-wrap.inscribe-stroke::after` 0.7s 키프레임 — 칼날 따라 빛 라인 위→아래 그어짐. `runInscribeQueue`에서 발동. SFX.inscribe + 칼날 시각 동기.
+
+**v75 시간 일지** (`state.recentLog`, `recordEvent`, `formatTimeAgo`): 최근 10건 액션 기록 (검 파괴 / 판매 / 베기). 통계 모달 '최근 일지'에 시간 표시.
 
 ### 봉인 균형 곡선 (참고)
 
