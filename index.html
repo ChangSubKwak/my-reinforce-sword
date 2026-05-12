@@ -1013,6 +1013,9 @@
   <button id="btn-stats">기 록</button>
   <button id="btn-help">안 내</button>
   <button id="btn-mute">소 리  끄 기</button>
+  <button id="btn-backup">진행도 백업</button>
+  <button id="btn-restore">진행도 복원</button>
+  <input type="file" id="restore-file-input" accept=".json,application/json" style="display:none">
   <button id="btn-reset">초 기 화</button>
 </div>
 <div id="game">
@@ -3455,9 +3458,64 @@
     }
   });
   // 메뉴 내 버튼은 클릭 후 자동 닫힘
-  ['btn-stats', 'btn-help', 'btn-reset'].forEach(id => {
+  ['btn-stats', 'btn-help', 'btn-reset', 'btn-backup', 'btn-restore'].forEach(id => {
     const b = $(id);
     if (b) b.addEventListener('click', () => $('menu-drop').classList.remove('open'));
+  });
+
+  // === v47 백업 / 복원 ===
+  $('btn-backup').addEventListener('click', () => {
+    try {
+      const data = JSON.stringify(state, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      a.download = 'reinforce-sword-backup-' + ts + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      log('백업 파일 저장됨', 'success');
+    } catch (e) {
+      log('백업 실패: ' + e.message, 'destroy');
+    }
+  });
+
+  $('btn-restore').addEventListener('click', () => {
+    $('restore-file-input').click();
+  });
+  $('restore-file-input').addEventListener('change', (ev) => {
+    const file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const loaded = JSON.parse(e.target.result);
+        if (typeof loaded !== 'object' || loaded === null) throw new Error('잘못된 형식');
+        if (!confirm('현재 진행도를 백업 파일로 덮어씁니다. 진행할까요?')) return;
+        // 기본 state에 병합 — 누락 필드 안전
+        state = Object.assign({}, state, loaded);
+        // load() 안의 보정 재실행
+        if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
+        if (!state.currentSword || typeof state.currentSword !== 'object') {
+          state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0 };
+        }
+        if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
+        if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
+        save();
+        gameOverShown = false;
+        $('gameover-overlay').classList.remove('active');
+        render();
+        log('진행도 복원됨', 'success');
+        SFX.forge();
+      } catch (err) {
+        alert('복원 실패: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    ev.target.value = ''; // 같은 파일 재선택 가능
   });
   $('btn-stats').addEventListener('click', () => {
     renderStats();
