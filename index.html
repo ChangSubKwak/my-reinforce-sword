@@ -1530,6 +1530,7 @@
         <line id="preview-mark-way" x1="50" y1="20" x2="50" y2="138" stroke="#fff5c0" stroke-width="1.6" opacity="0" style="filter: drop-shadow(0 0 3px #d4af37);"/>
         <circle id="preview-mark-demon" cx="50" cy="22" r="1.8" fill="#c0392b" opacity="0"/>
         <polygon id="preview-mark-honest" points="50,12 51.5,14 50,16 48.5,14" fill="#6a8a9a" opacity="0"/>
+        <text id="preview-mark-kanji" x="50" y="80" text-anchor="middle" font-size="10" fill="#fff5c0" opacity="0" style="filter: drop-shadow(0 0 4px #d4af37); font-family: 'Noto Serif KR', serif; font-weight: 700;"></text>
       </svg>
       <div id="name-preview" style="font-size:11px;color:var(--dim);line-height:1.9;letter-spacing:2px;text-align:left;flex:1"></div>
     </div>
@@ -3713,6 +3714,18 @@
     if (pMarkWay) pMarkWay.setAttribute('opacity', ins.includes('道') ? '0.85' : '0');
     if (pMarkDemon) pMarkDemon.setAttribute('opacity', ins.includes('鬼斬') ? '0.9' : '0');
     if (pMarkHonest) pMarkHonest.setAttribute('opacity', ins.includes('本') ? '0.7' : '0');
+    // v70 명명 미리 보기에도 한자 새김
+    const pKanji = $('preview-mark-kanji');
+    if (pKanji) {
+      const k = getPrimaryKanji(ins);
+      if (k) {
+        pKanji.textContent = k.k;
+        pKanji.setAttribute('fill', k.c);
+        pKanji.setAttribute('opacity', '0.9');
+      } else {
+        pKanji.setAttribute('opacity', '0');
+      }
+    }
     // 미리 보기: 형 + 명문 + 회수 + 시구
     const formStr = form ? '<span style="color:var(--accent);letter-spacing:4px">' + form + '</span>' : '<span style="color:var(--dim)">無</span>';
     const insStr = ins.length
@@ -3844,18 +3857,32 @@
       '</div></div>';
   }
 
+  function getPrimaryKanji(ins) {
+    if (ins.includes('道')) return { k: '道', c: '#fff5c0' };
+    if (ins.includes('鬼斬')) return { k: '鬼', c: '#ff8060' };
+    if (ins.includes('本')) return { k: '本', c: '#a0c0d0' };
+    if (ins.includes('聖')) return { k: '聖', c: '#fff5c0' };
+    if (ins.includes('斷魔')) return { k: '斷', c: '#fff5c0' };
+    return null;
+  }
+
   function buildDetailSwordSVG(s) {
-    // 검 SVG (form + level 기반) + 명문 마크
+    // 검 SVG (form + level 기반) + 명문 마크 + v69 한자 새김
     const ins = s.inscriptions || [];
     const body = buildSwordBody(s.level || 0, s.form);
     const wayOpacity = ins.includes('道') ? '0.85' : '0';
     const demonOpacity = ins.includes('鬼斬') ? '0.9' : '0';
     const honestOpacity = ins.includes('本') ? '0.7' : '0';
+    const kanji = getPrimaryKanji(ins);
+    const kanjiSVG = kanji
+      ? '<text x="50" y="80" text-anchor="middle" font-size="10" fill="' + kanji.c + '" opacity="0.9" style="filter: drop-shadow(0 0 4px #d4af37); font-family: \'Noto Serif KR\', serif; font-weight: 700;">' + kanji.k + '</text>'
+      : '';
     return '<svg viewBox="0 0 100 200" width="100" height="200" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 12px">' +
       '<g>' + body + '</g>' +
       '<line x1="50" y1="20" x2="50" y2="138" stroke="#fff5c0" stroke-width="1.6" opacity="' + wayOpacity + '" style="filter: drop-shadow(0 0 3px #d4af37);"/>' +
       '<circle cx="50" cy="22" r="1.8" fill="#c0392b" opacity="' + demonOpacity + '"/>' +
       '<polygon points="50,12 51.5,14 50,16 48.5,14" fill="#6a8a9a" opacity="' + honestOpacity + '"/>' +
+      kanjiSVG +
       '</svg>';
   }
   function showSwordDetail(s, index) {
