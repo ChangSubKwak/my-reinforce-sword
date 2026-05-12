@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 새 인스턴스가 첫 5분 안에 잡을 그림:
 
-- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v50 누적 약 102KB JS / 162KB total. git 추적 (`main` 브랜치, GitHub remote).
+- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v56 누적 약 112KB JS / 174KB total. git 추적 (`main` 브랜치, GitHub remote).
 - **루프**: 강화(`enhance`) → 파괴 시 5초 회수(`showVoid`) → 강화 성공 시 그림자(`maybeTriggerChallenge`, 4종 변종) → 베기(`slay`) → 자발 봉인(`sealSword`, 道 검은 컷씬) → 새 검(`newSword`) + 명문(`checkInscriptions`) + 첫 강화 시 검의 形(`decideForm`).
 - **결정 차원**: 강화 / 방지권 / 회수 / 베기 / 물러남 / 봉인 / 숫돌(砥) / 영석(靈).
 - **상태 진입점**: `let state = {...}` 한 객체. `localStorage['reinforce_sword_v1']`. 음소거는 별도 키 `reinforce_sword_muted`.
@@ -499,6 +499,23 @@ footer 7개 버튼 → 3개 (조합소·계보·詩集) + 우상단 ≡ 메뉴 (
 **v49 검귀 베어낸 큰 의식**: `#demon-slay-overlay` — 빨간 빛 슬래시 라인 + `鬼斬` 96px 한자 펄스 + 보상 메시지. 2.5초 페이드. `slay()` isDemon 분기에서 발동.
 
 **v50 사용자 페르소나 (`getPersonas`)**: 통계 기반 자동 분류 8종 (귀살자/봉인가/도의 추구자/달인/구원자/도박꾼/바람의 검/집착자/초보). 統計 모달 상단에 표시 — 게임의 거울.
+
+### v51+ 깊이 추가
+
+**v51 검 일생 그래프**: `state.currentSword.levelHistory` 배열 (최대 100점). `recordLevelHistory()`가 enhance 후 호출. 봉인 시 보존. `buildLevelChart`가 회고 모달에 SVG 라인 차트 (280x50) — 시작/끝/강화 횟수 표시.
+
+**v52 守 (수호자)**: `state.guardianIdx` — 봉인된 道 검 1자루 선택. 형별 패시브:
+- 直: 강화 +2% / 曲: 파괴 -2% / 重: 도전 보상 ×1.10 / 速: 회수 +1초
+
+`getGuardian()` + `guardianBonus()` — 道 명문 검만 가능. 회고 모달에 지정/해제 버튼.
+
+**v53 메인 화면 수호자 표시**: `#guardian-display` stage 좌측 상단 — 30x60 SVG + 검명 + 보너스. `renderGuardianDisplay()`가 매 render마다 갱신.
+
+**v54 화면 흔들림**: `screenShake(heavy)` — `#game.screen-shake-{light,heavy}` 클래스 토글. 베기 실패=light(0.35s), 검 파괴/검귀 등장=heavy(0.55s).
+
+**v55 명문 사전 모달** (`renderCodex`): 14종 명문 전체 — 한자/라벨/조건/시구/상태. 미획득은 opacity 0.35. 상단 진척도 (N/14). 메뉴 진입.
+
+**v56 도전 결정 명료**: 베기 버튼에 보상 텍스트 (`+N 조각`) + challenge-stakes에 검/그림자 강도 막대 비교.
 
 ### 봉인 균형 곡선 (참고)
 
