@@ -1829,9 +1829,9 @@
       </div>
     </div>
     <div id="login-step2" style="display:none">
-      <p>이메일에 도착한 <strong style="color:var(--accent)">6자리 코드</strong>를 입력하세요.<br><span style="font-size:11px;color:var(--dim)">디바이스 간 이동도 안전 (PC/모바일 어디서나)</span></p>
-      <input id="login-otp-code" type="text" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code"
-        style="width:100%;padding:14px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:22px;text-align:center;letter-spacing:12px;margin-bottom:12px;outline:none;">
+      <p>이메일에 도착한 <strong style="color:var(--accent)">코드</strong>를 입력하세요.<br><span style="font-size:11px;color:var(--dim)">디바이스 간 이동도 안전 (PC/모바일 어디서나)</span></p>
+      <input id="login-otp-code" type="text" placeholder="00000000" maxlength="8" inputmode="numeric" autocomplete="one-time-code"
+        style="width:100%;padding:14px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:22px;text-align:center;letter-spacing:8px;margin-bottom:12px;outline:none;">
       <div style="display:flex;gap:8px">
         <button id="login-back" style="flex:1;padding:10px;background:transparent;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:13px;letter-spacing:3px;cursor:pointer">이전</button>
         <button id="login-verify" style="flex:1;padding:10px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:13px;letter-spacing:4px;cursor:pointer">코드 확인</button>
@@ -4723,7 +4723,7 @@
     showLoginError(null);
     const email = $('login-email').value.trim();
     const code = $('login-otp-code').value.trim();
-    if (!code || code.length !== 6) { showLoginError('6자리 코드를 입력하세요'); return; }
+    if (!code || (code.length !== 6 && code.length !== 8)) { showLoginError('6자리 또는 8자리 코드를 입력하세요'); return; }
     const btn = $('login-verify');
     btn.disabled = true;
     btn.textContent = '확인 중...';
@@ -4754,12 +4754,12 @@
   $('login-otp-code').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); $('login-verify').click(); }
   });
-  // 6자리 입력 완료 시 자동 verify (UX)
+  // 6자리 또는 8자리 입력 완료 시 자동 verify (UX)
   $('login-otp-code').addEventListener('input', (e) => {
     const v = e.target.value.replace(/\D/g, ''); // 숫자만
     e.target.value = v;
-    if (v.length === 6) {
-      // 살짝 지연 후 자동 verify (사용자가 화면 보고 인지할 시간)
+    // Supabase OTP는 프로젝트에 따라 6자리 또는 8자리. 둘 다 자동 verify.
+    if (v.length === 6 || v.length === 8) {
       setTimeout(() => $('login-verify').click(), 200);
     }
   });
