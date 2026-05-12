@@ -290,6 +290,9 @@
     position: relative;
   }
   #rescue-circle:hover { transform: scale(1.1); }
+  #rescue-ring-circle {
+    transition: stroke-dashoffset 5s linear, stroke 0.3s;
+  }
   #rescue-circle:active { transform: scale(0.95); }
   @keyframes heartbeat {
     0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.6); }
@@ -1349,6 +1352,12 @@
     <div id="void">
       <div id="void-msg">검 이 부 서 졌 다</div>
       <div id="rescue-circle">
+        <svg id="rescue-ring" viewBox="0 0 100 100" style="position:absolute;inset:-8px;width:96px;height:96px;pointer-events:none;transform:rotate(-90deg)">
+          <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(192,57,43,0.2)" stroke-width="2"/>
+          <circle id="rescue-ring-circle" cx="50" cy="50" r="46" fill="none" stroke="#ff6655" stroke-width="2.5"
+            stroke-dasharray="289" stroke-dashoffset="0" stroke-linecap="round"
+            style="filter: drop-shadow(0 0 6px #ff6655)"/>
+        </svg>
         조각<br>줍기
         <div id="rescue-timer">5.0</div>
       </div>
@@ -2270,6 +2279,18 @@
     const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec; // 速流 + 冬 + 수호자 速 보너스
     let timeLeft = totalSec;
     rescueTimer.textContent = timeLeft.toFixed(1) + '초 안에  ·  +' + shardReward + ' 조각';
+    // v65 progress ring 5초 (또는 totalSec) 진행
+    const ringCircle = $('rescue-ring-circle');
+    if (ringCircle) {
+      // 즉시 리셋 (transition 없이)
+      ringCircle.style.transition = 'none';
+      ringCircle.style.strokeDashoffset = '0';
+      // 다음 프레임에 totalSec 동안 289로 진행
+      requestAnimationFrame(() => {
+        ringCircle.style.transition = 'stroke-dashoffset ' + totalSec + 's linear';
+        ringCircle.style.strokeDashoffset = '289';
+      });
+    }
 
     let rescued = false;
     const tickInterval = setInterval(() => {
