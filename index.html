@@ -4411,6 +4411,31 @@
     };
     // 그림자 type 4종 — 가장 많이 베어낸 것 기준 비율
     const slainMax = Math.max(s.slainNormal || 0, s.slainFlee || 0, s.slainSteel || 0, s.slainDemon || 0, 1);
+    // v76 형 분포 차트
+    const formCounts = { '直': 0, '曲': 0, '重': 0, '速': 0 };
+    const formNames = { '直': '곧은', '曲': '굽은', '重': '무거운', '速': '빠른' };
+    state.sealedSwords.forEach(sw => {
+      if (sw.form && formCounts[sw.form] !== undefined) formCounts[sw.form]++;
+    });
+    const totalForms = Object.values(formCounts).reduce((a, b) => a + b, 0);
+    const maxFormCount = Math.max(1, ...Object.values(formCounts));
+    const formChartHTML = totalForms > 0
+      ? '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:14px 0 6px">형  분 포</div>' +
+        Object.keys(formCounts).map(f => {
+          const c = formCounts[f];
+          const pct = (c / maxFormCount) * 100;
+          const ratio = totalForms > 0 ? Math.round((c / totalForms) * 100) : 0;
+          return '<div style="display:flex;align-items:center;gap:8px;padding:4px 4px;font-size:11px">' +
+            '<span style="color:var(--accent);width:30px;letter-spacing:3px">' + f + '</span>' +
+            '<span style="color:var(--dim);width:46px;font-size:10px">' + formNames[f] + '</span>' +
+            '<div style="flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden">' +
+              '<div style="height:100%;width:' + pct + '%;background:var(--accent);transition:width 0.5s"></div>' +
+            '</div>' +
+            '<span style="color:var(--fg);width:40px;text-align:right">' + c + ' (' + ratio + '%)</span>' +
+          '</div>';
+        }).join('')
+      : '';
+
     // v72 검명 컬렉션 — 4 form × 7 suffix
     const forms = ['直', '曲', '重', '速'];
     const suffixes = NAME_SUFFIX.map(s => s.word); // 道/魔/本/剛/覺/古/久
@@ -4456,7 +4481,7 @@
           '</div>'
         ).join('')
       : '';
-    $('stats-list').innerHTML = personasHTML + collectionGrid + timeLogHTML +
+    $('stats-list').innerHTML = personasHTML + formChartHTML + collectionGrid + timeLogHTML +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:14px 0 4px;margin-top:4px">강 화</div>' +
       bar('성공률', rate + '% (' + (s.enhanceSuccess || 0) + '/' + (s.enhanceAttempts || 0) + ')',
           100, 'var(--safe)').replace(/>(\d+)% \(/, '><span style="font-size:10px">$1% (') +
