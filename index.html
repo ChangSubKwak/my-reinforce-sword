@@ -1744,6 +1744,7 @@
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     heritageInscription: null,  // v33 — 道 검 봉인 후 다음 검에 전수될 명문 (1개)
     guardianIdx: null,  // v52 — 수호자로 지정된 봉인 검의 인덱스 (선택적)
+    recentLog: [],  // v75 — 최근 액션 기록 (최대 10건, 최신순)
     milestonesShown: {},  // v35 — 한 번씩만 표시되는 안내
     stats: {
       enhanceAttempts: 0, enhanceSuccess: 0,
@@ -1761,6 +1762,20 @@
   function bumpStat(key) {
     if (!state.stats) return;
     state.stats[key] = (state.stats[key] || 0) + 1;
+  }
+
+  // v75 시간 일지 — 최근 액션 기록
+  function recordEvent(text) {
+    if (!Array.isArray(state.recentLog)) state.recentLog = [];
+    state.recentLog.unshift({ t: Date.now(), text: text });
+    if (state.recentLog.length > 10) state.recentLog.length = 10;
+  }
+  function formatTimeAgo(ts) {
+    const sec = Math.floor((Date.now() - ts) / 1000);
+    if (sec < 60) return sec + '초 전';
+    if (sec < 3600) return Math.floor(sec / 60) + '분 전';
+    if (sec < 86400) return Math.floor(sec / 3600) + '시간 전';
+    return Math.floor(sec / 86400) + '일 전';
   }
 
   // v35 신규 마일스톤 안내 (한 번씩만)
@@ -1792,6 +1807,7 @@
       if (!state.shadowOriginsSlain || typeof state.shadowOriginsSlain !== 'object') state.shadowOriginsSlain = {};
       if (state.heritageInscription === undefined) state.heritageInscription = null;
       if (state.guardianIdx === undefined) state.guardianIdx = null;
+      if (!Array.isArray(state.recentLog)) state.recentLog = [];
       if (!state.milestonesShown || typeof state.milestonesShown !== 'object') state.milestonesShown = {};
       if (!state.stats || typeof state.stats !== 'object') {
         state.stats = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0 };
@@ -2267,6 +2283,7 @@
         burstParticles('#c0392b', 30);
         SFX.destroy();
         screenShake(true);  // 검 파괴 — 큰 흔들림
+        recordEvent('검 파괴 (+' + destroyedLevel + ')');
         maybeMilestone('firstDestroy', '부서짐', '검이 부서졌습니다 — 5초 안에 조각을 주우세요');
         showVoid(destroyedLevel);
       } else if (failRoll < effectiveDestroy + t.downgrade && !useProtect) {
@@ -2785,6 +2802,7 @@
       }
       checkInscriptions();
       log(c.type.name + ' 베어냄 +' + c.reward + ' 조각', 'success');
+      recordEvent(c.type.name + ' 베어냄 +' + c.reward);
       burstParticles(c.type.isDemon ? '#c0392b' : '#d4af37', c.type.isDemon ? 30 : 18);
       // v73 보상 조각 시각화 — 그림자 → stats 흐름
       const shardCount = Math.min(15, Math.max(5, Math.floor(c.reward / 8)));
@@ -3739,6 +3757,7 @@
     state.shards += reward;
     bumpStat('sealed');
     if (isWay) bumpStat('wayReached');
+    recordEvent('판매 ' + swordName + ' +' + reward + ' 조각');
     log('판매 +' + lv + ' — 조각 ' + reward, 'success');
     burstParticles('#d4af37', isWay ? 40 : 20);
     if (isWay) {
@@ -4426,7 +4445,18 @@
         '<div style="color:var(--dim);font-size:10px;letter-spacing:2px;margin-top:2px">' + p.desc + '</div>' +
         '</div>'
       ).join('');
-    $('stats-list').innerHTML = personasHTML + collectionGrid +
+    // v75 시간 일지
+    const recentLog = (state.recentLog || []).slice(0, 5);
+    const timeLogHTML = recentLog.length > 0
+      ? '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:14px 0 6px">최 근  일 지</div>' +
+        recentLog.map(e =>
+          '<div style="padding:4px 6px;font-size:11px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between">' +
+            '<span style="color:var(--fg)">' + e.text + '</span>' +
+            '<span style="color:var(--dim);font-size:9px;letter-spacing:1px">' + formatTimeAgo(e.t) + '</span>' +
+          '</div>'
+        ).join('')
+      : '';
+    $('stats-list').innerHTML = personasHTML + collectionGrid + timeLogHTML +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:14px 0 4px;margin-top:4px">강 화</div>' +
       bar('성공률', rate + '% (' + (s.enhanceSuccess || 0) + '/' + (s.enhanceAttempts || 0) + ')',
           100, 'var(--safe)').replace(/>(\d+)% \(/, '><span style="font-size:10px">$1% (') +
@@ -4468,6 +4498,7 @@
       shadowOriginsSlain: {},
       heritageInscription: null,
       guardianIdx: null,
+      recentLog: [],
       milestonesShown: {},
       stats: { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0 },
       seenHelp: true,
