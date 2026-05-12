@@ -1351,6 +1351,9 @@
         <line id="mark-way" x1="50" y1="20" x2="50" y2="138" stroke="#fff5c0" stroke-width="1.6" opacity="0" style="filter: drop-shadow(0 0 3px #d4af37);"/>
         <circle id="mark-demon" cx="50" cy="22" r="1.8" fill="#c0392b" opacity="0"/>
         <polygon id="mark-honest" points="50,12 51.5,14 50,16 48.5,14" fill="#6a8a9a" opacity="0"/>
+        <!-- v69 칼날 한자 새김 — 정점 명문 한자 -->
+        <text id="mark-kanji" x="50" y="80" text-anchor="middle" font-size="10" fill="#fff5c0" opacity="0"
+          style="filter: drop-shadow(0 0 4px #d4af37); font-family: 'Noto Serif KR', serif; font-weight: 700;"></text>
       </svg>
       <div id="level-badge">+0</div>
       <div id="soul-bar"><div id="soul-fill"></div></div>
@@ -2831,7 +2834,7 @@
     return SWORD_FORMS[state.currentSword.form] || null;
   }
 
-  // v23 정점 명문을 검 SVG에 새김 + v39 정점 검 발산
+  // v23 정점 명문을 검 SVG에 새김 + v39 정점 검 발산 + v69 한자 새김
   function applyInscriptionVisual() {
     const ins = (state.hasSword && state.currentSword.inscriptions) || [];
     const wayEl = $('mark-way');
@@ -2840,6 +2843,19 @@
     if (wayEl) wayEl.setAttribute('opacity', ins.includes('道') ? '0.85' : '0');
     if (demonEl) demonEl.setAttribute('opacity', ins.includes('鬼斬') ? '0.9' : '0');
     if (honestEl) honestEl.setAttribute('opacity', ins.includes('本') ? '0.7' : '0');
+    // v69 정점 명문 한자를 칼날 중앙에 직접 새김 (우선순위)
+    const kanjiEl = $('mark-kanji');
+    if (kanjiEl) {
+      let kanji = '', color = '#fff5c0';
+      if (ins.includes('道')) { kanji = '道'; color = '#fff5c0'; }
+      else if (ins.includes('鬼斬')) { kanji = '鬼'; color = '#ff8060'; }
+      else if (ins.includes('本')) { kanji = '本'; color = '#a0c0d0'; }
+      else if (ins.includes('聖')) { kanji = '聖'; color = '#fff5c0'; }
+      else if (ins.includes('斷魔')) { kanji = '斷'; color = '#fff5c0'; }
+      kanjiEl.textContent = kanji;
+      kanjiEl.setAttribute('fill', color);
+      kanjiEl.setAttribute('opacity', kanji ? '0.9' : '0');
+    }
     // 本 또는 道 명문 보유 시 검 전체에 호흡 발산
     if (swordWrap) {
       const isTranscendent = ins.includes('本') || ins.includes('道');
