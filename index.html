@@ -1913,7 +1913,8 @@
 <div id="gameover-overlay">
   <div id="gameover-title">길의 끝</div>
   <div id="gameover-msg">
-    검도 조각도 모두 잃었습니다.<br>
+    검이 사라졌습니다. 처음부터 다시 시작합니다.<br>
+    <span style="color:var(--dim);font-size:11px">조각·도구는 초기화 · 봉인된 검과 도(道) 기록은 영원히 보존</span><br><br>
     아래 <span style="color:var(--accent);font-weight:700">다시 시작</span> 버튼을 누르세요.
   </div>
   <div id="gameover-stats"></div>
@@ -3981,8 +3982,10 @@
   function isStuck() {
     const shardsNum = (typeof state.shards === 'number' && !isNaN(state.shards)) ? state.shards : 0;
     const hasSwordBool = state.hasSword === true;
-    // 케이스 1: 검 없음 + 새 검 못 만듦
-    if (!hasSwordBool) return shardsNum < NEWSWORD_COST;
+    // 회수 윈도우 진행 중에는 게임 오버 발동 차단 (사용자 마지막 기회)
+    if (rescueWindow) return false;
+    // 케이스 1: 검 없음 → 무조건 게임 오버 (조각 잔여 무관, '처음부터')
+    if (!hasSwordBool) return true;
     // 케이스 2: 검 보유 +1~+2 (판매 불가) + 다음 강화 비용 부족
     if (state.level >= 1 && state.level < SEAL_MIN_LEVEL) {
       const f = getForm();
@@ -4014,8 +4017,11 @@
     if (typeof SFX !== 'undefined' && SFX.destroy) SFX.destroy();
   }
   function restartFromGameOver() {
-    // 자비로운 재시작 — 검·조각 회복, 계보/통계 보존
+    // '처음부터' 재시작 — 현재 자원 초기화, 메타 진행(계보/통계/유파/始祖)은 영구 보존
     state.shards = NEWSWORD_COST;
+    state.protections = 0;
+    state.whetstones = 0;
+    state.spiritstones = 0;
     newSword();
     gameOverShown = false;
     $('gameover-overlay').classList.remove('active');
