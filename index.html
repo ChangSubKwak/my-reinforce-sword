@@ -31,6 +31,22 @@
   body.season-summer { background: radial-gradient(ellipse at 50% 30%, #322a1d 0%, #221b14 80%); }
   body.season-autumn { background: radial-gradient(ellipse at 50% 30%, #3a2a1c 0%, #221710 80%); }
   body.season-winter { background: radial-gradient(ellipse at 50% 30%, #232a30 0%, #161a1f 80%); }
+  /* v80 道 도달 카운터 (우측 상단, season-mark 옆) */
+  #way-counter {
+    position: fixed;
+    top: 14px;
+    right: 60px;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    opacity: 0.85;
+    pointer-events: none;
+    z-index: 25;
+    text-shadow: 0 0 8px rgba(232, 196, 84, 0.5);
+    display: none;
+  }
+  #way-counter.active { display: block; }
+
   #season-mark {
     position: fixed;
     top: 14px;
@@ -1273,6 +1289,7 @@
 </head>
 <body>
 <div id="season-mark"></div>
+<div id="way-counter"></div>
 <button id="menu-toggle">≡</button>
 <div id="menu-drop">
   <button id="btn-stats">기 록</button>
@@ -1891,6 +1908,18 @@
     if (ins.includes('久')) return { costMul: 1.05, sealMul: 1.05 };
     return { costMul: 1, sealMul: 1 };
   }
+  function renderWayCounter() {
+    const el = $('way-counter');
+    if (!el) return;
+    const ways = (state.stats && state.stats.wayReached) || 0;
+    if (ways > 0) {
+      el.textContent = '道 × ' + ways;
+      el.classList.add('active');
+    } else {
+      el.classList.remove('active');
+    }
+  }
+
   function applySeason() {
     const s = getSeason();
     const body = document.body;
@@ -2053,6 +2082,7 @@
     renderSealButton();
     renderCurrentChart();
     applySeason();
+    renderWayCounter();
     renderGuardianDisplay();
     checkGameOver();
 
