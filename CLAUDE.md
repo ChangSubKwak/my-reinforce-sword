@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 새 인스턴스가 첫 5분 안에 잡을 그림:
 
-- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v45 누적 약 93KB JS / 133KB total.
+- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v50 누적 약 102KB JS / 162KB total. git 추적 (`main` 브랜치, GitHub remote).
 - **루프**: 강화(`enhance`) → 파괴 시 5초 회수(`showVoid`) → 강화 성공 시 그림자(`maybeTriggerChallenge`, 4종 변종) → 베기(`slay`) → 자발 봉인(`sealSword`, 道 검은 컷씬) → 새 검(`newSword`) + 명문(`checkInscriptions`) + 첫 강화 시 검의 形(`decideForm`).
 - **결정 차원**: 강화 / 방지권 / 회수 / 베기 / 물러남 / 봉인 / 숫돌(砥) / 영석(靈).
 - **상태 진입점**: `let state = {...}` 한 객체. `localStorage['reinforce_sword_v1']`. 음소거는 별도 키 `reinforce_sword_muted`.
@@ -487,6 +487,18 @@ footer 7개 버튼 → 3개 (조합소·계보·詩集) + 우상단 ≡ 메뉴 (
 **통계 시각화 (v44)**: `bar(label, val, max, color)` 헬퍼 — 4px 막대 그래프. 기록 모달이 4 카테고리(강화/그림자/생사/정점)로 정리 + 그림자 4종 비율 시각 비교.
 
 **강화도 한자 단계명 (v45)**: level-badge에 강화도 + 한자 부제 — `+0 始`, `+1~2 初`, `+3~5 鍊`, `+6~9 強`, `+10~13 靈`, `+14 聖`, `+15 道`. 사용자 직관 강화.
+
+### v46+ 사용자 가치 도약
+
+**v46 명명 모달 검 SVG 미리 보기**: `askName` 모달에 작은 SVG (60x120) — `buildSwordBody`로 실제 검 모습 재구성, 정점 명문 마크 포함. 사용자가 *팔게 될 검*을 시각적으로 확인.
+
+**v47 진행도 백업/복원**: 메뉴에 JSON export/import. 백업은 `state` 전체 → 타임스탬프 파일명. 복원은 파일 선택 → confirm → `Object.assign` 병합 + load() 보정 재실행. 게임 오버 상태도 해제. 브라우저 캐시 초기화/다른 기기 이동 안전.
+
+**v48 회고 모달 검 SVG**: `showSwordDetail`에 `buildDetailSwordSVG` 결과 삽입 — 봉인된 검의 *그 당시* 모습 (form + level). 박물관 유물 시각.
+
+**v49 검귀 베어낸 큰 의식**: `#demon-slay-overlay` — 빨간 빛 슬래시 라인 + `鬼斬` 96px 한자 펄스 + 보상 메시지. 2.5초 페이드. `slay()` isDemon 분기에서 발동.
+
+**v50 사용자 페르소나 (`getPersonas`)**: 통계 기반 자동 분류 8종 (귀살자/봉인가/도의 추구자/달인/구원자/도박꾼/바람의 검/집착자/초보). 統計 모달 상단에 표시 — 게임의 거울.
 
 ### 봉인 균형 곡선 (참고)
 
