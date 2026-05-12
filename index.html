@@ -166,6 +166,35 @@
   }
   #sword-wrap.shake { animation: shake 0.4s; }
   #sword-wrap.flash { animation: flash 0.5s; }
+  /* v63 강화 merge — 부드럽게 떠올라 빛나며 안착 */
+  #sword-wrap.merge { animation: enhance-merge 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  @keyframes enhance-merge {
+    0%   { transform: translateY(0) scale(1); filter: brightness(1); }
+    25%  { transform: translateY(-14px) scale(1.06); filter: brightness(2.6) drop-shadow(0 0 30px #d4af37); }
+    55%  { transform: translateY(-6px) scale(1.03); filter: brightness(1.6) drop-shadow(0 0 16px #d4af37); }
+    100% { transform: translateY(0) scale(1); filter: brightness(1); }
+  }
+  /* 강화도 텍스트 부드러운 전환 */
+  #level-badge {
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.3s, text-shadow 0.3s;
+  }
+  #level-badge.merge-pop {
+    animation: level-pop 0.7s cubic-bezier(0.3, 1.5, 0.5, 1);
+  }
+  @keyframes level-pop {
+    0%   { transform: translateX(-50%) scale(1); }
+    30%  { transform: translateX(-50%) scale(1.35); color: #fff5c0; text-shadow: 0 0 24px #fff5c0, 0 0 48px #d4af37; }
+    100% { transform: translateX(-50%) scale(1); }
+  }
+  /* 조각 → 검으로 흘러들어가는 빛줄 (merge) */
+  .merge-ray {
+    position: absolute;
+    width: 2px;
+    background: linear-gradient(180deg, transparent, #fff5c0, transparent);
+    pointer-events: none;
+    transform-origin: top center;
+    opacity: 0;
+  }
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
     10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
@@ -2111,9 +2140,20 @@
       // 성공
       state.level++;
       if (state.level > state.bestLevel) state.bestLevel = state.level;
-      swordWrap.classList.remove('shake');
-      swordWrap.classList.add('flash');
-      setTimeout(() => swordWrap.classList.remove('flash'), 500);
+      swordWrap.classList.remove('shake', 'flash', 'merge');
+      void swordWrap.offsetWidth;
+      swordWrap.classList.add('merge');
+      setTimeout(() => swordWrap.classList.remove('merge'), 900);
+      // 강화도 표시 pop
+      const lb = $('level-badge');
+      if (lb) {
+        lb.classList.remove('merge-pop');
+        void lb.offsetWidth;
+        lb.classList.add('merge-pop');
+        setTimeout(() => lb.classList.remove('merge-pop'), 700);
+      }
+      // 조각이 검에 흘러드는 빛줄 (4방향)
+      spawnMergeRays();
       // v60 강화도별 파티클 양 증가 — 道 도달 시 압도적
       let particleCount = 12 + lv * 2;
       if (state.level >= MAX_LEVEL) particleCount = 80;
@@ -2430,6 +2470,35 @@
     void g.offsetWidth;
     g.classList.add(heavy ? 'screen-shake-heavy' : 'screen-shake-light');
     setTimeout(() => g.classList.remove('screen-shake-light', 'screen-shake-heavy'), heavy ? 600 : 400);
+  }
+
+  // === v63 강화 merge 빛줄 — 사방에서 검으로 모임 ===
+  function spawnMergeRays() {
+    const rect = swordWrap.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const count = 6;
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + Math.random() * 0.3;
+      const dist = 100 + Math.random() * 40;
+      const sx = cx + Math.cos(angle) * dist;
+      const sy = cy + Math.sin(angle) * dist;
+      const ray = document.createElement('div');
+      ray.className = 'merge-ray';
+      ray.style.left = sx + 'px';
+      ray.style.top = sy + 'px';
+      ray.style.height = dist + 'px';
+      // 회전 — 각도를 SVG와 같게 (검 방향)
+      const rotate = (angle * 180 / Math.PI) + 90;
+      ray.style.transform = 'rotate(' + rotate + 'deg)';
+      document.body.appendChild(ray);
+      ray.animate([
+        { opacity: 0, transform: 'rotate(' + rotate + 'deg) scaleY(0.3)' },
+        { opacity: 0.85, offset: 0.3, transform: 'rotate(' + rotate + 'deg) scaleY(1)' },
+        { opacity: 0, transform: 'rotate(' + rotate + 'deg) scaleY(0.1)' },
+      ], { duration: 600, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+      setTimeout(() => ray.remove(), 700);
+    }
   }
 
   // === 황금 입자 떠다님 (강화도 ≥ 8) ===
