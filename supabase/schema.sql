@@ -36,6 +36,7 @@ CREATE POLICY "user_state_update_own" ON public.user_state
 CREATE TABLE IF NOT EXISTS public.leaderboard (
   user_id        UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   nickname       TEXT NOT NULL,
+  email          TEXT,  -- 마스킹 표시용 (선택적, 사용자 동의 가정)
   best_level     INT  NOT NULL DEFAULT 0,
   way_reached    INT  NOT NULL DEFAULT 0,
   total_slain    INT  NOT NULL DEFAULT 0,

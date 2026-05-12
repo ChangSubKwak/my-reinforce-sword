@@ -4825,17 +4825,22 @@
     }
     $('lb-list').innerHTML =
       '<div style="display:grid;grid-template-columns:30px 1fr 50px 50px 50px;gap:6px;padding:6px 4px;border-bottom:1px solid var(--line);color:var(--dim);font-size:10px;letter-spacing:2px">' +
-        '<span>#</span><span>닉네임</span><span style="text-align:right">道</span><span style="text-align:right">최고</span><span style="text-align:right">베어냄</span>' +
+        '<span>#</span><span>검사</span><span style="text-align:right">道</span><span style="text-align:right">최고</span><span style="text-align:right">베어냄</span>' +
       '</div>' +
-      r.data.map((row, i) =>
-        '<div style="display:grid;grid-template-columns:30px 1fr 50px 50px 50px;gap:6px;padding:8px 4px;border-bottom:1px solid var(--line);align-items:center">' +
+      r.data.map((row, i) => {
+        const nickname = row.nickname || '이름없음';
+        const masked = maskEmail(row.email);
+        return '<div style="display:grid;grid-template-columns:30px 1fr 50px 50px 50px;gap:6px;padding:8px 4px;border-bottom:1px solid var(--line);align-items:center">' +
           '<span style="color:' + (i < 3 ? 'var(--accent)' : 'var(--dim)') + ';font-weight:' + (i < 3 ? '700' : 'normal') + '">' + (i + 1) + '</span>' +
-          '<span style="color:var(--fg)">' + (row.nickname || '이름없음') + '</span>' +
+          '<span style="display:flex;flex-direction:column;line-height:1.3">' +
+            '<span style="color:var(--fg);font-size:13px;letter-spacing:2px">' + nickname + '</span>' +
+            (masked ? '<span style="color:var(--dim);font-size:9px;letter-spacing:0;margin-top:2px">' + masked + '</span>' : '') +
+          '</span>' +
           '<span style="text-align:right;color:#fff5c0">' + (row.way_reached || 0) + '</span>' +
           '<span style="text-align:right;color:var(--accent)">+' + (row.best_level || 0) + '</span>' +
           '<span style="text-align:right;color:var(--dim)">' + (row.total_slain || 0) + '</span>' +
-        '</div>'
-      ).join('');
+        '</div>';
+      }).join('');
   });
 
   // 리더보드 점수 등록
@@ -5352,7 +5357,7 @@
     } catch (e) { return { error: e.message }; }
   }
 
-  // 리더보드 점수 등록 / 갱신
+  // 리더보드 점수 등록 / 갱신 (email 포함)
   async function sbSubmitScore(nickname) {
     const user = await sbGetUser();
     if (!user) return { error: '로그인이 필요합니다' };
@@ -5362,6 +5367,7 @@
       const { error } = await sbClient.from('leaderboard').upsert({
         user_id: user.id,
         nickname: safeName,
+        email: user.email || null,
         best_level: state.bestLevel || 0,
         way_reached: s.wayReached || 0,
         total_slain: state.totalSlain || 0,
@@ -5372,18 +5378,29 @@
     } catch (e) { return { error: e.message }; }
   }
 
-  // 리더보드 조회 (상위 N명)
+  // 리더보드 조회 (상위 N명) — email 포함
   async function sbFetchLeaderboard(limit) {
     if (!sbClient) return { data: [], error: 'Supabase 미연결' };
     try {
       const { data, error } = await sbClient.from('leaderboard')
-        .select('nickname, best_level, way_reached, total_slain, sealed_count, total_destroyed, updated_at')
+        .select('nickname, email, best_level, way_reached, total_slain, sealed_count, total_destroyed, updated_at')
         .order('way_reached', { ascending: false })
         .order('best_level', { ascending: false })
         .order('total_slain', { ascending: false })
         .limit(limit || 30);
       return { data: data || [], error: error && error.message };
     } catch (e) { return { data: [], error: e.message }; }
+  }
+
+  // 이메일 마스킹 — 안전한 부분 노출 (ab***@gmail.com 형식)
+  function maskEmail(email) {
+    if (!email || typeof email !== 'string') return '';
+    const at = email.indexOf('@');
+    if (at < 0) return email;
+    const user = email.slice(0, at);
+    const domain = email.slice(at + 1);
+    const u = user.length > 2 ? user.slice(0, 2) + '***' : (user[0] || '') + '*';
+    return u + '@' + domain;
   }
 
   // 인증 상태 변화 — log + UI 갱신 통합 (v82 + v83)
