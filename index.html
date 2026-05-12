@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>검(劍) — 강화의 도</title>
-<!-- v82 Supabase 클라이언트 (선택적 — 클라우드 동기화/리더보드) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<!-- v82+ Supabase 클라이언트 (최신 stable) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root {
     --bg: #1f1a14;
@@ -1663,20 +1663,30 @@
   </div>
 </div>
 
-<!-- v83 로그인 모달 (이메일 OTP) -->
+<!-- v83 로그인 모달 (이메일 매직 링크 + OTP 코드) -->
 <div class="modal" id="login-modal">
   <div class="modal-box">
     <h2>☁  로 그 인</h2>
-    <p id="login-step1">이메일로 일회용 코드를 받아 로그인합니다.<br>비밀번호 없음 · 진행도 클라우드 저장 가능.</p>
-    <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"
-      style="width:100%;padding:12px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:14px;text-align:center;margin-bottom:12px;outline:none;">
-    <div id="login-otp-wrap" style="display:none">
-      <p style="font-size:11px;color:var(--dim);margin-bottom:8px">이메일을 확인하시고 인증 링크를 클릭하세요.<br>인증되면 자동으로 로그인됩니다.</p>
+    <div id="login-step1">
+      <p>이메일로 로그인 (비밀번호 없음).<br>매직 링크 + 6자리 코드 함께 전송됩니다.</p>
+      <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"
+        style="width:100%;padding:12px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:14px;text-align:center;margin-bottom:12px;outline:none;">
+      <div style="display:flex;gap:8px">
+        <button class="modal-close" data-close style="flex:1;margin:0">취 소</button>
+        <button id="login-send" style="flex:1;padding:10px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:13px;letter-spacing:4px;cursor:pointer">코드 보내기</button>
+      </div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button class="modal-close" data-close style="flex:1;margin:0">취 소</button>
-      <button class="modal-close" id="login-send" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)">코드 보내기</button>
+    <div id="login-step2" style="display:none">
+      <p>이메일을 확인하세요.<br>① 매직 링크 클릭 (자동 로그인) <br>② 또는 6자리 코드 직접 입력</p>
+      <input id="login-otp-code" type="text" placeholder="123456" maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+        style="width:100%;padding:12px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:18px;text-align:center;letter-spacing:8px;margin-bottom:12px;outline:none;">
+      <div style="display:flex;gap:8px">
+        <button id="login-back" style="flex:1;padding:10px;background:transparent;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:13px;letter-spacing:3px;cursor:pointer">이전</button>
+        <button id="login-verify" style="flex:1;padding:10px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:13px;letter-spacing:4px;cursor:pointer">코드 확인</button>
+      </div>
+      <div id="login-resend" style="text-align:center;margin-top:10px;font-size:10px;color:var(--dim);cursor:pointer">코드 재전송</div>
     </div>
+    <div id="login-error" style="display:none;margin-top:12px;padding:8px;border:1px solid var(--danger);color:var(--danger);font-size:11px;text-align:center"></div>
   </div>
 </div>
 
@@ -4436,19 +4446,31 @@
     }
   }
 
-  // 로그인 모달
-  $('btn-cloud-login').addEventListener('click', () => {
-    if (!sbClient) { log('Supabase 미연결', 'destroy'); return; }
-    $('login-modal').classList.add('active');
+  // === 로그인 모달 (Step 1: 이메일 → Step 2: OTP 코드) ===
+  function showLoginError(msg) {
+    const el = $('login-error');
+    if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
+    el.style.display = '';
+    el.textContent = msg;
+  }
+  function resetLoginModal() {
     $('login-step1').style.display = '';
-    $('login-otp-wrap').style.display = 'none';
+    $('login-step2').style.display = 'none';
+    showLoginError(null);
     $('login-email').value = '';
+    $('login-otp-code').value = '';
+  }
+  $('btn-cloud-login').addEventListener('click', () => {
+    if (!sbClient) { log('Supabase 미연결 — CDN 로드 실패', 'destroy'); return; }
+    $('login-modal').classList.add('active');
+    resetLoginModal();
     setTimeout(() => $('login-email').focus(), 100);
   });
   $('login-send').addEventListener('click', async (e) => {
     e.preventDefault();
+    showLoginError(null);
     const email = $('login-email').value.trim();
-    if (!email || !email.includes('@')) { alert('유효한 이메일을 입력하세요'); return; }
+    if (!email || !email.includes('@')) { showLoginError('유효한 이메일을 입력하세요'); return; }
     const btn = $('login-send');
     btn.disabled = true;
     btn.textContent = '전송 중...';
@@ -4456,12 +4478,54 @@
     btn.disabled = false;
     btn.textContent = '코드 보내기';
     if (error) {
-      alert('전송 실패: ' + error);
+      showLoginError(error);
       return;
     }
     $('login-step1').style.display = 'none';
-    $('login-otp-wrap').style.display = '';
-    log('이메일을 확인하세요', 'success');
+    $('login-step2').style.display = '';
+    setTimeout(() => $('login-otp-code').focus(), 100);
+    log('이메일 확인 — 매직 링크 또는 6자리 코드', 'success');
+  });
+  $('login-back').addEventListener('click', () => {
+    $('login-step2').style.display = 'none';
+    $('login-step1').style.display = '';
+    showLoginError(null);
+    setTimeout(() => $('login-email').focus(), 100);
+  });
+  $('login-verify').addEventListener('click', async () => {
+    showLoginError(null);
+    const email = $('login-email').value.trim();
+    const code = $('login-otp-code').value.trim();
+    if (!code || code.length !== 6) { showLoginError('6자리 코드를 입력하세요'); return; }
+    const btn = $('login-verify');
+    btn.disabled = true;
+    btn.textContent = '확인 중...';
+    const { error } = await sbVerifyOtp(email, code);
+    btn.disabled = false;
+    btn.textContent = '코드 확인';
+    if (error) {
+      showLoginError('코드 인증 실패: ' + error);
+      return;
+    }
+    $('login-modal').classList.remove('active');
+    log('로그인 성공', 'success');
+    SFX.forge();
+    updateCloudMenu();
+  });
+  $('login-resend').addEventListener('click', async () => {
+    showLoginError(null);
+    const email = $('login-email').value.trim();
+    if (!email) return;
+    const r = await sbSignInWithEmail(email);
+    if (r.error) showLoginError(r.error);
+    else log('코드 재전송됨', 'success');
+  });
+  // Enter 키 지원
+  $('login-email').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); $('login-send').click(); }
+  });
+  $('login-otp-code').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); $('login-verify').click(); }
   });
 
   // 클라우드 저장
@@ -4986,14 +5050,48 @@
   }
 
   async function sbSignInWithEmail(email) {
+    if (!sbClient) return { error: 'Supabase 미연결 — CDN 로드 실패' };
+    try {
+      // file:// 진단
+      if (window.location.protocol === 'file:') {
+        return { error: 'file:// 환경에서는 로그인 불가. http://localhost:3000 또는 배포된 URL에서 실행하세요.' };
+      }
+      const { data, error } = await sbClient.auth.signInWithOtp({
+        email: email,
+        options: {
+          emailRedirectTo: window.location.origin + window.location.pathname,
+          shouldCreateUser: true,
+        }
+      });
+      if (error) {
+        console.error('[Supabase] signInWithOtp 에러:', error);
+        return { error: error.message + ' (code: ' + (error.status || error.code || 'unknown') + ')' };
+      }
+      return { data };
+    } catch (e) {
+      console.error('[Supabase] 예외:', e);
+      return { error: e.message || '알 수 없는 에러' };
+    }
+  }
+
+  // v83.1 OTP 코드로 직접 로그인 (매직 링크 대안)
+  async function sbVerifyOtp(email, token) {
     if (!sbClient) return { error: 'Supabase 미연결' };
     try {
-      const { data, error } = await sbClient.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: window.location.origin }
+      const { data, error } = await sbClient.auth.verifyOtp({
+        email: email,
+        token: token,
+        type: 'email',
       });
-      return { data, error: error && error.message };
-    } catch (e) { return { error: e.message }; }
+      if (error) {
+        console.error('[Supabase] verifyOtp 에러:', error);
+        return { error: error.message };
+      }
+      return { data };
+    } catch (e) {
+      console.error('[Supabase] verifyOtp 예외:', e);
+      return { error: e.message };
+    }
   }
 
   async function sbSignOut() {
