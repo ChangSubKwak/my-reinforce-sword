@@ -3716,8 +3716,9 @@
     });
   }
 
-  // === 계보 (v33 필터 + v32 클릭하여 회고) ===
+  // === 계보 (v33 필터 + v32 클릭 + v59 정렬) ===
   let legacyFilter = 'all'; // all / 直 / 曲 / 重 / 速 / 道
+  let legacySort = 'recent'; // recent / level-desc / level-asc / inscriptions
   function renderLegacy() {
     const list = $('legacy-list');
     const filterEl = $('legacy-filter');
@@ -3741,9 +3742,29 @@
           (active ? 'var(--accent)' : 'var(--dim)') +
           ';font-family:inherit;font-size:10px;letter-spacing:2px;cursor:pointer">' + f.label + ' ' + f.count + '</button>';
       }).join('');
+      // 정렬 옵션 추가
+      const sorts = [
+        { key: 'recent', label: '최신순' },
+        { key: 'level-desc', label: '강화도↓' },
+        { key: 'level-asc', label: '강화도↑' },
+        { key: 'inscriptions', label: '명문수↓' },
+      ];
+      const sortHTML = '<div style="width:100%;display:flex;gap:6px;justify-content:center;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)">' +
+        sorts.map(srt => {
+          const active = legacySort === srt.key;
+          return '<button data-sort="' + srt.key + '" style="padding:3px 8px;background:transparent;border:1px solid ' +
+            (active ? 'var(--accent)' : 'var(--line)') + ';color:' +
+            (active ? 'var(--accent)' : 'var(--dim)') +
+            ';font-family:inherit;font-size:10px;letter-spacing:2px;cursor:pointer">' + srt.label + '</button>';
+        }).join('') + '</div>';
+      filterEl.innerHTML += sortHTML;
       // 필터 클릭 이벤트
       filterEl.querySelectorAll('button[data-filter]').forEach(btn => {
         btn.addEventListener('click', () => { legacyFilter = btn.dataset.filter; renderLegacy(); });
+      });
+      // 정렬 클릭 이벤트
+      filterEl.querySelectorAll('button[data-sort]').forEach(btn => {
+        btn.addEventListener('click', () => { legacySort = btn.dataset.sort; renderLegacy(); });
       });
     } else if (filterEl) {
       filterEl.innerHTML = '';
@@ -3751,8 +3772,8 @@
     if (sealed.length === 0) {
       list.innerHTML = '<p style="text-align:center;color:var(--dim);font-size:12px;padding:24px 0;line-height:1.8">아직 판 검이 없습니다.<br><br>+' + SEAL_MIN_LEVEL + ' 이상의 검을 팔면<br>그 힘과 자국이 계보에 남습니다.</p>';
     } else {
-      // 필터 적용
-      const filtered = sealed.map((s, originalIdx) => ({s, originalIdx}))
+      // 필터 + 정렬 적용
+      let filtered = sealed.map((s, originalIdx) => ({s, originalIdx}))
         .filter(({s}) => {
           if (legacyFilter === 'all') return true;
           if (legacyFilter === '道') return (s.inscriptions || []).includes('道');
@@ -3763,7 +3784,17 @@
         $('legacy-summary').innerHTML = $('legacy-summary').innerHTML; // 유지
         return;
       }
-      const items = filtered.slice().reverse().map(({s, originalIdx}) => {
+      // 정렬
+      if (legacySort === 'recent') {
+        filtered = filtered.slice().reverse();
+      } else if (legacySort === 'level-desc') {
+        filtered.sort((a, b) => (b.s.level || 0) - (a.s.level || 0));
+      } else if (legacySort === 'level-asc') {
+        filtered.sort((a, b) => (a.s.level || 0) - (b.s.level || 0));
+      } else if (legacySort === 'inscriptions') {
+        filtered.sort((a, b) => (b.s.inscriptions || []).length - (a.s.inscriptions || []).length);
+      }
+      const items = filtered.map(({s, originalIdx}) => {
         const i = originalIdx + 1;
         const ins = (s.inscriptions || []);
         const hasWay = ins.includes('道');
