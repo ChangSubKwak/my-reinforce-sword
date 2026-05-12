@@ -488,6 +488,70 @@
     text-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
     pointer-events: none;
   }
+  /* v49 검귀 베어낸 큰 의식 컷씬 */
+  #demon-slay-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 350;
+    pointer-events: none;
+    background: radial-gradient(circle at center, rgba(192, 57, 43, 0.18), transparent 70%);
+    opacity: 0;
+  }
+  #demon-slay-overlay.active {
+    display: flex;
+    animation: demon-slay-fade 2.5s forwards;
+  }
+  @keyframes demon-slay-fade {
+    0% { opacity: 0; }
+    15% { opacity: 1; }
+    75% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  #demon-slay-overlay::before {
+    content: '';
+    position: absolute;
+    width: 800px;
+    height: 6px;
+    background: linear-gradient(90deg, transparent, #ff6655, #fff5c0, #ff6655, transparent);
+    box-shadow: 0 0 30px #ff6655, 0 0 60px rgba(255, 102, 85, 0.5);
+    animation: demon-slay-slash 0.6s ease-out;
+    transform: scaleX(0);
+  }
+  @keyframes demon-slay-slash {
+    0% { transform: scaleX(0); opacity: 0; }
+    30% { transform: scaleX(1); opacity: 1; }
+    100% { transform: scaleX(1); opacity: 0; }
+  }
+  #demon-slay-content {
+    position: relative;
+    text-align: center;
+  }
+  #demon-slay-kanji {
+    font-size: 96px;
+    color: #ff6655;
+    letter-spacing: 24px;
+    margin-left: 24px;
+    text-shadow:
+      0 0 30px rgba(255, 102, 85, 0.9),
+      0 0 60px rgba(255, 102, 85, 0.6),
+      0 0 100px rgba(192, 57, 43, 0.4);
+    animation: demon-slay-kanji-pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes demon-slay-kanji-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  #demon-slay-msg {
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 6px;
+    margin-top: 16px;
+    text-shadow: 0 0 12px rgba(212, 175, 55, 0.8);
+  }
+
   /* 게임 오버 — 검도 조각도 모두 잃은 끝 */
   #gameover-overlay {
     position: fixed;
@@ -1341,6 +1405,14 @@
     <h2 id="detail-name">劍</h2>
     <div id="detail-body" style="font-size:12px;line-height:1.9;letter-spacing:2px;color:var(--fg)"></div>
     <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- v49 검귀 베어낸 큰 의식 -->
+<div id="demon-slay-overlay">
+  <div id="demon-slay-content">
+    <div id="demon-slay-kanji">鬼斬</div>
+    <div id="demon-slay-msg">검귀를 베어냈다</div>
   </div>
 </div>
 
@@ -2301,6 +2373,15 @@
       if (c.type.isDemon) {
         grantInscription('鬼斬');
         addSoul(10); // 검귀 추가 +10
+        // v49 검귀 베어낸 큰 의식 컷씬
+        const dso = $('demon-slay-overlay');
+        if (dso) {
+          $('demon-slay-msg').textContent = '검귀를 베어냈다 · 조각 +' + c.reward;
+          dso.classList.remove('active');
+          void dso.offsetWidth;
+          dso.classList.add('active');
+          setTimeout(() => dso.classList.remove('active'), 2500);
+        }
       }
       checkInscriptions();
       log(c.type.name + ' 베어냄 +' + c.reward + ' 조각', 'success');
