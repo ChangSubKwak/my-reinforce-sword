@@ -4182,9 +4182,15 @@
   // === 시작 ===
   load();
   if (!state.seenHelp) {
-    $('help-modal').classList.add('active');
-    state.seenHelp = true;
-    save();
+    // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
+    inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
+    inscribeQueue.push({ key: '始', label: '강화를 시작하세요' });
+    if (!inscribeRunning) runInscribeQueue();
+    setTimeout(() => {
+      $('help-modal').classList.add('active');
+      state.seenHelp = true;
+      save();
+    }, 2800);
   }
   render();
   // 초기 진입 시 게임 오버 상황(저장된 데이터로) 즉시 감지
