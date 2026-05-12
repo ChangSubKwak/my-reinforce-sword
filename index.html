@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>검(劍) — 강화의 도</title>
+<!-- v82 Supabase 클라이언트 (선택적 — 클라우드 동기화/리더보드) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
   :root {
     --bg: #1f1a14;
@@ -4769,6 +4771,112 @@
     }
     if (e.key === 'm' || e.key === 'M') toggleMute();
   });
+
+  // === v82 Supabase 통합 (선택적) ===
+  const SUPABASE_URL = 'https://ouxohdlfzxsqniizxman.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_wfB6tzvpxfKrJVGIxAZHTw_PiHiG2AP';
+  let sbClient = null;
+  try {
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+      sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+  } catch (e) { console.warn('Supabase 초기화 실패:', e); }
+
+  async function sbGetUser() {
+    if (!sbClient) return null;
+    try {
+      const { data } = await sbClient.auth.getUser();
+      return (data && data.user) || null;
+    } catch (e) { return null; }
+  }
+
+  async function sbSignInWithEmail(email) {
+    if (!sbClient) return { error: 'Supabase 미연결' };
+    try {
+      const { data, error } = await sbClient.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin }
+      });
+      return { data, error: error && error.message };
+    } catch (e) { return { error: e.message }; }
+  }
+
+  async function sbSignOut() {
+    if (!sbClient) return;
+    try { await sbClient.auth.signOut(); } catch (e) {}
+  }
+
+  // 진행도 클라우드 저장
+  async function sbPushState() {
+    const user = await sbGetUser();
+    if (!user) return { error: '로그인이 필요합니다' };
+    try {
+      const { error } = await sbClient.from('user_state').upsert({
+        user_id: user.id,
+        state: state,
+      }, { onConflict: 'user_id' });
+      return { error: error && error.message };
+    } catch (e) { return { error: e.message }; }
+  }
+
+  // 진행도 클라우드 복원
+  async function sbPullState() {
+    const user = await sbGetUser();
+    if (!user) return { error: '로그인이 필요합니다' };
+    try {
+      const { data, error } = await sbClient.from('user_state').select('state').eq('user_id', user.id).maybeSingle();
+      if (error) return { error: error.message };
+      if (!data) return { error: '클라우드에 저장된 데이터 없음' };
+      return { data: data.state };
+    } catch (e) { return { error: e.message }; }
+  }
+
+  // 리더보드 점수 등록 / 갱신
+  async function sbSubmitScore(nickname) {
+    const user = await sbGetUser();
+    if (!user) return { error: '로그인이 필요합니다' };
+    const safeName = (nickname || '').trim().slice(0, 24) || '이름없음';
+    const s = state.stats || {};
+    try {
+      const { error } = await sbClient.from('leaderboard').upsert({
+        user_id: user.id,
+        nickname: safeName,
+        best_level: state.bestLevel || 0,
+        way_reached: s.wayReached || 0,
+        total_slain: state.totalSlain || 0,
+        sealed_count: (state.sealedSwords || []).length,
+        total_destroyed: state.totalDestroyed || 0,
+      }, { onConflict: 'user_id' });
+      return { error: error && error.message };
+    } catch (e) { return { error: e.message }; }
+  }
+
+  // 리더보드 조회 (상위 N명)
+  async function sbFetchLeaderboard(limit) {
+    if (!sbClient) return { data: [], error: 'Supabase 미연결' };
+    try {
+      const { data, error } = await sbClient.from('leaderboard')
+        .select('nickname, best_level, way_reached, total_slain, sealed_count, total_destroyed, updated_at')
+        .order('way_reached', { ascending: false })
+        .order('best_level', { ascending: false })
+        .order('total_slain', { ascending: false })
+        .limit(limit || 30);
+      return { data: data || [], error: error && error.message };
+    } catch (e) { return { data: [], error: e.message }; }
+  }
+
+  // 인증 상태 변화 감지
+  if (sbClient) {
+    try {
+      sbClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          log('로그인됨 — ' + (session.user.email || ''), 'success');
+        } else if (event === 'SIGNED_OUT') {
+          log('로그아웃됨', 'fail');
+        }
+      });
+    } catch (e) {}
+  }
 
   // === 시작 ===
   load();
