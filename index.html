@@ -1298,8 +1298,15 @@
   <button id="btn-codex">명문 사전</button>
   <button id="btn-help">안 내</button>
   <button id="btn-mute">소 리  끄 기</button>
-  <button id="btn-backup">진행도 백업</button>
-  <button id="btn-restore">진행도 복원</button>
+  <div style="height:1px;background:var(--line);margin:4px 0"></div>
+  <button id="btn-cloud-login">☁ 로 그 인</button>
+  <button id="btn-cloud-push" style="display:none">☁ 클라우드 저장</button>
+  <button id="btn-cloud-pull" style="display:none">☁ 클라우드 복원</button>
+  <button id="btn-cloud-logout" style="display:none">☁ 로그아웃</button>
+  <button id="btn-leaderboard">🏆 리 더 보 드</button>
+  <div style="height:1px;background:var(--line);margin:4px 0"></div>
+  <button id="btn-backup">진행도 백업 (파일)</button>
+  <button id="btn-restore">진행도 복원 (파일)</button>
   <button id="btn-export-sword">현재 검 SVG 저장</button>
   <input type="file" id="restore-file-input" accept=".json,application/json" style="display:none">
   <button id="btn-reset">초 기 화</button>
@@ -1652,6 +1659,38 @@
     <h2>명 문  사 전</h2>
     <p>모든 명문 · 획득 조건 · 시구</p>
     <div id="codex-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- v83 로그인 모달 (이메일 OTP) -->
+<div class="modal" id="login-modal">
+  <div class="modal-box">
+    <h2>☁  로 그 인</h2>
+    <p id="login-step1">이메일로 일회용 코드를 받아 로그인합니다.<br>비밀번호 없음 · 진행도 클라우드 저장 가능.</p>
+    <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"
+      style="width:100%;padding:12px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:14px;text-align:center;margin-bottom:12px;outline:none;">
+    <div id="login-otp-wrap" style="display:none">
+      <p style="font-size:11px;color:var(--dim);margin-bottom:8px">이메일을 확인하시고 인증 링크를 클릭하세요.<br>인증되면 자동으로 로그인됩니다.</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="modal-close" data-close style="flex:1;margin:0">취 소</button>
+      <button class="modal-close" id="login-send" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)">코드 보내기</button>
+    </div>
+  </div>
+</div>
+
+<!-- v83 리더보드 모달 -->
+<div class="modal" id="leaderboard-modal">
+  <div class="modal-box" style="max-width:460px">
+    <h2>🏆  리 더 보 드</h2>
+    <p id="lb-info">전 세계 검사들의 기록</p>
+    <div id="lb-list" style="max-height:380px;overflow-y:auto;font-size:12px;letter-spacing:1px">불러오는 중...</div>
+    <div id="lb-submit-wrap" style="display:none;padding:10px 0;border-top:1px solid var(--line);margin-top:10px">
+      <input id="lb-nickname" type="text" placeholder="닉네임 (16자)" maxlength="16"
+        style="width:100%;padding:10px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:14px;text-align:center;margin-bottom:8px;outline:none;">
+      <button class="modal-close" id="lb-submit" style="width:100%;border-color:var(--accent);color:var(--accent);margin:0">내 점수 등록 / 갱신</button>
+    </div>
     <button class="modal-close" data-close>닫 기</button>
   </div>
 </div>
@@ -3881,6 +3920,14 @@
       const ways = (state.stats && state.stats.wayReached) || 0;
       if (ways === 5) setTimeout(() => announceInscription('達人', '도(道) 5번 달성 — 달인의 경지'), 6200);
       if (ways === 10) setTimeout(() => announceInscription('聖', '도(道) 10번 달성 — 성인의 경지'), 6600);
+      // v83 道 도달 시 로그인된 사용자에게 점수 등록 안내
+      if (sbClient) {
+        sbGetUser().then(user => {
+          if (user) {
+            setTimeout(() => log('🏆 리더보드 메뉴에서 점수를 등록하세요', 'success'), 7500);
+          }
+        }).catch(() => {});
+      }
       // v33 傳授: 道 검 봉인 시 희귀 명문 1개 다음 검에 전수
       const heritageOrder = ['斷魔', '鬼斬', '古', '久'];
       const heritage = heritageOrder.find(k => ins.includes(k));
@@ -4357,6 +4404,8 @@
   $('menu-toggle').addEventListener('click', (e) => {
     e.stopPropagation();
     $('menu-drop').classList.toggle('open');
+    // 메뉴 열릴 때 클라우드 메뉴 상태 최신화
+    if ($('menu-drop').classList.contains('open') && sbClient) updateCloudMenu();
   });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#menu-drop') && !e.target.closest('#menu-toggle')) {
@@ -4364,10 +4413,156 @@
     }
   });
   // 메뉴 내 버튼은 클릭 후 자동 닫힘
-  ['btn-stats', 'btn-help', 'btn-reset', 'btn-backup', 'btn-restore', 'btn-export-sword', 'btn-codex'].forEach(id => {
+  ['btn-stats', 'btn-help', 'btn-reset', 'btn-backup', 'btn-restore', 'btn-export-sword', 'btn-codex',
+   'btn-cloud-login', 'btn-cloud-push', 'btn-cloud-pull', 'btn-cloud-logout', 'btn-leaderboard'].forEach(id => {
     const b = $(id);
     if (b) b.addEventListener('click', () => $('menu-drop').classList.remove('open'));
   });
+
+  // === v83 Supabase UI 통합 ===
+  async function updateCloudMenu() {
+    const user = await sbGetUser();
+    const loggedIn = !!user;
+    const ll = $('btn-cloud-login');
+    const lp = $('btn-cloud-push');
+    const lq = $('btn-cloud-pull');
+    const lo = $('btn-cloud-logout');
+    if (ll) ll.style.display = loggedIn ? 'none' : '';
+    if (lp) lp.style.display = loggedIn ? '' : 'none';
+    if (lq) lq.style.display = loggedIn ? '' : 'none';
+    if (lo) {
+      lo.style.display = loggedIn ? '' : 'none';
+      lo.textContent = loggedIn ? '☁ ' + (user.email || '') + ' · 로그아웃' : '☁ 로그아웃';
+    }
+  }
+
+  // 로그인 모달
+  $('btn-cloud-login').addEventListener('click', () => {
+    if (!sbClient) { log('Supabase 미연결', 'destroy'); return; }
+    $('login-modal').classList.add('active');
+    $('login-step1').style.display = '';
+    $('login-otp-wrap').style.display = 'none';
+    $('login-email').value = '';
+    setTimeout(() => $('login-email').focus(), 100);
+  });
+  $('login-send').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const email = $('login-email').value.trim();
+    if (!email || !email.includes('@')) { alert('유효한 이메일을 입력하세요'); return; }
+    const btn = $('login-send');
+    btn.disabled = true;
+    btn.textContent = '전송 중...';
+    const { error } = await sbSignInWithEmail(email);
+    btn.disabled = false;
+    btn.textContent = '코드 보내기';
+    if (error) {
+      alert('전송 실패: ' + error);
+      return;
+    }
+    $('login-step1').style.display = 'none';
+    $('login-otp-wrap').style.display = '';
+    log('이메일을 확인하세요', 'success');
+  });
+
+  // 클라우드 저장
+  $('btn-cloud-push').addEventListener('click', async () => {
+    const r = await sbPushState();
+    if (r.error) { log('클라우드 저장 실패: ' + r.error, 'destroy'); return; }
+    log('클라우드에 저장됨', 'success');
+    SFX.forge();
+  });
+
+  // 클라우드 복원
+  $('btn-cloud-pull').addEventListener('click', async () => {
+    if (!confirm('현재 진행도를 클라우드 데이터로 덮어씁니다. 진행할까요?')) return;
+    const r = await sbPullState();
+    if (r.error) { log('클라우드 복원 실패: ' + r.error, 'destroy'); return; }
+    if (typeof r.data !== 'object' || r.data === null) { log('데이터 형식 오류', 'destroy'); return; }
+    state = Object.assign({}, state, r.data);
+    // load 보정 재실행
+    if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
+    if (!state.currentSword || typeof state.currentSword !== 'object') {
+      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0] };
+    }
+    if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
+    if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
+    if (!Array.isArray(state.currentSword.levelHistory)) state.currentSword.levelHistory = [state.level || 0];
+    save();
+    gameOverShown = false;
+    $('gameover-overlay').classList.remove('active');
+    render();
+    log('클라우드에서 복원됨', 'success');
+    SFX.forge();
+  });
+
+  // 로그아웃
+  $('btn-cloud-logout').addEventListener('click', async () => {
+    await sbSignOut();
+    updateCloudMenu();
+  });
+
+  // 리더보드 열기
+  $('btn-leaderboard').addEventListener('click', async () => {
+    $('leaderboard-modal').classList.add('active');
+    $('lb-list').innerHTML = '<div style="text-align:center;color:var(--dim);padding:20px">불러오는 중...</div>';
+    // 본인 등록 영역 — 로그인 상태면 표시
+    const user = await sbGetUser();
+    $('lb-submit-wrap').style.display = user ? '' : 'none';
+    if (!user) $('lb-info').innerHTML = '전 세계 검사들의 기록<br><span style="color:var(--dim);font-size:10px">로그인하면 점수를 등록할 수 있습니다</span>';
+    else $('lb-info').textContent = '전 세계 검사들의 기록 · 닉네임으로 등록';
+    // 리더보드 조회
+    const r = await sbFetchLeaderboard(30);
+    if (r.error) {
+      $('lb-list').innerHTML = '<div style="text-align:center;color:var(--danger);padding:20px;font-size:11px">조회 실패: ' + r.error + '</div>';
+      return;
+    }
+    if (!r.data || r.data.length === 0) {
+      $('lb-list').innerHTML = '<div style="text-align:center;color:var(--dim);padding:20px">아직 등록된 점수가 없습니다.<br>첫 번째 등록자가 되어보세요!</div>';
+      return;
+    }
+    $('lb-list').innerHTML =
+      '<div style="display:grid;grid-template-columns:30px 1fr 50px 50px 50px;gap:6px;padding:6px 4px;border-bottom:1px solid var(--line);color:var(--dim);font-size:10px;letter-spacing:2px">' +
+        '<span>#</span><span>닉네임</span><span style="text-align:right">道</span><span style="text-align:right">최고</span><span style="text-align:right">베어냄</span>' +
+      '</div>' +
+      r.data.map((row, i) =>
+        '<div style="display:grid;grid-template-columns:30px 1fr 50px 50px 50px;gap:6px;padding:8px 4px;border-bottom:1px solid var(--line);align-items:center">' +
+          '<span style="color:' + (i < 3 ? 'var(--accent)' : 'var(--dim)') + ';font-weight:' + (i < 3 ? '700' : 'normal') + '">' + (i + 1) + '</span>' +
+          '<span style="color:var(--fg)">' + (row.nickname || '이름없음') + '</span>' +
+          '<span style="text-align:right;color:#fff5c0">' + (row.way_reached || 0) + '</span>' +
+          '<span style="text-align:right;color:var(--accent)">+' + (row.best_level || 0) + '</span>' +
+          '<span style="text-align:right;color:var(--dim)">' + (row.total_slain || 0) + '</span>' +
+        '</div>'
+      ).join('');
+  });
+
+  // 리더보드 점수 등록
+  $('lb-submit').addEventListener('click', async () => {
+    const nick = $('lb-nickname').value.trim();
+    if (!nick) { alert('닉네임을 입력하세요'); return; }
+    const btn = $('lb-submit');
+    btn.disabled = true;
+    btn.textContent = '등록 중...';
+    const r = await sbSubmitScore(nick);
+    btn.disabled = false;
+    btn.textContent = '내 점수 등록 / 갱신';
+    if (r.error) { alert('등록 실패: ' + r.error); return; }
+    log('리더보드 등록됨 — ' + nick, 'success');
+    // 닫지 않고 다시 fetch
+    $('btn-leaderboard').click();
+  });
+
+  // 초기 메뉴 상태 갱신 + 로그인 상태 변화 감지
+  if (sbClient) {
+    updateCloudMenu();
+    try {
+      sbClient.auth.onAuthStateChange((event) => {
+        updateCloudMenu();
+        if (event === 'SIGNED_IN') {
+          $('login-modal').classList.remove('active');
+        }
+      });
+    } catch (e) {}
+  }
 
   // v77 현재 검 SVG 저장
   $('btn-export-sword').addEventListener('click', () => {
@@ -4865,7 +5060,7 @@
     } catch (e) { return { data: [], error: e.message }; }
   }
 
-  // 인증 상태 변화 감지
+  // 인증 상태 변화 알림용 log (UI 갱신은 v83 updateCloudMenu에서)
   if (sbClient) {
     try {
       sbClient.auth.onAuthStateChange((event, session) => {
