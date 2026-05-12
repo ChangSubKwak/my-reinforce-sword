@@ -1236,6 +1236,7 @@
   <button id="btn-mute">소 리  끄 기</button>
   <button id="btn-backup">진행도 백업</button>
   <button id="btn-restore">진행도 복원</button>
+  <button id="btn-export-sword">현재 검 SVG 저장</button>
   <input type="file" id="restore-file-input" accept=".json,application/json" style="display:none">
   <button id="btn-reset">초 기 화</button>
 </div>
@@ -4223,9 +4224,51 @@
     }
   });
   // 메뉴 내 버튼은 클릭 후 자동 닫힘
-  ['btn-stats', 'btn-help', 'btn-reset', 'btn-backup', 'btn-restore'].forEach(id => {
+  ['btn-stats', 'btn-help', 'btn-reset', 'btn-backup', 'btn-restore', 'btn-export-sword', 'btn-codex'].forEach(id => {
     const b = $(id);
     if (b) b.addEventListener('click', () => $('menu-drop').classList.remove('open'));
+  });
+
+  // v77 현재 검 SVG 저장
+  $('btn-export-sword').addEventListener('click', () => {
+    if (!state.hasSword) {
+      log('저장할 검이 없습니다', 'destroy');
+      return;
+    }
+    try {
+      const lv = state.level;
+      const form = state.currentSword.form;
+      const ins = state.currentSword.inscriptions || [];
+      const name = makeSwordName(form, ins, lv);
+      const body = buildSwordBody(lv, form);
+      const k = getPrimaryKanji(ins);
+      const kanjiSVG = k
+        ? '<text x="50" y="80" text-anchor="middle" font-size="10" fill="' + k.c + '" opacity="0.9" style="filter: drop-shadow(0 0 4px #d4af37); font-family: serif; font-weight: 700;">' + k.k + '</text>'
+        : '';
+      const defs = document.querySelector('#sword-svg defs').outerHTML;
+      // 명문 마크 (정점)
+      const wayMark = ins.includes('道') ? '<line x1="50" y1="20" x2="50" y2="138" stroke="#fff5c0" stroke-width="1.6" opacity="0.85" style="filter: drop-shadow(0 0 3px #d4af37);"/>' : '';
+      const demonMark = ins.includes('鬼斬') ? '<circle cx="50" cy="22" r="1.8" fill="#c0392b" opacity="0.9"/>' : '';
+      const honestMark = ins.includes('本') ? '<polygon points="50,12 51.5,14 50,16 48.5,14" fill="#6a8a9a" opacity="0.7"/>' : '';
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200" width="200" height="400">' +
+        defs +
+        '<rect width="100" height="200" fill="#1f1a14"/>' +
+        body + wayMark + demonMark + honestMark + kanjiSVG +
+        '<text x="50" y="195" text-anchor="middle" font-size="6" fill="#d4af37" font-family="serif">' + name + ' · +' + lv + '</text>' +
+        '</svg>';
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name + '_' + lv + '.svg';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      log('검 SVG 저장됨 — ' + name, 'success');
+    } catch (e) {
+      log('저장 실패: ' + e.message, 'destroy');
+    }
   });
 
   // === v47 백업 / 복원 ===
