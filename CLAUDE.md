@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 새 인스턴스가 첫 5분 안에 잡을 그림:
 
-- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v80 누적 약 133KB JS / 198KB total. git 추적 (`main` 브랜치, GitHub remote).
+- **파일**: `index.html` (인라인) + `server.js` (Express 정적 서버) + `package.json` + `render.yaml` + `supabase/schema.sql`. v1~v83 누적 약 144KB JS / 약 215KB index.html. git 추적 (`main` 브랜치, GitHub remote). Render Web Service 배포 가능, Supabase 연결.
 - **루프**: 강화(`enhance`) → 파괴 시 5초 회수(`showVoid`) → 강화 성공 시 그림자(`maybeTriggerChallenge`, 4종 변종) → 베기(`slay`) → 자발 봉인(`sealSword`, 道 검은 컷씬) → 새 검(`newSword`) + 명문(`checkInscriptions`) + 첫 강화 시 검의 形(`decideForm`).
 - **결정 차원**: 강화 / 방지권 / 회수 / 베기 / 물러남 / 봉인 / 숫돌(砥) / 영석(靈).
 - **상태 진입점**: `let state = {...}` 한 객체. `localStorage['reinforce_sword_v1']`. 음소거는 별도 키 `reinforce_sword_muted`.
@@ -570,6 +570,29 @@ footer 7개 버튼 → 3개 (조합소·계보·詩集) + 우상단 ≡ 메뉴 (
 **v79 키보드 mini 안내**: footer 위 항상 표시 — `␣` 강화 / `Esc` 도망 / `P` 보호권 / `M` 소리. 9px opacity 0.5.
 
 **v80 道 카운터**: 우측 상단 `道 × N` (wayReached ≥ 1 시). 황금 + 빛 그림자. season-mark 옆 (right: 60px).
+
+### v81+ 호스팅 + 클라우드 (Render + Supabase)
+
+**v81 Node + Express 정적 서버**:
+- `server.js` — Express, 보안 헤더, index.html no-cache, SPA 폴백
+- `package.json` — express 4.21, `npm start`, node >=18
+- `render.yaml` — Render Blueprint (free plan, node 20, `npm install` + `npm start`)
+- `README.md` — 게임 설명 + 호스팅/단축키 가이드
+
+로컬: `npm install && npm start` (PORT 환경변수 지원, 기본 3000).
+
+**v82 Supabase 통합 (코드)**:
+- `head`: supabase-js@2.45.4 UMD CDN
+- 상수: `SUPABASE_URL` / `SUPABASE_ANON_KEY` (publishable, 클라이언트 안전)
+- IIFE 내 함수: `sbClient` / `sbGetUser` / `sbSignInWithEmail` (OTP) / `sbSignOut` / `sbPushState` / `sbPullState` / `sbSubmitScore` / `sbFetchLeaderboard`
+- `supabase/schema.sql`: 2 테이블 (user_state JSONB, leaderboard) + RLS + updated_at 트리거
+
+**v83 Supabase UI**:
+- 메뉴: `☁ 로그인` (이메일 OTP) / `☁ 클라우드 저장` / `☁ 클라우드 복원` / `☁ 로그아웃` / `🏆 리더보드` — `updateCloudMenu()` 로그인 상태 동기
+- `#login-modal`: 이메일 → 매직 링크 (Step 1 → OTP 대기)
+- `#leaderboard-modal`: 상위 30 그리드 (#/닉네임/道/최고/베어냄), 1~3위 황금. 로그인 시 닉네임 등록/갱신 영역
+- `onAuthStateChange`로 자동 UI 갱신 + 로그인 모달 자동 닫힘
+- 道 도달 시 로그인 사용자에게 점수 등록 안내 log (7.5초 후)
 
 ### 봉인 균형 곡선 (참고)
 
