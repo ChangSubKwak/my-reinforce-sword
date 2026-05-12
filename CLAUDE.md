@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 새 인스턴스가 첫 5분 안에 잡을 그림:
 
-- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v62 누적 약 116KB JS / 178KB total. git 추적 (`main` 브랜치, GitHub remote).
+- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v70 누적 약 122KB JS / 184KB total. git 추적 (`main` 브랜치, GitHub remote).
 - **루프**: 강화(`enhance`) → 파괴 시 5초 회수(`showVoid`) → 강화 성공 시 그림자(`maybeTriggerChallenge`, 4종 변종) → 베기(`slay`) → 자발 봉인(`sealSword`, 道 검은 컷씬) → 새 검(`newSword`) + 명문(`checkInscriptions`) + 첫 강화 시 검의 形(`decideForm`).
 - **결정 차원**: 강화 / 방지권 / 회수 / 베기 / 물러남 / 봉인 / 숫돌(砥) / 영석(靈).
 - **상태 진입점**: `let state = {...}` 한 객체. `localStorage['reinforce_sword_v1']`. 음소거는 별도 키 `reinforce_sword_muted`.
@@ -530,6 +530,22 @@ footer 7개 버튼 → 3개 (조합소·계보·詩集) + 우상단 ≡ 메뉴 (
 **v61 첫 진입 인트로**: `seenHelp=false` 시 도움말 *전*에 `劍 → 始` 페이드 (2.8초) 후 도움말 모달.
 
 **v62 道 도달 stage 황금 빛**: `#stage.way-flash` 5초 keyframe — rgba(255,245,192,0.7) → 점진 약화. 道 도달 시에만 발동.
+
+### v63+ 시각 깊이 (액션의 무게)
+
+**v63 강화 merge**: `#sword-wrap.merge` 0.9s 키프레임 (떠올라 빛나며 안착) + level-badge `merge-pop` 1.35배 (0.7s) + `spawnMergeRays` 6방향 빛줄 사방에서 검으로.
+
+**v64 봉인 dissolve**: 일반 봉인 시 `#sword-wrap.dissolve` 0.8s (솟구쳐 빛으로 사라짐, scale 1.7, opacity 0) + 새 검 `appear` 0.6s (아래에서 솟아 안착). 道 봉인은 의식 컷씬으로 가려져 별도 X.
+
+**v65 회수 ring**: `#rescue-ring-circle` SVG (r=46) strokeDashoffset 0→289 transition. `totalSec`에 맞춰 (速流/冬/守 보너스 반영) 동적 transition 시간. 시간 흐름 시각화.
+
+**v66 선대 강기 빛 모임**: `spawnLegacyRays(count)` — newSword 시 始祖(15)/達人(15)/聖(20) 입자 사방에서 검으로 모임. 1.2s cubic-bezier, 자동 정리.
+
+**v67 도전 zoom-in**: `#challenge.active` 0.45s `challenge-appear` 키프레임 (scale 0.88→1.02→1, cubic-bezier).
+
+**v68 명문 사전 페이드 미리 보기**: 한자 클릭 시 `inscribeQueue` push → 새겨질 때 페이드 재생. hover scale 1.15.
+
+**v69/v70 칼날 한자 새김**: `#mark-kanji` SVG text — 칼날 중앙(y=80, 10px) 한자 새김. 우선순위 `getPrimaryKanji`: 道(흰) > 鬼斬(주황) > 本(푸른) > 聖 > 斷魔. 메인 검 + 회고 모달 + 명명 미리 보기 모두 일관 적용.
 
 ### 봉인 균형 곡선 (참고)
 
