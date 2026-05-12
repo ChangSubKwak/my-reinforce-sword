@@ -1455,6 +1455,7 @@
       <div class="stat-value" id="stat-destroyed">0</div>
     </div>
   </div>
+  <svg id="current-chart" viewBox="0 0 280 24" width="100%" height="24" preserveAspectRatio="none" style="display:none;opacity:0.55;margin-top:4px"></svg>
 
   <div id="actions">
     <div id="odds">
@@ -1956,6 +1957,7 @@
     renderSoul();
     renderWayProgress();
     renderSealButton();
+    renderCurrentChart();
     applySeason();
     renderGuardianDisplay();
     checkGameOver();
@@ -3458,6 +3460,30 @@
     // 팔기 시 자동 검명도 함께 — 검 정체성 미리 보기
     btn.firstChild.textContent = '팔 기  ·  ' + autoName + '  ';
     lbl.textContent = '+' + reward + ' 조각';
+  }
+
+  function renderCurrentChart() {
+    const el = $('current-chart');
+    if (!el) return;
+    if (!state.hasSword) { el.style.display = 'none'; return; }
+    const h = state.currentSword.levelHistory || [];
+    if (h.length < 4) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    const max = Math.max.apply(null, h.concat([MAX_LEVEL]));
+    const w = 280, ht = 24;
+    const dx = w / Math.max(1, h.length - 1);
+    let pts = '';
+    let fillPts = '0,' + ht;
+    for (let i = 0; i < h.length; i++) {
+      const x = (i * dx).toFixed(1);
+      const y = (ht - (h[i] / max) * ht).toFixed(1);
+      pts += (i ? ' ' : '') + x + ',' + y;
+      fillPts += ' ' + x + ',' + y;
+    }
+    fillPts += ' ' + w + ',' + ht;
+    el.innerHTML =
+      '<polygon points="' + fillPts + '" fill="rgba(232,196,84,0.12)"/>' +
+      '<polyline points="' + pts + '" fill="none" stroke="#e8c454" stroke-width="1"/>';
   }
 
   function renderWayProgress() {
