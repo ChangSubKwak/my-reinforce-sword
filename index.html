@@ -2521,6 +2521,38 @@
     setTimeout(() => g.classList.remove('screen-shake-light', 'screen-shake-heavy'), heavy ? 600 : 400);
   }
 
+  // === v73 베기 보상 — 그림자 위치에서 검 stats로 조각 흐름 ===
+  function spawnRewardShards(count) {
+    const shadowEl = $('challenge-shadow');
+    const statShards = $('stat-shards');
+    if (!shadowEl || !statShards) return;
+    const srcRect = shadowEl.getBoundingClientRect();
+    const dstRect = statShards.getBoundingClientRect();
+    const sx = srcRect.left + srcRect.width / 2;
+    const sy = srcRect.top + srcRect.height / 2;
+    const dx = dstRect.left + dstRect.width / 2;
+    const dy = dstRect.top + dstRect.height / 2;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = sx + 'px';
+      p.style.top = sy + 'px';
+      p.style.background = '#fff5c0';
+      p.style.boxShadow = '0 0 8px #d4af37';
+      document.body.appendChild(p);
+      const delay = i * 30;
+      const offsetX = (Math.random() - 0.5) * 40;
+      const offsetY = (Math.random() - 0.5) * 40;
+      p.animate([
+        { opacity: 0, transform: 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(0.6)' },
+        { opacity: 1, offset: 0.2, transform: 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(1.2)' },
+        { opacity: 1, offset: 0.7, transform: 'translate(' + (dx - sx) + 'px,' + (dy - sy) + 'px) scale(1)' },
+        { opacity: 0, transform: 'translate(' + (dx - sx) + 'px,' + (dy - sy) + 'px) scale(0.4)' },
+      ], { duration: 900, delay: delay, easing: 'cubic-bezier(0.4, 0.0, 0.2, 1)' });
+      setTimeout(() => p.remove(), 1100 + delay);
+    }
+  }
+
   // === v66 선대 강기 빛 모임 — 새 검 생성 시 사방에서 빛이 검으로 ===
   function spawnLegacyRays(count) {
     const rect = swordWrap.getBoundingClientRect();
@@ -2735,6 +2767,9 @@
       checkInscriptions();
       log(c.type.name + ' 베어냄 +' + c.reward + ' 조각', 'success');
       burstParticles(c.type.isDemon ? '#c0392b' : '#d4af37', c.type.isDemon ? 30 : 18);
+      // v73 보상 조각 시각화 — 그림자 → stats 흐름
+      const shardCount = Math.min(15, Math.max(5, Math.floor(c.reward / 8)));
+      spawnRewardShards(shardCount);
       // 큰 도전엔 보너스 방지권
       if (c.strength >= 8 && Math.random() < 0.35) {
         state.protections++;
