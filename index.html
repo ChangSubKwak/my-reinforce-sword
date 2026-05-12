@@ -3646,6 +3646,24 @@
     list.innerHTML = items.join('');
   }
 
+  // v50 사용자 페르소나 — 통계 기반 자동 분류
+  function getPersonas() {
+    const s = state.stats || {};
+    const personas = [];
+    if ((s.slainDemon || 0) >= 3) personas.push({ name: '귀살자 (鬼殺者)', desc: '검귀를 거듭 베어낸 자' });
+    if ((s.sealed || 0) >= 10) personas.push({ name: '봉인가 (封印家)', desc: '10자루 이상 봉인한 자' });
+    if ((s.wayReached || 0) >= 1) personas.push({ name: '도(道)의 추구자', desc: '최고 단계에 이른 적이 있다' });
+    if ((s.wayReached || 0) >= 5) personas.push({ name: '달인 (達人)', desc: '도(道)를 다섯 번 지났다' });
+    if ((s.rescued || 0) >= 5) personas.push({ name: '구원자 (救援者)', desc: '검의 파편을 거듭 회수' });
+    if ((state.totalDestroyed || 0) >= 10) personas.push({ name: '도박꾼 (賭博者)', desc: '많은 검을 잃었지만 계속 도전한다' });
+    if ((s.fled || 0) >= 10) personas.push({ name: '바람의 검 (風劍)', desc: '도전에서 자주 물러난다' });
+    if (state.sealedSwords && state.sealedSwords.length === 0 && (state.bestLevel || 0) >= 8) {
+      personas.push({ name: '집착자 (執着者)', desc: '한 자루의 검을 깊이 키운다' });
+    }
+    if (personas.length === 0) personas.push({ name: '초보 (初步)', desc: '검의 길을 막 시작한 자' });
+    return personas;
+  }
+
   function renderStats() {
     const s = state.stats || {};
     const rate = s.enhanceAttempts > 0 ? Math.round((s.enhanceSuccess / s.enhanceAttempts) * 100) : 0;
@@ -3659,8 +3677,16 @@
     };
     // 그림자 type 4종 — 가장 많이 베어낸 것 기준 비율
     const slainMax = Math.max(s.slainNormal || 0, s.slainFlee || 0, s.slainSteel || 0, s.slainDemon || 0, 1);
-    $('stats-list').innerHTML =
-      '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:6px 0 4px;margin-top:4px">강 화</div>' +
+    const personas = getPersonas();
+    const personasHTML = '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:6px 0 6px">검 사 의  길</div>' +
+      personas.map(p =>
+        '<div style="padding:6px 4px;border-bottom:1px solid var(--line)">' +
+        '<div style="color:var(--accent);letter-spacing:3px;font-size:13px">' + p.name + '</div>' +
+        '<div style="color:var(--dim);font-size:10px;letter-spacing:2px;margin-top:2px">' + p.desc + '</div>' +
+        '</div>'
+      ).join('');
+    $('stats-list').innerHTML = personasHTML +
+      '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:14px 0 4px;margin-top:4px">강 화</div>' +
       bar('성공률', rate + '% (' + (s.enhanceSuccess || 0) + '/' + (s.enhanceAttempts || 0) + ')',
           100, 'var(--safe)').replace(/>(\d+)% \(/, '><span style="font-size:10px">$1% (') +
       row('강화 시도', (s.enhanceAttempts || 0) + ' 회') +
