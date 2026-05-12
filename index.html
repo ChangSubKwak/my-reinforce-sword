@@ -474,6 +474,36 @@
     100% { opacity: 0; transform: translateX(-10px); }
   }
 
+  /* v53 메인 화면 수호자 표시 */
+  #guardian-display {
+    position: absolute;
+    top: 50px;
+    left: 12px;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 4px;
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    border-radius: 6px;
+    pointer-events: none;
+    z-index: 20;
+  }
+  #guardian-display.active { display: flex; }
+  #guardian-display svg { flex-shrink: 0; }
+  #guardian-display .info {
+    font-size: 9px;
+    line-height: 1.5;
+    letter-spacing: 2px;
+  }
+  #guardian-display .who {
+    color: var(--accent);
+  }
+  #guardian-display .bonus {
+    color: var(--dim);
+    font-size: 8px;
+  }
+
   /* 銘 — 검 위 명문 표시 */
   #sword-inscriptions {
     position: absolute;
@@ -1088,6 +1118,15 @@
   </header>
 
   <div id="stage">
+    <div id="guardian-display">
+      <svg id="guardian-svg" viewBox="0 0 100 200" width="30" height="60" xmlns="http://www.w3.org/2000/svg">
+        <g id="guardian-body"></g>
+      </svg>
+      <div class="info">
+        <div class="who" id="guardian-name">—</div>
+        <div class="bonus" id="guardian-bonus">—</div>
+      </div>
+    </div>
     <div id="sword-wrap">
       <div id="sword-inscriptions"></div>
       <svg id="sword-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
@@ -1770,6 +1809,7 @@
     renderSoul();
     renderSealButton();
     applySeason();
+    renderGuardianDisplay();
     checkGameOver();
 
     if (!state.hasSword) {
@@ -3058,6 +3098,24 @@
     SFX.inscribe();
     // 1.2초 페이드 + 100ms 간격 → 다음 1.3초 후 다음 페이드
     setTimeout(runInscribeQueue, 1300);
+  }
+
+  function renderGuardianDisplay() {
+    const wrap = $('guardian-display');
+    if (!wrap) return;
+    const g = getGuardian();
+    if (!g) { wrap.classList.remove('active'); return; }
+    wrap.classList.add('active');
+    const body = $('guardian-body');
+    if (body) body.innerHTML = buildSwordBody(g.level || 0, g.form);
+    $('guardian-name').textContent = (g.name || '검') + ' · 守';
+    const bonusMap = {
+      '直': '강화 +2%',
+      '曲': '파괴 -2%',
+      '重': '보상 ×1.1',
+      '速': '회수 +1초',
+    };
+    $('guardian-bonus').textContent = bonusMap[g.form] || '강화 +1%';
   }
 
   function renderSealButton() {
