@@ -4614,19 +4614,7 @@
     // 닫지 않고 다시 fetch
     $('btn-leaderboard').click();
   });
-
-  // 초기 메뉴 상태 갱신 + 로그인 상태 변화 감지
-  if (sbClient) {
-    updateCloudMenu();
-    try {
-      sbClient.auth.onAuthStateChange((event) => {
-        updateCloudMenu();
-        if (event === 'SIGNED_IN') {
-          $('login-modal').classList.remove('active');
-        }
-      });
-    } catch (e) {}
-  }
+  // 초기 메뉴 상태 갱신 + UI 인증 상태 감지는 Supabase 블록 정의 후 (TDZ 회피)
 
   // v77 현재 검 SVG 저장
   $('btn-export-sword').addEventListener('click', () => {
@@ -5158,17 +5146,21 @@
     } catch (e) { return { data: [], error: e.message }; }
   }
 
-  // 인증 상태 변화 알림용 log (UI 갱신은 v83 updateCloudMenu에서)
+  // 인증 상태 변화 — log + UI 갱신 통합 (v82 + v83)
   if (sbClient) {
     try {
       sbClient.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_IN' && session) {
           log('로그인됨 — ' + (session.user.email || ''), 'success');
+          $('login-modal').classList.remove('active');
         } else if (event === 'SIGNED_OUT') {
           log('로그아웃됨', 'fail');
         }
+        if (typeof updateCloudMenu === 'function') updateCloudMenu();
       });
     } catch (e) {}
+    // 초기 메뉴 상태 갱신 (페이지 로드 시 이미 로그인되어 있을 수 있음)
+    if (typeof updateCloudMenu === 'function') updateCloudMenu();
   }
 
   // === 시작 ===
