@@ -1663,12 +1663,12 @@
   </div>
 </div>
 
-<!-- v83 로그인 모달 (이메일 매직 링크 + OTP 코드) -->
+<!-- v83 로그인 모달 (이메일 6자리 OTP 코드) -->
 <div class="modal" id="login-modal">
   <div class="modal-box">
     <h2>☁  로 그 인</h2>
     <div id="login-step1">
-      <p>이메일로 로그인 (비밀번호 없음).<br>매직 링크 + 6자리 코드 함께 전송됩니다.</p>
+      <p>이메일로 6자리 코드를 받아 로그인합니다.<br>비밀번호 없음 · 진행도 클라우드 저장 가능.</p>
       <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"
         style="width:100%;padding:12px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:14px;text-align:center;margin-bottom:12px;outline:none;">
       <div style="display:flex;gap:8px">
@@ -1677,14 +1677,14 @@
       </div>
     </div>
     <div id="login-step2" style="display:none">
-      <p>이메일을 확인하세요.<br>① 매직 링크 클릭 (자동 로그인) <br>② 또는 6자리 코드 직접 입력</p>
-      <input id="login-otp-code" type="text" placeholder="123456" maxlength="6" inputmode="numeric" autocomplete="one-time-code"
-        style="width:100%;padding:12px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:18px;text-align:center;letter-spacing:8px;margin-bottom:12px;outline:none;">
+      <p>이메일에 도착한 <strong style="color:var(--accent)">6자리 코드</strong>를 입력하세요.<br><span style="font-size:11px;color:var(--dim)">디바이스 간 이동도 안전 (PC/모바일 어디서나)</span></p>
+      <input id="login-otp-code" type="text" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+        style="width:100%;padding:14px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:22px;text-align:center;letter-spacing:12px;margin-bottom:12px;outline:none;">
       <div style="display:flex;gap:8px">
         <button id="login-back" style="flex:1;padding:10px;background:transparent;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:13px;letter-spacing:3px;cursor:pointer">이전</button>
         <button id="login-verify" style="flex:1;padding:10px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:13px;letter-spacing:4px;cursor:pointer">코드 확인</button>
       </div>
-      <div id="login-resend" style="text-align:center;margin-top:10px;font-size:10px;color:var(--dim);cursor:pointer">코드 재전송</div>
+      <div id="login-resend" style="text-align:center;margin-top:10px;font-size:10px;color:var(--dim);cursor:pointer;text-decoration:underline;text-underline-offset:3px">코드 재전송</div>
     </div>
     <div id="login-error" style="display:none;margin-top:12px;padding:8px;border:1px solid var(--danger);color:var(--danger);font-size:11px;text-align:center"></div>
   </div>
@@ -4484,7 +4484,7 @@
     $('login-step1').style.display = 'none';
     $('login-step2').style.display = '';
     setTimeout(() => $('login-otp-code').focus(), 100);
-    log('이메일 확인 — 매직 링크 또는 6자리 코드', 'success');
+    log('이메일에서 6자리 코드를 확인하세요', 'success');
   });
   $('login-back').addEventListener('click', () => {
     $('login-step2').style.display = 'none';
@@ -4526,6 +4526,15 @@
   });
   $('login-otp-code').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); $('login-verify').click(); }
+  });
+  // 6자리 입력 완료 시 자동 verify (UX)
+  $('login-otp-code').addEventListener('input', (e) => {
+    const v = e.target.value.replace(/\D/g, ''); // 숫자만
+    e.target.value = v;
+    if (v.length === 6) {
+      // 살짝 지연 후 자동 verify (사용자가 화면 보고 인지할 시간)
+      setTimeout(() => $('login-verify').click(), 200);
+    }
   });
 
   // 클라우드 저장
