@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 새 인스턴스가 첫 5분 안에 잡을 그림:
 
-- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v75 누적 약 128KB JS / 192KB total. git 추적 (`main` 브랜치, GitHub remote).
+- **파일**: `index.html` 1개 (HTML/CSS/JS 인라인, IIFE). v1~v80 누적 약 133KB JS / 198KB total. git 추적 (`main` 브랜치, GitHub remote).
 - **루프**: 강화(`enhance`) → 파괴 시 5초 회수(`showVoid`) → 강화 성공 시 그림자(`maybeTriggerChallenge`, 4종 변종) → 베기(`slay`) → 자발 봉인(`sealSword`, 道 검은 컷씬) → 새 검(`newSword`) + 명문(`checkInscriptions`) + 첫 강화 시 검의 形(`decideForm`).
 - **결정 차원**: 강화 / 방지권 / 회수 / 베기 / 물러남 / 봉인 / 숫돌(砥) / 영석(靈).
 - **상태 진입점**: `let state = {...}` 한 객체. `localStorage['reinforce_sword_v1']`. 음소거는 별도 키 `reinforce_sword_muted`.
@@ -558,6 +558,18 @@ footer 7개 버튼 → 3개 (조합소·계보·詩集) + 우상단 ≡ 메뉴 (
 **v74 명문 새김 칼날 빛**: `#sword-wrap.inscribe-stroke::after` 0.7s 키프레임 — 칼날 따라 빛 라인 위→아래 그어짐. `runInscribeQueue`에서 발동. SFX.inscribe + 칼날 시각 동기.
 
 **v75 시간 일지** (`state.recentLog`, `recordEvent`, `formatTimeAgo`): 최근 10건 액션 기록 (검 파괴 / 판매 / 베기). 통계 모달 '최근 일지'에 시간 표시.
+
+### v76+ 컬렉션 / 공유 / 안내
+
+**v76 형 분포 차트**: 통계 모달 4 form (直/曲/重/速) 봉인 수 막대 — 형 편향 시각 인지. 한글 라벨 + 카운트 + %.
+
+**v77 검 SVG 다운로드**: 메뉴 '현재 검 SVG 저장' — defs(gradient/filter) + body + 명문 마크 + 한자 새김 + 검명/강화도 레이블. 200x400 image/svg+xml Blob → 파일명 `{검명}_{강화도}.svg`.
+
+**v78 봉인 직후 카드**: `#seal-card` — 봉인 후 3.5s 화면 하단 페이드. 검명 + 강화도 + 보상 + 명문. '계보 보기' 버튼 즉시 진입.
+
+**v79 키보드 mini 안내**: footer 위 항상 표시 — `␣` 강화 / `Esc` 도망 / `P` 보호권 / `M` 소리. 9px opacity 0.5.
+
+**v80 道 카운터**: 우측 상단 `道 × N` (wayReached ≥ 1 시). 황금 + 빛 그림자. season-mark 옆 (right: 60px).
 
 ### 봉인 균형 곡선 (참고)
 
