@@ -168,6 +168,25 @@
   #sword-wrap.flash { animation: flash 0.5s; }
   /* v63 강화 merge — 부드럽게 떠올라 빛나며 안착 */
   #sword-wrap.merge { animation: enhance-merge 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  /* v74 명문 새김 — 칼날 따라 빛이 그어짐 */
+  #sword-wrap.inscribe-stroke::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 8%;
+    width: 4px;
+    height: 0;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, transparent, #fff5c0, transparent);
+    box-shadow: 0 0 12px #fff5c0, 0 0 24px #d4af37;
+    pointer-events: none;
+    animation: inscribe-stroke-anim 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  @keyframes inscribe-stroke-anim {
+    0%   { height: 0; opacity: 0; top: 8%; }
+    30%  { height: 60%; opacity: 1; top: 8%; }
+    100% { height: 0; opacity: 0; top: 70%; }
+  }
   /* v64 봉인 dissolve — 검이 빛으로 솟구쳐 사라짐 */
   #sword-wrap.dissolve { animation: sword-dissolve 0.8s cubic-bezier(0.3, 0.7, 0.4, 1) forwards; }
   @keyframes sword-dissolve {
@@ -3437,6 +3456,13 @@
     void inscribeOverlay.offsetWidth;
     inscribeOverlay.classList.add('active');
     SFX.inscribe();
+    // v74 검 칼날에 빛 그어짐 (단, 검 있을 때만)
+    if (state.hasSword) {
+      swordWrap.classList.remove('inscribe-stroke');
+      void swordWrap.offsetWidth;
+      swordWrap.classList.add('inscribe-stroke');
+      setTimeout(() => swordWrap.classList.remove('inscribe-stroke'), 750);
+    }
     // 1.2초 페이드 + 100ms 간격 → 다음 1.3초 후 다음 페이드
     setTimeout(runInscribeQueue, 1300);
   }
