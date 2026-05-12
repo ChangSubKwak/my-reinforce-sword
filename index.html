@@ -168,6 +168,51 @@
   #sword-wrap.flash { animation: flash 0.5s; }
   /* v63 강화 merge — 부드럽게 떠올라 빛나며 안착 */
   #sword-wrap.merge { animation: enhance-merge 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  /* v78 봉인 직후 작은 카드 */
+  #seal-card {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(40px);
+    background: var(--bg-2);
+    border: 1px solid var(--accent);
+    padding: 12px 20px;
+    color: var(--fg);
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 3px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 250;
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 30px rgba(212,175,55,0.25);
+    min-width: 220px;
+  }
+  #seal-card.active {
+    animation: seal-card-fade 3.5s forwards;
+    pointer-events: auto;
+  }
+  @keyframes seal-card-fade {
+    0%   { opacity: 0; transform: translateX(-50%) translateY(40px); }
+    10%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+    80%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  }
+  #seal-card .name { color: var(--accent); font-size: 16px; letter-spacing: 5px; margin-bottom: 4px; }
+  #seal-card .info { color: var(--dim); font-size: 11px; }
+  #seal-card .view-btn {
+    margin-top: 8px;
+    padding: 4px 12px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
   /* v74 명문 새김 — 칼날 따라 빛이 그어짐 */
   #sword-wrap.inscribe-stroke::after {
     content: '';
@@ -1621,6 +1666,13 @@
     <div id="demon-slay-kanji">鬼斬</div>
     <div id="demon-slay-msg">검귀를 베어냈다</div>
   </div>
+</div>
+
+<!-- v78 봉인 직후 카드 -->
+<div id="seal-card">
+  <div class="name" id="seal-card-name"></div>
+  <div class="info" id="seal-card-info"></div>
+  <button class="view-btn" id="seal-card-view">계보 보기</button>
 </div>
 
 <!-- 게임 오버 -->
@@ -3760,6 +3812,8 @@
     if (isWay) bumpStat('wayReached');
     recordEvent('판매 ' + swordName + ' +' + reward + ' 조각');
     log('판매 +' + lv + ' — 조각 ' + reward, 'success');
+    // v78 봉인 직후 카드 (방금 봉인된 검 요약)
+    showSealCard(swordName, lv, ins, reward);
     burstParticles('#d4af37', isWay ? 40 : 20);
     if (isWay) {
       SFX.ritual();
@@ -3933,6 +3987,27 @@
       render();
       updateForgeButtons();
     });
+  });
+
+  // v78 봉인 직후 카드
+  function showSealCard(name, lv, ins, reward) {
+    const card = $('seal-card');
+    if (!card) return;
+    $('seal-card-name').textContent = name;
+    const insStr = ins.length ? ins.join(' · ') : '명문 없음';
+    $('seal-card-info').innerHTML = '+' + lv + ' · 회수 ' + reward + ' 조각<br><span style="font-size:10px;opacity:0.75">' + insStr + '</span>';
+    card.classList.remove('active');
+    void card.offsetWidth;
+    card.classList.add('active');
+    setTimeout(() => card.classList.remove('active'), 3500);
+  }
+  // 계보 보기 버튼 (카드 안)
+  document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'seal-card-view') {
+      $('seal-card').classList.remove('active');
+      renderLegacy();
+      $('legacy-modal').classList.add('active');
+    }
   });
 
   // === 검 회고 모달 (v32 + v48 SVG 시각화) ===
