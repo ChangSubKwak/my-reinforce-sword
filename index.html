@@ -1282,7 +1282,15 @@
 <div class="modal" id="name-modal">
   <div class="modal-box">
     <h2>검 이름 · 팔기</h2>
-    <div id="name-preview" style="padding:8px 4px 14px;font-size:11px;color:var(--dim);line-height:1.9;letter-spacing:2px;border-bottom:1px solid var(--line);margin-bottom:14px;text-align:center"></div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:14px;padding:8px 4px 14px;border-bottom:1px solid var(--line);margin-bottom:14px">
+      <svg id="preview-sword-svg" viewBox="0 0 100 200" width="60" height="120" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+        <g id="preview-body"></g>
+        <line id="preview-mark-way" x1="50" y1="20" x2="50" y2="138" stroke="#fff5c0" stroke-width="1.6" opacity="0" style="filter: drop-shadow(0 0 3px #d4af37);"/>
+        <circle id="preview-mark-demon" cx="50" cy="22" r="1.8" fill="#c0392b" opacity="0"/>
+        <polygon id="preview-mark-honest" points="50,12 51.5,14 50,16 48.5,14" fill="#6a8a9a" opacity="0"/>
+      </svg>
+      <div id="name-preview" style="font-size:11px;color:var(--dim);line-height:1.9;letter-spacing:2px;text-align:left;flex:1"></div>
+    </div>
     <p id="name-prompt-text">이 검에 직접 이름을 지어주시겠습니까?</p>
     <input id="name-input" type="text" maxlength="16" placeholder=""
       style="width:100%;padding:12px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:16px;letter-spacing:6px;text-align:center;margin-bottom:14px;outline:none;"
@@ -3171,6 +3179,15 @@
     const input = $('name-input');
     const promptText = $('name-prompt-text');
     const preview = $('name-preview');
+    // 미리 보기 검 SVG — 실제 검 모습
+    const pBody = $('preview-body');
+    if (pBody) pBody.innerHTML = buildSwordBody(lv, form);
+    const pMarkWay = $('preview-mark-way');
+    const pMarkDemon = $('preview-mark-demon');
+    const pMarkHonest = $('preview-mark-honest');
+    if (pMarkWay) pMarkWay.setAttribute('opacity', ins.includes('道') ? '0.85' : '0');
+    if (pMarkDemon) pMarkDemon.setAttribute('opacity', ins.includes('鬼斬') ? '0.9' : '0');
+    if (pMarkHonest) pMarkHonest.setAttribute('opacity', ins.includes('本') ? '0.7' : '0');
     // 미리 보기: 형 + 명문 + 회수 + 시구
     const formStr = form ? '<span style="color:var(--accent);letter-spacing:4px">' + form + '</span>' : '<span style="color:var(--dim)">無</span>';
     const insStr = ins.length
