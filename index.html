@@ -1853,6 +1853,13 @@
         style="width:100%;padding:10px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:14px;text-align:center;margin-bottom:8px;outline:none;">
       <button class="modal-close" id="lb-submit" style="width:100%;border-color:var(--accent);color:var(--accent);margin:0">내 점수 등록 / 갱신</button>
     </div>
+    <div id="lb-login-prompt" style="display:none;padding:14px 0;border-top:1px solid var(--line);margin-top:10px;text-align:center">
+      <p style="color:var(--dim);font-size:11px;letter-spacing:2px;margin-bottom:10px;line-height:1.7">
+        리더보드 등록은 로그인 후 가능합니다.<br>
+        <span style="font-size:10px;opacity:0.7">이메일 1개로 1회 OTP 코드 입력 · 비밀번호 없음</span>
+      </p>
+      <button class="modal-close" id="lb-go-login" style="width:100%;padding:10px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:13px;letter-spacing:5px;cursor:pointer;margin:0">☁  지 금  로 그 인</button>
+    </div>
     <button class="modal-close" data-close>닫 기</button>
   </div>
 </div>
@@ -4805,10 +4812,11 @@
   $('btn-leaderboard').addEventListener('click', async () => {
     $('leaderboard-modal').classList.add('active');
     $('lb-list').innerHTML = '<div style="text-align:center;color:var(--dim);padding:20px">불러오는 중...</div>';
-    // 본인 등록 영역 — 로그인 상태면 표시
+    // 본인 등록 영역 — 로그인 상태면 표시, 아니면 로그인 안내
     const user = await sbGetUser();
     $('lb-submit-wrap').style.display = user ? '' : 'none';
-    if (!user) $('lb-info').innerHTML = '전 세계 검사들의 기록<br><span style="color:var(--dim);font-size:10px">로그인하면 점수를 등록할 수 있습니다</span>';
+    $('lb-login-prompt').style.display = user ? 'none' : '';
+    if (!user) $('lb-info').textContent = '전 세계 검사들의 기록';
     else $('lb-info').textContent = '전 세계 검사들의 기록 · 닉네임으로 등록';
     // 리더보드 조회
     const r = await sbFetchLeaderboard(30);
@@ -4838,6 +4846,13 @@
           '<span style="text-align:right;color:var(--dim)">' + (row.total_slain || 0) + '</span>' +
         '</div>';
       }).join('');
+  });
+
+  // 리더보드 모달 안 "지금 로그인" — 로그인 모달로 즉시 전환
+  $('lb-go-login').addEventListener('click', () => {
+    $('leaderboard-modal').classList.remove('active');
+    // btn-cloud-login 클릭 흐름 재사용
+    setTimeout(() => $('btn-cloud-login').click(), 100);
   });
 
   // 리더보드 점수 등록
