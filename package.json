@@ -1,0 +1,21 @@
+{
+  "name": "my-reinforce-sword",
+  "version": "1.0.0",
+  "description": "검 강화 — Sword Enhancement Game (clone + distill of NBS 검 강화하기)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChangSubKwak/my-reinforce-sword.git"
+  },
+  "license": "MIT"
+}

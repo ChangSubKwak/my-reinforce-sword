@@ -1,0 +1,15 @@
+# Render Blueprint — 자동 배포 설정
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: my-reinforce-sword
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 20
