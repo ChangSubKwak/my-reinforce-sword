@@ -2507,6 +2507,35 @@
     setTimeout(() => g.classList.remove('screen-shake-light', 'screen-shake-heavy'), heavy ? 600 : 400);
   }
 
+  // === v66 선대 강기 빛 모임 — 새 검 생성 시 사방에서 빛이 검으로 ===
+  function spawnLegacyRays(count) {
+    const rect = swordWrap.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 180 + Math.random() * 80;
+      const sx = cx + Math.cos(angle) * dist;
+      const sy = cy + Math.sin(angle) * dist;
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = sx + 'px';
+      p.style.top = sy + 'px';
+      p.style.background = '#fff5c0';
+      p.style.boxShadow = '0 0 12px #d4af37';
+      document.body.appendChild(p);
+      const dx = cx - sx;
+      const dy = cy - sy;
+      const delay = Math.random() * 400;
+      p.animate([
+        { opacity: 0, transform: 'translate(0,0) scale(0.3)' },
+        { opacity: 1, transform: 'translate(' + (dx * 0.5) + 'px,' + (dy * 0.5) + 'px) scale(1.2)', offset: 0.5 },
+        { opacity: 0, transform: 'translate(' + dx + 'px,' + dy + 'px) scale(0.5)' },
+      ], { duration: 1200, delay: delay, easing: 'cubic-bezier(0.3, 0.5, 0.5, 1)' });
+      setTimeout(() => p.remove(), 1800);
+    }
+  }
+
   // === v63 강화 merge 빛줄 — 사방에서 검으로 모임 ===
   function spawnMergeRays() {
     const rect = swordWrap.getBoundingClientRect();
@@ -3490,6 +3519,15 @@
     }
     if (state.level > state.bestLevel) state.bestLevel = state.level;
     checkInscriptions();
+    // v66 선대 강기 빛 모임 — 始祖/達人/聖 보유자에게 시각적 의식
+    const newIns = state.currentSword.inscriptions || [];
+    let rayCount = 0;
+    if (newIns.includes('始祖')) rayCount += 15;
+    if (newIns.includes('達人')) rayCount += 15;
+    if (newIns.includes('聖')) rayCount += 20;
+    if (rayCount > 0) {
+      setTimeout(() => spawnLegacyRays(rayCount), 100);
+    }
   }
   const NEWSWORD_COST = 50;
 
