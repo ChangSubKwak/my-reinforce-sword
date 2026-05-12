@@ -1127,6 +1127,7 @@
 <button id="menu-toggle">≡</button>
 <div id="menu-drop">
   <button id="btn-stats">기 록</button>
+  <button id="btn-codex">명문 사전</button>
   <button id="btn-help">안 내</button>
   <button id="btn-mute">소 리  끄 기</button>
   <button id="btn-backup">진행도 백업</button>
@@ -1436,6 +1437,16 @@
     <h2>검의 노래</h2>
     <p>도(道)에 이른 검들의 일생을 시구로</p>
     <div id="anthology-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- 명문 사전 모달 (v55) -->
+<div class="modal" id="codex-modal">
+  <div class="modal-box" style="max-width: 420px;">
+    <h2>명 문  사 전</h2>
+    <p>모든 명문 · 획득 조건 · 시구</p>
+    <div id="codex-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
     <button class="modal-close" data-close>닫 기</button>
   </div>
 </div>
@@ -3817,6 +3828,60 @@
     renderAnthology();
     $('anthology-modal').classList.add('active');
   });
+  $('btn-codex').addEventListener('click', () => {
+    renderCodex();
+    $('codex-modal').classList.add('active');
+    $('menu-drop').classList.remove('open');
+  });
+
+  function renderCodex() {
+    // 명문별 획득 조건 텍스트
+    const conditions = {
+      '初刃': '그림자를 한 번 베어내기',
+      '百鍊': '한 검으로 10번 강화 시도',
+      '剛體': '+10 단계 도달',
+      '回魔': '그림자를 5번 베어내기',
+      '道': '최고 단계 +' + MAX_LEVEL + ' 도달',
+      '鬼斬': '검귀 (드문 그림자) 베어내기',
+      '覺': '魂 게이지 ' + SOUL_AWAKEN + ' 도달',
+      '本': '魂 게이지 ' + SOUL_TRUE + ' 도달',
+      '始祖': '첫 道 도달 — 모든 새 검에 자동',
+      '達人': '도(道) 5번 도달 — 모든 새 검에 자동',
+      '聖': '도(道) 10번 도달 — 모든 새 검에 자동',
+      '斷魔': '4종류 그림자(夜/霧/骨/焰) 모두 베어내기',
+      '久': '한 검으로 50번 강화 시도',
+      '古': '한 검으로 100번 강화 시도',
+    };
+    // 검사: 현재 검 / 봉인 검 중 어디에 새겨졌는지
+    const currentIns = (state.hasSword && state.currentSword.inscriptions) || [];
+    const allEverEarned = new Set(currentIns);
+    state.sealedSwords.forEach(s => (s.inscriptions || []).forEach(k => allEverEarned.add(k)));
+
+    const list = INSCRIPTIONS.map(ins => {
+      const earned = allEverEarned.has(ins.key);
+      const onCurrent = currentIns.includes(ins.key);
+      const cond = conditions[ins.key] || '특수 조건';
+      const status = onCurrent ? '✦ 현재 검' : earned ? '✓ 획득함' : '— 미획득';
+      const statusColor = onCurrent ? 'var(--accent)' : earned ? 'var(--safe)' : 'var(--dim)';
+      const kanjiColor = earned ? 'var(--accent)' : 'var(--dim)';
+      const kanjiOpacity = earned ? '1' : '0.35';
+      return '<div style="padding:10px 6px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px">' +
+        '<div style="font-size:28px;color:' + kanjiColor + ';letter-spacing:4px;opacity:' + kanjiOpacity + ';flex-shrink:0;width:50px;text-align:center">' + ins.key + '</div>' +
+        '<div style="flex:1;font-size:11px;line-height:1.6">' +
+          '<div style="color:var(--fg);letter-spacing:2px">' + ins.label + '</div>' +
+          '<div style="color:var(--dim);font-size:10px;margin-top:2px">조건: ' + cond + '</div>' +
+          (ins.verse ? '<div style="color:var(--dim);font-size:10px;font-style:italic;margin-top:2px;opacity:0.75">' + ins.verse + '</div>' : '') +
+          '<div style="color:' + statusColor + ';font-size:10px;margin-top:3px;letter-spacing:2px">' + status + '</div>' +
+        '</div></div>';
+    }).join('');
+
+    const totalCount = INSCRIPTIONS.length;
+    const earnedCount = allEverEarned.size;
+    $('codex-list').innerHTML =
+      '<div style="text-align:center;color:var(--accent);font-size:12px;letter-spacing:3px;padding:6px 0 10px;border-bottom:1px solid var(--line);margin-bottom:6px">' +
+        earnedCount + ' / ' + totalCount + ' 획득' +
+      '</div>' + list;
+  }
   $('btn-help').addEventListener('click', () => {
     $('help-modal').classList.add('active');
   });
