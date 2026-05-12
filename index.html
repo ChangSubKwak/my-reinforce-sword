@@ -1456,7 +1456,6 @@
   <button id="btn-cloud-pull" style="display:none">☁ 클라우드 복원</button>
   <button id="btn-cloud-logout" style="display:none">☁ 로그아웃</button>
   <button id="btn-leaderboard">🏆 리 더 보 드</button>
-  <button id="btn-replay-ending" style="display:none">🌟 엔딩 다시 보기</button>
   <div style="height:1px;background:var(--line);margin:4px 0"></div>
   <button id="btn-backup">진행도 백업 (파일)</button>
   <button id="btn-restore">진행도 복원 (파일)</button>
@@ -2566,6 +2565,12 @@
       // 강화 성공 → 일대기 점검 (百鍊·剛體·道)
       checkInscriptions();
       recordLevelHistory();
+      // v84 정말 최종 강화 (+MAX_LEVEL=15 도달) 시 엔딩 발동 — 한 번만
+      if (state.level >= MAX_LEVEL && !state.endingShown) {
+        state.endingShown = true;
+        // 道 명문 페이드 (1.3s) + 시각 효과 + 5초 stage 황금 빛 후 엔딩 시작
+        setTimeout(() => playEnding(), 6500);
+      }
       // 그림자가 비칠 수 있다
       protectCheck.checked = false;
       if ($('whet-check')) $('whet-check').checked = false;
@@ -4093,12 +4098,7 @@
       const ways = (state.stats && state.stats.wayReached) || 0;
       if (ways === 5) setTimeout(() => announceInscription('達人', '도(道) 5번 달성 — 달인의 경지'), 6200);
       if (ways === 10) setTimeout(() => announceInscription('聖', '도(道) 10번 달성 — 성인의 경지'), 6600);
-      // v84 聖 도달 시 엔딩 컷씬 (한 번만)
-      if (ways >= 10 && !state.endingShown) {
-        state.endingShown = true;
-        // 의식 컷씬(5.5s) + 명문 페이드 후 엔딩 시작
-        setTimeout(() => playEnding(), 8000);
-      }
+      // v84 엔딩은 봉인이 아닌 *최종 강화 +15 도달* 시점에 발동 (enhance 분기에서 처리)
       // v83 道 도달 시 로그인된 사용자에게 점수 등록 안내
       if (sbClient) {
         sbGetUser().then(user => {
@@ -4635,12 +4635,8 @@
   $('menu-toggle').addEventListener('click', (e) => {
     e.stopPropagation();
     $('menu-drop').classList.toggle('open');
-    // 메뉴 열릴 때 클라우드 메뉴 + 엔딩 다시 보기 상태 최신화
-    if ($('menu-drop').classList.contains('open')) {
-      if (sbClient) updateCloudMenu();
-      const re = $('btn-replay-ending');
-      if (re) re.style.display = state.endingShown ? '' : 'none';
-    }
+    // 메뉴 열릴 때 클라우드 메뉴 최신화
+    if ($('menu-drop').classList.contains('open') && sbClient) updateCloudMenu();
   });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#menu-drop') && !e.target.closest('#menu-toggle')) {
@@ -4800,11 +4796,6 @@
   });
 
   // 리더보드 열기
-  // 엔딩 다시 보기 (聖 도달 후만 표시)
-  $('btn-replay-ending').addEventListener('click', () => {
-    $('menu-drop').classList.remove('open');
-    playEnding();
-  });
   $('btn-leaderboard').addEventListener('click', async () => {
     $('leaderboard-modal').classList.add('active');
     $('lb-list').innerHTML = '<div style="text-align:center;color:var(--dim);padding:20px">불러오는 중...</div>';
@@ -5262,6 +5253,11 @@
       if (!protectCheck.disabled) protectCheck.checked = !protectCheck.checked;
     }
     if (e.key === 'm' || e.key === 'M') toggleMute();
+    // v84 이스터에그 — ALT+1 로 언제든 엔딩 재생
+    if (e.altKey && e.key === '1') {
+      e.preventDefault();
+      if (typeof playEnding === 'function') playEnding();
+    }
   });
 
   // === v82 Supabase 통합 (선택적) ===
