@@ -111,6 +111,17 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
   }
+  /* v62 道 도달 시 stage 황금 빛 */
+  #stage.way-flash {
+    animation: way-flash 5s forwards;
+  }
+  @keyframes way-flash {
+    0% { background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.04), transparent 60%); }
+    8% { background: radial-gradient(circle at 50% 50%, rgba(255, 245, 192, 0.7), rgba(212, 175, 55, 0.4) 30%, transparent 80%); }
+    25% { background: radial-gradient(circle at 50% 50%, rgba(255, 245, 192, 0.5), rgba(212, 175, 55, 0.3) 40%, transparent 80%); }
+    60% { background: radial-gradient(circle at 50% 50%, rgba(255, 245, 192, 0.3), rgba(212, 175, 55, 0.18) 50%, transparent 80%); }
+    100% { background: radial-gradient(circle at 50% 50%, rgba(255, 240, 180, 0.28), rgba(212, 175, 55, 0.08) 50%, transparent 80%); }
+  }
   /* 도전 등장 시 어둠 펄스 */
   #stage.darken { animation: darken-pulse 0.7s forwards; }
   @keyframes darken-pulse {
@@ -2109,10 +2120,18 @@
       else if (state.level >= 13) particleCount = 60;
       else if (state.level >= 10) particleCount = 40;
       burstParticles('#d4af37', particleCount);
-      // 道 도달 시 추가 빛 광선 (다른 색)
+      // 道 도달 시 추가 빛 광선 (다른 색) + stage 황금 빛
       if (state.level >= MAX_LEVEL) {
         setTimeout(() => burstParticles('#fff5c0', 50), 80);
         setTimeout(() => burstParticles('#ff8c40', 30), 160);
+        // v62 stage 황금 빛 5초
+        const stage = $('stage');
+        if (stage) {
+          stage.classList.remove('way-flash');
+          void stage.offsetWidth;
+          stage.classList.add('way-flash');
+          setTimeout(() => stage.classList.remove('way-flash'), 5100);
+        }
       } else if (state.level >= 12) {
         setTimeout(() => burstParticles('#fff5c0', 25), 80);
       }
