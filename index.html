@@ -2103,7 +2103,19 @@
       swordWrap.classList.remove('shake');
       swordWrap.classList.add('flash');
       setTimeout(() => swordWrap.classList.remove('flash'), 500);
-      burstParticles('#d4af37', 12 + lv * 2);
+      // v60 강화도별 파티클 양 증가 — 道 도달 시 압도적
+      let particleCount = 12 + lv * 2;
+      if (state.level >= MAX_LEVEL) particleCount = 80;
+      else if (state.level >= 13) particleCount = 60;
+      else if (state.level >= 10) particleCount = 40;
+      burstParticles('#d4af37', particleCount);
+      // 道 도달 시 추가 빛 광선 (다른 색)
+      if (state.level >= MAX_LEVEL) {
+        setTimeout(() => burstParticles('#fff5c0', 50), 80);
+        setTimeout(() => burstParticles('#ff8c40', 30), 160);
+      } else if (state.level >= 12) {
+        setTimeout(() => burstParticles('#fff5c0', 25), 80);
+      }
       SFX.enhanceSuccess();
       bumpStat('enhanceSuccess');
       // v35 첫 강화 / 첫 +5(봉인 가능) 마일스톤
