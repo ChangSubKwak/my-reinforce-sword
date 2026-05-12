@@ -2084,6 +2084,13 @@
     applySeason();
     renderWayCounter();
     renderGuardianDisplay();
+    // v81 조합소 버튼 시각 잠금 — +0 일 때만 활성
+    const forgeBtn = $('btn-forge');
+    if (forgeBtn) {
+      const canForge = state.hasSword && state.level === 0;
+      forgeBtn.style.opacity = canForge ? '' : '0.4';
+      forgeBtn.title = canForge ? '' : '+0 검 단계에서만 입장 가능';
+    }
     checkGameOver();
 
     if (!state.hasSword) {
@@ -3752,14 +3759,25 @@
 
   // === 게임 오버 — 검 없음 + 새 검 빚을 조각도 없음 ===
   let gameOverShown = false;
-  function checkGameOver() {
-    if (gameOverShown) return;
-    // state 손상 방어 — 숫자 아닌 값이면 0으로 간주
+  function isStuck() {
     const shardsNum = (typeof state.shards === 'number' && !isNaN(state.shards)) ? state.shards : 0;
     const hasSwordBool = state.hasSword === true;
-    if (!hasSwordBool && shardsNum < NEWSWORD_COST) {
-      showGameOver();
+    // 케이스 1: 검 없음 + 새 검 못 만듦
+    if (!hasSwordBool) return shardsNum < NEWSWORD_COST;
+    // 케이스 2: 검 보유 +1~+2 (판매 불가) + 다음 강화 비용 부족
+    if (state.level >= 1 && state.level < SEAL_MIN_LEVEL) {
+      const f = getForm();
+      const formCostMul = (f && f.costMul) || 1;
+      const t = TABLE[state.level];
+      if (!t) return false;
+      const cost = Math.ceil(t.cost * formCostMul * getSeason().costMul * getAgeEffect().costMul);
+      return shardsNum < cost;
     }
+    return false;
+  }
+  function checkGameOver() {
+    if (gameOverShown) return;
+    if (isStuck()) showGameOver();
   }
   // 안전장치: 1초마다 자동 체크 — render 누락 / 외부 에러에도 대응
   setInterval(checkGameOver, 1000);
@@ -4306,6 +4324,15 @@
 
   // === 모달 ===
   $('btn-forge').addEventListener('click', () => {
+    // 조합소는 +0 검 단계에서만 입장 가능 (사용자 강화 시작 전 전략 준비)
+    if (!state.hasSword) {
+      log('새 검을 먼저 만드세요', 'fail');
+      return;
+    }
+    if (state.level > 0) {
+      log('조합소는 +0 검 단계에서만 들어갈 수 있습니다', 'fail');
+      return;
+    }
     $('forge-modal').classList.add('active');
     updateForgeButtons();
   });
