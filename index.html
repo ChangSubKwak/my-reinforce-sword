@@ -4856,6 +4856,13 @@
     $('lb-login-prompt').style.display = user ? 'none' : '';
     if (!user) $('lb-info').textContent = '전 세계 검사들의 기록';
     else $('lb-info').textContent = '전 세계 검사들의 기록 · 닉네임으로 등록';
+    // v86 닉네임 자동 제안 (비어 있을 때만)
+    const nickInput = $('lb-nickname');
+    if (nickInput && user && !nickInput.value) {
+      const suggested = suggestNickname();
+      if (suggested) nickInput.placeholder = '닉네임 (예: ' + suggested + ')';
+      else nickInput.placeholder = '닉네임 (16자)';
+    }
     // 리더보드 조회
     const r = await sbFetchLeaderboard(30);
     if (r.error) {
@@ -4913,8 +4920,10 @@
 
   // 리더보드 점수 등록
   $('lb-submit').addEventListener('click', async () => {
-    const nick = $('lb-nickname').value.trim();
-    if (!nick) { alert('닉네임을 입력하세요'); return; }
+    let nick = $('lb-nickname').value.trim();
+    // 비어 있으면 자동 제안 사용 (v86)
+    if (!nick) nick = suggestNickname();
+    if (!nick) { alert('닉네임을 입력하거나 검을 키워주세요'); return; }
     const btn = $('lb-submit');
     btn.disabled = true;
     btn.textContent = '등록 중...';
@@ -5490,6 +5499,26 @@
         .limit(limit || 30);
       return { data: data || [], error: error && error.message };
     } catch (e) { return { data: [], error: e.message }; }
+  }
+
+  // v86 닉네임 자동 제안 — 사용자 道 검 중 가장 강한 것
+  function suggestNickname() {
+    // 우선순위 1: 道 검 중 가장 강화도 높은 검명
+    const daoSwords = (state.sealedSwords || []).filter(s => (s.inscriptions || []).includes('道'));
+    if (daoSwords.length > 0) {
+      const best = daoSwords.slice().sort((a, b) => (b.level || 0) - (a.level || 0))[0];
+      return best.name || makeSwordName(best.form, best.inscriptions || [], best.level);
+    }
+    // 우선순위 2: 가장 강한 봉인 검
+    if (state.sealedSwords && state.sealedSwords.length > 0) {
+      const best = state.sealedSwords.slice().sort((a, b) => (b.level || 0) - (a.level || 0))[0];
+      return best.name || makeSwordName(best.form, best.inscriptions || [], best.level);
+    }
+    // 우선순위 3: 현재 검의 자동 검명 (강화도 ≥ 3)
+    if (state.hasSword && state.level >= 3) {
+      return makeSwordName(state.currentSword.form, state.currentSword.inscriptions || [], state.level);
+    }
+    return '';
   }
 
   // v85 본인 리더보드 위치 조회
