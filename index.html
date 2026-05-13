@@ -4717,17 +4717,26 @@
     const btn = $('login-send');
     btn.disabled = true;
     btn.textContent = '전송 중...';
-    const { error } = await sbSignInWithEmail(email);
+    const result = await sbSignInWithEmail(email);
     btn.disabled = false;
     btn.textContent = '코드 보내기';
-    if (error) {
-      showLoginError(error);
+    if (result.error) {
+      showLoginError(result.error);
+      // rate limit인 경우 익명 가입 버튼 강조 (펄스)
+      if (result.rateLimited) {
+        const anon = $('login-anon');
+        if (anon) {
+          anon.style.borderColor = 'var(--accent)';
+          anon.style.color = 'var(--accent)';
+          anon.style.animation = 'gameover-btn-glow 2s ease-in-out infinite';
+        }
+      }
       return;
     }
     $('login-step1').style.display = 'none';
     $('login-step2').style.display = '';
     setTimeout(() => $('login-otp-code').focus(), 100);
-    log('이메일에서 6자리 코드를 확인하세요', 'success');
+    log('이메일에서 코드를 확인하세요', 'success');
   });
   // 익명 게스트 가입
   $('login-anon').addEventListener('click', async () => {
@@ -5343,7 +5352,13 @@
       });
       if (error) {
         console.error('[Supabase] signInWithOtp 에러:', error);
-        return { error: error.message + ' (code: ' + (error.status || error.code || 'unknown') + ')' };
+        const code = error.status || error.code || '';
+        const msg = error.message || '';
+        // 429: rate limit
+        if (code === 429 || msg.toLowerCase().includes('rate limit')) {
+          return { error: '이메일 발송 한도 초과 (Supabase 무료 SMTP 시간당 3~4개). 잠시 후 재시도하거나, 아래 "익명 게스트로 시작"을 사용하세요.', rateLimited: true };
+        }
+        return { error: msg + (code ? ' (code: ' + code + ')' : '') };
       }
       return { data };
     } catch (e) {
