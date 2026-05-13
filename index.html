@@ -4698,6 +4698,64 @@
     }, 3000); // 3초 debounce
   }
 
+  // === v88 진행도 비교 + 로그인 시 자동 가져오기 ===
+  // 점수: 처치 수 + 봉인 검 × 100 + 최고 강화 × 10
+  function progressScore(s) {
+    if (!s || typeof s !== 'object') return -1;
+    return (s.totalSlain || 0)
+         + ((Array.isArray(s.sealedSwords) ? s.sealedSwords.length : 0) * 100)
+         + ((s.bestLevel || 0) * 10);
+  }
+  // 클라우드 데이터를 state에 안전하게 적용 (load() 보정 재사용)
+  function applyCloudState(cloudData) {
+    state = Object.assign({}, state, cloudData);
+    if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
+    if (!state.currentSword || typeof state.currentSword !== 'object') {
+      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0] };
+    }
+    if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
+    if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
+    if (!Array.isArray(state.currentSword.levelHistory)) state.currentSword.levelHistory = [state.level || 0];
+    save();
+    gameOverShown = false;
+    const overlay = $('gameover-overlay');
+    if (overlay) overlay.classList.remove('active');
+    if (typeof render === 'function') render();
+  }
+  let autoPullRunning = false;
+  async function autoPull() {
+    if (!autosyncEnabled || !sbClient || autoPullRunning) return;
+    autoPullRunning = true;
+    try {
+      const user = await sbGetUser();
+      if (!user) return;
+      const r = await sbPullState();
+      if (r.error) {
+        // 클라우드 비어있으면 로컬을 초기 push
+        if (/없음|not found|no rows/i.test(r.error)) {
+          const pr = await sbPushState();
+          if (!pr.error) log('☁ 클라우드 초기 동기화', 'success');
+        }
+        return;
+      }
+      const cloud = r.data;
+      if (!cloud || typeof cloud !== 'object') return;
+      const cs = progressScore(cloud);
+      const ls = progressScore(state);
+      if (cs > ls) {
+        applyCloudState(cloud);
+        log('☁ 다른 기기 진행 적용 (' + ls + ' → ' + cs + ')', 'success');
+        if (typeof SFX !== 'undefined' && SFX.forge) SFX.forge();
+      } else if (ls > cs) {
+        const pr = await sbPushState();
+        if (!pr.error) log('☁ 클라우드 동기화 완료', 'success');
+      }
+      // 같으면 silent
+    } finally {
+      autoPullRunning = false;
+    }
+  }
+
   // === v83 Supabase UI 통합 ===
   async function updateCloudMenu() {
     const user = await sbGetUser();
@@ -5623,6 +5681,11 @@
         if (event === 'SIGNED_IN' && session) {
           log('로그인됨 — ' + (session.user.email || ''), 'success');
           $('login-modal').classList.remove('active');
+          // v88 로그인 직후 자동 pull (자동 동기화 ON일 때만)
+          if (typeof autoPull === 'function') setTimeout(autoPull, 300);
+        } else if (event === 'INITIAL_SESSION' && session) {
+          // 페이지 새로고침: 이미 로그인 상태로 부팅 — 자동 pull로 다른 기기 진행 적용
+          if (typeof autoPull === 'function') setTimeout(autoPull, 600);
         } else if (event === 'SIGNED_OUT') {
           log('로그아웃됨', 'fail');
         }
