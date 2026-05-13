@@ -1449,6 +1449,7 @@
   <button id="btn-stats">기 록</button>
   <button id="btn-codex">명문 사전</button>
   <button id="btn-trial">시련의 혼</button>
+  <button id="btn-foes">처치 보고서</button>
   <button id="btn-help">안 내</button>
   <button id="btn-mute">소 리  끄 기</button>
   <div style="height:1px;background:var(--line);margin:4px 0"></div>
@@ -1819,6 +1820,20 @@
   </div>
 </div>
 
+<!-- v90 처치 보고서 모달 (이름 있는 적 컬렉션) -->
+<div class="modal" id="foes-modal">
+  <div class="modal-box" style="max-width: 440px;">
+    <h2>처 치  보 고 서</h2>
+    <p id="foes-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
+    <div id="foes-list" style="max-height: 400px; overflow-y: auto; padding: 4px 2px; margin-top:8px"></div>
+    <p style="font-size:10px;color:var(--dim);margin-top:10px;line-height:1.7;letter-spacing:2px">
+      강화도 마일스톤마다 나타나는 이름 있는 적.<br>
+      베면 영구 명문이 그 검에 새겨진다.
+    </p>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
 <!-- v89 시련의 혼 모달 (영구 메타 진행) -->
 <div class="modal" id="trial-modal">
   <div class="modal-box" style="max-width: 440px;">
@@ -2064,6 +2079,7 @@
     firstWayReached: false,  // v16 始祖 — 첫 道 도달 시 true, 영구
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
+    foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
     heritageInscription: null,  // v33 — 道 검 봉인 후 다음 검에 전수될 명문 (1개)
     guardianIdx: null,  // v52 — 수호자로 지정된 봉인 검의 인덱스 (선택적)
     recentLog: [],  // v75 — 최근 액션 기록 (최대 10건, 최신순)
@@ -2128,6 +2144,10 @@
       if (typeof state.firstWayReached !== 'boolean') state.firstWayReached = false;
       if (typeof state.endingShown !== 'boolean') state.endingShown = false;
       if (!state.shadowOriginsSlain || typeof state.shadowOriginsSlain !== 'object') state.shadowOriginsSlain = {};
+      if (!state.foesSlain || typeof state.foesSlain !== 'object') state.foesSlain = {};
+      if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
+        state.currentSword.foesEncountered = {};
+      }
       if (state.heritageInscription === undefined) state.heritageInscription = null;
       if (state.guardianIdx === undefined) state.guardianIdx = null;
       if (!Array.isArray(state.recentLog)) state.recentLog = [];
@@ -2828,10 +2848,65 @@
     return Math.floor(strength * 4) + 6;
   }
 
+  // === v90 名 — 이름 있는 적 (Named Foes) ===
+  // 강화도 마일스톤마다 1회성 등장. 베면 영구 명문 + 대량 조각 + 컬렉션 등재.
+  const NAMED_FOES = [
+    { key: 'blackwind',  name: '黑風', trigger: 5,  strength: 6,  reward: 80,   inscription: '風斬', desc: '검은 바람의 그림자' },
+    { key: 'silvermoon', name: '銀月', trigger: 8,  strength: 10, reward: 180,  inscription: '月斬', desc: '달의 한기를 두른 자' },
+    { key: 'thousand',   name: '千刃', trigger: 11, strength: 13, reward: 350,  inscription: '刃斬', desc: '천 개의 칼날을 가진 자' },
+    { key: 'demonemp',   name: '鬼帝', trigger: 13, strength: 16, reward: 700,  inscription: '帝斬', desc: '귀신을 다스리는 자' },
+    { key: 'dragon',     name: '龍',   trigger: 15, strength: 18, reward: 1500, inscription: '龍斬', desc: '하늘의 그림자' }
+  ];
+  function pendingNamedFoe() {
+    if (!state.foesSlain) state.foesSlain = {};
+    if (!state.currentSword.foesEncountered) state.currentSword.foesEncountered = {};
+    return NAMED_FOES.find(f =>
+      state.bestLevel >= f.trigger
+      && !state.foesSlain[f.key]
+      && !state.currentSword.foesEncountered[f.key]
+    );
+  }
+  function triggerNamedFoe(foe) {
+    // 形 + 魂 + 수호자 보상 보너스 (기존 challenge와 동일 패턴)
+    let reward = foe.reward;
+    const f = getForm();
+    if (f && f.rewardMul) reward = Math.floor(reward * f.rewardMul);
+    const sMul = soulEffects().rewardMul;
+    if (sMul !== 1) reward = Math.floor(reward * sMul);
+    const gMul = guardianBonus().rewardMul;
+    if (gMul !== 1) reward = Math.floor(reward * gMul);
+    challenge = {
+      strength: foe.strength,
+      reward,
+      type: { key: 'named', name: foe.name, desc: foe.desc, isNamed: true },
+      origin: null,
+      namedFoeKey: foe.key
+    };
+    state.currentSword.foesEncountered[foe.key] = true;
+    bumpStat('challengesAppeared');
+    SFX.challengeAppear();
+    setTimeout(() => {
+      if (challenge) whisperFromAncestor(state.currentSword.form);
+    }, 1200);
+    const stage = $('stage');
+    if (stage) {
+      stage.classList.remove('darken');
+      void stage.offsetWidth;
+      stage.classList.add('darken');
+      setTimeout(() => stage.classList.remove('darken'), 800);
+    }
+    screenShake(true);
+    log(foe.name + '이 나타났다 — ' + foe.desc, 'destroy');
+    showChallenge();
+  }
+
   function maybeTriggerChallenge() {
     if (!state.hasSword) return;
     if (state.level < CHALLENGE_MIN_LEVEL) return;
     if (challenge) return;
+    // v90 이름 있는 적: 마일스톤 달성한 unslain 적이 있으면 100% spawn (검 1자루당 1회)
+    const foe = pendingNamedFoe();
+    if (foe) { triggerNamedFoe(foe); return; }
     const seasonMul = getSeason().challengeMul;
     const chance = Math.min(CHALLENGE_MAX_CHANCE, (CHALLENGE_BASE_CHANCE + state.level * CHALLENGE_LEVEL_BONUS) * seasonMul);
     if (Math.random() >= chance) return;
@@ -3142,11 +3217,38 @@
         // v49 검귀 베어낸 큰 의식 컷씬
         const dso = $('demon-slay-overlay');
         if (dso) {
+          const dk = $('demon-slay-kanji'); if (dk) dk.textContent = '鬼斬';
           $('demon-slay-msg').textContent = '검귀를 베어냈다 · 조각 +' + c.reward;
           dso.classList.remove('active');
           void dso.offsetWidth;
           dso.classList.add('active');
           setTimeout(() => dso.classList.remove('active'), 2500);
+        }
+      }
+      // v90 이름 있는 적 처치 — 영구 명문 + 컬렉션 등재 + 큰 의식
+      if (c.namedFoeKey) {
+        if (!state.foesSlain) state.foesSlain = {};
+        state.foesSlain[c.namedFoeKey] = true;
+        const foe = NAMED_FOES.find(x => x.key === c.namedFoeKey);
+        if (foe) {
+          addSoul(15); // 이름 있는 적은 더 큰 영혼 보너스
+          // 영구 명문 (해당 검에)
+          if (foe.inscription && !state.currentSword.inscriptions.includes(foe.inscription)) {
+            state.currentSword.inscriptions.push(foe.inscription);
+            setTimeout(() => announceInscription(foe.inscription, foe.name + ' — ' + foe.desc), 1100);
+          }
+          // 큰 컷씬 (검귀 오버레이 재활용 — kanji 동적 교체)
+          const dso = $('demon-slay-overlay');
+          if (dso) {
+            const dk = $('demon-slay-kanji'); if (dk) dk.textContent = foe.name;
+            $('demon-slay-msg').textContent = foe.name + '을 베어냈다 · 조각 +' + c.reward;
+            dso.classList.remove('active');
+            void dso.offsetWidth;
+            dso.classList.add('active');
+            setTimeout(() => dso.classList.remove('active'), 2500);
+          }
+          burstParticles('#fff5c0', 50);
+          setTimeout(() => burstParticles('#d4af37', 30), 200);
         }
       }
       checkInscriptions();
@@ -4003,7 +4105,7 @@
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
     state.level = startLv;
     const startSoul = trialStartSoulBonus();
-    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level] };
+    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {} };
     // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (state.firstWayReached) {
@@ -4726,7 +4828,7 @@
     }
   });
   // 메뉴 내 버튼은 클릭 후 자동 닫힘
-  ['btn-stats', 'btn-help', 'btn-reset', 'btn-backup', 'btn-restore', 'btn-export-sword', 'btn-codex', 'btn-trial',
+  ['btn-stats', 'btn-help', 'btn-reset', 'btn-backup', 'btn-restore', 'btn-export-sword', 'btn-codex', 'btn-trial', 'btn-foes',
    'btn-cloud-login', 'btn-cloud-push', 'btn-cloud-pull', 'btn-cloud-logout', 'btn-leaderboard'].forEach(id => {
     const b = $(id);
     if (b) b.addEventListener('click', () => $('menu-drop').classList.remove('open'));
@@ -5209,6 +5311,48 @@
     $('trial-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
+
+  // v90 처치 보고서 모달
+  $('btn-foes').addEventListener('click', () => {
+    renderFoes();
+    $('foes-modal').classList.add('active');
+    $('menu-drop').classList.remove('open');
+  });
+  function renderFoes() {
+    if (!state.foesSlain) state.foesSlain = {};
+    const slainCount = NAMED_FOES.filter(f => state.foesSlain[f.key]).length;
+    $('foes-progress').textContent = '베어낸 적 ' + slainCount + ' / ' + NAMED_FOES.length;
+    const rows = NAMED_FOES.map(f => {
+      const slain = !!state.foesSlain[f.key];
+      const reachable = state.bestLevel >= f.trigger;
+      const stateLabel = slain
+        ? '<span style="color:var(--accent);font-size:10px;letter-spacing:3px">베어냄</span>'
+        : (reachable
+           ? '<span style="color:var(--danger);font-size:10px;letter-spacing:3px">출현 가능</span>'
+           : '<span style="color:var(--dim);font-size:10px;letter-spacing:2px">+' + f.trigger + ' 도달 시</span>');
+      const nameDisplay = slain || reachable ? f.name : '???';
+      const descDisplay = slain ? f.desc : (reachable ? f.desc : '미발견');
+      const color = slain ? 'var(--accent)' : (reachable ? 'var(--danger)' : 'var(--dim)');
+      const bg = slain ? 'rgba(232,196,84,0.06)' : 'transparent';
+      const border = slain ? '1px solid var(--accent)' : (reachable ? '1px solid var(--danger)' : '1px dashed var(--line)');
+      const insLine = slain
+        ? '<div style="color:var(--accent);font-size:10px;letter-spacing:3px;margin-top:4px">명문 「' + f.inscription + '」 새김</div>'
+        : '<div style="color:var(--dim);font-size:10px;letter-spacing:2px;margin-top:4px">보상: 조각 +' + f.reward + ' · 명문 「' + (reachable || slain ? f.inscription : '???') + '」</div>';
+      return ''
+        + '<div style="display:flex;align-items:flex-start;gap:14px;padding:12px 10px;margin-bottom:8px;background:' + bg + ';border:' + border + ';border-radius:2px">'
+        +   '<div style="font-size:22px;color:' + color + ';line-height:1.2;flex-shrink:0;width:48px;text-align:center;letter-spacing:2px">' + nameDisplay + '</div>'
+        +   '<div style="flex:1;min-width:0">'
+        +     '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px">'
+        +       '<span style="color:' + color + ';font-size:11px;letter-spacing:3px">강도 +' + f.strength + '</span>'
+        +       stateLabel
+        +     '</div>'
+        +     '<div style="color:' + (slain ? 'var(--ink)' : 'var(--dim)') + ';font-size:11px;letter-spacing:2px;line-height:1.6">' + descDisplay + '</div>'
+        +     insLine
+        +   '</div>'
+        + '</div>';
+    }).join('');
+    $('foes-list').innerHTML = rows;
+  }
   function renderTrial() {
     const cnt = trialCount();
     const unlockedCount = TRIALS.filter(t => trialUnlocked(t.key)).length;
@@ -5463,6 +5607,7 @@
       firstWayReached: false,
       endingShown: false,
       shadowOriginsSlain: {},
+      foesSlain: {},
       heritageInscription: null,
       guardianIdx: null,
       recentLog: [],
