@@ -1455,6 +1455,9 @@
   <button id="btn-cloud-push" style="display:none">☁ 클라우드 저장</button>
   <button id="btn-cloud-pull" style="display:none">☁ 클라우드 복원</button>
   <button id="btn-cloud-logout" style="display:none">☁ 로그아웃</button>
+  <label id="btn-cloud-autosync" style="display:none;padding:8px 12px;background:transparent;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:3px;cursor:pointer;text-align:left">
+    <input type="checkbox" id="cloud-autosync-check" style="margin-right:6px;accent-color:var(--accent)"> ☁ 자동 동기화
+  </label>
   <button id="btn-leaderboard">🏆 리 더 보 드</button>
   <div style="height:1px;background:var(--line);margin:4px 0"></div>
   <button id="btn-backup">진행도 백업 (파일)</button>
@@ -4108,6 +4111,8 @@
     log('판매 +' + lv + ' — 조각 ' + reward, 'success');
     // v78 봉인 직후 카드 (방금 봉인된 검 요약)
     showSealCard(swordName, lv, ins, reward);
+    // v87 자동 클라우드 동기화 (debounced)
+    if (typeof schedulePush === 'function') schedulePush();
     burstParticles('#d4af37', isWay ? 40 : 20);
     if (isWay) {
       SFX.ritual();
@@ -4671,6 +4676,28 @@
     if (b) b.addEventListener('click', () => $('menu-drop').classList.remove('open'));
   });
 
+  // === v87 자동 클라우드 동기화 (debounced push) ===
+  const AUTOSYNC_KEY = 'reinforce_sword_autosync';
+  let autosyncEnabled = (function() {
+    try { return localStorage.getItem(AUTOSYNC_KEY) === '1'; } catch (e) { return false; }
+  })();
+  let autosyncTimer = null;
+  function schedulePush() {
+    if (!autosyncEnabled || !sbClient) return;
+    if (autosyncTimer) clearTimeout(autosyncTimer);
+    autosyncTimer = setTimeout(async () => {
+      const user = await sbGetUser();
+      if (!user) return;
+      const r = await sbPushState();
+      if (!r.error) {
+        // 조용히 (메뉴에서 마지막 동기화 시간 등)
+        try { localStorage.setItem(AUTOSYNC_KEY + '_last', String(Date.now())); } catch (e) {}
+      } else {
+        log('자동 동기화 실패: ' + r.error, 'destroy');
+      }
+    }, 3000); // 3초 debounce
+  }
+
   // === v83 Supabase UI 통합 ===
   async function updateCloudMenu() {
     const user = await sbGetUser();
@@ -4688,6 +4715,11 @@
       const label = isAnon ? '익명 게스트' : (user && user.email) || '';
       lo.textContent = loggedIn ? '☁ ' + label + ' · 로그아웃' : '☁ 로그아웃';
     }
+    // v87 자동 동기화 토글
+    const autosyncWrap = $('btn-cloud-autosync');
+    const autosyncCheck = $('cloud-autosync-check');
+    if (autosyncWrap) autosyncWrap.style.display = loggedIn ? '' : 'none';
+    if (autosyncCheck) autosyncCheck.checked = autosyncEnabled;
   }
 
   // === 로그인 모달 (Step 1: 이메일 → Step 2: OTP 코드) ===
@@ -4703,6 +4735,16 @@
     showLoginError(null);
     $('login-email').value = '';
     $('login-otp-code').value = '';
+  }
+  // 자동 동기화 체크박스
+  const _autosyncCheck = $('cloud-autosync-check');
+  if (_autosyncCheck) {
+    _autosyncCheck.addEventListener('change', (e) => {
+      autosyncEnabled = e.target.checked;
+      try { localStorage.setItem(AUTOSYNC_KEY, autosyncEnabled ? '1' : '0'); } catch (err) {}
+      log(autosyncEnabled ? '자동 동기화 켜짐' : '자동 동기화 꺼짐', 'success');
+      if (autosyncEnabled) schedulePush();
+    });
   }
   $('btn-cloud-login').addEventListener('click', () => {
     if (!sbClient) { log('Supabase 미연결 — CDN 로드 실패', 'destroy'); return; }
