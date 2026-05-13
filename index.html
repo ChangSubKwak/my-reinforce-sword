@@ -1448,6 +1448,7 @@
 <div id="menu-drop">
   <button id="btn-stats">기 록</button>
   <button id="btn-codex">명문 사전</button>
+  <button id="btn-trial">시련의 혼</button>
   <button id="btn-help">안 내</button>
   <button id="btn-mute">소 리  끄 기</button>
   <div style="height:1px;background:var(--line);margin:4px 0"></div>
@@ -1814,6 +1815,20 @@
     <h2>명 문  사 전</h2>
     <p>모든 명문 · 획득 조건 · 시구</p>
     <div id="codex-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- v89 시련의 혼 모달 (영구 메타 진행) -->
+<div class="modal" id="trial-modal">
+  <div class="modal-box" style="max-width: 440px;">
+    <h2>시 련 의  혼</h2>
+    <p id="trial-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
+    <div id="trial-list" style="max-height: 400px; overflow-y: auto; padding: 4px 2px; margin-top:8px"></div>
+    <p style="font-size:10px;color:var(--dim);margin-top:10px;line-height:1.7;letter-spacing:2px">
+      검을 봉인할수록 영구 능력이 열린다.<br>
+      검이 부서져도 시련의 혼은 사라지지 않는다.
+    </p>
     <button class="modal-close" data-close>닫 기</button>
   </div>
 </div>
@@ -2398,7 +2413,7 @@
     const successBonus = (f && f.successBonus) || 0;
     const destroyReduce = (f && f.destroyReduce) || 0;
     const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul);
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus();
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus();
     const showSuccess = Math.min(1, t.success + totalBonus);
     const showDestroy = Math.max(0, t.destroy - destroyReduce - schoolDestroyReduce());
 
@@ -2536,7 +2551,7 @@
     addSoul(1); // 강화 시도 자체로 혼 +1
     lastEnhanceTime = Date.now(); // 호흡 리셋
     const roll = Math.random();
-    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus) {
+    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus()) {
       // 성공
       state.level++;
       if (state.level > state.bestLevel) state.bestLevel = state.level;
@@ -3941,6 +3956,31 @@
     swordInscriptions.textContent = parts.join(' · ');
   }
 
+  // === v89 시련의 혼 — 영구 메타 진행 ===
+  // 봉인 검 누적 수에 따라 영구 패시브 잠금 해제. 게임오버 리셋 후에도 보존.
+  // 점수 인플레이션이 아닌 *시작 자원* 보너스만 — 봉인 동기 부여 강화.
+  const TRIALS = [
+    { key: 't1', need: 1,  name: '초심의 인',  effect: '게임오버 후 부적 +1',          short: '부적 +1' },
+    { key: 't2', need: 3,  name: '혼의 그릇',  effect: '모든 새 검의 시작 영혼 +20',   short: '영혼 +20' },
+    { key: 't3', need: 5,  name: '장인의 손',  effect: '모든 강화 성공률 +1% 영구',     short: '+1%' },
+    { key: 't4', need: 10, name: '수련의 결정', effect: '게임오버 후 숫돌 +1',          short: '숫돌 +1' },
+    { key: 't5', need: 20, name: '검선의 길',  effect: '모든 새 검의 시작 강화 +1',     short: '시작 +1' }
+  ];
+  function trialCount() {
+    return Array.isArray(state.sealedSwords) ? state.sealedSwords.length : 0;
+  }
+  function trialUnlocked(k) {
+    const t = TRIALS.find(x => x.key === k);
+    return !!t && trialCount() >= t.need;
+  }
+  function trialSuccessBonus()    { return trialUnlocked('t3') ? 0.01 : 0; }
+  function trialStartSoulBonus()  { return trialUnlocked('t2') ? 20 : 0; }
+  function trialStartLevelBonus() { return trialUnlocked('t5') ? 1 : 0; }
+  function applyGameOverTrials() {
+    if (trialUnlocked('t1')) state.protections = Math.max(state.protections, 1);
+    if (trialUnlocked('t4')) state.whetstones  = Math.max(state.whetstones, 1);
+  }
+
   // === 封印 / 剛氣 — 검의 계보 ===
   const SEAL_MIN_LEVEL = 3;
   const START_BONUS_CAP = 6;
@@ -3958,8 +3998,12 @@
   }
   function newSword() {
     state.hasSword = true;
-    state.level = startBonus();
-    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: state.level, levelHistory: [state.level] };
+    // v89 시련의 혼: 시작 강화 + 영혼 보너스
+    let startLv = startBonus() + trialStartLevelBonus();
+    if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
+    state.level = startLv;
+    const startSoul = trialStartSoulBonus();
+    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level] };
     // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (state.firstWayReached) {
@@ -4040,6 +4084,8 @@
     state.protections = 0;
     state.whetstones = 0;
     state.spiritstones = 0;
+    // v89 시련의 혼 — 게임오버 보너스 자원 (1봉인 이상이면 활성)
+    applyGameOverTrials();
     newSword();
     gameOverShown = false;
     $('gameover-overlay').classList.remove('active');
@@ -4092,11 +4138,21 @@
     const verse = isWay
       ? generateVerse(form, ins, lv, slainHere, reward, state.currentSword.soul || 0)
       : null;
+    // v89 시련의 혼 — 봉인 직전 잠금 상태 기록
+    const trialsBefore = TRIALS.filter(t => trialUnlocked(t.key)).map(t => t.key);
     state.sealedSwords.push({
       level: lv, inscriptions: ins, form,
       soul: state.currentSword.soul || 0, name: swordName,
       slainCount: slainHere, verse,
       levelHistory: (state.currentSword.levelHistory || []).slice(),
+    });
+    // v89 잠금 해제된 시련 알림
+    const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
+    newlyUnlocked.forEach(t => {
+      log('시련의 혼 — 「' + t.name + '」 열림 (' + t.short + ')', 'success');
+      if (typeof announceInscription === 'function') {
+        setTimeout(() => announceInscription(t.name, t.effect), 600);
+      }
     });
     const schoolsAfter = getActiveSchools();
     const newSchool = schoolsAfter.find(s => !schoolsBefore.includes(s));
@@ -4670,7 +4726,7 @@
     }
   });
   // 메뉴 내 버튼은 클릭 후 자동 닫힘
-  ['btn-stats', 'btn-help', 'btn-reset', 'btn-backup', 'btn-restore', 'btn-export-sword', 'btn-codex',
+  ['btn-stats', 'btn-help', 'btn-reset', 'btn-backup', 'btn-restore', 'btn-export-sword', 'btn-codex', 'btn-trial',
    'btn-cloud-login', 'btn-cloud-push', 'btn-cloud-pull', 'btn-cloud-logout', 'btn-leaderboard'].forEach(id => {
     const b = $(id);
     if (b) b.addEventListener('click', () => $('menu-drop').classList.remove('open'));
@@ -5146,6 +5202,40 @@
     $('codex-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
+
+  // v89 시련의 혼 모달
+  $('btn-trial').addEventListener('click', () => {
+    renderTrial();
+    $('trial-modal').classList.add('active');
+    $('menu-drop').classList.remove('open');
+  });
+  function renderTrial() {
+    const cnt = trialCount();
+    const unlockedCount = TRIALS.filter(t => trialUnlocked(t.key)).length;
+    $('trial-progress').textContent = '봉인 ' + cnt + ' · 열린 시련 ' + unlockedCount + ' / ' + TRIALS.length;
+    const rows = TRIALS.map(t => {
+      const u = trialUnlocked(t.key);
+      const color = u ? 'var(--accent)' : 'var(--dim)';
+      const bg = u ? 'rgba(232,196,84,0.06)' : 'transparent';
+      const border = u ? '1px solid var(--accent)' : '1px dashed var(--line)';
+      const seal = u ? '◉' : '◌';
+      const status = u ? '<span style="color:var(--safe);font-size:10px;letter-spacing:3px">열림</span>'
+                       : '<span style="color:var(--dim);font-size:10px;letter-spacing:2px">' + (t.need - cnt) + ' 봉인 더 필요</span>';
+      return ''
+        + '<div style="display:flex;align-items:flex-start;gap:14px;padding:12px 10px;margin-bottom:8px;background:' + bg + ';border:' + border + ';border-radius:2px">'
+        +   '<div style="font-size:24px;color:' + color + ';line-height:1;flex-shrink:0;width:28px;text-align:center">' + seal + '</div>'
+        +   '<div style="flex:1;min-width:0">'
+        +     '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px">'
+        +       '<span style="color:' + color + ';font-size:13px;letter-spacing:4px">' + t.name + '</span>'
+        +       status
+        +     '</div>'
+        +     '<div style="color:' + (u ? 'var(--ink)' : 'var(--dim)') + ';font-size:11px;letter-spacing:2px;line-height:1.6">' + t.effect + '</div>'
+        +     '<div style="color:var(--dim);font-size:10px;letter-spacing:2px;margin-top:3px">필요: 봉인 ' + t.need + ' · 효과: ' + t.short + '</div>'
+        +   '</div>'
+        + '</div>';
+    }).join('');
+    $('trial-list').innerHTML = rows;
+  }
 
   function renderCodex() {
     // 명문별 획득 조건 텍스트
