@@ -1509,6 +1509,7 @@
   <button id="btn-codex">명문 사전</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
+  <button id="btn-daily">오늘의 도전</button>
   <button id="btn-help">안 내</button>
   <button id="btn-mute">소 리  끄 기</button>
   <div style="height:1px;background:var(--line);margin:4px 0"></div>
@@ -1901,6 +1902,20 @@
   </div>
 </div>
 
+<!-- v94 天時 일일 도전 모달 -->
+<div class="modal" id="daily-modal">
+  <div class="modal-box" style="max-width: 400px;">
+    <h2>天 時 — 오늘의 도전</h2>
+    <p><span id="daily-date" style="color:var(--dim);letter-spacing:2px"></span> · <span id="daily-count" style="color:var(--accent);letter-spacing:2px"></span></p>
+    <div id="daily-body" style="padding:14px 6px;margin-top:6px"></div>
+    <p style="font-size:10px;color:var(--dim);margin-top:8px;line-height:1.7;letter-spacing:2px">
+      매일 0시, 새로운 도전이 주어진다.<br>
+      모든 검사에게 같은 도전 — 오늘의 검을 증명하라.
+    </p>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
 <!-- v92 融劍 모달 (검 합성) -->
 <div class="modal" id="fusion-modal">
   <div class="modal-box" style="max-width: 440px;">
@@ -2169,6 +2184,8 @@
     guardianIdx: null,  // v52 — 수호자로 지정된 봉인 검의 인덱스 (선택적)
     recentLog: [],  // v75 — 최근 액션 기록 (최대 10건, 최신순)
     milestonesShown: {},  // v35 — 한 번씩만 표시되는 안내
+    dailyTrial: null,  // v94 天時 — { date, key, progress, completed }
+    dailyCompletedCount: 0,  // v94 — 누적 일일 도전 완료 횟수 (영구)
     stats: {
       enhanceAttempts: 0, enhanceSuccess: 0,
       challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0,
@@ -2240,6 +2257,8 @@
       }
       if (state.heritageInscription === undefined) state.heritageInscription = null;
       if (state.guardianIdx === undefined) state.guardianIdx = null;
+      if (typeof state.dailyCompletedCount !== 'number') state.dailyCompletedCount = 0;
+      if (state.dailyTrial !== null && (typeof state.dailyTrial !== 'object')) state.dailyTrial = null;
       if (!Array.isArray(state.recentLog)) state.recentLog = [];
       if (!state.milestonesShown || typeof state.milestonesShown !== 'object') state.milestonesShown = {};
       if (!state.stats || typeof state.stats !== 'object') {
@@ -2681,6 +2700,7 @@
     if (useSpirit) state.spiritstones--;
     state.currentSword.enhanceAttempts++;
     bumpStat('enhanceAttempts');
+    bumpDaily('enhanceAttempt', 1);  // v94 天時 — 강화 시도 (성공/실패 무관)
 
     // 첫 강화 시 검의 형 결정
     if (!state.currentSword.form) decideForm();
@@ -2753,6 +2773,8 @@
       if ($('whet-check')) $('whet-check').checked = false;
       if ($('spirit-check')) $('spirit-check').checked = false;
       checkDestiny();  // v93 天命 — 강화 성공 후 운명 점검
+      bumpDaily('enhanceSuccess', 1);  // v94 天時
+      bumpDaily('reachLevel', state.level);
       save();
       render();
       maybeTriggerChallenge();
@@ -2862,6 +2884,7 @@
         clearTimeout(failTimeout);
         state.shards += shardReward;
         bumpStat('rescued');
+        bumpDaily('rescue', 1);  // v94 天時
         SFX.rescueSave();
         log('조각 +' + shardReward + ' 주웠다', 'success');
         endVoid(true);
@@ -3010,6 +3033,7 @@
     };
     state.currentSword.foesEncountered[foe.key] = true;
     bumpStat('challengesAppeared');
+    bumpDaily('challenge', 1);  // v94 天時
     SFX.challengeAppear();
     setTimeout(() => {
       if (challenge) whisperFromAncestor(state.currentSword.form);
@@ -3055,6 +3079,7 @@
     const origin = rollShadowOrigin();
     challenge = { strength, reward, type, origin };
     bumpStat('challengesAppeared');
+    bumpDaily('challenge', 1);  // v94 天時
     maybeMilestone('firstChallenge', '그림자', '그림자가 나타났습니다 — 베거나 도망치세요');
     SFX.challengeAppear();
     // v26 道魂: 1.2초 후 봉인된 道 검의 시구 한 줄 페이드
@@ -3390,6 +3415,7 @@
         setTimeout(() => log('보호권 +1', 'success'), 200);
       }
       checkDestiny();  // v93 天命 — 베기 성공 후 운명 점검 (그림자/검귀/이름있는적)
+      bumpDaily('slay', 1);  // v94 天時
       setTimeout(() => { endChallenge(); save(); render(); }, 900);
     } else {
       // 베기 실패 — 검 흔들림
@@ -3534,6 +3560,93 @@
         + '<span style="color:var(--fg)">' + d.desc + '</span> '
         + '<span style="color:var(--dim);font-size:9px">· ' + d.rewardLabel + '</span>';
     }
+  }
+
+  // === v94 天時 — 일일 도전 (날짜 seed 기반, 매일 갱신) ===
+  // 게임에 *시간의 차원*을 부여 — 매일 돌아올 이유.
+  const DAILY_CHALLENGES = [
+    { key: 'enhance_success', label: '오늘의 단련', desc: '강화에 8번 성공하라',         target: 8,  track: 'enhanceSuccess' },
+    { key: 'slay',            label: '오늘의 사냥', desc: '그림자 다섯을 베어내라',       target: 5,  track: 'slay' },
+    { key: 'seal',            label: '오늘의 봉인', desc: '검을 두 자루 팔아라',          target: 2,  track: 'seal' },
+    { key: 'reach',           label: '오늘의 정점', desc: '검을 +10까지 강화하라',        target: 10, track: 'reachLevel' },
+    { key: 'rescue',          label: '오늘의 구원', desc: '부서진 검에서 두 번 회수하라', target: 2,  track: 'rescue' },
+    { key: 'challenge',       label: '오늘의 대치', desc: '그림자 도전을 여덟 번 마주하라', target: 8, track: 'challenge' },
+    { key: 'attempts',        label: '오늘의 정진', desc: '강화를 스무 번 시도하라',      target: 20, track: 'enhanceAttempt' }
+  ];
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function dailySeed(dateStr) {
+    let h = 0;
+    for (let i = 0; i < dateStr.length; i++) h = (h * 31 + dateStr.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  }
+  function ensureDailyTrial() {
+    const today = todayStr();
+    if (!state.dailyTrial || state.dailyTrial.date !== today) {
+      const ch = DAILY_CHALLENGES[dailySeed(today) % DAILY_CHALLENGES.length];
+      state.dailyTrial = { date: today, key: ch.key, progress: 0, completed: false };
+    }
+  }
+  function getDailyChallenge() {
+    if (!state.dailyTrial) return null;
+    return DAILY_CHALLENGES.find(c => c.key === state.dailyTrial.key) || null;
+  }
+  function bumpDaily(track, value) {
+    ensureDailyTrial();
+    const dt = state.dailyTrial;
+    if (dt.completed) return;
+    const ch = getDailyChallenge();
+    if (!ch || ch.track !== track) return;
+    if (track === 'reachLevel') {
+      dt.progress = Math.max(dt.progress || 0, value || 0);
+    } else {
+      dt.progress = (dt.progress || 0) + (value || 1);
+    }
+    if (dt.progress >= ch.target) {
+      dt.completed = true;
+      grantDailyReward(ch);
+    }
+  }
+  function grantDailyReward(ch) {
+    state.dailyCompletedCount = (state.dailyCompletedCount || 0) + 1;
+    const reward = 40 + ch.target * 8;
+    state.shards += reward;
+    log('天時 — 「' + ch.label + '」 달성! 조각 +' + reward, 'success');
+    if (typeof announceInscription === 'function') {
+      announceInscription('天時', ch.label + ' 달성 — 누적 ' + state.dailyCompletedCount + '회');
+    }
+    if (typeof SFX !== 'undefined' && SFX.inscribe) SFX.inscribe();
+    if (typeof recordEvent === 'function') recordEvent('天時 「' + ch.label + '」 달성 +' + reward);
+  }
+  function renderDaily() {
+    ensureDailyTrial();
+    const dt = state.dailyTrial;
+    const ch = getDailyChallenge();
+    const dateEl = $('daily-date'), bodyEl = $('daily-body'), countEl = $('daily-count');
+    if (!bodyEl) return;
+    if (dateEl) dateEl.textContent = dt.date;
+    if (countEl) countEl.textContent = '누적 달성 ' + (state.dailyCompletedCount || 0) + '회';
+    if (!ch) { bodyEl.innerHTML = '<div style="color:var(--dim)">도전 없음</div>'; return; }
+    const prog = Math.min(dt.progress || 0, ch.target);
+    const pct = Math.round((prog / ch.target) * 100);
+    const done = dt.completed;
+    const reward = 40 + ch.target * 8;
+    bodyEl.innerHTML = ''
+      + '<div style="text-align:center;margin-bottom:10px">'
+      +   '<div style="color:' + (done ? 'var(--safe)' : 'var(--accent)') + ';font-size:15px;letter-spacing:5px;margin-bottom:4px">' + ch.label + (done ? '  ✓' : '') + '</div>'
+      +   '<div style="color:var(--fg);font-size:12px;letter-spacing:2px">' + ch.desc + '</div>'
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+      +   '<div style="flex:1;height:7px;background:var(--line);border-radius:3px;overflow:hidden">'
+      +     '<div style="height:100%;background:' + (done ? 'var(--safe)' : 'var(--accent)') + ';width:' + pct + '%;transition:width 0.3s"></div>'
+      +   '</div>'
+      +   '<span style="color:var(--dim);font-size:11px;min-width:48px;text-align:right">' + prog + ' / ' + ch.target + '</span>'
+      + '</div>'
+      + '<div style="text-align:center;font-size:10px;color:var(--dim);letter-spacing:2px;margin-top:8px">'
+      +   (done ? '<span style="color:var(--safe)">완료 — 조각 +' + reward + ' 획득</span>' : '보상: 조각 +' + reward)
+      + '</div>';
   }
 
   // === 形 — 검의 천성 (첫 강화 시 결정) ===
@@ -4579,6 +4692,7 @@
     }
     state.shards += reward;
     bumpStat('sealed');
+    bumpDaily('seal', 1);  // v94 天時
     if (isWay) bumpStat('wayReached');
     recordEvent('판매 ' + swordName + ' +' + reward + ' 조각');
     log('판매 +' + lv + ' — 조각 ' + reward, 'success');
@@ -5157,7 +5271,7 @@
     }
   });
   // 메뉴 내 버튼은 클릭 후 자동 닫힘
-  ['btn-stats', 'btn-help', 'btn-reset', 'btn-backup', 'btn-restore', 'btn-export-sword', 'btn-codex', 'btn-trial', 'btn-foes',
+  ['btn-stats', 'btn-help', 'btn-reset', 'btn-backup', 'btn-restore', 'btn-export-sword', 'btn-codex', 'btn-trial', 'btn-foes', 'btn-daily',
    'btn-cloud-login', 'btn-cloud-push', 'btn-cloud-pull', 'btn-cloud-logout', 'btn-leaderboard'].forEach(id => {
     const b = $(id);
     if (b) b.addEventListener('click', () => $('menu-drop').classList.remove('open'));
@@ -5647,6 +5761,13 @@
     $('foes-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
+
+  // v94 天時 일일 도전 모달
+  $('btn-daily').addEventListener('click', () => {
+    renderDaily();
+    $('daily-modal').classList.add('active');
+    $('menu-drop').classList.remove('open');
+  });
   function renderFoes() {
     if (!state.foesSlain) state.foesSlain = {};
     const slainCount = NAMED_FOES.filter(f => state.foesSlain[f.key]).length;
@@ -5941,6 +6062,8 @@
       guardianIdx: null,
       recentLog: [],
       milestonesShown: {},
+      dailyTrial: null,
+      dailyCompletedCount: 0,
       stats: { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0 },
       seenHelp: true,
     };
@@ -6306,6 +6429,7 @@
 
   // === 시작 ===
   load();
+  ensureDailyTrial();  // v94 天時 — 오늘의 도전 초기화/갱신
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
