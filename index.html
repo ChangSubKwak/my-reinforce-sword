@@ -1772,6 +1772,7 @@
       <br>
       <span class="cost" id="odds-cost">조각 0 소모</span>
     </div>
+    <div id="destiny-banner" style="display:none;text-align:center;font-size:11px;letter-spacing:1px;padding:6px 8px;margin-bottom:8px;border:1px solid var(--line);border-radius:2px;line-height:1.6"></div>
     <label class="protect-row" id="protect-row">
       <input type="checkbox" id="protect-check">
       <span id="protect-label">보호권 사용 (실패해도 검 유지)</span>
@@ -2219,6 +2220,11 @@
       if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
       if (state.currentSword.form === undefined) state.currentSword.form = null;
       if (typeof state.currentSword.soul !== 'number') state.currentSword.soul = 0;
+      // v93 天命 — 기존 검에 천명 없으면 부여
+      if (state.hasSword && !state.currentSword.destiny) {
+        try { assignDestiny(); } catch (e) {}
+      }
+      if (typeof state.currentSword.destinyFulfilled !== 'boolean') state.currentSword.destinyFulfilled = false;
       // v45+ 무한 팔기 차단: 기존 저장 데이터는 startLevel을 현재 level로 (기존 검은 그 자리에서 팔기 허용)
       if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
       // v51 일생 그래프
@@ -2435,6 +2441,7 @@
     applySeason();
     renderWayCounter();
     renderGuardianDisplay();
+    renderDestiny();  // v93 天命
     // v81 조합소 버튼 시각 잠금 — +0 일 때만 활성
     const forgeBtn = $('btn-forge');
     if (forgeBtn) {
@@ -2472,6 +2479,7 @@
       // v92 融劍 버튼 — 검 없고 봉인 검 2자루 이상이면 표시
       const bf = $('btn-fusion');
       if (bf) bf.style.display = ((state.sealedSwords || []).length >= 2) ? '' : 'none';
+      renderDestiny();  // v93 天命 배너 숨김 (검 없을 때)
       // 게임 오버 체크 — return 전에 반드시 호출
       checkGameOver();
       return;
@@ -2744,6 +2752,7 @@
       protectCheck.checked = false;
       if ($('whet-check')) $('whet-check').checked = false;
       if ($('spirit-check')) $('spirit-check').checked = false;
+      checkDestiny();  // v93 天命 — 강화 성공 후 운명 점검
       save();
       render();
       maybeTriggerChallenge();
@@ -2794,6 +2803,7 @@
     // 실패 분기에서도 百鍊 카운트 확인 (강화 시도 자체로 누적)
     checkInscriptions();
     recordLevelHistory();
+    checkDestiny();  // v93 天命 — 강화 시도(횟수) 후 운명 점검
     save();
     render();
   }
@@ -3379,6 +3389,7 @@
         state.protections++;
         setTimeout(() => log('보호권 +1', 'success'), 200);
       }
+      checkDestiny();  // v93 天命 — 베기 성공 후 운명 점검 (그림자/검귀/이름있는적)
       setTimeout(() => { endChallenge(); save(); render(); }, 900);
     } else {
       // 베기 실패 — 검 흔들림
@@ -3451,6 +3462,78 @@
     // 단계 진입 시 명문 자동 부여
     if (before < SOUL_AWAKEN && after >= SOUL_AWAKEN) grantInscription('覺');
     if (before < SOUL_TRUE && after >= SOUL_TRUE) grantInscription('本');
+    checkDestiny();  // v93 혼 기반 천명
+  }
+
+  // === v93 天命 — 검의 운명 (검 한 자루의 일생 목표) ===
+  // 새 검마다 랜덤 부여. 달성 시 보상. 강화 루프에 *방향성*을 준다.
+  const DESTINIES = [
+    { key: 'reach10',   label: '十의 천명',   desc: '이 검을 +10까지 강화하라',       reward: { shards: 60 },        rewardLabel: '조각 +60',
+      check: () => state.level >= 10 },
+    { key: 'reach13',   label: '極의 천명',   desc: '이 검을 +13까지 강화하라',       reward: { shards: 150 },       rewardLabel: '조각 +150',
+      check: () => state.level >= 13 },
+    { key: 'slay5',     label: '影殺의 천명', desc: '이 검으로 그림자 다섯을 베어내라', reward: { soul: 25 },          rewardLabel: '혼 +25',
+      check: () => (state.currentSword.slainCount || 0) >= 5 },
+    { key: 'slay10',    label: '百影의 천명', desc: '이 검으로 그림자 열을 베어내라',   reward: { protections: 2 },    rewardLabel: '보호권 +2',
+      check: () => (state.currentSword.slainCount || 0) >= 10 },
+    { key: 'demon',     label: '鬼緣의 천명', desc: '이 검으로 검귀를 베어내라',       reward: { shards: 250 },       rewardLabel: '조각 +250',
+      check: () => (state.currentSword.inscriptions || []).includes('鬼斬') },
+    { key: 'enhance30', label: '百鍊의 천명', desc: '이 검으로 서른 번 강화하라',     reward: { whetstones: 3 },     rewardLabel: '숫돌 +3',
+      check: () => (state.currentSword.enhanceAttempts || 0) >= 30 },
+    { key: 'soul67',    label: '本心의 천명', desc: '이 검의 혼을 67까지 깨워라',     reward: { shards: 120 },       rewardLabel: '조각 +120',
+      check: () => (state.currentSword.soul || 0) >= 67 },
+    { key: 'foe',       label: '宿敵의 천명', desc: '이 검으로 이름 있는 적을 베어내라', reward: { spiritstones: 1, shards: 80 }, rewardLabel: '靈石 +1 · 조각 +80',
+      check: () => (state.currentSword.inscriptions || []).some(k => ['風斬','月斬','刃斬','帝斬','龍斬'].indexOf(k) >= 0) },
+  ];
+  function assignDestiny() {
+    if (!state.hasSword || !state.currentSword) return;
+    // 이미 충족된 천명은 회피 — 검의 방향이 즉시 끝나지 않게
+    const candidates = DESTINIES.filter(d => { try { return !d.check(); } catch (e) { return true; } });
+    const pool = candidates.length > 0 ? candidates : DESTINIES;
+    const d = pool[Math.floor(Math.random() * pool.length)];
+    state.currentSword.destiny = d.key;
+    state.currentSword.destinyFulfilled = false;
+  }
+  function checkDestiny() {
+    if (!state.hasSword || !state.currentSword) return;
+    const cs = state.currentSword;
+    if (!cs.destiny || cs.destinyFulfilled) return;
+    const d = DESTINIES.find(x => x.key === cs.destiny);
+    if (!d) return;
+    let ok = false;
+    try { ok = d.check(); } catch (e) { ok = false; }
+    if (!ok) return;
+    cs.destinyFulfilled = true;  // 보상 전 플래그 — 재귀/중복 차단
+    const r = d.reward || {};
+    if (r.shards) state.shards += r.shards;
+    if (r.protections) state.protections += r.protections;
+    if (r.whetstones) state.whetstones += r.whetstones;
+    if (r.spiritstones) state.spiritstones += r.spiritstones;
+    if (r.soul) addSoul(r.soul);  // addSoul은 checkDestiny 재호출하나 destinyFulfilled로 차단됨
+    log('天命 달성 — ' + d.label + ' · ' + d.rewardLabel, 'success');
+    if (typeof announceInscription === 'function') {
+      announceInscription('天命', d.label + ' 성취 — ' + d.rewardLabel);
+    }
+    if (typeof SFX !== 'undefined' && SFX.inscribe) SFX.inscribe();
+  }
+  function renderDestiny() {
+    const el = $('destiny-banner');
+    if (!el) return;
+    if (!state.hasSword || !state.currentSword || !state.currentSword.destiny) {
+      el.style.display = 'none';
+      return;
+    }
+    const d = DESTINIES.find(x => x.key === state.currentSword.destiny);
+    if (!d) { el.style.display = 'none'; return; }
+    el.style.display = '';
+    if (state.currentSword.destinyFulfilled) {
+      el.innerHTML = '<span style="color:var(--safe);letter-spacing:3px">天命 성취</span> '
+        + '<span style="color:var(--dim)">' + d.label + '</span>';
+    } else {
+      el.innerHTML = '<span style="color:var(--accent);letter-spacing:3px">天命</span> '
+        + '<span style="color:var(--fg)">' + d.desc + '</span> '
+        + '<span style="color:var(--dim);font-size:9px">· ' + d.rewardLabel + '</span>';
+    }
   }
 
   // === 形 — 검의 천성 (첫 강화 시 결정) ===
@@ -4254,6 +4337,8 @@
     if (rayCount > 0) {
       setTimeout(() => spawnLegacyRays(rayCount), 100);
     }
+    // v93 天命 — 새 검에 일생 목표 부여
+    assignDestiny();
   }
   const NEWSWORD_COST = 50;
 
@@ -4475,6 +4560,8 @@
       soul: state.currentSword.soul || 0, name: swordName,
       slainCount: slainHere, verse,
       levelHistory: (state.currentSword.levelHistory || []).slice(),
+      destiny: state.currentSword.destiny || null,
+      destinyFulfilled: !!state.currentSword.destinyFulfilled,
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -4851,6 +4938,19 @@
           s.verse.map(line => '<div>' + line + '</div>').join('') +
         '</div>'
       : '';
+    // v93 天命 — 검의 운명 회고
+    let destinyBlock = '';
+    if (s.destiny) {
+      const dd = DESTINIES.find(x => x.key === s.destiny);
+      if (dd) {
+        const done = !!s.destinyFulfilled;
+        destinyBlock = '<div style="margin:12px 0;padding:8px 10px;border:1px solid ' + (done ? 'var(--safe)' : 'var(--line)') + ';border-radius:2px;font-size:11px;letter-spacing:2px;text-align:center">' +
+          '<span style="color:' + (done ? 'var(--safe)' : 'var(--dim)') + '">天命' + (done ? ' 성취' : ' 미완') + '</span> ' +
+          '<span style="color:var(--fg)">' + dd.label + '</span>' +
+          '<div style="color:var(--dim);font-size:10px;margin-top:3px;opacity:0.8">' + dd.desc + '</div>' +
+        '</div>';
+      }
+    }
     $('detail-body').innerHTML =
       buildDetailSwordSVG(s) +
       buildLevelChart(s.levelHistory) +
@@ -4860,6 +4960,7 @@
         '<div><span style="color:var(--dim)">강화도</span> <span style="color:var(--accent);margin-left:6px">+' + s.level + '</span></div>' +
       '</div>' +
       verseBlock +
+      destinyBlock +
       '<div style="color:var(--dim);font-size:11px;margin-bottom:6px;letter-spacing:3px">— 명문 —</div>' +
       insBlock +
       '<div style="display:flex;justify-content:space-around;padding:10px 0;margin-top:14px;border-top:1px solid var(--line);font-size:11px">' +
@@ -5845,6 +5946,9 @@
     };
     inscribeQueue = [];
     gameOverShown = false;
+    fusionSelected = [];
+    resolveMode = 'normal';
+    assignDestiny();  // v93 天命 — 초기화 후 새 검에 운명 부여
     $('gameover-overlay').classList.remove('active');
     if (challenge) endChallenge();
     save();
