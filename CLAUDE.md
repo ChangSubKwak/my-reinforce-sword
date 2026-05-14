@@ -594,6 +594,36 @@ footer 7개 버튼 → 3개 (조합소·계보·詩集) + 우상단 ≡ 메뉴 (
 - `onAuthStateChange`로 자동 UI 갱신 + 로그인 모달 자동 닫힘
 - 道 도달 시 로그인 사용자에게 점수 등록 안내 log (7.5초 후)
 
+### v87+ 자동 클라우드 동기화
+
+**v87 봉인 시 자동 push**: `AUTOSYNC_KEY` localStorage 플래그 + `autosyncEnabled` 토글. `schedulePush()` — 3초 debounced push (연속 액션 시 1번만). 메뉴 '☁ 자동 동기화' 체크박스 (로그인 시만 표시). `doSeal()`에서 `schedulePush()` 호출.
+
+**v88 로그인 시 자동 pull**: `progressScore(s)` — 처치/봉인검×100/최고강화×10 합산 비교 지표. `applyCloudState(cloud)` — 보정 + 게임오버 해제 + render. `autoPull()` — autosync ON일 때: 클라우드 비어있음→초기 push / 클라우드>로컬→자동 적용 / 로컬>클라우드→자동 push / 같음→silent. `autoPullRunning` 가드. `onAuthStateChange`: `SIGNED_IN`→300ms 후, `INITIAL_SESSION`→600ms 후 `autoPull`. v87(push)+v88(pull) = 완전 양방향 자동 동기화.
+
+### v89 시련의 혼 (영구 메타 진행)
+
+봉인 검 누적 수에 따라 영구 패시브 잠금 해제 — 게임오버 리셋 후에도 보존. `TRIALS` 5노드 (1/3/5/10/20 봉인):
+- 초심의 인 (1) — 게임오버 후 부적 +1
+- 혼의 그릇 (3) — 모든 새 검 시작 영혼 +20
+- 장인의 손 (5) — 모든 강화 성공률 +1% 영구
+- 수련의 결정 (10) — 게임오버 후 숫돌 +1
+- 검선의 길 (20) — 모든 새 검 시작 강화 +1
+
+헬퍼: `trialCount()` / `trialUnlocked(k)` / `trialSuccessBonus()` / `trialStartSoulBonus()` / `trialStartLevelBonus()` / `applyGameOverTrials()`. 통합: `newSword()`(시작 강화/영혼), `enhance()`(표시+주사위), `restartFromGameOver()`(부적/숫돌), `doSeal()`(봉인 전후 비교→새 시련 알림). UI: 메뉴 '시련의 혼' + `#trial-modal` (`renderTrial()`).
+
+### v90 名 — 이름 있는 적 (Named Foes)
+
+강화도 마일스톤마다 등장하는 1회성 보스. `NAMED_FOES` 5종 (黑風+5 / 銀月+8 / 千刃+11 / 鬼帝+13 / 龍+15) — 각 `{key, name, trigger, strength, reward, inscription, desc}`. 규칙: `bestLevel >= trigger && !foesSlain[key] && !currentSword.foesEncountered[key]` → 100% spawn (`pendingNamedFoe()`). 검 1자루당 각 보스 1회 만남, 도망쳐도 다음 검에서 재등장. 베면 `state.foesSlain[key]=true` (영구) + 영구 명문 (해당 검) + 영혼 +15 + 검귀 컷씬 재활용 (`demon-slay-kanji` 동적 교체). `triggerNamedFoe()` 는 기존 challenge 객체 패턴 사용 (`type.isNamed`, `namedFoeKey`). UI: 메뉴 '처치 보고서' + `#foes-modal` (`renderFoes()`).
+
+### v91 覺悟 — 강화 마음가짐 3택
+
+원작 "다음 한 번만 더" 도박 충동에 *결정 차원* 부여. `RESOLVE` 3종 (휘발성 모듈 변수 `resolveMode`, 새로고침 시 `normal`):
+- 平常 — 변화 없음
+- 一心 — `successAdd:+0.08`, `destroyMul:1.5` (올인 도박)
+- 保身 — `successAdd:-0.10`, `destroyMul:0`, `downgradeMul:0.5`, `costMul:1.5` (신중)
+
+`getResolve()` 반환 객체. 통합: `enhance()` 비용/주사위/`effectiveDestroy`/`effectiveDowngrade` 전 경로, `render()` 성공률/파괴/하락/비용 표시 + `.resolve-btn` active 토글. 검 없을 때 `#resolve-row`/`#resolve-desc` 자동 숨김. 靈石(보유 한정)과 차별 — 保身은 즉시·무한·비용 트레이드. 강화 버튼 위 3택 버튼 UI.
+
 ### 봉인 균형 곡선 (참고)
 
 | 검 강화도 | 봉인 보상 (조각) |
