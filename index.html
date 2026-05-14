@@ -430,6 +430,43 @@
   .protect-row input { accent-color: var(--accent); cursor: pointer; }
   .protect-row.disabled { opacity: 0.4; cursor: not-allowed; }
 
+  /* v91 覺悟 — 강화 마음가짐 선택 */
+  #resolve-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .resolve-btn {
+    flex: 1;
+    max-width: 92px;
+    padding: 6px 4px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--dim);
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .resolve-btn:hover { border-color: var(--dim); color: var(--fg); }
+  .resolve-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(212, 175, 55, 0.06);
+  }
+  .resolve-btn.focus-mode.active { border-color: var(--danger); color: var(--danger); background: rgba(192,57,43,0.07); }
+  .resolve-btn.guard-mode.active { border-color: var(--safe); color: var(--safe); background: rgba(74,122,74,0.08); }
+  #resolve-desc {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    margin-bottom: 8px;
+    min-height: 13px;
+  }
+
   #btn-enhance {
     width: 100%;
     padding: 16px;
@@ -1721,6 +1758,12 @@
       <input type="checkbox" id="auto-check">
       <span id="auto-label">修練 (안전한 단계까지 자동 강화)</span>
     </label>
+    <div id="resolve-row">
+      <button class="resolve-btn active" data-resolve="normal">平常</button>
+      <button class="resolve-btn focus-mode" data-resolve="focus">一心</button>
+      <button class="resolve-btn guard-mode" data-resolve="guard">保身</button>
+    </div>
+    <div id="resolve-desc">마음을 비운다</div>
     <div id="stone-row" style="display:flex;gap:12px;justify-content:center;font-size:11px;color:var(--dim);margin-bottom:10px">
       <label id="whet-row" style="display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="whet-check"><span id="whet-label">砥 (성공 +25%)</span>
@@ -2381,6 +2424,10 @@
       const wc = $('whet-check'), sc = $('spirit-check');
       if (wc) { wc.disabled = true; wc.checked = false; }
       if (sc) { sc.disabled = true; sc.checked = false; }
+      // v91 覺悟 UI 숨김 (검 없을 때)
+      const rrow = $('resolve-row'), rdesc = $('resolve-desc');
+      if (rrow) rrow.style.display = 'none';
+      if (rdesc) rdesc.style.display = 'none';
       // 게임 오버 체크 — return 전에 반드시 호출
       checkGameOver();
       return;
@@ -2432,10 +2479,11 @@
     const ageCostMul = getAgeEffect().costMul;
     const successBonus = (f && f.successBonus) || 0;
     const destroyReduce = (f && f.destroyReduce) || 0;
-    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul);
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus();
-    const showSuccess = Math.min(1, t.success + totalBonus);
-    const showDestroy = Math.max(0, t.destroy - destroyReduce - schoolDestroyReduce());
+    const rsv = getResolve();  // v91 覺悟
+    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul);
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd;
+    const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
+    const showDestroy = Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce()) * rsv.destroyMul);
 
     const canAfford = state.shards >= actualCost;
     btnEnhance.disabled = !canAfford;
@@ -2450,16 +2498,25 @@
       : '';
     oddsSuccess.innerHTML = '성공률 ' + Math.round(showSuccess * 100) + '%' + freeNote +
       (breathStr ? '  <span style="color:#6a8a9a;font-size:10px">· ' + breathStr + '</span>' : '');
+    const showDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul);
     let failMsg = '';
     if (showDestroy > 0) {
-      failMsg = '실패 시 파괴 ' + Math.round(showDestroy * 100) + '% · 하락 ' + Math.round(t.downgrade * 100) + '%';
-    } else if (t.downgrade > 0) {
-      failMsg = '실패 시 하락 ' + Math.round(t.downgrade * 100) + '%';
+      failMsg = '실패 시 파괴 ' + Math.round(showDestroy * 100) + '% · 하락 ' + Math.round(showDowngrade * 100) + '%';
+    } else if (showDowngrade > 0) {
+      failMsg = '실패 시 하락 ' + Math.round(showDowngrade * 100) + '%';
     } else {
       failMsg = '실패 시 유지';
     }
     oddsFail.innerHTML = failMsg.replace('파괴', '<span class="destroy">파괴</span>');
     oddsCost.textContent = '조각 ' + actualCost + ' 소모';
+
+    // v91 覺悟 — 마음가짐 UI 갱신
+    const rrow = $('resolve-row'), resolveDesc = $('resolve-desc');
+    if (rrow) rrow.style.display = '';
+    if (resolveDesc) { resolveDesc.style.display = ''; resolveDesc.textContent = rsv.desc; }
+    document.querySelectorAll('.resolve-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.resolve === resolveMode);
+    });
 
     // 방지권
     const pCost = protectCost(lv);
@@ -2529,6 +2586,16 @@
   // === 강화 ===
   let rescueWindow = null;
 
+  // === v91 覺悟 — 강화 마음가짐 (휘발성, 새로고침 시 平常) ===
+  // 원작 "다음 한 번만 더" 도박 충동에 *결정 차원*을 부여.
+  const RESOLVE = {
+    normal: { key: 'normal', label: '平常', name: '평상', successAdd: 0,     destroyMul: 1,   downgradeMul: 1,   costMul: 1,   desc: '마음을 비운다 — 변화 없음' },
+    focus:  { key: 'focus',  label: '一心', name: '일심', successAdd: 0.08,  destroyMul: 1.5, downgradeMul: 1,   costMul: 1,   desc: '다음 한 번에 모든 것을 — 성공 +8% · 파괴 1.5배' },
+    guard:  { key: 'guard',  label: '保身', name: '보신', successAdd: -0.10, destroyMul: 0,   downgradeMul: 0.5, costMul: 1.5, desc: '부서짐을 허락하지 않는다 — 성공 -10% · 파괴 0 · 비용 1.5배' }
+  };
+  let resolveMode = 'normal';
+  function getResolve() { return RESOLVE[resolveMode] || RESOLVE.normal; }
+
   function enhance() {
     if (challenge || rescueWindow) return;
     if (!state.hasSword || state.level >= MAX_LEVEL) return;
@@ -2540,7 +2607,8 @@
     const ageCostMul = getAgeEffect().costMul;
     const successBonus = (form && form.successBonus) || 0;
     const destroyReduce = (form && form.destroyReduce) || 0;
-    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul);
+    const rsv = getResolve();  // v91 覺悟
+    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul);
     if (state.shards < actualCost) return;
 
     const useProtect = protectCheck.checked && !protectCheck.disabled;
@@ -2571,7 +2639,7 @@
     addSoul(1); // 강화 시도 자체로 혼 +1
     lastEnhanceTime = Date.now(); // 호흡 리셋
     const roll = Math.random();
-    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus()) {
+    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd) {
       // 성공
       state.level++;
       if (state.level > state.bestLevel) state.bestLevel = state.level;
@@ -2640,8 +2708,9 @@
       setTimeout(() => swordWrap.classList.remove('shake'), 400);
 
       const failRoll = Math.random();
-      // 영석: 파괴 차단 / 유파 + 수호자 보너스도 destroy 감소
-      const effectiveDestroy = useSpirit ? 0 : Math.max(0, t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce);
+      // 영석: 파괴 차단 / 유파 + 수호자 보너스도 destroy 감소 / v91 覺悟 배율
+      const effectiveDestroy = useSpirit ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce) * rsv.destroyMul);
+      const effectiveDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul);
       if (failRoll < effectiveDestroy && !useProtect) {
         // 파괴
         state.totalDestroyed++;
@@ -2655,7 +2724,7 @@
         recordEvent('검 파괴 (+' + destroyedLevel + ')');
         maybeMilestone('firstDestroy', '부서짐', '검이 부서졌습니다 — 5초 안에 조각을 주우세요');
         showVoid(destroyedLevel);
-      } else if (failRoll < effectiveDestroy + t.downgrade && !useProtect) {
+      } else if (failRoll < effectiveDestroy + effectiveDowngrade && !useProtect) {
         // 하락
         state.level = Math.max(0, state.level - 1);
         log('실패 — 하락 (+' + state.level + ')', 'fail');
@@ -5648,6 +5717,17 @@
     }
     enhance();
   });
+  // v91 覺悟 — 마음가짐 3택 버튼
+  document.querySelectorAll('.resolve-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const mode = b.dataset.resolve;
+      if (!RESOLVE[mode]) return;
+      resolveMode = mode;
+      SFX.forge();
+      render();
+    });
+  });
+
   const btnSealDirect = $('btn-seal-direct');
   const sealRewardLabel = $('seal-reward-label');
   if (btnSealDirect) {
