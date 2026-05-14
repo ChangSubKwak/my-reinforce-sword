@@ -515,6 +515,28 @@
   }
   #btn-seal-direct:disabled .seal-reward { color: var(--dim); }
 
+  /* v92 融劍 — 검 합성 버튼 */
+  #btn-fusion {
+    width: 100%;
+    margin-top: 8px;
+    padding: 9px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--dim);
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  #btn-fusion:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(212, 175, 55, 0.05);
+  }
+  #btn-fusion:active { transform: scale(0.98); }
+  .fusion-item:hover { border-color: var(--dim) !important; }
+
   /* 하단 버튼 */
   #footer {
     display: flex;
@@ -1774,6 +1796,7 @@
     </div>
     <button id="btn-enhance">강 &nbsp; 화</button>
     <button id="btn-seal-direct" title="검을 팔아 조각을 얻습니다">검  팔 기<span class="seal-reward" id="seal-reward-label"></span></button>
+    <button id="btn-fusion" style="display:none" title="봉인된 검 둘을 합쳐 새 검으로">融 劍  ·  검 둘을 합친다</button>
   </div>
 
   <div id="key-hint" style="text-align:center;font-size:9px;color:var(--dim);letter-spacing:2px;opacity:0.5;padding:4px 0">
@@ -1874,6 +1897,24 @@
       베면 영구 명문이 그 검에 새겨진다.
     </p>
     <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- v92 融劍 모달 (검 합성) -->
+<div class="modal" id="fusion-modal">
+  <div class="modal-box" style="max-width: 440px;">
+    <h2>融 劍</h2>
+    <p>봉인된 검 둘을 골라 형 · 명문 · 혼을 잇는다</p>
+    <div id="fusion-preview" style="padding:10px;border:1px dashed var(--line);border-radius:2px;margin-bottom:10px;min-height:40px"></div>
+    <div id="fusion-list" style="max-height: 280px; overflow-y: auto; padding: 2px;"></div>
+    <p style="font-size:10px;color:var(--dim);margin-top:8px;line-height:1.7;letter-spacing:1px">
+      두 검은 사라지고 선대 강기가 줄어든다.<br>
+      강한 검의 형, 정점 명문 하나, 혼의 평균이 새 검에 깃든다.
+    </p>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="modal-close" data-close style="flex:1;margin:0">취 소</button>
+      <button id="fusion-confirm" style="flex:1.4;padding:10px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:12px;letter-spacing:3px;cursor:pointer">검 둘을 고르세요</button>
+    </div>
   </div>
 </div>
 
@@ -2428,11 +2469,17 @@
       const rrow = $('resolve-row'), rdesc = $('resolve-desc');
       if (rrow) rrow.style.display = 'none';
       if (rdesc) rdesc.style.display = 'none';
+      // v92 融劍 버튼 — 검 없고 봉인 검 2자루 이상이면 표시
+      const bf = $('btn-fusion');
+      if (bf) bf.style.display = ((state.sealedSwords || []).length >= 2) ? '' : 'none';
       // 게임 오버 체크 — return 전에 반드시 호출
       checkGameOver();
       return;
     }
     btnEnhance.dataset.mode = 'enhance';
+    // v92 融劍 버튼은 검 보유 중 숨김
+    const bfHide = $('btn-fusion');
+    if (bfHide) bfHide.style.display = 'none';
 
     swordSvg.style.opacity = 1;
     // v45 단계별 한자 이름 + v57 道까지 거리
@@ -4210,6 +4257,118 @@
   }
   const NEWSWORD_COST = 50;
 
+  // === v92 融劍 — 검 합성 (봉인 검 2자루 → 형·명문·혼 계승) ===
+  const FUSION_COST = 60;
+  // 계승 명문 우선순위 (메타 명문 始祖/達人/聖 제외 — newSword가 자동 부여)
+  const FUSION_PRIORITY = ['道','龍斬','帝斬','鬼斬','刃斬','月斬','風斬','斷魔','本','覺','剛體','百鍊','回魔','初刃','古','久'];
+  let fusionSelected = [];
+  function fusionPreview() {
+    // 현재 선택된 2검으로 생성될 검의 미리보기 — { form, inscription, soul, startLevel } 또는 null
+    if (fusionSelected.length !== 2) return null;
+    const a = state.sealedSwords[fusionSelected[0]];
+    const b = state.sealedSwords[fusionSelected[1]];
+    if (!a || !b) return null;
+    const strong = (a.level || 0) >= (b.level || 0) ? a : b;
+    const allIns = [].concat(a.inscriptions || [], b.inscriptions || []);
+    let inheritIns = null;
+    for (const k of FUSION_PRIORITY) { if (allIns.includes(k)) { inheritIns = k; break; } }
+    const inheritSoul = Math.floor(((a.soul || 0) + (b.soul || 0)) / 2);
+    // 두 검 제거 후의 startBonus 추정 (legacyStrength 감소 반영)
+    const lostLegacy = (a.level || 0) + (b.level || 0);
+    const remainLegacy = legacyStrength() - lostLegacy;
+    let startLv = Math.min(START_BONUS_CAP, Math.floor(remainLegacy / START_BONUS_DIVISOR)) + trialStartLevelBonus();
+    if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
+    if (startLv < 0) startLv = 0;
+    return { form: strong.form, inscription: inheritIns, soul: inheritSoul, startLevel: startLv, a, b };
+  }
+  function fuseSwords() {
+    if (state.hasSword) return;
+    if (fusionSelected.length !== 2) return;
+    if (state.shards < FUSION_COST) { log('조각 부족 — 융검 ' + FUSION_COST + ' 필요', 'destroy'); return; }
+    const p = fusionPreview();
+    if (!p) return;
+    const idxA = fusionSelected[0], idxB = fusionSelected[1];
+    const nameA = p.a.name || '검', nameB = p.b.name || '검';
+    // 두 검 제거 (인덱스 큰 것부터)
+    const hi = Math.max(idxA, idxB), lo = Math.min(idxA, idxB);
+    state.sealedSwords.splice(hi, 1);
+    state.sealedSwords.splice(lo, 1);
+    state.shards -= FUSION_COST;
+    // 새 검 (startBonus는 감소한 legacy로 재계산)
+    newSword();
+    // 형질 계승 override
+    if (p.form) state.currentSword.form = p.form;
+    if (p.inscription && !state.currentSword.inscriptions.includes(p.inscription)) {
+      state.currentSword.inscriptions.push(p.inscription);
+    }
+    state.currentSword.soul = Math.max(state.currentSword.soul, p.soul);
+    checkInscriptions();
+    fusionSelected = [];
+    $('fusion-modal').classList.remove('active');
+    SFX.forge();
+    spawnLegacyRays(24);
+    log('融劍 — ' + nameA + ' + ' + nameB + ' → 새 검 (형·명문·혼 계승)', 'success');
+    recordEvent('融劍 ' + nameA + ' + ' + nameB);
+    if (p.inscription) {
+      setTimeout(() => announceInscription(p.inscription, '두 검의 유산이 깃들었다'), 500);
+    }
+    save();
+    render();
+  }
+  function renderFusion() {
+    const listEl = $('fusion-list');
+    const previewEl = $('fusion-preview');
+    const confirmBtn = $('fusion-confirm');
+    if (!listEl) return;
+    const swords = state.sealedSwords || [];
+    // 목록 (최신순 인덱스 유지)
+    const rows = swords.map((s, idx) => {
+      const sel = fusionSelected.indexOf(idx) >= 0;
+      const name = s.name || makeSwordName(s.form, s.inscriptions || [], s.level || 0);
+      const ins = (s.inscriptions || []).filter(k => FUSION_PRIORITY.indexOf(k) >= 0).slice(0, 3).join(' · ') || '명문 없음';
+      const order = fusionSelected.indexOf(idx);
+      const badge = sel ? '<span style="color:var(--accent);font-size:13px">' + (order === 0 ? '①' : '②') + '</span>' : '<span style="color:var(--dim);font-size:13px">○</span>';
+      return ''
+        + '<div class="fusion-item" data-fusion-idx="' + idx + '" style="display:flex;align-items:center;gap:10px;padding:9px 8px;margin-bottom:5px;'
+        +   'border:1px solid ' + (sel ? 'var(--accent)' : 'var(--line)') + ';background:' + (sel ? 'rgba(232,196,84,0.06)' : 'transparent') + ';border-radius:2px;cursor:pointer">'
+        +   '<div style="width:22px;text-align:center">' + badge + '</div>'
+        +   '<div style="flex:1;min-width:0">'
+        +     '<div style="color:' + (sel ? 'var(--accent)' : 'var(--fg)') + ';font-size:12px;letter-spacing:3px">' + name + '  <span style="color:var(--dim);font-size:10px">+' + (s.level || 0) + '</span></div>'
+        +     '<div style="color:var(--dim);font-size:10px;letter-spacing:1px;margin-top:2px">' + ins + ' · 혼 ' + (s.soul || 0) + '</div>'
+        +   '</div>'
+        + '</div>';
+    }).join('');
+    listEl.innerHTML = rows || '<div style="text-align:center;color:var(--dim);padding:20px">봉인된 검이 없다</div>';
+    // 미리보기
+    const p = fusionPreview();
+    if (p) {
+      const formName = p.form ? (SWORD_FORMS[p.form] ? SWORD_FORMS[p.form].label : p.form) : '미정';
+      previewEl.innerHTML = ''
+        + '<div style="color:var(--accent);font-size:11px;letter-spacing:3px;margin-bottom:4px">융합 결과 미리 보기</div>'
+        + '<div style="font-size:11px;color:var(--fg);letter-spacing:2px;line-height:1.8">'
+        +   '형 — ' + formName + '<br>'
+        +   '명문 계승 — ' + (p.inscription ? '「' + p.inscription + '」' : '없음') + '<br>'
+        +   '시작 혼 — ' + p.soul + ' · 시작 강화 — +' + p.startLevel
+        + '</div>';
+      previewEl.style.display = '';
+    } else {
+      previewEl.innerHTML = '<div style="color:var(--dim);font-size:11px;letter-spacing:2px">검 둘을 고르면 결과가 보인다</div>';
+      previewEl.style.display = '';
+    }
+    if (confirmBtn) {
+      const ok = fusionSelected.length === 2 && state.shards >= FUSION_COST;
+      confirmBtn.disabled = !ok;
+      confirmBtn.textContent = fusionSelected.length === 2
+        ? (state.shards >= FUSION_COST ? '융 합  ·  조각 ' + FUSION_COST : '조각 부족 (' + FUSION_COST + ' 필요)')
+        : '검 둘을 고르세요';
+    }
+  }
+  function openFusion() {
+    fusionSelected = [];
+    renderFusion();
+    $('fusion-modal').classList.add('active');
+  }
+
   // === 게임 오버 — 검 없음 + 새 검 빚을 조각도 없음 ===
   let gameOverShown = false;
   function isStuck() {
@@ -5727,6 +5886,36 @@
       render();
     });
   });
+
+  // v92 融劍 — 검 합성
+  function toggleFusionSelect(idx) {
+    const pos = fusionSelected.indexOf(idx);
+    if (pos >= 0) {
+      fusionSelected.splice(pos, 1);
+    } else {
+      if (fusionSelected.length >= 2) fusionSelected.shift();
+      fusionSelected.push(idx);
+    }
+    renderFusion();
+  }
+  const btnFusion = $('btn-fusion');
+  if (btnFusion) btnFusion.addEventListener('click', openFusion);
+  const fusionListEl = $('fusion-list');
+  if (fusionListEl) {
+    fusionListEl.addEventListener('click', (e) => {
+      const item = e.target.closest('.fusion-item');
+      if (!item) return;
+      const idx = parseInt(item.dataset.fusionIdx, 10);
+      if (!isNaN(idx)) toggleFusionSelect(idx);
+    });
+  }
+  const fusionConfirmBtn = $('fusion-confirm');
+  if (fusionConfirmBtn) {
+    fusionConfirmBtn.addEventListener('click', () => {
+      if (fusionConfirmBtn.disabled) return;
+      fuseSwords();
+    });
+  }
 
   const btnSealDirect = $('btn-seal-direct');
   const sealRewardLabel = $('seal-reward-label');
