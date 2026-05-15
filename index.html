@@ -193,6 +193,32 @@
     70%  { transform: scale(0.96) rotate(-0.5deg); filter: drop-shadow(0 0 6px rgba(192,57,43,0.3)); }
     100% { transform: scale(1.0) rotate(0deg); filter: none; }
   }
+  /* v107 連 — 연속 성공 streak 빛 */
+  #sword-wrap.streak-3 svg { filter: drop-shadow(0 0 8px rgba(212,175,55,0.35)); }
+  #sword-wrap.streak-5 svg { filter: drop-shadow(0 0 16px rgba(212,175,55,0.60)) drop-shadow(0 0 4px rgba(255,248,190,0.3)); }
+  #sword-wrap.streak-8 svg {
+    filter: drop-shadow(0 0 24px rgba(212,175,55,0.85)) drop-shadow(0 0 8px rgba(255,248,190,0.5));
+    animation: streak-breathe 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes streak-breathe {
+    from { filter: drop-shadow(0 0 18px rgba(212,175,55,0.65)) drop-shadow(0 0 5px rgba(255,248,190,0.3)); }
+    to   { filter: drop-shadow(0 0 30px rgba(212,175,55,1.0))  drop-shadow(0 0 10px rgba(255,248,190,0.6)); }
+  }
+  #streak-counter {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    font-family: 'Noto Serif KR', serif;
+    white-space: nowrap;
+  }
+  #streak-counter.visible { opacity: 1; }
   /* v63 강화 merge — 부드럽게 떠올라 빛나며 안착 */
   #sword-wrap.merge { animation: enhance-merge 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
   /* v78 봉인 직후 작은 카드 */
@@ -1884,6 +1910,7 @@
       <div id="soul-stage-label"></div>
       <div id="way-progress"></div>
       <div id="omen-indicator"></div>
+      <div id="streak-counter"></div>
     </div>
     <div id="void">
       <div id="void-msg">검 이 부 서 졌 다</div>
@@ -2812,6 +2839,7 @@
   let failStreak = 0;
   let adversityReady = false;
   let lastOmenType = 'none'; // v102 驗: 전조 추적
+  let successStreak = 0;    // v107 連: 연속 성공 횟수
 
   function checkAdversity() {
     if (adversityReady) return;
@@ -2843,6 +2871,32 @@
       banner.innerHTML = '';
       swordWrap.classList.remove('adversity-glow');
     }
+  }
+
+  // === 連 — 연속 성공 streak ===
+  function applyStreak() {
+    swordWrap.classList.remove('streak-3', 'streak-5', 'streak-8');
+    const sc = $('streak-counter');
+    if (successStreak >= 8) {
+      swordWrap.classList.add('streak-8');
+      if (sc) { sc.textContent = '連 ' + successStreak; sc.classList.add('visible'); }
+      if (successStreak === 8) announceInscription('連 八', '여덟 번이 이어졌다 — 검이 타오른다');
+    } else if (successStreak >= 5) {
+      swordWrap.classList.add('streak-5');
+      if (sc) { sc.textContent = '連 ' + successStreak; sc.classList.add('visible'); }
+      if (successStreak === 5) announceInscription('連 五', '다섯 번이 이어졌다 — 기세가 실린다');
+    } else if (successStreak >= 3) {
+      swordWrap.classList.add('streak-3');
+      if (sc) { sc.textContent = '連 ' + successStreak; sc.classList.add('visible'); }
+    } else {
+      if (sc) { sc.classList.remove('visible'); }
+    }
+  }
+  function clearStreak() {
+    successStreak = 0;
+    swordWrap.classList.remove('streak-3', 'streak-5', 'streak-8');
+    const sc = $('streak-counter');
+    if (sc) { sc.classList.remove('visible'); }
   }
 
   // === 生氣 — 살아있는 배경 드론 ===
@@ -3262,9 +3316,11 @@
     const adversityDestroyReduce = adversityReady ? 0.12 : 0;
     const roll = Math.random();
     if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd) {
-      // 성공
+      // 성공 (v107 連)
       if (adversityReady) { adversityReady = false; announceInscription('逆轉', '역경을 넘어 강화에 성공했다'); }
       failStreak = 0;
+      successStreak++;
+      applyStreak();
       state.level++;
       if (state.level > state.bestLevel) state.bestLevel = state.level;
       swordWrap.classList.remove('shake', 'flash', 'merge');
@@ -3342,7 +3398,9 @@
       const effectiveDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul);
       if (failRoll < effectiveDestroy && !useProtect) {
         // 파괴
+        if (successStreak >= 3) log('連 ' + successStreak + '회 streak 종료 — 검이 부서졌다', 'destroy');
         failStreak = 0; adversityReady = false; resolveOmen('destroy');  // v102
+        clearStreak();
         state.totalDestroyed++;
         state.hasSword = false;
         const destroyedLevel = state.level;
@@ -3356,7 +3414,9 @@
         showVoid(destroyedLevel);
       } else if (failRoll < effectiveDestroy + effectiveDowngrade && !useProtect) {
         // 하락 (v105 落)
+        if (successStreak >= 3) log('連 ' + successStreak + '회 streak 종료 — 하락', 'fail');
         failStreak++; checkAdversity(); resolveOmen('hold');  // v102 (하락도 hold 오멘)
+        clearStreak();
         bumpStat('downgraded');
         state.level = Math.max(0, state.level - 1);
         log('실패 — 하락 (+' + state.level + ')', 'fail');
@@ -3371,6 +3431,8 @@
         else SFX.enhanceFail();
       } else {
         // 유지 (또는 방지권 발동)
+        if (successStreak >= 3) log('連 ' + successStreak + '회 streak 종료 — 유지', 'fail');
+        clearStreak();
         failStreak++; checkAdversity(); resolveOmen('hold');  // v102
         if (useProtect) {
           log('보호권 사용 (+' + state.level + ')', 'fail');
@@ -5008,7 +5070,7 @@
     let startLv = startBonus() + trialStartLevelBonus();
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
     state.level = startLv;
-    failStreak = 0; adversityReady = false; clearOmen();
+    failStreak = 0; adversityReady = false; clearOmen(); clearStreak();
     // v103 意志: 새 검 시 마음가짐 중립 복귀
     resolveMode = 'normal';
     swordWrap.classList.remove('resolve-focus', 'resolve-guard');
