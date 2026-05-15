@@ -2616,8 +2616,17 @@
   const SFX = {
     // 강화 성공: 도-미-솔 화음 → 옥타브 위
     enhanceSuccess: () => {
-      chord([523, 659, 784], 0.18, 'sine', 0.5);   // C-E-G 메이저 화음
-      setTimeout(() => chord([784, 988, 1175], 0.25, 'sine', 0.4), 100); // G-B-D 상승
+      chord([523, 659, 784], 0.18, 'sine', 0.5);
+      setTimeout(() => chord([784, 988, 1175], 0.25, 'sine', 0.4), 100);
+    },
+    enhanceSuccessStreak: (streak) => {
+      // v108 響應: streak에 따라 pitch escalation
+      // 반음 = ×2^(1/12) ≈ 1.0595
+      const step = streak >= 8 ? 3 : streak >= 5 ? 2 : streak >= 3 ? 1 : 0;
+      const mul = Math.pow(1.0595, step);
+      chord([523*mul, 659*mul, 784*mul], 0.18, 'sine', Math.min(0.6, 0.5 + step*0.03));
+      setTimeout(() => chord([784*mul, 988*mul, 1175*mul], 0.25, 'sine', Math.min(0.55, 0.4 + step*0.04)), 100);
+      if (streak >= 8) setTimeout(() => tone(2093*mul, 0.12, 'sine', 0.25), 180); // 고음 shimmer
     },
     enhanceFail:    () => { tone(160, 0.22, 'sawtooth', 0.15); tone(120, 0.22, 'sawtooth', 0.1); },
     destroy:        () => { noise(0.4, 0.35); tone(80, 0.5, 'sawtooth', 0.2); tone(60, 0.6, 'sawtooth', 0.15); },
@@ -3358,7 +3367,8 @@
       } else if (state.level >= 12) {
         setTimeout(() => burstParticles('#fff5c0', 25), 80);
       }
-      SFX.enhanceSuccess();
+      // v108 響應: streak에 따라 성공음 pitch 상승
+      SFX.enhanceSuccessStreak(successStreak);
       setAmbientLevel(state.level);
       bumpStat('enhanceSuccess');
       // v35 첫 강화 / 첫 +5(봉인 가능) 마일스톤
@@ -4955,7 +4965,19 @@
     btn.disabled = false;
     // 팔기 시 자동 검명도 함께 — 검 정체성 미리 보기
     btn.firstChild.textContent = '팔 기  ·  ' + autoName + '  ';
-    lbl.textContent = '+' + reward + ' 조각';
+    // v108 響應: 다음 강화 성공 시 추가 보상 비교 (MAX 이하이고 파괴 위험 있는 경우)
+    const nextLv = state.level + 1;
+    let extraHint = '';
+    if (nextLv <= MAX_LEVEL && TABLE[state.level] && TABLE[state.level].destroy > 0) {
+      let nextReward = sealReward(nextLv);
+      const nextIns = ins.slice();
+      if (nextLv >= MAX_LEVEL && !nextIns.includes('道')) nextIns.push('道');
+      if (nextIns.includes('道')) nextReward = Math.floor(nextReward * 1.5);
+      nextReward = Math.floor(nextReward * schoolSealMul() * getSeason().sealMul);
+      const diff = nextReward - reward;
+      if (diff > 0) extraHint = '  <span style="font-size:9px;opacity:0.6;letter-spacing:1px">(+1 성공 시 +' + diff + '↑)</span>';
+    }
+    lbl.innerHTML = '+' + reward + ' 조각' + extraHint;
   }
 
   function renderCurrentChart() {
