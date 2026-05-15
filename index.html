@@ -1530,6 +1530,40 @@
   }
   .modal-close:hover { color: var(--fg); border-color: var(--dim); }
 
+  /* 殿 — 검의 전당 갤러리 */
+  #legacy-list.gallery-mode {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 8px;
+    padding: 6px 2px;
+  }
+  .legacy-card {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 8px 4px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 140px;
+  }
+  .legacy-card:hover {
+    border-color: rgba(212,175,55,0.5);
+    background: rgba(212,175,55,0.04);
+    transform: translateY(-2px);
+  }
+  .legacy-card.has-way { border-color: rgba(212,175,55,0.3); }
+  .lc-name { font-size: 11px; letter-spacing: 2px; color: var(--accent); margin-top: 4px; }
+  .lc-meta { font-size: 9px; color: var(--dim); letter-spacing: 1px; margin-top: 2px; line-height: 1.6; }
+  .lc-badges { display: flex; gap: 3px; justify-content: center; flex-wrap: wrap; margin-top: 3px; }
+  .lc-badge {
+    font-size: 8px; letter-spacing: 1px; color: var(--dim);
+    border: 1px solid var(--line); padding: 1px 3px; border-radius: 1px;
+  }
+  .lc-badge.way { color: var(--accent); border-color: rgba(212,175,55,0.5); }
   /* 刹那 — 강화 충전 긴장 */
   #sword-wrap.charging svg {
     animation: charging-glow 0.35s ease-in-out infinite alternate;
@@ -5415,6 +5449,12 @@
       kanjiSVG +
       '</svg>';
   }
+  function buildMiniSwordSVG(s) {
+    return buildDetailSwordSVG(s)
+      .replace('width="100" height="200"', 'width="46" height="92"')
+      .replace('display:block;margin:0 auto 12px', 'display:block;margin:0 auto');
+  }
+
   function showSwordDetail(s, index) {
     const ins = s.inscriptions || [];
     const formLabel = ({ '直': '강직', '曲': '유연', '重': '무거움', '速': '빠름' })[s.form] || '無';
@@ -5580,41 +5620,32 @@
       } else if (legacySort === 'inscriptions') {
         filtered.sort((a, b) => (b.s.inscriptions || []).length - (a.s.inscriptions || []).length);
       }
+      // 殿 — 갤러리 카드 렌더
+      list.classList.add('gallery-mode');
       const items = filtered.map(({s, originalIdx}) => {
-        const i = originalIdx + 1;
         const ins = (s.inscriptions || []);
         const hasWay = ins.includes('道');
         const name = s.name || makeSwordName(s.form, ins, s.level);
-        const insHTML = ins.length
-          ? '<div style="margin-top:4px;font-size:11px;letter-spacing:3px;color:var(--accent);opacity:0.85">' + ins.join(' · ') + '</div>'
-          : '<div style="margin-top:4px;font-size:10px;color:var(--dim);opacity:0.5">— 명문 없음</div>';
-        const badge = hasWay ? '<span style="color:#fff5c0;font-size:10px;letter-spacing:2px;margin-right:6px">道</span>' : '';
-        const soulStr = (typeof s.soul === 'number' && s.soul > 0)
-          ? '<span style="color:#6a8a9a;font-size:10px;margin-left:8px">魂 ' + s.soul + '</span>'
-          : '';
-        const verseHTML = (s.verse && Array.isArray(s.verse))
-          ? '<div style="margin-top:6px;padding:6px 0;font-size:10px;line-height:1.8;color:var(--dim);letter-spacing:2px;opacity:0.75;border-top:1px dashed rgba(212,175,55,0.2)">' +
-            s.verse.map(line => '<div>' + line + '</div>').join('') +
-            '</div>'
-          : '';
-        return '<div class="legacy-item" data-sword-idx="' + originalIdx + '" style="padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer;transition:background 0.15s">' +
-          '<div style="display:flex;justify-content:space-between;font-size:13px">' +
-            '<span><span style="color:var(--accent);letter-spacing:4px;font-size:15px">' + name + '</span><span style="color:var(--dim);font-size:10px;margin-left:8px">#' + i + '</span>' + soulStr + '</span>' +
-            '<span style="letter-spacing:2px">' + badge + '<span style="color:var(--accent)">+' + s.level + '</span></span>' +
-          '</div>' + insHTML + verseHTML +
+        const soulStr = (typeof s.soul === 'number' && s.soul > 0) ? s.soul : '';
+        const keyIns = ins.filter(k => ['道','鬼斬','本','覺','斷魔','逆轉'].includes(k));
+        return '<div class="legacy-card' + (hasWay ? ' has-way' : '') + '" data-sword-idx="' + originalIdx + '">' +
+          buildMiniSwordSVG(s) +
+          '<div class="lc-name">' + name + '</div>' +
+          '<div class="lc-meta">+' + (s.level || 0) + (soulStr ? ' · 魂' + soulStr : '') + '</div>' +
+          '<div class="lc-badges">' + keyIns.slice(0,3).map(k =>
+            '<span class="lc-badge' + (k === '道' ? ' way' : '') + '">' + k + '</span>'
+          ).join('') + '</div>' +
           '</div>';
       });
       list.innerHTML = items.join('');
     }
     // 봉인 검 클릭 → 회고 모달
-    list.querySelectorAll('.legacy-item').forEach(item => {
+    list.querySelectorAll('.legacy-card').forEach(item => {
       item.addEventListener('click', () => {
         const idx = parseInt(item.dataset.swordIdx, 10);
         if (isNaN(idx) || idx < 0 || idx >= state.sealedSwords.length) return;
         showSwordDetail(state.sealedSwords[idx], idx + 1);
       });
-      item.addEventListener('mouseenter', () => { item.style.background = 'rgba(212,175,55,0.05)'; });
-      item.addEventListener('mouseleave', () => { item.style.background = 'transparent'; });
     });
     const active = getActiveSchools();
     const counts = getFormCounts();
