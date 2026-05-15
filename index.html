@@ -1579,6 +1579,39 @@
     from { opacity: 0.7; }
     to   { opacity: 1.0; transform: scale(1.04); }
   }
+  /* 前兆 — 강화 전조 오멘 */
+  #omen-indicator {
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    letter-spacing: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    font-family: 'Noto Serif KR', serif;
+  }
+  #omen-indicator.visible { opacity: 1; }
+  #omen-indicator.omen-s { color: #d4af37; }
+  #omen-indicator.omen-d { color: #c0392b; }
+  #omen-indicator.omen-h { color: #888; }
+  #sword-wrap.omen-success svg {
+    animation: charging-glow 0.35s ease-in-out infinite alternate,
+               omen-success-pulse 0.6s ease-in-out infinite alternate;
+  }
+  #sword-wrap.omen-destroy svg {
+    animation: charging-glow 0.35s ease-in-out infinite alternate,
+               omen-destroy-pulse 0.45s ease-in-out infinite alternate;
+  }
+  @keyframes omen-success-pulse {
+    from { filter: drop-shadow(0 0 8px rgba(212,175,55,0.4)); }
+    to   { filter: drop-shadow(0 0 28px rgba(212,175,55,1.0)) drop-shadow(0 0 12px rgba(255,248,190,0.6)); }
+  }
+  @keyframes omen-destroy-pulse {
+    from { filter: drop-shadow(0 0 5px rgba(192,57,43,0.3)); }
+    to   { filter: drop-shadow(0 0 24px rgba(192,57,43,0.9)) drop-shadow(0 0 8px rgba(255,80,60,0.4)); }
+  }
   /* 梵境 — 무대 생태계 */
   #stage-bg {
     position: absolute;
@@ -1822,6 +1855,7 @@
       <div id="soul-bar"><div id="soul-fill"></div></div>
       <div id="soul-stage-label"></div>
       <div id="way-progress"></div>
+      <div id="omen-indicator"></div>
     </div>
     <div id="void">
       <div id="void-msg">검 이 부 서 졌 다</div>
@@ -2603,6 +2637,55 @@
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + dur + 0.05);
     } catch(e) {}
+  }
+
+  // === 前兆 — 강화 전조 오멘 ===
+  function rollOmen() {
+    // 현재 강화 단계의 주사위 방향을 ~80% 정확도로 예측
+    const lv = state.level;
+    if (lv >= MAX_LEVEL || !state.hasSword) return 'none';
+    const t = TABLE[lv];
+    const form = getForm();
+    const rsv = getResolve();
+    const successAdd = ((form && form.successBonus) || 0) + soulEffects().successBonus
+      + schoolSuccessBonus() + breathBonus() + guardianBonus().successBonus
+      + trialSuccessBonus() + rsv.successAdd + (adversityReady ? 0.40 : 0);
+    const destroyReduce2 = (form && form.destroyReduce) || 0;
+    const effectiveDestroy = Math.max(0, (t.destroy - destroyReduce2 - schoolDestroyReduce() - guardianBonus().destroyReduce - (adversityReady ? 0.12 : 0)) * rsv.destroyMul);
+    const trueSuccess = Math.min(1, t.success + successAdd);
+    // 80% accuracy: blend true prob with uniform random
+    const biasedRoll = Math.random() * 0.20 + Math.random() * 0.80;
+    if (biasedRoll < trueSuccess) return 'success';
+    if (Math.random() < effectiveDestroy / (1 - trueSuccess + 0.001)) return 'destroy';
+    return 'hold';
+  }
+
+  function showOmen(omenType) {
+    const el = $('omen-indicator');
+    if (!el) return;
+    el.className = '';
+    el.textContent = '';
+    if (omenType === 'none') return;
+    if (omenType === 'success') {
+      el.className = 'omen-s';
+      el.textContent = '瑞';
+      swordWrap.classList.add('omen-success');
+    } else if (omenType === 'destroy') {
+      el.className = 'omen-d';
+      el.textContent = '兇';
+      swordWrap.classList.add('omen-destroy');
+    } else {
+      el.className = 'omen-h';
+      el.textContent = '平';
+    }
+    void el.offsetWidth;
+    el.classList.add('visible');
+  }
+
+  function clearOmen() {
+    const el = $('omen-indicator');
+    if (el) { el.classList.remove('visible'); setTimeout(() => { el.className = ''; el.textContent = ''; }, 400); }
+    swordWrap.classList.remove('omen-success', 'omen-destroy');
   }
 
   // === 梵境 — 무대 생태계 ===
@@ -4824,7 +4907,7 @@
     let startLv = startBonus() + trialStartLevelBonus();
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
     state.level = startLv;
-    failStreak = 0; adversityReady = false;
+    failStreak = 0; adversityReady = false; clearOmen();
     setAmbientLevel(startLv); applyAmbientMode('idle');
     const startSoul = trialStartSoulBonus();
     state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {} };
@@ -6533,13 +6616,20 @@
       render();
       return;
     }
-    // v98 刹那: 위험 단계에서 충전 긴장 지연 (자동 강화는 이 경로 미사용)
+    // v98 刹那 + v101 前兆: 위험 단계 충전 긴장 + 전조 오멘
     const delay = chargeDelay();
     if (delay <= 0) { enhance(); return; }
     btnEnhance.disabled = true;
     swordWrap.classList.add('charging');
     playChargeSound(delay);
+    // 前兆: 충전 시작 200ms 후 전조 표시
+    const omenTimeout = setTimeout(() => {
+      const omen = rollOmen();
+      showOmen(omen);
+    }, Math.min(200, delay * 0.25));
     setTimeout(() => {
+      clearTimeout(omenTimeout);
+      clearOmen();
       swordWrap.classList.remove('charging');
       btnEnhance.disabled = false;
       enhance();
