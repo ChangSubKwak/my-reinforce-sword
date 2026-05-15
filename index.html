@@ -184,6 +184,15 @@
   }
   #sword-wrap.shake { animation: shake 0.4s; }
   #sword-wrap.flash { animation: flash 0.5s; }
+  /* v105 落 — 하락 드라마 */
+  #sword-wrap.downgrade { animation: downgrade-impact 0.6s cubic-bezier(0.3, 0, 0.2, 1); }
+  @keyframes downgrade-impact {
+    0%   { transform: scale(1.0) rotate(0deg); filter: drop-shadow(0 0 0 transparent); }
+    15%  { transform: scale(0.94) rotate(-2deg); filter: drop-shadow(0 0 12px rgba(192,57,43,0.8)); }
+    40%  { transform: scale(0.91) rotate(1.5deg); filter: drop-shadow(0 0 20px rgba(192,57,43,0.6)); }
+    70%  { transform: scale(0.96) rotate(-0.5deg); filter: drop-shadow(0 0 6px rgba(192,57,43,0.3)); }
+    100% { transform: scale(1.0) rotate(0deg); filter: none; }
+  }
   /* v63 강화 merge — 부드럽게 떠올라 빛나며 안착 */
   #sword-wrap.merge { animation: enhance-merge 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
   /* v78 봉인 직후 작은 카드 */
@@ -2406,6 +2415,7 @@
       fled: 0, evaded: 0,
       rescued: 0, rescueFailed: 0,
       sealed: 0, wayReached: 0,
+      downgraded: 0,  // v105 落 — 하락 누적
     },
     seenHelp: false,
   };
@@ -2609,6 +2619,8 @@
     forge:          () => { tone(520, 0.15, 'sine', 0.16); tone(659, 0.15, 'sine', 0.10); },
     resolveFocus:   () => { tone(1320, 0.08, 'sawtooth', 0.12); tone(1760, 0.06, 'sawtooth', 0.07); }, // 날카로운 일심
     resolveGuard:   () => { tone(220, 0.35, 'sine', 0.18); tone(165, 0.50, 'sine', 0.12); },           // 낮은 보신
+    downgradeFocus: () => { tone(880, 0.05, 'sawtooth', 0.22); tone(660, 0.12, 'sawtooth', 0.15); noise(0.08, 0.12); },  // 일심 하락: 금속 충격
+    downgradeGuard: () => { tone(110, 0.45, 'sine', 0.20); tone(82, 0.60, 'sine', 0.12); },            // 보신 하락: 둔탁 종
     formDecide:     () => {
       chord([440, 554, 659], 0.15, 'sine', 0.4);   // A-C#-E 화음
       setTimeout(() => chord([554, 698, 831], 0.25, 'sine', 0.3), 100);
@@ -3343,11 +3355,20 @@
         maybeMilestone('firstDestroy', '부서짐', '검이 부서졌습니다 — 5초 안에 조각을 주우세요');
         showVoid(destroyedLevel);
       } else if (failRoll < effectiveDestroy + effectiveDowngrade && !useProtect) {
-        // 하락
+        // 하락 (v105 落)
         failStreak++; checkAdversity(); resolveOmen('hold');  // v102 (하락도 hold 오멘)
+        bumpStat('downgraded');
         state.level = Math.max(0, state.level - 1);
         log('실패 — 하락 (+' + state.level + ')', 'fail');
-        SFX.enhanceFail();
+        // 검 수축 애니메이션
+        swordWrap.classList.remove('downgrade');
+        void swordWrap.offsetWidth;
+        swordWrap.classList.add('downgrade');
+        setTimeout(() => swordWrap.classList.remove('downgrade'), 650);
+        // 覺悟 상태별 효과음
+        if (resolveMode === 'focus') SFX.downgradeFocus();
+        else if (resolveMode === 'guard') SFX.downgradeGuard();
+        else SFX.enhanceFail();
       } else {
         // 유지 (또는 방지권 발동)
         failStreak++; checkAdversity(); resolveOmen('hold');  // v102
