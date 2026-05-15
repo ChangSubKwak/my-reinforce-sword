@@ -2690,6 +2690,11 @@
     forge:          () => { tone(520, 0.15, 'sine', 0.16); tone(659, 0.15, 'sine', 0.10); },
     resolveFocus:   () => { tone(1320, 0.08, 'sawtooth', 0.12); tone(1760, 0.06, 'sawtooth', 0.07); }, // 날카로운 일심
     resolveGuard:   () => { tone(220, 0.35, 'sine', 0.18); tone(165, 0.50, 'sine', 0.12); },           // 낮은 보신
+    birth: () => {  // v110 誕: 새 검 탄생음 — 상승 사인 코드
+      tone(220, 0.12, 'sine', 0.08);
+      setTimeout(() => chord([330, 415, 523], 0.30, 'sine', 0.22), 80);
+      setTimeout(() => chord([440, 554, 659], 0.40, 'sine', 0.18), 280);
+    },
     downgradeFocus: () => { tone(880, 0.05, 'sawtooth', 0.22); tone(660, 0.12, 'sawtooth', 0.15); noise(0.08, 0.12); },  // 일심 하락: 금속 충격
     downgradeGuard: () => { tone(110, 0.45, 'sine', 0.20); tone(82, 0.60, 'sine', 0.12); },            // 보신 하락: 둔탁 종
     formDecide:     () => {
@@ -5211,6 +5216,15 @@
     if (newIns.includes('聖')) rayCount += 20;
     if (rayCount > 0) {
       setTimeout(() => spawnLegacyRays(rayCount), 100);
+    }
+    // v110 誕: 탄생 시퀀스 — appear 애니메이션 + 탄생음 + 시작 레벨 알림
+    swordWrap.classList.remove('appear');
+    void swordWrap.offsetWidth;
+    swordWrap.classList.add('appear');
+    setTimeout(() => swordWrap.classList.remove('appear'), 700);
+    setTimeout(() => SFX.birth(), 120);
+    if (startLv > 0) {
+      setTimeout(() => announceInscription('先代 ·  +' + startLv, '선대의 강기로 ' + startLv + '강에서 시작한다'), 500);
     }
     // v93 天命 — 새 검에 일생 목표 부여
     assignDestiny();
