@@ -3316,6 +3316,68 @@
     }
   }
 
+  // === v112 祖靈 — 봉인/탄생 시 조상 명문 영혼 이펙트 ===
+  function spawnAncestorGatherKanji() {
+    // 선대 봉인 검들의 핵심 명문 1~2개씩 수집 — 최신 3자루만
+    const skip = new Set(['始祖', '達人', '聖', '百鍊', '初刃']);
+    const pool = [];
+    const recent = state.sealedSwords.slice(-3);
+    recent.forEach(s => {
+      (s.inscriptions || []).filter(k => !skip.has(k)).slice(0, 2).forEach(k => {
+        if (!pool.includes(k)) pool.push(k);
+      });
+    });
+    if (pool.length === 0) return;
+    const rect = swordWrap.getBoundingClientRect();
+    const tx = rect.left + rect.width / 2;
+    const ty = rect.top + rect.height / 2;
+    pool.slice(0, 4).forEach((kanji, i) => {
+      const el = document.createElement('div');
+      el.textContent = kanji;
+      const angle = (i / Math.max(pool.length, 1)) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+      const dist = 140 + Math.random() * 60;
+      const sx = tx + Math.cos(angle) * dist;
+      const sy = ty + Math.sin(angle) * dist;
+      el.style.cssText = 'position:fixed;font-size:16px;font-family:"Noto Serif KR",serif;pointer-events:none;z-index:1200;color:rgba(180,160,100,0.7);left:' + sx + 'px;top:' + sy + 'px;';
+      document.body.appendChild(el);
+      const dx = tx - sx;
+      const dy = ty - sy;
+      const delay = i * 80;
+      el.animate([
+        { opacity: 0, transform: 'translate(-50%,-50%) scale(0.8)' },
+        { opacity: 0.7, transform: 'translate(calc(-50% + ' + (dx * 0.5) + 'px),calc(-50% + ' + (dy * 0.5) + 'px)) scale(1.1)', offset: 0.5 },
+        { opacity: 0, transform: 'translate(calc(-50% + ' + dx + 'px),calc(-50% + ' + dy + 'px)) scale(0.4)' },
+      ], { duration: 1100, delay: delay, easing: 'cubic-bezier(0.3, 0.7, 0.4, 1)' });
+      setTimeout(() => el.remove(), 1300 + delay);
+    });
+  }
+  function spawnSealedSpiritKanji(ins, form) {
+    const skip = new Set(['始祖', '達人', '聖']);
+    const interesting = (ins || []).filter(k => !skip.has(k));
+    if (interesting.length === 0) return;
+    const rect = swordWrap.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const baseY = rect.top + rect.height * 0.3;
+    const formColor = { '直': '#d4af37', '曲': '#a8c87a', '重': '#8ab0c8', '速': '#c8a0d4' };
+    const color = formColor[form] || '#d4af37';
+    interesting.slice(0, 5).forEach((kanji, i) => {
+      const el = document.createElement('div');
+      el.textContent = kanji;
+      const spreadX = (i - (interesting.length - 1) / 2) * 32 + (Math.random() - 0.5) * 20;
+      el.style.cssText = 'position:fixed;font-size:22px;font-family:"Noto Serif KR",serif;pointer-events:none;z-index:1200;color:' + color + ';text-shadow:0 0 10px ' + color + ';left:' + (cx + spreadX - 11) + 'px;top:' + baseY + 'px;transform:translateY(0);';
+      document.body.appendChild(el);
+      const delay = i * 90;
+      const driftX = (Math.random() - 0.5) * 40;
+      el.animate([
+        { opacity: 0, transform: 'translateY(0) scale(0.6)' },
+        { opacity: 0.95, transform: 'translateY(-60px) scale(1.15)', offset: 0.25 },
+        { opacity: 0.7, transform: 'translateY(-130px) translateX(' + driftX + 'px) scale(1.0)', offset: 0.65 },
+        { opacity: 0, transform: 'translateY(-220px) translateX(' + (driftX * 1.5) + 'px) scale(0.6)' },
+      ], { duration: 1600, delay: delay, easing: 'ease-out', fill: 'forwards' });
+      setTimeout(() => el.remove(), 1800 + delay);
+    });
+  }
+
   // === 강화 ===
   let rescueWindow = null;
 
@@ -5274,6 +5336,10 @@
     if (rayCount > 0) {
       setTimeout(() => spawnLegacyRays(rayCount), 100);
     }
+    // v112 祖靈: 새 검 탄생 시 선대 명문들이 사방에서 검으로 모여듦 (선대 검이 1개 이상일 때)
+    if (state.sealedSwords.length >= 2) {
+      setTimeout(() => spawnAncestorGatherKanji(), 300);
+    }
     // v110 誕: 탄생 시퀀스 — appear 애니메이션 + 탄생음 + 시작 레벨 알림
     swordWrap.classList.remove('appear');
     void swordWrap.offsetWidth;
@@ -5616,6 +5682,8 @@
       swordWrap.classList.remove('shake', 'flash', 'merge', 'appear');
       void swordWrap.offsetWidth;
       swordWrap.classList.add('dissolve');
+      // v112 祖靈 — 봉인된 검의 명문이 영혼처럼 위로 떠오름
+      spawnSealedSpiritKanji(ins, form);
       setTimeout(() => {
         swordWrap.classList.remove('dissolve');
         newSword();
