@@ -1489,6 +1489,21 @@
   }
   .modal-close:hover { color: var(--fg); border-color: var(--dim); }
 
+  /* 刹那 — 강화 충전 긴장 */
+  #sword-wrap.charging svg {
+    animation: charging-glow 0.35s ease-in-out infinite alternate;
+  }
+  @keyframes charging-glow {
+    from { filter: drop-shadow(0 0 5px rgba(212,175,55,0.25)); }
+    to   { filter: drop-shadow(0 0 22px rgba(212,175,55,0.75)) drop-shadow(0 0 4px rgba(255,255,255,0.2)); }
+  }
+  #sword-wrap.charging #level-badge {
+    animation: badge-charge 0.35s ease-in-out infinite alternate;
+  }
+  @keyframes badge-charge {
+    from { opacity: 0.7; }
+    to   { opacity: 1.0; transform: scale(1.04); }
+  }
   /* 梵境 — 무대 생태계 */
   #stage-bg {
     position: absolute;
@@ -2472,6 +2487,39 @@
     if (btn) btn.textContent = muted ? '소 리  켜 기' : '소 리  끄 기';
     log(muted ? '소리 끔' : '소리 켬', 'fail');
     if (muted) stopAmbient(true); else startAmbient();
+  }
+
+  // === 刹那 — 강화 충전 긴장 ===
+  function chargeDelay() {
+    if (!state.hasSword || state.level >= MAX_LEVEL) return 0;
+    const d = TABLE[state.level].destroy;
+    const dg = TABLE[state.level].downgrade;
+    if (d >= 0.85) return 1000;      // +13~+14 道 직전
+    if (d >= 0.55) return 850;       // +10~+12
+    if (d >= 0.20) return 700;       // +7~+9
+    if (d >= 0.05) return 500;       // +5~+6
+    if (dg >= 0.30) return 350;      // +3~+4 하락 가능
+    return 0;                        // +0~+2 즉시
+  }
+
+  function playChargeSound(delayMs) {
+    const ctx = getAudio();
+    if (!ctx || delayMs <= 0) return;
+    try {
+      const dur = delayMs / 1000;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(180, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(320, ctx.currentTime + dur * 0.85);
+      gain.gain.setValueAtTime(0.03, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + dur * 0.7);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + dur + 0.05);
+    } catch(e) {}
   }
 
   // === 梵境 — 무대 생태계 ===
@@ -6380,7 +6428,17 @@
       render();
       return;
     }
-    enhance();
+    // v98 刹那: 위험 단계에서 충전 긴장 지연 (자동 강화는 이 경로 미사용)
+    const delay = chargeDelay();
+    if (delay <= 0) { enhance(); return; }
+    btnEnhance.disabled = true;
+    swordWrap.classList.add('charging');
+    playChargeSound(delay);
+    setTimeout(() => {
+      swordWrap.classList.remove('charging');
+      btnEnhance.disabled = false;
+      enhance();
+    }, delay);
   });
   // v91 覺悟 — 마음가짐 3택 버튼
   document.querySelectorAll('.resolve-btn').forEach(b => {

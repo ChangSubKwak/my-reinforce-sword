@@ -660,6 +660,14 @@ Web Audio API 기반 실시간 반응 사운드스케이프. 외부 파일 0, �
 - 성공 시: '逆轉' 명문 페이드. 파괴 시: streak 리셋(새 검)
 - `checkAdversity()` — downgrade/hold 후 임계 도달 시 호출. `renderAdversity()` — render()마다 배너 갱신.
 
+### v97 梵境 — 무대가 검의 역사를 기억한다
+
+봉인된 검 수·유파에 따라 stage가 살아 변모. `ECHO_POSITIONS` 8개 좌표 + 회전각 + 스케일. `updateStageBg()` — render()마다 호출.
+
+- **에코 검**: 봉인 검 1개마다 `#stage-bg` 내 반투명 SVG 검 실루엣 등장 (최대 8개). 각 echo는 다른 위치·회전·투명도 + `echo-pulse` 느린 opacity 펄스. 누적 15개↑ → 밝기 추가 강화.
+- **유파 색조**: 활성 유파 → `#stage[data-school="*"]::after` CSS radial gradient. 직류(파랑) / 곡류(황토) / 중류(초록) / 속류(청록). 5초 CSS transition.
+- `#stage-bg`: `position:absolute;inset:0;z-index:0;overflow:hidden` — 검 뒤 레이어.
+
 ### 봉인 균형 곡선 (참고)
 
 | 검 강화도 | 봉인 보상 (조각) |
