@@ -1498,6 +1498,33 @@
     border-radius: 50%;
     pointer-events: none;
   }
+  /* 厄運轉機 — 연속 실패 역전 */
+  #adversity-banner {
+    display: none;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    margin-bottom: 8px;
+    padding: 5px 10px;
+    line-height: 1.5;
+  }
+  #adversity-banner.adv-active { display: block; }
+  #adversity-banner.adv-ready {
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    animation: adv-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes adv-pulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(212,175,55,0.2); }
+    50% { box-shadow: 0 0 14px rgba(212,175,55,0.55); }
+  }
+  .adv-kanji { font-size: 15px; font-weight: 700; margin-right: 5px; }
+  .adv-boost { font-weight: 700; }
+  #sword-wrap.adversity-glow svg {
+    filter: drop-shadow(0 0 14px rgba(212,175,55,0.5)) drop-shadow(0 0 6px rgba(180,70,70,0.35));
+  }
 </style>
 </head>
 <body>
@@ -1773,6 +1800,7 @@
       <br>
       <span class="cost" id="odds-cost">조각 0 소모</span>
     </div>
+    <div id="adversity-banner"></div>
     <div id="destiny-banner" style="display:none;text-align:center;font-size:11px;letter-spacing:1px;padding:6px 8px;margin-bottom:8px;border:1px solid var(--line);border-radius:2px;line-height:1.6"></div>
     <label class="protect-row" id="protect-row">
       <input type="checkbox" id="protect-check">
@@ -2408,6 +2436,43 @@
     if (muted) stopAmbient(true); else startAmbient();
   }
 
+  // === 厄運轉機 — 연속 실패 역전 ===
+  const ADVERSITY_THRESHOLD = 5;
+  let failStreak = 0;
+  let adversityReady = false;
+
+  function checkAdversity() {
+    if (adversityReady) return;
+    if (failStreak >= ADVERSITY_THRESHOLD) {
+      adversityReady = true;
+      announceInscription('逆', '역경이 한계에 달했다 · 다음 강화에 운명이 실린다');
+    }
+  }
+
+  function renderAdversity() {
+    const banner = $('adversity-banner');
+    if (!banner || !state.hasSword || state.level >= MAX_LEVEL) {
+      if (banner) { banner.className = ''; banner.innerHTML = ''; }
+      if (swordWrap) swordWrap.classList.remove('adversity-glow');
+      return;
+    }
+    if (adversityReady) {
+      banner.innerHTML = '<span class="adv-kanji">逆</span>역경전기 · 다음 강화에 운명이 실린다<span class="adv-boost" style="margin-left:6px;color:var(--accent)">+40%</span>';
+      banner.className = 'adv-active adv-ready';
+      swordWrap.classList.add('adversity-glow');
+    } else if (failStreak >= 2) {
+      const filled = '●'.repeat(failStreak > ADVERSITY_THRESHOLD ? ADVERSITY_THRESHOLD : failStreak);
+      const empty = '○'.repeat(Math.max(0, ADVERSITY_THRESHOLD - failStreak));
+      banner.innerHTML = '<span style="color:var(--dim);letter-spacing:3px">역경&nbsp;' + filled + empty + '</span>';
+      banner.className = 'adv-active';
+      swordWrap.classList.remove('adversity-glow');
+    } else {
+      banner.className = '';
+      banner.innerHTML = '';
+      swordWrap.classList.remove('adversity-glow');
+    }
+  }
+
   // === 生氣 — 살아있는 배경 드론 ===
   let ambientNodes = null;
   let ambientMode = 'idle';
@@ -2566,6 +2631,7 @@
     renderWayCounter();
     renderGuardianDisplay();
     renderDestiny();  // v93 天命
+    renderAdversity();  // v96 厄運轉機
     // v81 조합소 버튼 시각 잠금 — +0 일 때만 활성
     const forgeBtn = $('btn-forge');
     if (forgeBtn) {
@@ -2604,6 +2670,7 @@
       const bf = $('btn-fusion');
       if (bf) bf.style.display = ((state.sealedSwords || []).length >= 2) ? '' : 'none';
       renderDestiny();  // v93 天命 배너 숨김 (검 없을 때)
+      renderAdversity();  // v96 厄運轉機 (검 없으면 banner 자동 숨김)
       // 게임 오버 체크 — return 전에 반드시 호출
       checkGameOver();
       return;
@@ -2818,9 +2885,13 @@
     const guardBonus = guardianBonus().successBonus;
     addSoul(1); // 강화 시도 자체로 혼 +1
     lastEnhanceTime = Date.now(); // 호흡 리셋
+    const adversityAdd = adversityReady ? 0.40 : 0;
+    const adversityDestroyReduce = adversityReady ? 0.12 : 0;
     const roll = Math.random();
-    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd) {
+    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd) {
       // 성공
+      if (adversityReady) { adversityReady = false; announceInscription('逆轉', '역경을 넘어 강화에 성공했다'); }
+      failStreak = 0;
       state.level++;
       if (state.level > state.bestLevel) state.bestLevel = state.level;
       swordWrap.classList.remove('shake', 'flash', 'merge');
@@ -2892,11 +2963,12 @@
       setTimeout(() => swordWrap.classList.remove('shake'), 400);
 
       const failRoll = Math.random();
-      // 영석: 파괴 차단 / 유파 + 수호자 보너스도 destroy 감소 / v91 覺悟 배율
-      const effectiveDestroy = useSpirit ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce) * rsv.destroyMul);
+      // 영석: 파괴 차단 / 유파 + 수호자 보너스도 destroy 감소 / v91 覺悟 배율 / v96 역경전기 감소
+      const effectiveDestroy = useSpirit ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce) * rsv.destroyMul);
       const effectiveDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul);
       if (failRoll < effectiveDestroy && !useProtect) {
         // 파괴
+        failStreak = 0; adversityReady = false;
         state.totalDestroyed++;
         state.hasSword = false;
         const destroyedLevel = state.level;
@@ -2910,11 +2982,13 @@
         showVoid(destroyedLevel);
       } else if (failRoll < effectiveDestroy + effectiveDowngrade && !useProtect) {
         // 하락
+        failStreak++; checkAdversity();
         state.level = Math.max(0, state.level - 1);
         log('실패 — 하락 (+' + state.level + ')', 'fail');
         SFX.enhanceFail();
       } else {
         // 유지 (또는 방지권 발동)
+        failStreak++; checkAdversity();
         if (useProtect) {
           log('보호권 사용 (+' + state.level + ')', 'fail');
         } else {
@@ -4527,6 +4601,7 @@
     let startLv = startBonus() + trialStartLevelBonus();
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
     state.level = startLv;
+    failStreak = 0; adversityReady = false;
     setAmbientLevel(startLv); applyAmbientMode('idle');
     const startSoul = trialStartSoulBonus();
     state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {} };
