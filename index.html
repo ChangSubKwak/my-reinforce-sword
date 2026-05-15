@@ -1614,6 +1614,22 @@
     from { filter: drop-shadow(0 0 5px rgba(192,57,43,0.3)); }
     to   { filter: drop-shadow(0 0 24px rgba(192,57,43,0.9)) drop-shadow(0 0 8px rgba(255,80,60,0.4)); }
   }
+  /* 意志 — 覺悟 마음가짐 검 시각 */
+  #sword-wrap {
+    transition: transform 0.5s cubic-bezier(0.3, 0.8, 0.3, 1);
+  }
+  #sword-wrap.resolve-focus {
+    transform: rotate(5deg) translateY(-4px);
+  }
+  #sword-wrap.resolve-focus svg {
+    filter: drop-shadow(0 0 14px rgba(212,140,50,0.6)) drop-shadow(0 0 4px rgba(255,200,80,0.3));
+  }
+  #sword-wrap.resolve-guard {
+    transform: rotate(-5deg) translateY(4px);
+  }
+  #sword-wrap.resolve-guard svg {
+    filter: drop-shadow(0 0 12px rgba(80,120,180,0.5)) drop-shadow(0 0 4px rgba(100,160,220,0.2));
+  }
   /* 梵境 — 무대 생태계 */
   #stage-bg {
     position: absolute;
@@ -2586,6 +2602,8 @@
       setTimeout(() => tone(80, 3.0, 'sine', 0.3), 0); // 저음 풀
     },
     forge:          () => { tone(520, 0.15, 'sine', 0.16); tone(659, 0.15, 'sine', 0.10); },
+    resolveFocus:   () => { tone(1320, 0.08, 'sawtooth', 0.12); tone(1760, 0.06, 'sawtooth', 0.07); }, // 날카로운 일심
+    resolveGuard:   () => { tone(220, 0.35, 'sine', 0.18); tone(165, 0.50, 'sine', 0.12); },           // 낮은 보신
     formDecide:     () => {
       chord([440, 554, 659], 0.15, 'sine', 0.4);   // A-C#-E 화음
       setTimeout(() => chord([554, 698, 831], 0.25, 'sine', 0.3), 100);
@@ -4942,6 +4960,9 @@
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
     state.level = startLv;
     failStreak = 0; adversityReady = false; clearOmen();
+    // v103 意志: 새 검 시 마음가짐 중립 복귀
+    resolveMode = 'normal';
+    swordWrap.classList.remove('resolve-focus', 'resolve-guard');
     setAmbientLevel(startLv); applyAmbientMode('idle');
     const startSoul = trialStartSoulBonus();
     state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {} };
@@ -6679,7 +6700,11 @@
       const mode = b.dataset.resolve;
       if (!RESOLVE[mode]) return;
       resolveMode = mode;
-      SFX.forge();
+      // v103 意志: 마음가짐 → 검 시각 변환
+      swordWrap.classList.remove('resolve-focus', 'resolve-guard');
+      if (mode === 'focus') { swordWrap.classList.add('resolve-focus'); SFX.resolveFocus(); }
+      else if (mode === 'guard') { swordWrap.classList.add('resolve-guard'); SFX.resolveGuard(); }
+      else SFX.forge();
       render();
     });
   });
