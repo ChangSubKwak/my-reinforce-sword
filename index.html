@@ -1596,6 +1596,8 @@
   #omen-indicator.omen-s { color: #d4af37; }
   #omen-indicator.omen-d { color: #c0392b; }
   #omen-indicator.omen-h { color: #888; }
+  #omen-indicator.omen-match { text-shadow: 0 0 8px currentColor; }
+  #omen-indicator.omen-miss { opacity: 0.55 !important; }
   #sword-wrap.omen-success svg {
     animation: charging-glow 0.35s ease-in-out infinite alternate,
                omen-success-pulse 0.6s ease-in-out infinite alternate;
@@ -2663,6 +2665,7 @@
   function showOmen(omenType) {
     const el = $('omen-indicator');
     if (!el) return;
+    lastOmenType = omenType;
     el.className = '';
     el.textContent = '';
     if (omenType === 'none') return;
@@ -2686,6 +2689,34 @@
     const el = $('omen-indicator');
     if (el) { el.classList.remove('visible'); setTimeout(() => { el.className = ''; el.textContent = ''; }, 400); }
     swordWrap.classList.remove('omen-success', 'omen-destroy');
+    lastOmenType = 'none';
+  }
+
+  function resolveOmen(actualOutcome) {
+    // actualOutcome: 'success' | 'destroy' | 'hold'
+    if (lastOmenType === 'none') return; // 오멘 미표시 단계는 기록 안 함
+    if (!state.hasSword && actualOutcome !== 'destroy') return;
+    if (!state.currentSword) return;
+    state.currentSword.omenTotal = (state.currentSword.omenTotal || 0) + 1;
+    const matched = lastOmenType === actualOutcome;
+    if (matched) state.currentSword.omenHits = (state.currentSword.omenHits || 0) + 1;
+    // 피드백: 오멘 한자를 결과 한자로 교차 전환
+    const el = $('omen-indicator');
+    if (!el) return;
+    const resultKanji = actualOutcome === 'success' ? '成' : actualOutcome === 'destroy' ? '破' : '落';
+    const resultClass = actualOutcome === 'success' ? 'omen-s' : actualOutcome === 'destroy' ? 'omen-d' : 'omen-h';
+    el.classList.remove('visible');
+    setTimeout(() => {
+      el.className = resultClass + (matched ? ' omen-match' : ' omen-miss');
+      el.textContent = resultKanji;
+      void el.offsetWidth;
+      el.classList.add('visible');
+      // 적중 시 작은 로그
+      if (matched) log('전조 적중 (' + resultKanji + ')', 'info');
+      setTimeout(() => { el.classList.remove('visible'); setTimeout(() => { el.className = ''; el.textContent = ''; }, 400); }, 1200);
+    }, 250);
+    // 讀劍 명문 체크 (10회 이상, 80% 적중률)
+    setTimeout(() => checkInscriptions(), 800);
   }
 
   // === 梵境 — 무대 생태계 ===
@@ -2745,6 +2776,7 @@
   const ADVERSITY_THRESHOLD = 5;
   let failStreak = 0;
   let adversityReady = false;
+  let lastOmenType = 'none'; // v102 驗: 전조 추적
 
   function checkAdversity() {
     if (adversityReady) return;
@@ -3255,6 +3287,7 @@
       protectCheck.checked = false;
       if ($('whet-check')) $('whet-check').checked = false;
       if ($('spirit-check')) $('spirit-check').checked = false;
+      resolveOmen('success');  // v102 驗: 전조 적중 피드백
       checkDestiny();  // v93 天命 — 강화 성공 후 운명 점검
       bumpDaily('enhanceSuccess', 1);  // v94 天時
       bumpDaily('reachLevel', state.level);
@@ -3274,7 +3307,7 @@
       const effectiveDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul);
       if (failRoll < effectiveDestroy && !useProtect) {
         // 파괴
-        failStreak = 0; adversityReady = false;
+        failStreak = 0; adversityReady = false; resolveOmen('destroy');  // v102
         state.totalDestroyed++;
         state.hasSword = false;
         const destroyedLevel = state.level;
@@ -3288,13 +3321,13 @@
         showVoid(destroyedLevel);
       } else if (failRoll < effectiveDestroy + effectiveDowngrade && !useProtect) {
         // 하락
-        failStreak++; checkAdversity();
+        failStreak++; checkAdversity(); resolveOmen('hold');  // v102 (하락도 hold 오멘)
         state.level = Math.max(0, state.level - 1);
         log('실패 — 하락 (+' + state.level + ')', 'fail');
         SFX.enhanceFail();
       } else {
         // 유지 (또는 방지권 발동)
-        failStreak++; checkAdversity();
+        failStreak++; checkAdversity(); resolveOmen('hold');  // v102
         if (useProtect) {
           log('보호권 사용 (+' + state.level + ')', 'fail');
         } else {
@@ -4681,6 +4714,7 @@
     { key: '斷魔', label: '네 종류 그림자 모두 베어냈다',   verse: '검이 모든 어둠을 알아본다',         trigger: () => false },
     { key: '久',   label: '50번 강화한 오랜 검',            verse: '검에 세월의 빛이 깃들었다',         trigger: () => state.currentSword.enhanceAttempts >= 50 },
     { key: '古',   label: '100번 강화한 아주 오랜 검',      verse: '검은 잊혀진 시대를 기억한다',       trigger: () => state.currentSword.enhanceAttempts >= 100 },
+    { key: '讀劍', label: '전조를 능숙하게 읽는 검',        verse: '검과 사람이 같은 하늘을 보았다',     trigger: () => (state.currentSword.omenTotal || 0) >= 10 && (state.currentSword.omenHits || 0) / (state.currentSword.omenTotal || 1) >= 0.8 },
   ];
 
   function grantInscription(key) {
@@ -5193,6 +5227,8 @@
       levelHistory: (state.currentSword.levelHistory || []).slice(),
       destiny: state.currentSword.destiny || null,
       destinyFulfilled: !!state.currentSword.destinyFulfilled,
+      omenHits: state.currentSword.omenHits || 0,
+      omenTotal: state.currentSword.omenTotal || 0,
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -5604,7 +5640,9 @@
       '<div style="display:flex;justify-content:space-around;padding:10px 0;margin-top:14px;border-top:1px solid var(--line);font-size:11px">' +
         '<div><span style="color:var(--dim)">魂</span> <span style="color:#6a8a9a;margin-left:6px">' + (s.soul || 0) + '</span></div>' +
         '<div><span style="color:var(--dim)">베어낸 그림자</span> <span style="color:var(--accent);margin-left:6px">' + (s.slainCount || 0) + '</span></div>' +
-      '</div>' + guardianBlock;
+      '</div>' +
+      (s.omenTotal >= 5 ? '<div style="text-align:center;color:var(--dim);font-size:10px;padding:4px 0;letter-spacing:2px">전조 적중률 ' + (s.omenHits || 0) + '/' + s.omenTotal + ' (' + Math.round((s.omenHits || 0) / s.omenTotal * 100) + '%)</div>' : '') +
+      guardianBlock;
     $('sword-detail-modal').classList.add('active');
     // 수호자 지정 / 해제 이벤트
     const gb = $('detail-guard');
