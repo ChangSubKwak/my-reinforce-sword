@@ -1564,6 +1564,7 @@
     border: 1px solid var(--line); padding: 1px 3px; border-radius: 1px;
   }
   .lc-badge.way { color: var(--accent); border-color: rgba(212,175,55,0.5); }
+  .lc-memo { font-size: 8px; color: var(--dim); opacity: 0.65; letter-spacing: 1px; margin-top: 4px; text-align: center; line-height: 1.4; font-style: italic; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* 刹那 — 강화 충전 긴장 */
   #sword-wrap.charging svg {
     animation: charging-glow 0.35s ease-in-out infinite alternate;
@@ -2068,6 +2069,10 @@
     <p id="name-prompt-text">이 검에 직접 이름을 지어주시겠습니까?</p>
     <input id="name-input" type="text" maxlength="16" placeholder=""
       style="width:100%;padding:12px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:16px;letter-spacing:6px;text-align:center;margin-bottom:14px;outline:none;"
+      autocomplete="off">
+    <!-- v104 刻 — 검에 새기는 한 마디 -->
+    <input id="memo-input" type="text" maxlength="24" placeholder="한 마디를 새기다 (선택 · 24자)"
+      style="width:100%;padding:8px;background:transparent;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:2px;text-align:center;margin-bottom:14px;outline:none;opacity:0.7;"
       autocomplete="off">
     <div style="display:flex;gap:8px">
       <button class="modal-close" id="name-cancel" style="flex:1;margin:0">자 동 이 름</button>
@@ -5219,13 +5224,13 @@
       const slainHere = state.currentSword.slainCount || 0;
       const preVerse = isWay ? generateVerse(form, ins, lv, slainHere, preReward, state.currentSword.soul || 0) : null;
       askName(autoName, form, ins, lv, preReward, preVerse,
-        (userName) => doSeal(form, ins, lv, isWay, userName || autoName));
+        (userName, userMemo) => doSeal(form, ins, lv, isWay, userName || autoName, userMemo));
     } else {
       doSeal(form, ins, lv, isWay, autoName);
     }
   }
 
-  function doSeal(form, ins, lv, isWay, swordName) {
+  function doSeal(form, ins, lv, isWay, swordName, userMemo) {
     let reward = sealReward(lv);
     if (isWay) reward = Math.floor(reward * 1.5);
     reward = Math.floor(reward * schoolSealMul());
@@ -5250,6 +5255,7 @@
       destinyFulfilled: !!state.currentSword.destinyFulfilled,
       omenHits: state.currentSword.omenHits || 0,
       omenTotal: state.currentSword.omenTotal || 0,
+      memo: (userMemo && userMemo.trim()) ? userMemo.trim() : null,
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -5377,19 +5383,23 @@
     input.value = '';
     modal.classList.add('active');
     setTimeout(() => input.focus(), 100);
+    // v104 刻 — 메모 입력 초기화
+    const memoInput = $('memo-input');
+    if (memoInput) memoInput.value = '';
 
     const confirmBtn = $('name-confirm');
     const cancelBtn = $('name-cancel');
+    function getMemo() { return memoInput ? memoInput.value.trim().slice(0, 24) : ''; }
     function cleanup() {
       modal.classList.remove('active');
       confirmBtn.removeEventListener('click', onConfirm);
       cancelBtn.removeEventListener('click', onCancel);
       input.removeEventListener('keydown', onKey);
     }
-    function onConfirm() { const v = input.value.trim().slice(0, 16); cleanup(); callback(v); }
-    function onCancel() { cleanup(); callback(''); }
+    function onConfirm() { const v = input.value.trim().slice(0, 16); const m = getMemo(); cleanup(); callback(v, m); }
+    function onCancel() { const m = getMemo(); cleanup(); callback('', m); }
     function onKey(e) {
-      if (e.key === 'Enter') { e.preventDefault(); onConfirm(); }
+      if (e.key === 'Enter' && document.activeElement !== memoInput) { e.preventDefault(); onConfirm(); }
       if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
     }
     confirmBtn.addEventListener('click', onConfirm);
@@ -5663,6 +5673,7 @@
         '<div><span style="color:var(--dim)">베어낸 그림자</span> <span style="color:var(--accent);margin-left:6px">' + (s.slainCount || 0) + '</span></div>' +
       '</div>' +
       (s.omenTotal >= 5 ? '<div style="text-align:center;color:var(--dim);font-size:10px;padding:4px 0;letter-spacing:2px">전조 적중률 ' + (s.omenHits || 0) + '/' + s.omenTotal + ' (' + Math.round((s.omenHits || 0) / s.omenTotal * 100) + '%)</div>' : '') +
+      (s.memo ? '<div style="margin:12px 0;padding:10px 14px;background:rgba(212,175,55,0.04);border:1px dashed rgba(212,175,55,0.2);text-align:center;font-size:12px;letter-spacing:3px;color:var(--fg);line-height:1.8">' + s.memo + '</div>' : '') +
       guardianBlock;
     $('sword-detail-modal').classList.add('active');
     // 수호자 지정 / 해제 이벤트
@@ -5777,6 +5788,7 @@
           '<div class="lc-badges">' + keyIns.slice(0,3).map(k =>
             '<span class="lc-badge' + (k === '道' ? ' way' : '') + '">' + k + '</span>'
           ).join('') + '</div>' +
+          (s.memo ? '<div class="lc-memo">' + s.memo + '</div>' : '') +
           '</div>';
       });
       list.innerHTML = items.join('');
