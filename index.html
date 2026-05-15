@@ -1692,6 +1692,12 @@
   .form-card-kanji { font-size: 28px; color: var(--accent); letter-spacing: 6px; margin-bottom: 4px; }
   .form-card-name { font-size: 10px; color: var(--dim); letter-spacing: 2px; margin-bottom: 8px; }
   .form-card-effect { font-size: 9px; color: var(--dim); opacity: 0.75; letter-spacing: 1px; line-height: 1.6; }
+  /* v111 刻痕 — 흉터 새김 */
+  .scar-mark { stroke: rgba(180, 70, 50, 0.0); stroke-width: 1.4; stroke-linecap: round; transition: stroke rgba(0,0,0,0) 0s; }
+  .scar-mark.visible { stroke: rgba(180, 70, 50, 0.65); filter: drop-shadow(0 0 1px rgba(192,57,43,0.5)); animation: scar-pulse 3s ease-in-out infinite alternate; }
+  @keyframes scar-pulse { from { stroke-opacity: 0.65; } to { stroke-opacity: 0.35; } }
+  .scar-flash { animation: scar-carve 0.4s ease-out !important; stroke: rgba(220, 100, 80, 1) !important; }
+  @keyframes scar-carve { 0% { stroke: rgba(255,255,255,0.9); stroke-width: 2.5; } 40% { stroke: rgba(220,100,80,1); stroke-width: 2; } 100% { stroke: rgba(180,70,50,0.65); stroke-width: 1.4; } }
   /* 梵境 — 무대 생태계 */
   #stage-bg {
     position: absolute;
@@ -1930,6 +1936,10 @@
         <!-- v69 칼날 한자 새김 — 정점 명문 한자 -->
         <text id="mark-kanji" x="50" y="80" text-anchor="middle" font-size="10" fill="#fff5c0" opacity="0"
           style="filter: drop-shadow(0 0 4px #d4af37); font-family: 'Noto Serif KR', serif; font-weight: 700;"></text>
+        <!-- v111 刻痕 — 흉터 3개 (파괴 직전 회수할 때마다 새겨짐) -->
+        <line id="scar-1" class="scar-mark" x1="44" y1="52" x2="54" y2="59"/>
+        <line id="scar-2" class="scar-mark" x1="46" y1="83" x2="56" y2="90"/>
+        <line id="scar-3" class="scar-mark" x1="44" y1="114" x2="54" y2="121"/>
       </svg>
       <div id="level-badge">+0</div>
       <div id="soul-bar"><div id="soul-fill"></div></div>
@@ -2458,7 +2468,7 @@
     totalDestroyed: 0,
     totalSlain: 0,
     sealedSwords: [],
-    currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0] },
+    currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0 },
     whetstones: 0,
     spiritstones: 0,
     firstWayReached: false,  // v16 始祖 — 첫 道 도달 시 true, 영구
@@ -2523,6 +2533,7 @@
       if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
       if (state.currentSword.form === undefined) state.currentSword.form = null;
       if (typeof state.currentSword.soul !== 'number') state.currentSword.soul = 0;
+      if (typeof state.currentSword.scars !== 'number') state.currentSword.scars = 0;
       // v93 天命 — 기존 검에 천명 없으면 부여
       if (state.hasSword && !state.currentSword.destiny) {
         try { assignDestiny(); } catch (e) {}
@@ -3205,7 +3216,7 @@
     const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul);
     const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd;
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
-    const showDestroy = Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce()) * rsv.destroyMul);
+    const showDestroy = Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
 
     const canAfford = state.shards >= actualCost;
     btnEnhance.disabled = !canAfford;
@@ -3446,8 +3457,8 @@
       setTimeout(() => swordWrap.classList.remove('shake'), 400);
 
       const failRoll = Math.random();
-      // 영석: 파괴 차단 / 유파 + 수호자 보너스도 destroy 감소 / v91 覺悟 배율 / v96 역경전기 감소
-      const effectiveDestroy = useSpirit ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce) * rsv.destroyMul);
+      // 영석: 파괴 차단 / 유파 + 수호자 + 흉터(v111) 보너스도 destroy 감소 / v91 覺悟 배율 / v96 역경전기 감소
+      const effectiveDestroy = useSpirit ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce()) * rsv.destroyMul);
       const effectiveDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul);
       if (failRoll < effectiveDestroy && !useProtect) {
         // 파괴
@@ -3487,8 +3498,15 @@
         if (successStreak >= 3) log('連 ' + successStreak + '회 streak 종료 — 유지', 'fail');
         clearStreak();
         failStreak++; checkAdversity(); resolveOmen('hold');  // v102
+        // v111 刻痕: 방지권이 파괴 roll을 막아낸 경우 흉터 새김
+        const protectedFromDestroy = useProtect && failRoll < (useSpirit ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce) * rsv.destroyMul));
         if (useProtect) {
-          log('보호권 사용 (+' + state.level + ')', 'fail');
+          if (protectedFromDestroy) {
+            log('盾 — 방지권이 파괴를 막아냈다 (+' + state.level + ')', 'fail');
+            setTimeout(() => addScar(), 150);
+          } else {
+            log('盾 — 방지권 사용 (+' + state.level + ')', 'fail');
+          }
         } else {
           log('실패 — 유지', 'fail');
         }
@@ -3569,6 +3587,38 @@
         endVoid(true);
       }
     };
+  }
+
+  // === v111 刻痕 — 흉터 시스템 ===
+  function getScarDestroyReduce() {
+    return (state.currentSword && state.currentSword.scars || 0) * 0.01;
+  }
+  function addScar() {
+    if (!state.currentSword) return;
+    if ((state.currentSword.scars || 0) >= 3) return;
+    state.currentSword.scars = (state.currentSword.scars || 0) + 1;
+    const n = state.currentSword.scars;
+    // 흉터 새김 SFX: 금속 긁힘 + 낮은 탄식
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(280, now); osc.frequency.exponentialRampToValueAtTime(140, now + 0.18);
+      g.gain.setValueAtTime(0.22, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(now); osc.stop(now + 0.25);
+    }
+    // 흉터 마크 플래시 애니메이션
+    const scarEl = $('scar-' + n);
+    if (scarEl) {
+      scarEl.classList.add('visible', 'scar-flash');
+      setTimeout(() => scarEl.classList.remove('scar-flash'), 500);
+    }
+    if (n === 3 && state.hasSword) {
+      setTimeout(() => checkInscriptions(), 300);
+    }
+    log('刻痕 · ' + n + '  — 파괴의 충격이 검에 새겨졌다 (파괴 확률 -' + n + '%)', 'info');
+    save();
   }
 
   function endVoid(rescued) {
@@ -4424,6 +4474,12 @@
       const isTranscendent = ins.includes('本') || ins.includes('道');
       swordWrap.classList.toggle('transcendent', isTranscendent);
     }
+    // v111 刻痕 — 흉터 마크 표시 (scars 수에 따라 1~3개)
+    const scars = (state.hasSword && state.currentSword && state.currentSword.scars) || 0;
+    for (let i = 1; i <= 3; i++) {
+      const el = $('scar-' + i);
+      if (el) el.classList.toggle('visible', scars >= i);
+    }
   }
 
   // === 단계별 검 디자인 — 5 Tier 퀀텀 변경 (gradient + filter 사용) ===
@@ -4940,6 +4996,7 @@
     { key: '久',   label: '50번 강화한 오랜 검',            verse: '검에 세월의 빛이 깃들었다',         trigger: () => state.currentSword.enhanceAttempts >= 50 },
     { key: '古',   label: '100번 강화한 아주 오랜 검',      verse: '검은 잊혀진 시대를 기억한다',       trigger: () => state.currentSword.enhanceAttempts >= 100 },
     { key: '讀劍', label: '전조를 능숙하게 읽는 검',        verse: '검과 사람이 같은 하늘을 보았다',     trigger: () => (state.currentSword.omenTotal || 0) >= 10 && (state.currentSword.omenHits || 0) / (state.currentSword.omenTotal || 1) >= 0.8 },
+    { key: '傷',   label: '세 번 무너지기 직전 살아남은 검', verse: '상처가 검을 더 단단하게 만들었다',   trigger: () => (state.currentSword.scars || 0) >= 3 },
   ];
 
   function grantInscription(key) {
@@ -5184,7 +5241,7 @@
     swordWrap.classList.remove('resolve-focus', 'resolve-guard');
     setAmbientLevel(startLv); applyAmbientMode('idle');
     const startSoul = trialStartSoulBonus();
-    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {} };
+    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0 };
     // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (state.firstWayReached) {
@@ -5482,6 +5539,7 @@
       omenHits: state.currentSword.omenHits || 0,
       omenTotal: state.currentSword.omenTotal || 0,
       memo: (userMemo && userMemo.trim()) ? userMemo.trim() : null,
+      scars: state.currentSword.scars || 0,
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -5908,6 +5966,7 @@
         '<div><span style="color:var(--dim)">베어낸 그림자</span> <span style="color:var(--accent);margin-left:6px">' + (s.slainCount || 0) + '</span></div>' +
       '</div>' +
       (s.omenTotal >= 5 ? '<div style="text-align:center;color:var(--dim);font-size:10px;padding:4px 0;letter-spacing:2px">전조 적중률 ' + (s.omenHits || 0) + '/' + s.omenTotal + ' (' + Math.round((s.omenHits || 0) / s.omenTotal * 100) + '%)</div>' : '') +
+      (s.scars > 0 ? '<div style="text-align:center;color:rgba(180,70,50,0.8);font-size:10px;padding:4px 0;letter-spacing:3px">刻痕 ' + '●'.repeat(s.scars) + '○'.repeat(3 - s.scars) + '  · 파괴 직전 ' + s.scars + '번 살아남았다</div>' : '') +
       (s.memo ? '<div style="margin:12px 0;padding:10px 14px;background:rgba(212,175,55,0.04);border:1px dashed rgba(212,175,55,0.2);text-align:center;font-size:12px;letter-spacing:3px;color:var(--fg);line-height:1.8">' + s.memo + '</div>' : '') +
       guardianBlock;
     $('sword-detail-modal').classList.add('active');
@@ -6024,6 +6083,7 @@
             '<span class="lc-badge' + (k === '道' ? ' way' : '') + '">' + k + '</span>'
           ).join('') + '</div>' +
           (s.memo ? '<div class="lc-memo">' + s.memo + '</div>' : '') +
+          (s.scars > 0 ? '<div style="font-size:8px;color:rgba(180,70,50,0.7);letter-spacing:2px;margin-top:2px">' + '刻'.repeat(s.scars) + '</div>' : '') +
           '</div>';
       });
       list.innerHTML = items.join('');
@@ -6147,7 +6207,7 @@
     state = Object.assign({}, state, cloudData);
     if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
     if (!state.currentSword || typeof state.currentSword !== 'object') {
-      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0] };
+      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0 };
     }
     if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
     if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
@@ -6363,7 +6423,7 @@
     // load 보정 재실행
     if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
     if (!state.currentSword || typeof state.currentSword !== 'object') {
-      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0] };
+      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0 };
     }
     if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
     if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
@@ -6552,7 +6612,7 @@
         // load() 안의 보정 재실행
         if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
         if (!state.currentSword || typeof state.currentSword !== 'object') {
-          state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0 };
+          state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, scars: 0 };
         }
         if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
         if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
@@ -6887,7 +6947,7 @@
       level: 0, shards: 50, protections: 0, hasSword: true,
       bestLevel: 0, totalDestroyed: 0, totalSlain: 0,
       sealedSwords: [],
-      currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0] },
+      currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0 },
       whetstones: 0, spiritstones: 0,
       firstWayReached: false,
       endingShown: false,
