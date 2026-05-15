@@ -4694,6 +4694,26 @@
     '速': { name: '速流 (빠른 검 학파)', desc: '같은 형 3자루 판매 — 줍기 시간 +1초',   schoolBonusRescueSec: 1.0 },
   };
 
+  // v106 合 — 유파 마스터리 4단계
+  const MASTERY_TIERS = [
+    { name: '入門', min: 3,  mul: 1.0 },
+    { name: '師範', min: 6,  mul: 1.5 },
+    { name: '宗師', min: 10, mul: 2.0 },
+    { name: '超越', min: 15, mul: 2.5 },
+  ];
+  function getSchoolMastery(form) {
+    const count = (getFormCounts()[form] || 0);
+    let tier = null;
+    for (const t of MASTERY_TIERS) {
+      if (count >= t.min) tier = t;
+    }
+    return tier; // null = 미달성
+  }
+  function schoolMasteryMul(form) {
+    const t = getSchoolMastery(form);
+    return t ? t.mul : 0; // 0 = 미활성
+  }
+
   function getFormCounts() {
     const counts = {};
     for (const s of state.sealedSwords) {
@@ -4706,16 +4726,19 @@
     return Object.keys(SCHOOLS).filter(f => (counts[f] || 0) >= SCHOOL_THRESHOLD);
   }
   function schoolSuccessBonus() {
-    return getActiveSchools().reduce((a, f) => a + (SCHOOLS[f].schoolBonusSuccess || 0), 0);
+    return getActiveSchools().reduce((a, f) => a + (SCHOOLS[f].schoolBonusSuccess || 0) * schoolMasteryMul(f), 0);
   }
   function schoolDestroyReduce() {
-    return getActiveSchools().reduce((a, f) => a + (SCHOOLS[f].schoolBonusDestroyReduce || 0), 0);
+    return getActiveSchools().reduce((a, f) => a + (SCHOOLS[f].schoolBonusDestroyReduce || 0) * schoolMasteryMul(f), 0);
   }
   function schoolSealMul() {
-    return getActiveSchools().reduce((a, f) => a * (SCHOOLS[f].schoolBonusSealMul || 1), 1);
+    return getActiveSchools().reduce((a, f) => {
+      const base = (SCHOOLS[f].schoolBonusSealMul || 1) - 1; // e.g. 0.10
+      return a * (1 + base * schoolMasteryMul(f));
+    }, 1);
   }
   function schoolRescueSec() {
-    return getActiveSchools().reduce((a, f) => a + (SCHOOLS[f].schoolBonusRescueSec || 0), 0);
+    return getActiveSchools().reduce((a, f) => a + (SCHOOLS[f].schoolBonusRescueSec || 0) * schoolMasteryMul(f), 0);
   }
 
   // === 銘名 — 봉인 시 검의 비명 ===
@@ -5261,6 +5284,9 @@
     if (ins.includes('古')) reward = Math.floor(reward * 1.10);
     else if (ins.includes('久')) reward = Math.floor(reward * 1.05);
     const schoolsBefore = getActiveSchools();
+    // v106 合: 마스터리 단계 — 봉인 전 상태
+    const masteryBefore = {};
+    Object.keys(SCHOOLS).forEach(f => { masteryBefore[f] = getSchoolMastery(f); });
     const slainHere = state.currentSword.slainCount || 0;
     const verse = isWay
       ? generateVerse(form, ins, lv, slainHere, reward, state.currentSword.soul || 0)
@@ -5292,6 +5318,15 @@
       const def = SCHOOLS[newSchool];
       announceInscription(def.name, def.desc);
     }
+    // v106 合: 마스터리 단계 상승 알림
+    Object.keys(SCHOOLS).forEach(f => {
+      const before = masteryBefore[f];
+      const after = getSchoolMastery(f);
+      if (after && (!before || after.name !== before.name)) {
+        const sname = SCHOOLS[f].name.split(' ')[0];
+        setTimeout(() => announceInscription(sname + ' · ' + after.name, after.name + ' — 유파 효과 ×' + after.mul), 400);
+      }
+    });
     state.shards += reward;
     bumpStat('sealed');
     bumpDaily('seal', 1);  // v94 天時
@@ -5826,13 +5861,27 @@
     const counts = getFormCounts();
     let summary = '선대의 강기 ' + legacyStrength() + ' · 시작 +' + startBonus();
     if (active.length) {
-      summary += '<br><span style="color:var(--accent);letter-spacing:4px">' + active.map(f => SCHOOLS[f].name).join(' · ') + '</span>';
+      // v106 合: 활성 유파에 마스터리 단계 표시
+      const schoolDisplay = active.map(f => {
+        const mastery = getSchoolMastery(f);
+        const tierLabel = mastery ? ' <span style="font-size:9px;opacity:0.75">(' + mastery.name + ' ×' + mastery.mul + ')</span>' : '';
+        return SCHOOLS[f].name + tierLabel;
+      }).join(' · ');
+      summary += '<br><span style="color:var(--accent);letter-spacing:3px">' + schoolDisplay + '</span>';
     }
-    // 형 진행도 (3자루 미만)
+    // 형 진행도 (3자루 미만 + 入門 진행 중)
     const progress = Object.keys(SCHOOLS).filter(f => !active.includes(f) && (counts[f] || 0) > 0)
       .map(f => '<span style="opacity:0.55">' + f + ' ' + (counts[f] || 0) + '/' + SCHOOL_THRESHOLD + '</span>')
       .join('  ·  ');
-    if (progress) summary += '<br><span style="font-size:10px">' + progress + '</span>';
+    // v106: 활성 유파 중 다음 단계 진행도
+    const masteryProgress = active.map(f => {
+      const count = counts[f] || 0;
+      const next = MASTERY_TIERS.find(t => t.min > count);
+      if (!next) return '';
+      return '<span style="opacity:0.55">' + SCHOOLS[f].name.split(' ')[0] + ' ' + count + '/' + next.min + ' → ' + next.name + '</span>';
+    }).filter(Boolean).join('  ·  ');
+    const allProgress = [progress, masteryProgress].filter(Boolean).join('  ·  ');
+    if (allProgress) summary += '<br><span style="font-size:10px">' + allProgress + '</span>';
     $('legacy-summary').innerHTML = summary;
   }
 
