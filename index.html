@@ -1666,6 +1666,32 @@
   #sword-wrap.resolve-guard svg {
     filter: drop-shadow(0 0 12px rgba(80,120,180,0.5)) drop-shadow(0 0 4px rgba(100,160,220,0.2));
   }
+  /* 選形 — 형 선택 카드 */
+  .form-card {
+    border: 1px solid var(--line);
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    border-radius: 2px;
+    position: relative;
+  }
+  .form-card:hover { border-color: var(--accent); background: rgba(212,175,55,0.05); }
+  .form-card.recommended { border-color: rgba(212,175,55,0.4); background: rgba(212,175,55,0.04); }
+  .form-card.recommended::before {
+    content: '天命';
+    position: absolute;
+    top: -8px;
+    right: 8px;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    background: var(--bg);
+    padding: 0 4px;
+  }
+  .form-card-kanji { font-size: 28px; color: var(--accent); letter-spacing: 6px; margin-bottom: 4px; }
+  .form-card-name { font-size: 10px; color: var(--dim); letter-spacing: 2px; margin-bottom: 8px; }
+  .form-card-effect { font-size: 9px; color: var(--dim); opacity: 0.75; letter-spacing: 1px; line-height: 1.6; }
   /* 梵境 — 무대 생태계 */
   #stage-bg {
     position: absolute;
@@ -2114,6 +2140,15 @@
       <button class="modal-close" id="name-cancel" style="flex:1;margin:0">자 동 이 름</button>
       <button class="modal-close" id="name-confirm" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)">이 름 새 김 · 팔 기</button>
     </div>
+  </div>
+</div>
+
+<!-- v109 選形 모달 — 첫 강화 시 형 선택 -->
+<div class="modal" id="form-select-modal">
+  <div class="modal-box" style="max-width:460px">
+    <h2>검 의  천 성</h2>
+    <p id="form-select-hint" style="color:var(--dim);letter-spacing:2px;font-size:11px;margin-bottom:16px">이 검은 어떤 길을 걷겠습니까</p>
+    <div id="form-card-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
   </div>
 </div>
 
@@ -3281,6 +3316,9 @@
   function enhance() {
     if (challenge || rescueWindow) return;
     if (!state.hasSword || state.level >= MAX_LEVEL) return;
+    // v109 選形: 형 선택 모달 중이면 대기
+    const formModal = $('form-select-modal');
+    if (formModal && formModal.classList.contains('active')) return;
     const lv = state.level;
     const t = TABLE[lv];
     const form = getForm();
@@ -4300,10 +4338,53 @@
   function decideForm() {
     if (!state.hasSword) return;
     if (state.currentSword.form) return;
-    state.currentSword.form = FORM_KEYS[Math.floor(Math.random() * FORM_KEYS.length)];
-    const def = SWORD_FORMS[state.currentSword.form];
+    // v109 選形: 자동 결정 → 선택 모달 (showFormSelectModal이 없으면 폴백)
+    showFormSelectModal();
+  }
+
+  function applyFormChoice(form) {
+    if (!state.hasSword || state.currentSword.form) return;
+    state.currentSword.form = form;
+    const def = SWORD_FORMS[form];
     announceInscription(def.name, def.label);
     SFX.formDecide();
+    save();
+    render();
+  }
+
+  function showFormSelectModal() {
+    const modal = $('form-select-modal');
+    const grid = $('form-card-grid');
+    if (!modal || !grid) {
+      // 폴백: 랜덤 결정
+      state.currentSword.form = FORM_KEYS[Math.floor(Math.random() * FORM_KEYS.length)];
+      const def = SWORD_FORMS[state.currentSword.form];
+      announceInscription(def.name, def.label);
+      SFX.formDecide();
+      return;
+    }
+    const recommended = FORM_KEYS[Math.floor(Math.random() * FORM_KEYS.length)];
+    const formDesc = {
+      '直': '강화 성공 +3%',
+      '曲': '파괴 확률 -3%',
+      '重': '강화 비용 +10%\n그림자 보상 +20%',
+      '速': '도전 도망 무료',
+    };
+    const formKr = { '直': '곧은 검', '曲': '굽은 검', '重': '무거운 검', '速': '빠른 검' };
+    grid.innerHTML = FORM_KEYS.map(f =>
+      '<div class="form-card' + (f === recommended ? ' recommended' : '') + '" data-form="' + f + '">' +
+        '<div class="form-card-kanji">' + f + '</div>' +
+        '<div class="form-card-name">' + formKr[f] + '</div>' +
+        '<div class="form-card-effect">' + formDesc[f].replace('\n', '<br>') + '</div>' +
+      '</div>'
+    ).join('');
+    modal.classList.add('active');
+    grid.querySelectorAll('.form-card').forEach(card => {
+      card.addEventListener('click', () => {
+        modal.classList.remove('active');
+        applyFormChoice(card.dataset.form);
+      });
+    });
   }
 
   function getForm() {
