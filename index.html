@@ -1692,6 +1692,25 @@
   .form-card-kanji { font-size: 28px; color: var(--accent); letter-spacing: 6px; margin-bottom: 4px; }
   .form-card-name { font-size: 10px; color: var(--dim); letter-spacing: 2px; margin-bottom: 8px; }
   .form-card-effect { font-size: 9px; color: var(--dim); opacity: 0.75; letter-spacing: 1px; line-height: 1.6; }
+  /* v113 劍聲 — 검의 목소리 */
+  #sword-voice {
+    position: absolute;
+    bottom: -38px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+    transition: opacity 0.3s ease;
+    font-style: italic;
+  }
+  #sword-voice.voice-success { color: #c8a86a; opacity: 0.85; }
+  #sword-voice.voice-hold    { color: var(--dim); opacity: 0.55; }
+  #sword-voice.voice-slay    { color: #8ab0c8; opacity: 0.80; }
+  #sword-voice.voice-destroy { color: var(--danger); opacity: 0.80; }
   /* v111 刻痕 — 흉터 새김 */
   .scar-mark { stroke: rgba(180, 70, 50, 0.0); stroke-width: 1.4; stroke-linecap: round; transition: stroke rgba(0,0,0,0) 0s; }
   .scar-mark.visible { stroke: rgba(180, 70, 50, 0.65); filter: drop-shadow(0 0 1px rgba(192,57,43,0.5)); animation: scar-pulse 3s ease-in-out infinite alternate; }
@@ -1945,6 +1964,7 @@
       <div id="soul-bar"><div id="soul-fill"></div></div>
       <div id="soul-stage-label"></div>
       <div id="way-progress"></div>
+      <div id="sword-voice"></div>
       <div id="omen-indicator"></div>
       <div id="streak-counter"></div>
     </div>
@@ -3316,6 +3336,67 @@
     }
   }
 
+  // === v113 劍聲 — 검의 목소리 (강화 결과별 한 줄 속삭임) ===
+  const SWORD_WHISPERS = {
+    success: [
+      ['검이 처음으로 빛났다', '이제 시작이다', '첫 걸음'],       // lv 1-2
+      ['조금 더 단단하게', '강해지고 있다', '담금질이 계속된다'],  // lv 3-4
+      ['파괴의 문이 열렸다', '위험해질수록 빛난다', '그래도 더'],  // lv 5-6
+      ['한계가 가까워진다', '한 걸음이 전부다', '끝이 보인다'],   // lv 7-9
+      ['이미 보통의 검이 아니다', '경계를 넘었다', '신의 영역'],  // lv 10-12
+      ['道가 보인다', '마지막 단계', '거의 다 왔다'],             // lv 13-14
+    ],
+    hold: [
+      ['다시', '멈추지 않는다', '또 한 번'],
+      ['버티는 것도 힘이다', '흔들리지 않는다', '이번엔 아니다'],
+      ['검이 거부한다', '아직 아니다', '준비가 필요하다'],
+      ['강함이 부족하다', '더 담금질해야 한다', '인내'],
+      ['한계가 벽이 된다', '이 이상은...', '극한에서 저항한다'],
+      ['道가 거부한다', '마지막 시련', '조금만 더'],
+    ],
+    destroy: [
+      '다시 시작이다',
+      '부서진 것들은 녹아 다시 태어난다',
+      '파괴도 여정의 일부다',
+      '이 검은 충분히 싸웠다',
+      '이 정도면 충분하다',
+    ],
+    slay: [
+      '어둠을 베었다',
+      '강함이 증명됐다',
+      '그림자가 물러났다',
+      '검이 기뻐한다',
+      '하나를 더 넘었다',
+    ],
+  };
+  let swordVoiceTimer = null;
+  function showSwordVoice(outcome, lv) {
+    const el = $('sword-voice');
+    if (!el) return;
+    let pool;
+    if (outcome === 'success') {
+      const tier = lv <= 2 ? 0 : lv <= 4 ? 1 : lv <= 6 ? 2 : lv <= 9 ? 3 : lv <= 12 ? 4 : 5;
+      pool = SWORD_WHISPERS.success[tier] || SWORD_WHISPERS.success[0];
+    } else if (outcome === 'hold') {
+      if (Math.random() > 0.35) return; // hold 메시지는 35% 확률만
+      const tier = lv <= 2 ? 0 : lv <= 4 ? 1 : lv <= 6 ? 2 : lv <= 9 ? 3 : lv <= 12 ? 4 : 5;
+      pool = SWORD_WHISPERS.hold[tier] || SWORD_WHISPERS.hold[0];
+    } else if (outcome === 'destroy') {
+      if (Math.random() > 0.6) return; // 파괴 메시지는 60% 확률
+      pool = SWORD_WHISPERS.destroy;
+    } else {
+      pool = SWORD_WHISPERS[outcome] || [];
+    }
+    if (!pool || pool.length === 0) return;
+    const msg = pool[Math.floor(Math.random() * pool.length)];
+    if (swordVoiceTimer) clearTimeout(swordVoiceTimer);
+    el.className = 'voice-' + outcome;
+    el.textContent = msg;
+    swordVoiceTimer = setTimeout(() => {
+      el.className = '';
+      el.textContent = '';
+    }, 2800);
+  }
   // === v112 祖靈 — 봉인/탄생 시 조상 명문 영혼 이펙트 ===
   function spawnAncestorGatherKanji() {
     // 선대 봉인 검들의 핵심 명문 1~2개씩 수집 — 최신 3자루만
@@ -3491,6 +3572,7 @@
       if (state.level === 1) maybeMilestone('first1', '一', '첫 강화 — 검의 이야기가 시작됩니다');
       if (state.level === SEAL_MIN_LEVEL) maybeMilestone('firstSeal', '팔기', '+' + SEAL_MIN_LEVEL + ' 도달 — 이제 검을 팔 수 있습니다');
       log('+' + state.level + ' 성공', 'success');
+      showSwordVoice('success', state.level);  // v113 劍聲
       // 강화 성공 → 일대기 점검 (百鍊·剛體·道)
       checkInscriptions();
       recordLevelHistory();
@@ -3532,6 +3614,7 @@
         const destroyedLevel = state.level;
         state.level = 0;
         log('검이 부서졌다 (+' + destroyedLevel + ')', 'destroy');
+        showSwordVoice('destroy', destroyedLevel);  // v113 劍聲
         burstParticles('#c0392b', 30);
         SFX.destroy();
         screenShake(true);  // 검 파괴 — 큰 흔들림
@@ -3572,6 +3655,7 @@
         } else {
           log('실패 — 유지', 'fail');
         }
+        showSwordVoice('hold', state.level);  // v113 劍聲
         SFX.enhanceFail();
       }
     }
@@ -4142,6 +4226,7 @@
       state.totalSlain++;
       state.currentSword.slainCount++;
       addSoul(6); // 베기 성공 +6
+      showSwordVoice('slay', state.level);  // v113 劍聲
       // v34 一閃 결과 페이드 (의식)
       inscribeQueue.push({ key: '斬', label: c.type.name + ' · 조각 +' + c.reward });
       if (!inscribeRunning) runInscribeQueue();
@@ -5298,6 +5383,8 @@
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
     state.level = startLv;
     failStreak = 0; adversityReady = false; clearOmen(); clearStreak();
+    if (swordVoiceTimer) { clearTimeout(swordVoiceTimer); swordVoiceTimer = null; }
+    const voiceEl = $('sword-voice'); if (voiceEl) { voiceEl.className = ''; voiceEl.textContent = ''; }
     // v103 意志: 새 검 시 마음가짐 중립 복귀
     resolveMode = 'normal';
     swordWrap.classList.remove('resolve-focus', 'resolve-guard');
