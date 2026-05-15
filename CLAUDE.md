@@ -624,6 +624,18 @@ footer 7개 버튼 → 3개 (조합소·계보·詩集) + 우상단 ≡ 메뉴 (
 
 `getResolve()` 반환 객체. 통합: `enhance()` 비용/주사위/`effectiveDestroy`/`effectiveDowngrade` 전 경로, `render()` 성공률/파괴/하락/비용 표시 + `.resolve-btn` active 토글. 검 없을 때 `#resolve-row`/`#resolve-desc` 자동 숨김. 靈石(보유 한정)과 차별 — 保身은 즉시·무한·비용 트레이드. 강화 버튼 위 3택 버튼 UI.
 
+### v92 融劍 — 두 봉인 검 합체
+
+검 없음 상태에서 봉인된 검 2자루를 선택해 *합체*, 더 강한 검으로 새출발. `FUSION_COST = 60` 조각. `FUSION_PRIORITY` 배열 (道/龍斬/帝斬/.../久 순서)로 두 검의 최우선 명문 비교 → 높은 쪽 명문 + 높은 쪽 형 + 두 영혼 평균 + 높은 강화도로 시작. `fusionPreview()` — 리스트 선택 시 결과 미리 보기 (형/명문/시작 강화/조각 비용). `fuseSwords()` — 높은 인덱스부터 splice 후 `newSword()` → form/inscriptions/soul override. 결과 검은 一생이력 0부터. 검명 모달(`askName`)에서 확정. `fusionSelected = []` 휘발성. UI: `#btn-fusion` 검 없음 && sealedSwords≥2 시 노출. `#fusion-modal` 계보와 유사 리스트 + 선택 2개 강조 + 미리 보기.
+
+### v93 天命 — 현재 검의 목표
+
+검 1자루당 1개 부여되는 랜덤 *숨겨진 목표*. 달성 시 보상 + `destinyFulfilled=true` 영구. `DESTINIES` 8종 (reach10/reach13/slay5/slay10/demon/enhance30/soul67/foe — 각 조각/영혼/방지권/숫돌/영석 보상). `assignDestiny()` — 미이행 중 랜덤 pick (newSword/fusion 시). `checkDestiny()` — destinyFulfilled 먼저 set 후 보상 (addSoul→checkDestiny 재귀 차단). 8 hook: enhance(success/fail), slay(success), addSoul + 시작(reach/foe 즉시). `#destiny-banner` 항상 표시 (달성 전: 목표/진행/보상, 달성 후: 황금 완료). `doSeal()` 봉인 시 destiny/destinyFulfilled 보존. `showSwordDetail` 회고에 천명 블록.
+
+### v94 天時 — 일일 도전 시스템
+
+날짜 기반 1일 1목표. `DAILY_CHALLENGES` 7종 (강화성공8/베기5/봉인2/+10도달/회수2/도전발동8/강화시도20). `todayStr()` → YYYY-MM-DD 로컬. `dailySeed(dateStr)` 해시 → 오늘의 도전 결정적 선택. `ensureDailyTrial()` — 날짜 바뀌면 리셋. `bumpDaily(track, val)` — reachLevel은 `Math.max` (검 파괴로 감소 X). 8 hook 위치. 완료 시 `grantDailyReward()` — `40 + ch.target*8` 조각 + `state.dailyCompletedCount++`. 기록 모달 상단 배너 (`#daily-trial-banner`) + 메뉴 '天時'. 새벽 자정 자동 갱신 (다음 강화 시 `ensureDailyTrial()` 자동 체크).
+
 ### 봉인 균형 곡선 (참고)
 
 | 검 강화도 | 봉인 보상 (조각) |

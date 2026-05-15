@@ -2321,6 +2321,7 @@
       const Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return null;
       audioCtx = new Ctx();
+      setTimeout(startAmbient, 450);
       return audioCtx;
     } catch (e) { return null; }
   }
@@ -2404,6 +2405,110 @@
     const btn = $('btn-mute');
     if (btn) btn.textContent = muted ? '소 리  켜 기' : '소 리  끄 기';
     log(muted ? '소리 끔' : '소리 켬', 'fail');
+    if (muted) stopAmbient(true); else startAmbient();
+  }
+
+  // === 生氣 — 살아있는 배경 드론 ===
+  let ambientNodes = null;
+  let ambientMode = 'idle';
+  let ambientLevel = 0;
+
+  function ambientFreq(lv) {
+    return 55 * Math.pow(1.8, lv / 15);
+  }
+
+  function startAmbient() {
+    if (muted || ambientNodes || !audioCtx) return;
+    try {
+      const ctx = audioCtx;
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(0, ctx.currentTime);
+      masterGain.connect(ctx.destination);
+
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(ambientFreq(ambientLevel), ctx.currentTime);
+
+      const subOsc = ctx.createOscillator();
+      subOsc.type = 'sine';
+      subOsc.frequency.setValueAtTime(ambientFreq(ambientLevel) / 2, ctx.currentTime);
+      const subGain = ctx.createGain();
+      subGain.gain.setValueAtTime(0, ctx.currentTime);
+      subOsc.connect(subGain);
+      subGain.connect(ctx.destination);
+
+      const lfo = ctx.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(0.25, ctx.currentTime);
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.setValueAtTime(0, ctx.currentTime);
+      lfo.connect(lfoGain);
+      lfoGain.connect(masterGain.gain);
+
+      osc.connect(masterGain);
+      osc.start(); subOsc.start(); lfo.start();
+      ambientNodes = { osc, subOsc, subGain, lfo, lfoGain, masterGain };
+      applyAmbientMode(ambientMode);
+    } catch(e) {}
+  }
+
+  function stopAmbient(immediate) {
+    if (!ambientNodes) return;
+    try {
+      if (!immediate && audioCtx) {
+        const t = audioCtx.currentTime;
+        ambientNodes.masterGain.gain.linearRampToValueAtTime(0, t + 1.2);
+        ambientNodes.subGain.gain.linearRampToValueAtTime(0, t + 1.2);
+        const nodes = ambientNodes;
+        ambientNodes = null;
+        setTimeout(() => { try { nodes.osc.stop(); nodes.subOsc.stop(); nodes.lfo.stop(); } catch(e2) {} }, 1300);
+      } else {
+        try { ambientNodes.osc.stop(); ambientNodes.subOsc.stop(); ambientNodes.lfo.stop(); } catch(e2) {}
+        ambientNodes = null;
+      }
+    } catch(e) { ambientNodes = null; }
+  }
+
+  function applyAmbientMode(mode) {
+    ambientMode = mode;
+    if (!ambientNodes || !audioCtx) return;
+    const ctx = audioCtx;
+    const t = ctx.currentTime;
+    const { osc, subOsc, subGain, lfo, lfoGain, masterGain } = ambientNodes;
+    const base = ambientFreq(ambientLevel);
+
+    if (mode === 'void') {
+      masterGain.gain.linearRampToValueAtTime(0, t + 0.7);
+      subGain.gain.linearRampToValueAtTime(0, t + 0.7);
+      lfoGain.gain.setValueAtTime(0, t);
+    } else if (mode === 'crisis') {
+      masterGain.gain.linearRampToValueAtTime(0.09, t + 0.4);
+      subGain.gain.linearRampToValueAtTime(0.05, t + 0.4);
+      osc.frequency.linearRampToValueAtTime(base * 1.18, t + 0.6);
+      subOsc.frequency.linearRampToValueAtTime(base * 0.6, t + 0.6);
+      lfo.frequency.setValueAtTime(5.5, t);
+      lfoGain.gain.linearRampToValueAtTime(0.045, t + 0.4);
+    } else if (mode === 'way') {
+      masterGain.gain.linearRampToValueAtTime(0.12, t + 2.0);
+      subGain.gain.linearRampToValueAtTime(0.06, t + 2.0);
+      osc.frequency.linearRampToValueAtTime(base * 1.5, t + 2.5);
+      subOsc.frequency.linearRampToValueAtTime(base * 0.75, t + 2.5);
+      lfo.frequency.setValueAtTime(0.12, t);
+      lfoGain.gain.linearRampToValueAtTime(0.018, t + 2.0);
+    } else {
+      const vol = 0.035 + (ambientLevel / 15) * 0.045;
+      masterGain.gain.linearRampToValueAtTime(vol, t + 2.0);
+      subGain.gain.linearRampToValueAtTime(vol * 0.45, t + 2.0);
+      osc.frequency.linearRampToValueAtTime(base, t + 2.5);
+      subOsc.frequency.linearRampToValueAtTime(base / 2, t + 2.5);
+      lfo.frequency.setValueAtTime(0.25, t);
+      lfoGain.gain.linearRampToValueAtTime(0, t + 0.8);
+    }
+  }
+
+  function setAmbientLevel(lv) {
+    ambientLevel = lv;
+    if (ambientMode !== 'crisis' && ambientMode !== 'way') applyAmbientMode(ambientMode);
   }
 
   // === DOM ===
@@ -2754,6 +2859,7 @@
         setTimeout(() => burstParticles('#fff5c0', 25), 80);
       }
       SFX.enhanceSuccess();
+      setAmbientLevel(state.level);
       bumpStat('enhanceSuccess');
       // v35 첫 강화 / 첫 +5(봉인 가능) 마일스톤
       if (state.level === 1) maybeMilestone('first1', '一', '첫 강화 — 검의 이야기가 시작됩니다');
@@ -2843,6 +2949,7 @@
     const shardReward = rescueShards(destroyedLevel);
     voidEl.classList.add('active');
     swordWrap.style.opacity = 0;
+    applyAmbientMode('void');
     const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec; // 速流 + 冬 + 수호자 速 보너스
     let timeLeft = totalSec;
     rescueTimer.textContent = timeLeft.toFixed(1) + '초 안에  ·  +' + shardReward + ' 조각';
@@ -2896,6 +3003,7 @@
     voidEl.classList.remove('active');
     swordWrap.style.opacity = 1;
     rescueWindow = null;
+    applyAmbientMode('idle');
     if (!rescued) {
       bumpStat('rescueFailed');
       log('조각도 모두 잃었다', 'destroy');
@@ -3262,6 +3370,7 @@
 
   function showChallenge() {
     const t = challenge.type;
+    applyAmbientMode('crisis');
     // 검 종류별 시각 클래스
     shadowForm.className = '';
     if (t.key === 'flee') shadowForm.classList.add('flee-type');
@@ -3322,6 +3431,7 @@
     swordWrap.style.opacity = 1;
     levelBadge.style.opacity = 1;
     challenge = null;
+    if (ambientMode !== 'way') applyAmbientMode('idle');
   }
 
   function slay() {
@@ -4209,6 +4319,7 @@
       if (ins.includes(def.key)) continue;
       if (def.trigger()) {
         ins.push(def.key);
+        if (def.key === '道') applyAmbientMode('way');
         announceInscription(def.key, def.label);
       }
     }
@@ -4416,6 +4527,7 @@
     let startLv = startBonus() + trialStartLevelBonus();
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
     state.level = startLv;
+    setAmbientLevel(startLv); applyAmbientMode('idle');
     const startSoul = trialStartSoulBonus();
     state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {} };
     // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
