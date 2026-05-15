@@ -998,20 +998,61 @@
     from { opacity: 0; }
     to { opacity: 1; }
   }
+  #gameover-mu {
+    font-size: 96px;
+    color: rgba(255,255,255,0.12);
+    letter-spacing: 12px;
+    margin-bottom: 4px;
+    animation: mu-ceremony 3.5s ease-in-out forwards;
+  }
+  @keyframes mu-ceremony {
+    0%   { opacity: 0; transform: scale(0.85); }
+    25%  { opacity: 1; transform: scale(1.0); color: rgba(255,255,255,0.25); }
+    65%  { opacity: 1; }
+    100% { opacity: 0.18; transform: scale(0.95); }
+  }
   #gameover-title {
     font-size: 48px;
     color: #ff6655;
     letter-spacing: 14px;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
     text-shadow:
       0 0 30px rgba(255, 102, 85, 0.8),
       0 0 60px rgba(192, 57, 43, 0.5);
-    animation: gameover-pulse 3s ease-in-out infinite;
+    animation: gameover-pulse 3s ease-in-out infinite, gameover-fade-in 1.2s 0.8s both;
   }
   @keyframes gameover-pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.04); }
   }
+  #gameover-journey {
+    font-size: 13px;
+    color: var(--fg);
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    line-height: 1.8;
+    opacity: 0;
+    animation: gameover-fade-in 0.8s 1.6s forwards;
+  }
+  #gameover-swords {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    max-width: 340px;
+    opacity: 0;
+    animation: gameover-fade-in 0.8s 2.0s forwards;
+  }
+  .go-sword-name {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    padding: 3px 8px;
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 2px;
+  }
+  .go-sword-name.way { border-color: rgba(212,175,55,0.7); color: #e8c454; }
   #gameover-msg {
     color: #c8c8c8;
     font-size: 14px;
@@ -2140,14 +2181,15 @@
 
 <!-- 게임 오버 -->
 <div id="gameover-overlay">
+  <div id="gameover-mu">無</div>
   <div id="gameover-title">길의 끝</div>
+  <div id="gameover-journey"></div>
+  <div id="gameover-swords"></div>
   <div id="gameover-msg">
-    검이 사라졌습니다. 처음부터 다시 시작합니다.<br>
-    <span style="color:var(--dim);font-size:11px">조각·도구는 초기화 · 봉인된 검과 도(道) 기록은 영원히 보존</span><br><br>
-    아래 <span style="color:var(--accent);font-weight:700">다시 시작</span> 버튼을 누르세요.
+    <span style="color:var(--dim);font-size:11px">조각·도구는 초기화 · 봉인된 검과 道 기록은 영원히 보존</span>
   </div>
   <div id="gameover-stats"></div>
-  <button id="gameover-restart">다 시  시 작</button>
+  <button id="gameover-restart">다 시  검 을  들 다</button>
   <button id="gameover-fullreset">전 체  초 기 화 (계보까지 지움)</button>
 </div>
 
@@ -2477,6 +2519,13 @@
     formDecide:     () => {
       chord([440, 554, 659], 0.15, 'sine', 0.4);   // A-C#-E 화음
       setTimeout(() => chord([554, 698, 831], 0.25, 'sine', 0.3), 100);
+    },
+    gameOver: () => {
+      const ctx = getAudio();
+      if (!ctx) return;
+      // 낮은 단3도 화음이 천천히 사라짐 — 검사의 마지막 숨소리
+      chord([55, 65, 82], 4.5, 'sine', 0.10);
+      setTimeout(() => chord([41, 55, 73], 3.5, 'sine', 0.06), 800);
     },
   };
 
@@ -4922,16 +4971,41 @@
   setInterval(checkGameOver, 1000);
   function showGameOver() {
     gameOverShown = true;
-    // 자동 강화 중지
     if (typeof stopAutoEnhance === 'function') stopAutoEnhance();
+    stopAmbient(false);   // 배경 드론 페이드아웃
+    SFX.gameOver();       // 낮은 종 화음
+
     const s = state.stats || {};
+    const sealed = state.sealedSwords || [];
+    const ways = (s.wayReached || 0);
+
+    // 여정 요약 (봉인 수·道 기반 맞춤)
+    let journeyText = '';
+    if (ways >= 10) journeyText = '道에 ' + ways + '번 닿았다. 검선의 경지를 보았다.';
+    else if (ways >= 5) journeyText = 'Dao에 ' + ways + '번 도달했다. 긴 여정이었다.';
+    else if (ways >= 1) journeyText = '道를 ' + ways + '번 걸었다. 검의 본질을 잠시 보았다.';
+    else if (sealed.length >= 10) journeyText = sealed.length + '자루의 검이 역사에 남았다.';
+    else if (sealed.length >= 3) journeyText = sealed.length + '자루의 검을 팔았다. 여기까지였다.';
+    else if (sealed.length >= 1) journeyText = '첫 걸음이었다. 검 한 자루가 기억된다.';
+    else journeyText = '아직 시작에 불과하다. 다시 일어서라.';
+    $('gameover-journey').textContent = journeyText;
+
+    // 봉인 검 이름 (최근 6자루 — 道 검 강조)
+    const recentSwords = sealed.slice(-6).reverse();
+    $('gameover-swords').innerHTML = recentSwords.map(sw => {
+      const n = sw.name || makeSwordName(sw);
+      const isWay = (sw.inscriptions || []).includes('道');
+      return '<span class="go-sword-name' + (isWay ? ' way' : '') + '">' + n + '</span>';
+    }).join('');
+
+    // 통계
     $('gameover-stats').innerHTML =
-      '<div><span class="label">팔린 검</span>' + state.sealedSwords.length + '</div>' +
-      '<div><span class="label">도(道) 도달</span>' + (s.wayReached || 0) + '</div>' +
+      '<div><span class="label">팔린 검</span>' + sealed.length + '</div>' +
+      '<div><span class="label">道 도달</span>' + ways + '</div>' +
       '<div><span class="label">베어낸 그림자</span>' + (state.totalSlain || 0) + '</div>' +
       '<div><span class="label">검 파괴</span>' + (state.totalDestroyed || 0) + '</div>';
+
     $('gameover-overlay').classList.add('active');
-    if (typeof SFX !== 'undefined' && SFX.destroy) SFX.destroy();
   }
   function restartFromGameOver() {
     // '처음부터' 재시작 — 현재 자원 초기화, 메타 진행(계보/통계/유파/始祖)은 영구 보존
