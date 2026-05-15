@@ -636,6 +636,30 @@ footer 7개 버튼 → 3개 (조합소·계보·詩集) + 우상단 ≡ 메뉴 (
 
 날짜 기반 1일 1목표. `DAILY_CHALLENGES` 7종 (강화성공8/베기5/봉인2/+10도달/회수2/도전발동8/강화시도20). `todayStr()` → YYYY-MM-DD 로컬. `dailySeed(dateStr)` 해시 → 오늘의 도전 결정적 선택. `ensureDailyTrial()` — 날짜 바뀌면 리셋. `bumpDaily(track, val)` — reachLevel은 `Math.max` (검 파괴로 감소 X). 8 hook 위치. 완료 시 `grantDailyReward()` — `40 + ch.target*8` 조각 + `state.dailyCompletedCount++`. 기록 모달 상단 배너 (`#daily-trial-banner`) + 메뉴 '天時'. 새벽 자정 자동 갱신 (다음 강화 시 `ensureDailyTrial()` 자동 체크).
 
+### v95 生氣 — 살아있는 배경 드론
+
+Web Audio API 기반 실시간 반응 사운드스케이프. 외부 파일 0, 기존 `audioCtx` 재활용.
+
+드론 구조: 메인 사인 오실레이터(55Hz base) + 서브 옥타브 오실레이터 + LFO(tremolo용). `ambientNodes = { osc, subOsc, subGain, lfo, lfoGain, masterGain }` 모듈 스코프.
+
+4 모드:
+- `idle`: `55*1.8^(lv/15)` Hz 베이스 드론, 강화도↑ → 음조·볼륨↑ (0.035~0.08)
+- `crisis` (도전 등장): 5.5Hz LFO 떨림 + 음조 ×1.18, 긴장
+- `void` (검 파괴): 0.7초 페이드 침묵
+- `way` (道 도달): 음조 ×1.5 (완전5도) + 0.12Hz 느린 LFO, 신성 화음
+
+훅 위치: `getAudio()` 첫 audioCtx 생성 후 450ms, `toggleMute()`, `showVoid()`, `endVoid()`, `showChallenge()`, `endChallenge()`, `enhance()` 성공, `newSword()`, `checkInscriptions()` 道 추가. `setAmbientLevel(lv)` — crisis/way 모드 중엔 주파수 변경 안 함.
+
+### v96 厄運轉機 — 연속 실패 역전
+
+비파괴 강화 실패 누적 → 다음 강화 확률 역전. `failStreak`, `adversityReady` 모듈 변수 (휘발성).
+
+- 2연패~: `#adversity-banner` '역경 ●●○○○' 채움 표시
+- 5연패 (ADVERSITY_THRESHOLD): `adversityReady=true` → '逆' 황금 배너 + sword-wrap 복합 glow + `announceInscription('逆', ...)`
+- 역전 강화: `adversityAdd=0.40` 성공률, `adversityDestroyReduce=0.12` 파괴 감소 → 사용 후 즉시 `adversityReady=false; failStreak=0`
+- 성공 시: '逆轉' 명문 페이드. 파괴 시: streak 리셋(새 검)
+- `checkAdversity()` — downgrade/hold 후 임계 도달 시 호출. `renderAdversity()` — render()마다 배너 갱신.
+
 ### 봉인 균형 곡선 (참고)
 
 | 검 강화도 | 봉인 보상 (조각) |

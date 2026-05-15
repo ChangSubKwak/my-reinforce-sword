@@ -1489,6 +1489,43 @@
   }
   .modal-close:hover { color: var(--fg); border-color: var(--dim); }
 
+  /* 梵境 — 무대 생태계 */
+  #stage-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  #stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: transparent;
+    transition: background 5s ease;
+  }
+  #stage[data-school="direct"]::after {
+    background: radial-gradient(ellipse at 15% 20%, rgba(120,140,200,0.07), transparent 48%),
+                radial-gradient(ellipse at 85% 78%, rgba(120,140,200,0.07), transparent 48%);
+  }
+  #stage[data-school="curve"]::after {
+    background: radial-gradient(ellipse at 15% 20%, rgba(200,155,80,0.08), transparent 48%),
+                radial-gradient(ellipse at 85% 78%, rgba(200,155,80,0.08), transparent 48%);
+  }
+  #stage[data-school="heavy"]::after {
+    background: radial-gradient(ellipse at 15% 20%, rgba(80,155,95,0.07), transparent 48%),
+                radial-gradient(ellipse at 85% 78%, rgba(80,155,95,0.07), transparent 48%);
+  }
+  #stage[data-school="fast"]::after {
+    background: radial-gradient(ellipse at 15% 20%, rgba(155,210,220,0.07), transparent 48%),
+                radial-gradient(ellipse at 85% 78%, rgba(155,210,220,0.07), transparent 48%);
+  }
+  @keyframes echo-pulse {
+    from { opacity: 0.55; }
+    to   { opacity: 1.0; }
+  }
   /* 파티클 */
   .particle {
     position: absolute;
@@ -1561,6 +1598,7 @@
   </header>
 
   <div id="stage">
+    <div id="stage-bg" aria-hidden="true"></div>
     <div id="guardian-display">
       <svg id="guardian-svg" viewBox="0 0 100 200" width="30" height="60" xmlns="http://www.w3.org/2000/svg">
         <g id="guardian-body"></g>
@@ -2436,6 +2474,59 @@
     if (muted) stopAmbient(true); else startAmbient();
   }
 
+  // === 梵境 — 무대 생태계 ===
+  const ECHO_POSITIONS = [
+    { l:'7%',  t:'8%',  r:-16, s:0.70 },
+    { l:'82%', t:'10%', r:19,  s:0.65 },
+    { l:'4%',  t:'52%', r:-11, s:0.80 },
+    { l:'86%', t:'58%', r:14,  s:0.75 },
+    { l:'14%', t:'79%', r:-22, s:0.60 },
+    { l:'76%', t:'77%', r:24,  s:0.58 },
+    { l:'20%', t:'24%', r:-8,  s:0.55 },
+    { l:'68%', t:'28%', r:13,  s:0.52 },
+  ];
+
+  function updateStageBg() {
+    const stageEl = $('stage');
+    if (!stageEl) return;
+
+    // 유파 색조
+    const schools = getActiveSchools();
+    delete stageEl.dataset.school;
+    if (schools.includes('直流')) stageEl.dataset.school = 'direct';
+    else if (schools.includes('曲流')) stageEl.dataset.school = 'curve';
+    else if (schools.includes('重流')) stageEl.dataset.school = 'heavy';
+    else if (schools.includes('速流')) stageEl.dataset.school = 'fast';
+
+    // 계보 에코 검
+    const bgEl = $('stage-bg');
+    if (!bgEl) return;
+    const swords = state.sealedSwords || [];
+    const count = swords.length;
+    const maxEcho = Math.min(count, 8);
+    if (maxEcho === 0) { bgEl.innerHTML = ''; return; }
+
+    let html = '';
+    for (let i = 0; i < maxEcho; i++) {
+      const pos = ECHO_POSITIONS[i];
+      const baseOp = 0.06 + (count >= 15 ? 0.05 : count >= 5 ? 0.03 : 0);
+      const op = (baseOp + (i === count - 1 ? 0.05 : 0)).toFixed(2);
+      const delay = (i * 0.8).toFixed(1);
+      const dur = (3.0 + i * 0.4).toFixed(1);
+      const w = Math.round(14 * pos.s), h = Math.round(50 * pos.s);
+      const mx = Math.round(w / 2), cy = Math.round(h * 0.34);
+      const col = 'rgba(212,175,55,' + op + ')';
+      html += '<div style="position:absolute;left:' + pos.l + ';top:' + pos.t +
+        ';transform:rotate(' + pos.r + 'deg);opacity:' + op +
+        ';animation:echo-pulse ' + dur + 's ease-in-out infinite alternate;animation-delay:-' + delay + 's">' +
+        '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">' +
+        '<line x1="' + mx + '" y1="2" x2="' + mx + '" y2="' + (h-4) + '" stroke="' + col + '" stroke-width="1.5"/>' +
+        '<line x1="' + Math.round(w*0.2) + '" y1="' + cy + '" x2="' + Math.round(w*0.8) + '" y2="' + cy + '" stroke="' + col + '" stroke-width="1"/>' +
+        '</svg></div>';
+    }
+    bgEl.innerHTML = html;
+  }
+
   // === 厄運轉機 — 연속 실패 역전 ===
   const ADVERSITY_THRESHOLD = 5;
   let failStreak = 0;
@@ -2632,6 +2723,7 @@
     renderGuardianDisplay();
     renderDestiny();  // v93 天命
     renderAdversity();  // v96 厄運轉機
+    updateStageBg();   // v97 梵境
     // v81 조합소 버튼 시각 잠금 — +0 일 때만 활성
     const forgeBtn = $('btn-forge');
     if (forgeBtn) {
