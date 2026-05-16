@@ -3472,6 +3472,45 @@
       chord([440, 554, 659], 0.15, 'sine', 0.4);   // A-C#-E 화음
       setTimeout(() => chord([554, 698, 831], 0.25, 'sine', 0.3), 100);
     },
+    // v130 音律 — 형(form)별 시그니처 4음 모티프
+    formMotif: (form, scale) => {
+      // scale: 0.7 ~ 1.0 (intensity)
+      const vol = (scale || 1.0) * 0.22;
+      const ctx = getAudio();
+      if (!ctx) return;
+      // 형별 4음 패턴 (Hz, 시작 ms, 길이 s, type)
+      const motifs = {
+        '直': [  // 곧음 — 펜타토닉 상승 (C-D-E-G), 직선 진행
+          { f: 523, t: 0,   d: 0.22, type: 'sine' },
+          { f: 587, t: 180, d: 0.22, type: 'sine' },
+          { f: 659, t: 360, d: 0.22, type: 'sine' },
+          { f: 784, t: 540, d: 0.40, type: 'sine' },
+        ],
+        '曲': [  // 곡선 — 단조 휘어짐 (D-F-A♭-F), 굽이지는 슬픔
+          { f: 587, t: 0,   d: 0.30, type: 'triangle' },
+          { f: 698, t: 220, d: 0.30, type: 'triangle' },
+          { f: 831, t: 440, d: 0.30, type: 'triangle' },
+          { f: 698, t: 700, d: 0.45, type: 'triangle' },
+        ],
+        '重': [  // 무거움 — 옥타브 도약 (C-G-Bb-C), 묵직한 점프
+          { f: 261, t: 0,   d: 0.45, type: 'sine' },
+          { f: 392, t: 380, d: 0.45, type: 'sine' },
+          { f: 466, t: 760, d: 0.45, type: 'sine' },
+          { f: 523, t: 1140, d: 0.65, type: 'sine' },
+        ],
+        '速': [  // 속도 — 빠른 트레몰로 (C-E-G-C), 짧고 날렵
+          { f: 523, t: 0,   d: 0.12, type: 'sine' },
+          { f: 659, t: 100, d: 0.12, type: 'sine' },
+          { f: 784, t: 200, d: 0.12, type: 'sine' },
+          { f: 1047, t: 300, d: 0.30, type: 'sine' },
+        ],
+      };
+      const m = motifs[form];
+      if (!m) return;
+      m.forEach(n => {
+        setTimeout(() => tone(n.f, n.d, n.type, vol), n.t);
+      });
+    },
     gameOver: () => {
       const ctx = getAudio();
       if (!ctx) return;
@@ -4590,7 +4629,12 @@
       setAmbientLevel(state.level);
       bumpStat('enhanceSuccess');
       // v35 첫 강화 / 첫 +5(봉인 가능) 마일스톤
-      if (state.level === 1) maybeMilestone('first1', '一', '첫 강화 — 검의 이야기가 시작됩니다');
+      if (state.level === 1) {
+        maybeMilestone('first1', '一', '첫 강화 — 검의 이야기가 시작됩니다');
+        // v130 音律 — 첫 +1 = 형 시그니처 (검이 깨어남)
+        const fNow = state.currentSword && state.currentSword.form;
+        if (fNow) setTimeout(() => SFX.formMotif(fNow, 0.80), 400);
+      }
       if (state.level === SEAL_MIN_LEVEL) maybeMilestone('firstSeal', '팔기', '+' + SEAL_MIN_LEVEL + ' 도달 — 이제 검을 팔 수 있습니다');
       log('+' + state.level + ' 성공', 'success');
       showSwordVoice('success', state.level);  // v113 劍聲
@@ -5745,6 +5789,7 @@
     const def = SWORD_FORMS[form];
     announceInscription(def.name, def.label);
     SFX.formDecide();
+    setTimeout(() => SFX.formMotif(form, 1.0), 300);  // v130 音律 — 형 시그니처
     save();
     render();
   }
@@ -5758,6 +5803,7 @@
       const def = SWORD_FORMS[state.currentSword.form];
       announceInscription(def.name, def.label);
       SFX.formDecide();
+      setTimeout(() => SFX.formMotif(state.currentSword.form, 1.0), 300);  // v130
       return;
     }
     const recommended = FORM_KEYS[Math.floor(Math.random() * FORM_KEYS.length)];
@@ -7210,6 +7256,10 @@
     swordWrap.classList.add('appear');
     setTimeout(() => swordWrap.classList.remove('appear'), 700);
     setTimeout(() => SFX.birth(), 120);
+    // v130 音律 — 형이 이미 결정된 검(융합/저장 복원)인 경우만 (랜덤 결정은 applyFormChoice에서)
+    if (state.currentSword.form) {
+      setTimeout(() => SFX.formMotif(state.currentSword.form, 0.85), 850);
+    }
     if (startLv > 0) {
       setTimeout(() => announceInscription('先代 ·  +' + startLv, '선대의 강기로 ' + startLv + '강에서 시작한다'), 500);
     }
@@ -7580,6 +7630,8 @@
       updateForgeButtons();
     } else {
       SFX.seal();
+      // v130 音律 — 봉인 시 형 시그니처 (작별 인사)
+      if (form) setTimeout(() => SFX.formMotif(form, 0.75), 250);
       // v64 일반 봉인 — 검이 빛으로 솟구쳐 사라지는 dissolve (0.8초)
       // 그동안 state는 이미 sealedSwords에 push됨 — 새 검은 0.8초 후
       save();
