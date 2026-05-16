@@ -2958,6 +2958,9 @@
     scrollsUnlocked: {},      // v124 古文書 — 풀린 두루마리
     scrollsAllRead: false,    // v124 古文書 — 모두 풀었는지
     rubbings: [],             // v136 拓本 — 의미있는 순간 포착 (최대 20)
+    resonancesDiscovered: {}, // v138 雙銘 — 발견한 명문 쌍
+    metsumaoCharges: 0,       // v138 雙銘 — 滅魔 슬레이 ×1.5 남은 횟수
+    hondoCharges: 0,          // v138 雙銘 — 本道 새 검 시작 영혼 +20 남은 횟수
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
@@ -3129,6 +3132,9 @@
       if (!state.scrollsUnlocked || typeof state.scrollsUnlocked !== 'object') state.scrollsUnlocked = {};  // v124 古文書
       if (typeof state.scrollsAllRead !== 'boolean') state.scrollsAllRead = false;
       if (!Array.isArray(state.rubbings)) state.rubbings = [];  // v136 拓本
+      if (!state.resonancesDiscovered || typeof state.resonancesDiscovered !== 'object') state.resonancesDiscovered = {};  // v138
+      if (typeof state.metsumaoCharges !== 'number') state.metsumaoCharges = 0;
+      if (typeof state.hondoCharges !== 'number') state.hondoCharges = 0;
       if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
         state.currentSword.foesEncountered = {};
       }
@@ -4513,6 +4519,46 @@
     }
   }
 
+  // === v138 雙銘 — 명문 쌍 공명 (paired inscription resonance) ===
+  const PAIRED_RESONANCES = [
+    {
+      key: 'tianming', pair: ['道', '七星'], name: '天命', label: '하늘의 명',
+      desc: '도와 별이 한 검에 — 봉인 보상 ×2',
+      onSeal: (state, reward) => Math.floor(reward * 2),
+    },
+    {
+      key: 'metsumao', pair: ['鬼斬', '斷魔'], name: '滅魔', label: '모든 마를 멸하다',
+      desc: '검귀와 단마가 함께 — 봉인 시 다음 5번 슬레이 ×1.5',
+      onSealPersistent: (state) => { state.metsumaoCharges = 5; },
+    },
+    {
+      key: 'hondo', pair: ['本', '道'], name: '本道', label: '본질과 도가 하나',
+      desc: '본과 도의 만남 — 다음 3 새 검 시작 영혼 +20',
+      onSealPersistent: (state) => { state.hondoCharges = 3; },
+    },
+  ];
+  function detectResonances(inscriptions) {
+    // 모든 활성 쌍 반환
+    return PAIRED_RESONANCES.filter(r => r.pair.every(k => inscriptions.includes(k)));
+  }
+  function applyResonancesAtSeal(ins, baseReward) {
+    let reward = baseReward;
+    const found = detectResonances(ins);
+    if (found.length === 0) return { reward, found: [] };
+    if (!state.resonancesDiscovered) state.resonancesDiscovered = {};
+    found.forEach(r => {
+      if (r.onSeal) reward = r.onSeal(state, reward);
+      if (r.onSealPersistent) r.onSealPersistent(state);
+      // 첫 발견 영구 기록
+      if (!state.resonancesDiscovered[r.key]) {
+        state.resonancesDiscovered[r.key] = Date.now();
+      }
+      // 큰 페이드 announce
+      setTimeout(() => announceInscription(r.name, r.label + ' — ' + r.desc), 1400 + Math.random() * 400);
+    });
+    return { reward, found };
+  }
+
   // === v136 拓本 — 의미있는 순간 포착 ===
   const RUBBING_REASONS = {
     'first10':        '첫 +10 도달',
@@ -5616,6 +5662,11 @@
     const currentForm = state.hasSword && state.currentSword && state.currentSword.form;
     const affMul = affinityRewardMul(currentForm, type.key);
     if (affMul !== 1) reward = Math.floor(reward * affMul);
+    // v138 雙銘 — 滅魔 charge 활성 시 슬레이 ×1.5
+    if (state.metsumaoCharges > 0) {
+      reward = Math.floor(reward * 1.5);
+      state.metsumaoCharges--;
+    }
     const origin = rollShadowOrigin();
     challenge = { strength, reward, type, origin };
     bumpStat('challengesAppeared');
@@ -7906,7 +7957,12 @@
     resolveMode = 'normal';
     swordWrap.classList.remove('resolve-focus', 'resolve-guard');
     setAmbientLevel(startLv); applyAmbientMode('idle');
-    const startSoul = trialStartSoulBonus();
+    let startSoul = trialStartSoulBonus();
+    // v138 雙銘 — 本道 charge 활성 시 시작 영혼 +20 (한 번 소모)
+    if (state.hondoCharges > 0) {
+      startSoul += 20;
+      state.hondoCharges--;
+    }
     state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0, protectsUsed: 0, stars: {} };
     // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
     const ways = (state.stats && state.stats.wayReached) || 0;
@@ -8222,6 +8278,9 @@
     if (ins.includes('七星')) reward = Math.floor(reward * 1.5);
     // v123 系譜 — 25代+ 봉인 보너스
     reward = Math.floor(reward * generationSealMul());
+    // v138 雙銘 — 명문 쌍 공명 (天命 ×2, 滅魔/本道 지속 효과)
+    const resResult = applyResonancesAtSeal(ins, reward);
+    reward = resResult.reward;
     // v119 奇緣 — 銀河 활성 시 봉인 보상 ×2
     if (blessingState.ginhaActive) { reward = Math.floor(reward * 2); blessingState.ginhaActive = false; }
     const schoolsBefore = getActiveSchools();
@@ -9820,6 +9879,9 @@
     scrollsUnlocked: {},      // v124 古文書 — 풀린 두루마리
     scrollsAllRead: false,    // v124 古文書 — 모두 풀었는지
     rubbings: [],             // v136 拓本 — 의미있는 순간 포착 (최대 20)
+    resonancesDiscovered: {}, // v138 雙銘 — 발견한 명문 쌍
+    metsumaoCharges: 0,       // v138 雙銘 — 滅魔 슬레이 ×1.5 남은 횟수
+    hondoCharges: 0,          // v138 雙銘 — 本道 새 검 시작 영혼 +20 남은 횟수
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0, divinationStones: 0,
       firstWayReached: false,
