@@ -2143,6 +2143,7 @@
   <button id="btn-scrolls">古 文 書</button>
   <button id="btn-rubbings">拓 本</button>
   <button id="btn-seal-craft">印  章</button>
+  <button id="btn-journey">紀  程</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -2696,6 +2697,19 @@
 </div>
 
 <!-- v90 처치 보고서 모달 (이름 있는 적 컬렉션) -->
+<!-- v148 紀程 모달 — 여정 timeline -->
+<div class="modal" id="journey-modal">
+  <div class="modal-box" style="max-width: 500px;">
+    <h2>紀  程</h2>
+    <p id="journey-title" style="font-size:11px;color:#fff5c0;letter-spacing:4px;text-align:center;margin:-8px 0 14px;padding:6px;border:1px solid rgba(212,175,55,0.25);background:rgba(212,175,55,0.04);text-shadow:0 0 6px rgba(212,175,55,0.4)"></p>
+    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+      검사의 여정 — 큰 마일스톤이 시간순으로 정렬됩니다.
+    </p>
+    <div id="journey-list" style="max-height: 420px; overflow-y: auto; padding: 0 4px"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
 <!-- v140 篆刻 모달 — 플레이어 인장 설정 -->
 <div class="modal" id="seal-craft-modal">
   <div class="modal-box" style="max-width: 380px;">
@@ -10094,6 +10108,151 @@
     $('rubbings-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
+  // v148 紀程 모달 — 여정 timeline
+  $('btn-journey').addEventListener('click', () => {
+    renderJourney();
+    $('journey-modal').classList.add('active');
+    $('menu-drop').classList.remove('open');
+  });
+  function renderJourney() {
+    const titleEl = $('journey-title');
+    if (titleEl) titleEl.textContent = generatePlayerTitle();
+    const list = $('journey-list');
+    if (!list) return;
+    // 모든 timestamped milestone 수집
+    const events = [];
+    // 拓本 (이미 timestamp 보유)
+    (state.rubbings || []).forEach(r => {
+      events.push({
+        time: r.timestamp,
+        kanji: '拓',
+        label: r.reasonLabel,
+        sub: (r.form || '無') + ' +' + r.level + (r.inscriptions && r.inscriptions[0] ? ' · ' + r.inscriptions[0] : ''),
+        color: '#d4af37',
+      });
+    });
+    // 紀元 마일스톤 (state.erasEntered)
+    if (state.erasEntered) {
+      ERAS.forEach(era => {
+        if (era.key !== 'hoga' && state.erasEntered[era.key]) {
+          events.push({
+            time: state.erasEntered[era.key],
+            kanji: era.name,
+            label: '紀元 ' + era.name + ' 진입',
+            sub: era.label,
+            color: era.key === 'shinki' ? '#fff5c0' : '#c0883a',
+          });
+        }
+      });
+    }
+    // 系譜 마일스톤
+    if (state.generationMilestones) {
+      GENERATIONS.forEach(g => {
+        if (state.generationMilestones[g.key]) {
+          events.push({
+            time: state.generationMilestones[g.key],
+            kanji: g.name.substring(0, 1),
+            label: '系譜 ' + g.threshold + '代 — ' + g.name,
+            sub: g.label,
+            color: '#fff5c0',
+          });
+        }
+      });
+    }
+    // 古文書
+    if (state.scrollsUnlocked) {
+      SCROLLS.forEach(s => {
+        if (state.scrollsUnlocked[s.key]) {
+          events.push({
+            time: state.scrollsUnlocked[s.key],
+            kanji: s.kanji,
+            label: '古文書 — ' + s.title,
+            sub: '두루마리 풀림',
+            color: '#a8b8c8',
+          });
+        }
+      });
+    }
+    // 奇緣 (state.blessingsDiscovered)
+    if (state.blessingsDiscovered) {
+      BLESSINGS.forEach(b => {
+        if (state.blessingsDiscovered[b.key]) {
+          events.push({
+            time: state.blessingsDiscovered[b.key],
+            kanji: b.key.substring(0, 1),
+            label: '奇緣 — ' + b.label,
+            sub: '첫 발견',
+            color: '#fff5c0',
+          });
+        }
+      });
+    }
+    // 雙銘 (state.resonancesDiscovered)
+    if (state.resonancesDiscovered) {
+      PAIRED_RESONANCES.forEach(r => {
+        if (state.resonancesDiscovered[r.key]) {
+          events.push({
+            time: state.resonancesDiscovered[r.key],
+            kanji: r.name.substring(0, 1),
+            label: '雙銘 — ' + r.name,
+            sub: r.label,
+            color: '#fff5c0',
+          });
+        }
+      });
+    }
+    // 銘集 (state.collectionMilestones)
+    if (state.collectionMilestones) {
+      COLLECTION_MILESTONES.forEach(m => {
+        if (state.collectionMilestones[m.key]) {
+          events.push({
+            time: state.collectionMilestones[m.key],
+            kanji: '銘',
+            label: '銘集 ' + m.count + '종 — 명문 수집',
+            sub: m.label.split('—').pop().trim(),
+            color: '#c8d0e8',
+          });
+        }
+      });
+    }
+    // 殿堂 (state.enshrined with enshrinedAt)
+    (state.enshrined || []).forEach(s => {
+      if (s.enshrinedAt) {
+        events.push({
+          time: s.enshrinedAt,
+          kanji: '殿',
+          label: '殿堂 진열 — ' + (s.name || '검'),
+          sub: (s.form || '無') + ' +' + s.level,
+          color: '#fff5c0',
+        });
+      }
+    });
+    // 시간순 정렬 (오래된 것부터)
+    events.sort((a, b) => a.time - b.time);
+    if (events.length === 0) {
+      list.innerHTML = '<p style="color:var(--dim);text-align:center;font-size:11px;padding:24px 0;letter-spacing:2px">— 아직 마일스톤 없음 —<br><br><span style="font-size:10px;opacity:0.7">큰 성취 시 자동 기록</span></p>';
+      return;
+    }
+    list.innerHTML = '<div style="position:relative;padding-left:24px">' +
+      // 세로 줄
+      '<div style="position:absolute;left:9px;top:8px;bottom:8px;width:1px;background:linear-gradient(180deg,rgba(212,175,55,0.5),rgba(212,175,55,0.15))"></div>' +
+      events.map(e => {
+        const date = new Date(e.time);
+        const dateStr = date.getFullYear() + '.' + String(date.getMonth() + 1).padStart(2, '0') + '.' + String(date.getDate()).padStart(2, '0');
+        const timeStr = String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+        return '<div style="position:relative;padding:6px 0 10px;border-bottom:1px dashed rgba(212,175,55,0.1)">' +
+          // 점
+          '<span style="position:absolute;left:-22px;top:8px;width:12px;height:12px;border-radius:50%;background:' + e.color + ';box-shadow:0 0 6px ' + e.color + '80;display:block"></span>' +
+          // 한자 마크
+          '<span style="position:absolute;left:-22px;top:6px;width:12px;height:14px;text-align:center;color:rgba(0,0,0,0.7);font-size:8px;font-family:\'Noto Serif KR\', serif;line-height:14px;font-weight:700">' + e.kanji + '</span>' +
+          // 내용
+          '<div style="font-size:11px;color:var(--fg);letter-spacing:2px">' + e.label + '</div>' +
+          '<div style="font-size:9px;color:var(--dim);margin-top:2px;letter-spacing:1px;opacity:0.8">' + e.sub + '</div>' +
+          '<div style="font-size:9px;color:var(--dim);margin-top:2px;opacity:0.55">' + dateStr + ' ' + timeStr + '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }
   // v140 篆刻 모달
   $('btn-seal-craft').addEventListener('click', () => {
     const inp = $('seal-craft-input');
