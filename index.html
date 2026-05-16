@@ -1860,6 +1860,7 @@
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
+  <button id="btn-enshrined">🏛 殿 堂</button>
   <button id="btn-help">안 내</button>
   <button id="btn-mute">소 리  끄 기</button>
   <div style="height:1px;background:var(--line);margin:4px 0"></div>
@@ -2231,6 +2232,9 @@
       <button class="modal-close" id="name-cancel" style="flex:1;margin:0">자 동 이 름</button>
       <button class="modal-close" id="name-confirm" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)">이 름 새 김 · 팔 기</button>
     </div>
+    <!-- v118 殿堂 — 道 검 한정 박물관 진열 (조각 보상 없이 영구 진열 + +1.5% 성공) -->
+    <button class="modal-close" id="name-enshrine" style="display:none;width:100%;margin:10px 0 0;border:1px solid #fff5c0;color:#fff5c0;background:transparent;font-family:inherit;font-size:12px;letter-spacing:5px;padding:12px 0;cursor:pointer;text-shadow:0 0 6px rgba(255,245,192,0.4)">🏛 殿 堂  에  영 구  진 열</button>
+    <p id="name-enshrine-hint" style="display:none;color:var(--dim);font-size:10px;letter-spacing:2px;margin-top:6px;text-align:center;line-height:1.6">조각 보상 없음. 영구 진열되며 모든 미래 검에 강화 성공 +1.5%</p>
   </div>
 </div>
 
@@ -2264,6 +2268,19 @@
 </div>
 
 <!-- v90 처치 보고서 모달 (이름 있는 적 컬렉션) -->
+<!-- v118 殿堂 모달 — 박물관 진열된 道 검 -->
+<div class="modal" id="enshrined-modal">
+  <div class="modal-box" style="max-width: 460px;">
+    <h2>殿  堂</h2>
+    <p id="enshrined-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
+    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+      도(道)에 이른 검을 봉인 대신 영구 진열.<br>
+      각 진열 검: 모든 미래 검에 강화 성공 +1.5% (최대 3자루).
+    </p>
+    <div id="enshrined-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
 <div class="modal" id="foes-modal">
   <div class="modal-box" style="max-width: 440px;">
     <h2>처 치  보 고 서</h2>
@@ -2549,6 +2566,7 @@
     totalDestroyed: 0,
     totalSlain: 0,
     sealedSwords: [],
+    enshrined: [],  // v118 殿堂 — 박물관에 모셔진 道 검 (최대 3)
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
@@ -2632,6 +2650,7 @@
       if (typeof state.endingShown !== 'boolean') state.endingShown = false;
       if (!state.shadowOriginsSlain || typeof state.shadowOriginsSlain !== 'object') state.shadowOriginsSlain = {};
       if (!state.foesSlain || typeof state.foesSlain !== 'object') state.foesSlain = {};
+      if (!Array.isArray(state.enshrined)) state.enshrined = [];  // v118 殿堂
       if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
         state.currentSword.foesEncountered = {};
       }
@@ -3309,7 +3328,7 @@
     const echoSuccessShow = (enhanceEcho && enhanceEcho.successBonus) || 0;
     const echoDestroyBlockShow = !!(enhanceEcho && enhanceEcho.destroyBlock);
     const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow);
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus();
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = echoDestroyBlockShow ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
 
@@ -3760,7 +3779,7 @@
     const adversityAdd = adversityReady ? 0.40 : 0;
     const adversityDestroyReduce = adversityReady ? 0.12 : 0;
     const roll = Math.random();
-    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus()) {
+    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus()) {
       // 성공 (v107 連)
       if (adversityReady) { adversityReady = false; announceInscription('逆轉', '역경을 넘어 강화에 성공했다'); }
       failStreak = 0;
@@ -5380,10 +5399,75 @@
     return Object.keys(SCHOOLS).filter(f => (counts[f] || 0) >= SCHOOL_THRESHOLD);
   }
 
+  // === v118 殿堂 — 道 검을 봉인 대신 박물관에 영구 진열 ===
+  const ENSHRINE_CAP = 3;
+  function enshrineCount() {
+    return (state.enshrined || []).length;
+  }
+  function canEnshrineMore() {
+    return enshrineCount() < ENSHRINE_CAP;
+  }
+  function enshrineSuccessBonus() {
+    return enshrineCount() * 0.015;  // 검당 +1.5% (최대 +4.5%)
+  }
+  function enshrineSeal(form, ins, lv, swordName, userMemo) {
+    const slainHere = state.currentSword.slainCount || 0;
+    const verse = generateVerse(form, ins, lv, slainHere, 0, state.currentSword.soul || 0);
+    state.enshrined.push({
+      level: lv, inscriptions: ins, form,
+      soul: state.currentSword.soul || 0, name: swordName,
+      slainCount: slainHere, verse,
+      levelHistory: (state.currentSword.levelHistory || []).slice(),
+      destiny: state.currentSword.destiny || null,
+      destinyFulfilled: !!state.currentSword.destinyFulfilled,
+      omenHits: state.currentSword.omenHits || 0,
+      omenTotal: state.currentSword.omenTotal || 0,
+      memo: (userMemo && userMemo.trim()) ? userMemo.trim() : null,
+      scars: state.currentSword.scars || 0,
+      stars: Object.assign({}, state.currentSword.stars || {}),
+      enshrinedAt: Date.now(),
+    });
+    bumpStat('wayReached');
+    if (!state.firstWayReached) {
+      state.firstWayReached = true;
+      setTimeout(() => announceInscription('始祖', '첫 도(道) 달성 — 선조의 길이 열렸다'), 5800);
+    }
+    log('🏛 殿堂 — ' + swordName + ' 박물관에 영구 진열되었다 (강화 성공 +1.5%)', 'success');
+    recordEvent('殿堂 진열 ' + swordName);
+    SFX.ritual();
+    burstParticles('#fff5c0', 60);
+    setTimeout(() => burstParticles('#d4af37', 40), 200);
+    setTimeout(() => burstParticles('#a0c0d0', 20), 400);
+    // 殿堂 전용 의식 — playRitual 변형 (보상 텍스트 대신 진열 메시지)
+    const ritualEl = $('ritual-overlay');
+    const formEl = $('ritual-form');
+    const titleEl = $('ritual-title');
+    const verseEl = $('ritual-verse');
+    if (ritualEl && formEl && titleEl && verseEl) {
+      formEl.textContent = swordName;
+      titleEl.textContent = '+' + lv + ' · 殿堂';
+      verseEl.innerHTML =
+        '<span class="accent">' + verse[0] + '</span><br>' +
+        '<span>' + verse[1] + '</span><br>' +
+        '<span>' + verse[2] + '</span><br>' +
+        '<span class="accent">' + verse[3] + '</span><br><br>' +
+        '<span style="color:#fff5c0;letter-spacing:6px;font-size:12px;text-shadow:0 0 6px rgba(255,245,192,0.6)">박물관에 영구 진열되었다</span>';
+      ritualEl.classList.remove('active');
+      void ritualEl.offsetWidth;
+      ritualEl.classList.add('active');
+      setTimeout(() => ritualEl.classList.remove('active'), 5500);
+    }
+    newSword();
+    save();
+    render();
+    updateForgeButtons();
+  }
+
   // === v117 四道 — 4형의 道(+15) 검을 모두 봉인하면 영구 패시브 ===
   function getWayFormCounts() {
     const counts = { '直': 0, '曲': 0, '重': 0, '速': 0 };
-    for (const s of state.sealedSwords) {
+    const all = (state.sealedSwords || []).concat(state.enshrined || []);
+    for (const s of all) {
       if (s.form && (s.inscriptions || []).includes('道')) {
         counts[s.form] = (counts[s.form] || 0) + 1;
       }
@@ -6181,21 +6265,36 @@
 
     const confirmBtn = $('name-confirm');
     const cancelBtn = $('name-cancel');
+    const enshrineBtn = $('name-enshrine');
+    const enshrineHint = $('name-enshrine-hint');
+    // v118 殿堂 — 道 검 && 진열 cap 미달일 때만 표시
+    const isWay = ins.includes('道');
+    const showEnshrine = isWay && canEnshrineMore();
+    if (enshrineBtn) enshrineBtn.style.display = showEnshrine ? 'block' : 'none';
+    if (enshrineHint) enshrineHint.style.display = showEnshrine ? 'block' : 'none';
     function getMemo() { return memoInput ? memoInput.value.trim().slice(0, 24) : ''; }
     function cleanup() {
       modal.classList.remove('active');
       confirmBtn.removeEventListener('click', onConfirm);
       cancelBtn.removeEventListener('click', onCancel);
       input.removeEventListener('keydown', onKey);
+      if (enshrineBtn) enshrineBtn.removeEventListener('click', onEnshrine);
     }
     function onConfirm() { const v = input.value.trim().slice(0, 16); const m = getMemo(); cleanup(); callback(v, m); }
     function onCancel() { const m = getMemo(); cleanup(); callback('', m); }
+    function onEnshrine() {
+      const v = input.value.trim().slice(0, 16);
+      const m = getMemo();
+      cleanup();
+      enshrineSeal(form, ins, lv, v || autoName, m);
+    }
     function onKey(e) {
       if (e.key === 'Enter' && document.activeElement !== memoInput) { e.preventDefault(); onConfirm(); }
       if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
     }
     confirmBtn.addEventListener('click', onConfirm);
     cancelBtn.addEventListener('click', onCancel);
+    if (enshrineBtn && showEnshrine) enshrineBtn.addEventListener('click', onEnshrine);
     input.addEventListener('keydown', onKey);
   }
 
@@ -7172,6 +7271,40 @@
     $('daily-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
+  // v118 殿堂 모달
+  $('btn-enshrined').addEventListener('click', () => {
+    renderEnshrined();
+    $('enshrined-modal').classList.add('active');
+    $('menu-drop').classList.remove('open');
+  });
+  function renderEnshrined() {
+    const enshrined = state.enshrined || [];
+    const progress = $('enshrined-progress');
+    if (progress) {
+      progress.innerHTML = '진 열  ' + enshrined.length + ' / ' + ENSHRINE_CAP +
+        (enshrined.length > 0 ? '  ·  <span style="color:var(--accent)">강화 성공 +' + (enshrined.length * 1.5).toFixed(1) + '%</span>' : '');
+    }
+    const list = $('enshrined-list');
+    if (!list) return;
+    if (enshrined.length === 0) {
+      list.innerHTML = '<p style="color:var(--dim);text-align:center;font-size:11px;padding:24px 0;letter-spacing:2px">— 진열된 검 없음 —<br><br><span style="font-size:10px;opacity:0.7">道(+15)에 이른 검을 봉인 대신 진열하세요</span></p>';
+      return;
+    }
+    list.innerHTML = enshrined.map((s, i) => {
+      const ins = s.inscriptions || [];
+      const insStr = ins.slice(0, 4).join(' · ');
+      const date = s.enshrinedAt ? new Date(s.enshrinedAt).toLocaleDateString('ko-KR') : '';
+      return '<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid rgba(255,245,192,0.25);border-radius:2px;margin-bottom:8px;background:linear-gradient(180deg,rgba(255,245,192,0.05),rgba(212,175,55,0.02))">' +
+        '<svg viewBox="0 0 100 200" width="32" height="64" style="flex-shrink:0"><g>' + buildSwordBody(s.level, s.form) + '</g></svg>' +
+        '<div style="flex:1">' +
+          '<div style="color:#fff5c0;letter-spacing:5px;font-size:14px;text-shadow:0 0 6px rgba(255,245,192,0.5)">' + (s.name || '검 #' + (i + 1)) + '</div>' +
+          '<div style="color:var(--dim);font-size:10px;margin-top:3px;letter-spacing:2px">' + (s.form || '無') + '  ·  +' + s.level + '  ·  魂' + (s.soul || 0) + '</div>' +
+          (insStr ? '<div style="color:var(--accent);font-size:10px;margin-top:3px;letter-spacing:3px;opacity:0.85">' + insStr + '</div>' : '') +
+          (date ? '<div style="color:var(--dim);font-size:9px;margin-top:3px;opacity:0.6">' + date + ' 진열</div>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
   function renderFoes() {
     if (!state.foesSlain) state.foesSlain = {};
     const slainCount = NAMED_FOES.filter(f => state.foesSlain[f.key]).length;
@@ -7456,6 +7589,7 @@
       level: 0, shards: 50, protections: 0, hasSword: true,
       bestLevel: 0, totalDestroyed: 0, totalSlain: 0,
       sealedSwords: [],
+    enshrined: [],  // v118 殿堂 — 박물관에 모셔진 道 검 (최대 3)
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0,
       firstWayReached: false,
