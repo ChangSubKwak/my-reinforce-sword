@@ -5791,47 +5791,82 @@
     return 1;
   }
 
-  // 칼날 path — form별 곡선 + tier별 길이/두께
+  // === v128 形體革命 — 형(form)별 완전히 다른 검 정체성 ===
+  // 直: 일본도 (katana) — 곧고 슬림, 작은 츠바, 사각 손잡이
+  // 曲: 시미타르 (scimitar) — 강한 곡선, 너클보우 가드, 나선 손잡이
+  // 重: 클레이모어 (claymore) — 넓고 두꺼움, 큰 십자 가드 + 링, 양손 손잡이
+  // 速: 레이피어 (rapier) — 매우 가는 침형, 스웹트힐트, 가는 손잡이
   function bladePath(tier, form) {
-    // tier별 칼끝/가드 위치 + 두께
-    let tipY, gardY, halfW;
-    if (tier === 1) { tipY = 28; gardY = 140; halfW = 4; }
-    else if (tier === 2) { tipY = 14; gardY = 142; halfW = 5; }
-    else if (tier === 3) { tipY = 8; gardY = 144; halfW = 6; }
-    else if (tier === 4) { tipY = 4; gardY = 144; halfW = 7; }
-    else { tipY = 2; gardY = 144; halfW = 8; }
+    // 티어별 칼끝/가드 위치
+    let tipY, gardY;
+    if (tier === 1) { tipY = 28; gardY = 140; }
+    else if (tier === 2) { tipY = 16; gardY = 142; }
+    else if (tier === 3) { tipY = 8; gardY = 144; }
+    else if (tier === 4) { tipY = 4; gardY = 144; }
+    else { tipY = 2; gardY = 146; }
     const midY = Math.floor((tipY + gardY) / 2);
-    const L = 50 - halfW, R = 50 + halfW;
-    const tipDip = gardY + 8; // 칼날 바닥점
-    // 형별 path
+
+    if (form === '直') {
+      // 일본도 — 곧은 슬림 블레이드, 한쪽 날만 표현 (chisel point)
+      const halfW = tier <= 1 ? 3 : tier <= 2 ? 3.5 : tier <= 3 ? 4 : tier <= 4 ? 4.5 : 5;
+      const L = 50 - halfW, R = 50 + halfW;
+      // 칼끝 chisel point (오른쪽이 사선)
+      return 'M ' + (R - 0.5) + ' ' + tipY +
+        ' L ' + R + ' ' + (tipY + 6) +
+        ' L ' + R + ' ' + gardY +
+        ' L ' + L + ' ' + (gardY + 4) +
+        ' L ' + L + ' ' + (tipY + 10) +
+        ' L 50 ' + tipY + ' Z';
+    }
     if (form === '曲') {
-      // 굽은 검 — Bézier 곡선
-      return 'M 50 ' + tipY +
-        ' Q ' + (R + 3) + ' ' + midY + ' ' + (R - 1) + ' ' + gardY +
-        ' L 50 ' + tipDip +
-        ' L ' + (L + 1) + ' ' + gardY +
-        ' Q ' + (L - 3) + ' ' + midY + ' 50 ' + tipY + ' Z';
+      // 시미타르 — 강한 곡선 (오른쪽으로 휘어짐), 너른 끝
+      const baseW = tier <= 1 ? 3.5 : tier <= 2 ? 4 : tier <= 3 ? 4.5 : tier <= 4 ? 5 : 5.5;
+      const curveAmt = tier <= 2 ? 6 : tier <= 3 ? 8 : 10;  // 휘어짐 정도
+      const widerW = baseW + 1;  // 칼끝 근처가 더 넓음
+      return 'M ' + (50 + widerW + curveAmt * 0.3) + ' ' + tipY +
+        ' Q ' + (50 + baseW + curveAmt) + ' ' + midY + ' ' + (50 + baseW * 0.8) + ' ' + gardY +
+        ' L ' + (50 + baseW * 0.5) + ' ' + (gardY + 4) +
+        ' L ' + (50 - baseW * 0.5) + ' ' + (gardY + 4) +
+        ' L ' + (50 - baseW * 0.8) + ' ' + gardY +
+        ' Q ' + (50 - baseW + curveAmt) + ' ' + midY + ' ' + (50 + widerW * 0.5 + curveAmt * 0.3) + ' ' + (tipY + 4) +
+        ' Z';
     }
     if (form === '重') {
-      // 무거운 검 — 평행 곡선
+      // 클레이모어 — 넓고 두꺼움, 큰 fuller, leaf shape
+      const halfW = tier <= 1 ? 5.5 : tier <= 2 ? 6.5 : tier <= 3 ? 7.5 : tier <= 4 ? 8.5 : 9.5;
+      const L = 50 - halfW, R = 50 + halfW;
+      const shoulderY = gardY - 8;  // 가드 직전 어깨 (살짝 더 넓음)
+      const shoulderW = halfW + 1;
       return 'M 50 ' + tipY +
-        ' Q ' + (R + 1) + ' ' + (tipY + 8) + ' ' + (R + 3) + ' ' + gardY +
-        ' L 50 ' + tipDip +
-        ' L ' + (L - 3) + ' ' + gardY +
-        ' Q ' + (L - 1) + ' ' + (tipY + 8) + ' 50 ' + tipY + ' Z';
+        ' Q ' + (R + 1) + ' ' + (tipY + 12) + ' ' + R + ' ' + midY +
+        ' L ' + R + ' ' + shoulderY +
+        ' L ' + (50 + shoulderW) + ' ' + gardY +
+        ' L ' + (50 - shoulderW) + ' ' + gardY +
+        ' L ' + L + ' ' + shoulderY +
+        ' L ' + L + ' ' + midY +
+        ' Q ' + (L - 1) + ' ' + (tipY + 12) + ' 50 ' + tipY +
+        ' Z';
     }
     if (form === '速') {
-      // 가는 검 — 잎 모양
+      // 레이피어 — 매우 가는 침, 거의 직선
+      const halfW = tier <= 1 ? 1.5 : tier <= 2 ? 1.8 : tier <= 3 ? 2 : tier <= 4 ? 2.3 : 2.6;
+      const L = 50 - halfW, R = 50 + halfW;
+      // 다이아몬드 단면 (능선) 효과 — 짧은 어깨 + 긴 끝
       return 'M 50 ' + tipY +
-        ' Q ' + (50 + 1.5) + ' ' + midY + ' ' + (50 + 2) + ' ' + gardY +
-        ' L 50 ' + tipDip +
-        ' L ' + (50 - 2) + ' ' + gardY +
-        ' Q ' + (50 - 1.5) + ' ' + midY + ' 50 ' + tipY + ' Z';
+        ' L ' + R + ' ' + (tipY + 4) +
+        ' L ' + R + ' ' + gardY +
+        ' L ' + (50 + halfW * 1.3) + ' ' + (gardY + 2) +
+        ' L ' + (50 - halfW * 1.3) + ' ' + (gardY + 2) +
+        ' L ' + L + ' ' + gardY +
+        ' L ' + L + ' ' + (tipY + 4) +
+        ' Z';
     }
-    // 直 또는 기본 — 부드러운 잎 모양
+    // 기본 (form 미지정) — 균형 잡힌 leaf
+    const halfW = tier <= 1 ? 4 : tier <= 2 ? 5 : tier <= 3 ? 6 : tier <= 4 ? 7 : 8;
+    const L = 50 - halfW, R = 50 + halfW;
     return 'M 50 ' + tipY +
       ' Q ' + (R + 0.5) + ' ' + midY + ' ' + R + ' ' + gardY +
-      ' L 50 ' + tipDip +
+      ' L 50 ' + (gardY + 4) +
       ' L ' + L + ' ' + gardY +
       ' Q ' + (L - 0.5) + ' ' + midY + ' 50 ' + tipY + ' Z';
   }
@@ -5845,8 +5880,135 @@
     return '<line x1="50" y1="6" x2="50" y2="140" stroke="rgba(255,255,255,0.65)" stroke-width="1.4"/>';
   }
 
-  // tier별 가드 SVG (정교한 형태 + gradient)
-  function buildGuard(tier) {
+  // v128 形體革命 — 형별 가드 디자인
+  function buildGuard(tier, form) {
+    if (form === '直') return buildGuardKatana(tier);
+    if (form === '曲') return buildGuardScimitar(tier);
+    if (form === '重') return buildGuardClaymore(tier);
+    if (form === '速') return buildGuardRapier(tier);
+    return buildGuardDefault(tier);
+  }
+  // 직검 — 츠바 (일본도 가드): 작은 원/타원형, 가운데 칼날 구멍
+  function buildGuardKatana(tier) {
+    const gradId = tier <= 2 ? 'guard-grad-low' : tier <= 3 ? 'guard-grad-mid' : 'guard-grad-high';
+    const w = tier <= 1 ? 14 : tier <= 2 ? 16 : tier <= 3 ? 18 : tier <= 4 ? 20 : 22;
+    const h = 6;
+    const x = 50 - w / 2;
+    const filter = tier >= 4 ? ' filter="url(#strong-glow)"' : '';
+    let svg = '<ellipse cx="50" cy="142" rx="' + (w/2) + '" ry="' + (h/2) + '" fill="url(#' + gradId + ')" stroke="#3d2c18" stroke-width="0.5"' + filter + '/>';
+    // 츠바 무늬 (가운데 칼날 통과 구멍)
+    svg += '<rect x="48.5" y="139" width="3" height="6" fill="#1a0f08"/>';
+    // 티어별 장식 (sukashi 무늬)
+    if (tier >= 2) {
+      svg += '<circle cx="' + (50 - w/2 + 3) + '" cy="142" r="1.2" fill="none" stroke="#8a6a30" stroke-width="0.4"/>';
+      svg += '<circle cx="' + (50 + w/2 - 3) + '" cy="142" r="1.2" fill="none" stroke="#8a6a30" stroke-width="0.4"/>';
+    }
+    if (tier >= 3) {
+      svg += '<circle cx="50" cy="139.5" r="0.8" fill="url(#gem-red)"/>';
+    }
+    if (tier >= 4) {
+      // 깃털 같은 무늬
+      svg += '<path d="M ' + (50 - w/2 + 1) + ' 142 Q ' + (50 - w/4) + ' 138 50 142 Q ' + (50 + w/4) + ' 146 ' + (50 + w/2 - 1) + ' 142" fill="none" stroke="#d4af37" stroke-width="0.4" opacity="0.7"/>';
+    }
+    if (tier >= 5) {
+      // 신성 빛 광선
+      svg += '<line x1="' + (50 - w/2 - 2) + '" y1="142" x2="' + (50 + w/2 + 2) + '" y2="142" stroke="#fff5c0" stroke-width="0.3" opacity="0.8"/>';
+    }
+    return svg;
+  }
+  // 곡검 — 너클보우 (시미타르 가드): 한쪽으로 휘어지는 곡선 보호대
+  function buildGuardScimitar(tier) {
+    const gradId = tier <= 2 ? 'guard-grad-low' : tier <= 3 ? 'guard-grad-mid' : 'guard-grad-high';
+    const filter = tier >= 4 ? ' filter="url(#strong-glow)"' : '';
+    // 가드 기둥 (가운데)
+    let svg = '<rect x="46" y="139" width="8" height="6" rx="0.5" fill="url(#' + gradId + ')" stroke="#3d2c18" stroke-width="0.5"' + filter + '/>';
+    // 너클보우 — 오른쪽으로 휘어지는 곡선
+    const bowDepth = tier <= 1 ? 6 : tier <= 2 ? 8 : tier <= 3 ? 10 : tier <= 4 ? 12 : 14;
+    svg += '<path d="M 54 142 Q ' + (60 + bowDepth) + ' 145 ' + (54 + bowDepth) + ' ' + (165 + tier) + '" fill="none" stroke="url(#' + gradId + ')" stroke-width="' + (tier <= 2 ? 2 : 2.5) + '" stroke-linecap="round"' + filter + '/>';
+    // 좌측 짧은 가드 (퀼론)
+    svg += '<path d="M 46 142 L ' + (40 - tier) + ' ' + (139 - tier * 0.5) + '" fill="none" stroke="url(#' + gradId + ')" stroke-width="' + (tier <= 2 ? 2 : 2.5) + '" stroke-linecap="round"' + filter + '/>';
+    // 가드 가운데 보석
+    if (tier >= 2) {
+      svg += '<circle cx="50" cy="142" r="1.5" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.3"/>';
+    }
+    if (tier >= 3) {
+      // 너클보우 위 작은 보석
+      svg += '<circle cx="' + (58 + bowDepth) + '" cy="' + (152 + tier * 0.5) + '" r="1.2" fill="url(#gem-green)"/>';
+    }
+    if (tier >= 4) {
+      // 좌측 퀼론 끝 보석
+      svg += '<circle cx="' + (39 - tier) + '" cy="' + (138 - tier * 0.5) + '" r="1.4" fill="url(#gem-blue)"/>';
+    }
+    return svg;
+  }
+  // 중검 — 큰 십자 가드 + 링 (클레이모어)
+  function buildGuardClaymore(tier) {
+    const gradId = tier <= 2 ? 'guard-grad-low' : tier <= 3 ? 'guard-grad-mid' : 'guard-grad-high';
+    const filter = tier >= 4 ? ' filter="url(#strong-glow)"' : '';
+    // 큰 가로 가드
+    const armLen = tier <= 1 ? 14 : tier <= 2 ? 17 : tier <= 3 ? 20 : tier <= 4 ? 23 : 26;
+    const armH = tier <= 2 ? 4 : 5;
+    let svg = '<rect x="' + (50 - armLen) + '" y="' + (144 - armH / 2) + '" width="' + (armLen * 2) + '" height="' + armH + '" rx="1" fill="url(#' + gradId + ')" stroke="#3d2c18" stroke-width="0.6"' + filter + '/>';
+    // 가드 양끝 둥근 노브 (orb)
+    const orbR = tier <= 2 ? 2 : tier <= 3 ? 2.5 : 3;
+    svg += '<circle cx="' + (50 - armLen) + '" cy="144" r="' + orbR + '" fill="url(#' + gradId + ')" stroke="#3d2c18" stroke-width="0.5"' + filter + '/>';
+    svg += '<circle cx="' + (50 + armLen) + '" cy="144" r="' + orbR + '" fill="url(#' + gradId + ')" stroke="#3d2c18" stroke-width="0.5"' + filter + '/>';
+    // 가운데 링 (클레이모어 특징: ricasso 링)
+    if (tier >= 2) {
+      svg += '<circle cx="50" cy="144" r="3.5" fill="none" stroke="url(#' + gradId + ')" stroke-width="1.2"/>';
+      svg += '<circle cx="50" cy="144" r="2" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.3"/>';
+    }
+    // 보석 양끝
+    if (tier >= 3) {
+      svg += '<circle cx="' + (50 - armLen) + '" cy="144" r="1.2" fill="url(#gem-green)"/>';
+      svg += '<circle cx="' + (50 + armLen) + '" cy="144" r="1.2" fill="url(#gem-green)"/>';
+    }
+    if (tier >= 4) {
+      // 위쪽 칼날 어깨 보강 띠
+      svg += '<rect x="' + (50 - armLen + 4) + '" y="' + (144 - armH/2 - 1.5) + '" width="' + ((armLen - 4) * 2) + '" height="1" fill="#fff5c0" opacity="0.7"/>';
+    }
+    if (tier >= 5) {
+      // 거대한 깃털 가드 끝 장식
+      svg += '<path d="M ' + (50 - armLen - 3) + ' 144 L ' + (50 - armLen - 6) + ' 142 L ' + (50 - armLen - 6) + ' 146 Z" fill="#fff5c0" filter="url(#divine-glow)"/>';
+      svg += '<path d="M ' + (50 + armLen + 3) + ' 144 L ' + (50 + armLen + 6) + ' 142 L ' + (50 + armLen + 6) + ' 146 Z" fill="#fff5c0" filter="url(#divine-glow)"/>';
+    }
+    return svg;
+  }
+  // 속검 — 스웹트힐트 (rapier basket guard)
+  function buildGuardRapier(tier) {
+    const gradId = tier <= 2 ? 'guard-grad-low' : tier <= 3 ? 'guard-grad-mid' : 'guard-grad-high';
+    const filter = tier >= 4 ? ' filter="url(#strong-glow)"' : '';
+    // 가운데 십자 (짧음)
+    let svg = '<rect x="42" y="142" width="16" height="3" rx="0.5" fill="url(#' + gradId + ')" stroke="#3d2c18" stroke-width="0.5"' + filter + '/>';
+    // 스웹트 곡선 (양쪽으로 활처럼 휜 보호 바)
+    const sweepDepth = tier <= 1 ? 4 : tier <= 2 ? 6 : tier <= 3 ? 8 : tier <= 4 ? 10 : 12;
+    // 우측 스웹트
+    svg += '<path d="M 58 144 Q ' + (62 + sweepDepth) + ' ' + (152 + sweepDepth * 0.3) + ' ' + (50 + sweepDepth * 0.7) + ' ' + (165 + tier) + '" fill="none" stroke="url(#' + gradId + ')" stroke-width="1.5" stroke-linecap="round"' + filter + '/>';
+    // 좌측 스웹트
+    svg += '<path d="M 42 144 Q ' + (38 - sweepDepth) + ' ' + (152 + sweepDepth * 0.3) + ' ' + (50 - sweepDepth * 0.7) + ' ' + (165 + tier) + '" fill="none" stroke="url(#' + gradId + ')" stroke-width="1.5" stroke-linecap="round"' + filter + '/>';
+    // 가운데 작은 보석
+    if (tier >= 2) {
+      svg += '<circle cx="50" cy="143.5" r="1.2" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.3"/>';
+    }
+    if (tier >= 3) {
+      // 추가 보조 바
+      svg += '<path d="M 55 144 Q ' + (58 + sweepDepth * 0.5) + ' ' + (155 + sweepDepth * 0.2) + ' ' + (52 + sweepDepth * 0.4) + ' ' + (170 + tier) + '" fill="none" stroke="url(#' + gradId + ')" stroke-width="1" stroke-linecap="round" opacity="0.7"/>';
+      svg += '<path d="M 45 144 Q ' + (42 - sweepDepth * 0.5) + ' ' + (155 + sweepDepth * 0.2) + ' ' + (48 - sweepDepth * 0.4) + ' ' + (170 + tier) + '" fill="none" stroke="url(#' + gradId + ')" stroke-width="1" stroke-linecap="round" opacity="0.7"/>';
+    }
+    if (tier >= 4) {
+      // 스웹트 끝 작은 구슬
+      svg += '<circle cx="' + (50 + sweepDepth * 0.7) + '" cy="' + (165 + tier) + '" r="1.2" fill="url(#gem-white)"/>';
+      svg += '<circle cx="' + (50 - sweepDepth * 0.7) + '" cy="' + (165 + tier) + '" r="1.2" fill="url(#gem-white)"/>';
+    }
+    if (tier >= 5) {
+      // 정교한 라인 (광채 효과)
+      svg += '<path d="M 58 144 Q ' + (62 + sweepDepth) + ' ' + (152 + sweepDepth * 0.3) + ' ' + (50 + sweepDepth * 0.7) + ' ' + (165 + tier) + '" fill="none" stroke="#fff5c0" stroke-width="0.4" opacity="0.8"/>';
+      svg += '<path d="M 42 144 Q ' + (38 - sweepDepth) + ' ' + (152 + sweepDepth * 0.3) + ' ' + (50 - sweepDepth * 0.7) + ' ' + (165 + tier) + '" fill="none" stroke="#fff5c0" stroke-width="0.4" opacity="0.8"/>';
+    }
+    return svg;
+  }
+  // 기본 가드 (form 미지정)
+  function buildGuardDefault(tier) {
     if (tier === 1) {
       // 단순 십자 가드 — 미세 라운드 끝
       return '<rect x="38" y="139" width="24" height="5" rx="1" fill="url(#guard-grad-low)" stroke="#3d2c18" stroke-width="0.5"/>' +
@@ -5914,8 +6076,109 @@
       '<circle cx="56" cy="134" r="1.2" fill="url(#gem-red)"/>';
   }
 
-  // tier별 손잡이 (감기 패턴 + 보석)
-  function buildGrip(tier) {
+  // v128 形體革命 — 형별 손잡이 디자인
+  function buildGrip(tier, form) {
+    if (form === '直') return buildGripKatana(tier);
+    if (form === '曲') return buildGripScimitar(tier);
+    if (form === '重') return buildGripClaymore(tier);
+    if (form === '速') return buildGripRapier(tier);
+    return buildGripDefault(tier);
+  }
+  // 직검 — 사각 손잡이 (츠카) + 다이아 마키 와이어
+  function buildGripKatana(tier) {
+    const gripLen = tier <= 1 ? 24 : tier <= 2 ? 30 : tier <= 3 ? 32 : 34;
+    const w = tier <= 2 ? 6 : 7;
+    const x = 50 - w / 2;
+    const y0 = 146;
+    let svg = '<rect x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + gripLen + '" fill="url(#grip-leather)" stroke="#1a0f08" stroke-width="0.4"/>';
+    // 다이아몬드 마키 패턴 (전형적 일본도)
+    const bands = Math.floor(gripLen / 4);
+    for (let i = 0; i < bands; i++) {
+      const ty = y0 + 2 + i * 4;
+      svg += '<line x1="' + x + '" y1="' + ty + '" x2="' + (x + w) + '" y2="' + (ty + 3) + '" stroke="#1a0f08" stroke-width="0.4"/>';
+      svg += '<line x1="' + (x + w) + '" y1="' + ty + '" x2="' + x + '" y2="' + (ty + 3) + '" stroke="#1a0f08" stroke-width="0.4"/>';
+    }
+    // 메누키 (가운데 작은 장식)
+    if (tier >= 2) {
+      const my = y0 + gripLen / 2 - 1;
+      svg += '<circle cx="50" cy="' + my + '" r="1.2" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.3"/>';
+    }
+    if (tier >= 4) {
+      // 황금 띠 위·아래
+      svg += '<rect x="' + (x - 0.3) + '" y="' + (y0 + 1) + '" width="' + (w + 0.6) + '" height="1.5" fill="url(#grip-gold)"/>';
+      svg += '<rect x="' + (x - 0.3) + '" y="' + (y0 + gripLen - 2.5) + '" width="' + (w + 0.6) + '" height="1.5" fill="url(#grip-gold)"/>';
+    }
+    return svg;
+  }
+  // 곡검 — 나선 감기 (시미타르 그립)
+  function buildGripScimitar(tier) {
+    const gripLen = tier <= 1 ? 22 : tier <= 2 ? 26 : tier <= 3 ? 28 : 30;
+    const w = tier <= 2 ? 7 : 8;
+    const x = 50 - w / 2;
+    const y0 = 146;
+    let svg = '<rect x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + gripLen + '" rx="2" fill="url(#grip-leather)" stroke="#1a0f08" stroke-width="0.4"/>';
+    // 나선 감기 (대각선 동일 방향만)
+    const turns = Math.floor(gripLen / 3.5);
+    for (let i = 0; i < turns; i++) {
+      const ty = y0 + 1 + i * 3.5;
+      svg += '<line x1="' + (x - 0.3) + '" y1="' + ty + '" x2="' + (x + w + 0.3) + '" y2="' + (ty + 2.5) + '" stroke="#3d2c18" stroke-width="0.7"/>';
+    }
+    // 위·아래 황금 띠
+    if (tier >= 2) {
+      svg += '<rect x="' + (x - 0.4) + '" y="' + y0 + '" width="' + (w + 0.8) + '" height="1.8" fill="url(#grip-gold)"/>';
+      svg += '<rect x="' + (x - 0.4) + '" y="' + (y0 + gripLen - 2) + '" width="' + (w + 0.8) + '" height="2" fill="url(#grip-gold)"/>';
+    }
+    if (tier >= 4) {
+      // 가운데 보석
+      svg += '<circle cx="50" cy="' + (y0 + gripLen / 2) + '" r="1.5" fill="url(#gem-green)" stroke="#0a3018" stroke-width="0.3"/>';
+    }
+    return svg;
+  }
+  // 중검 — 양손 긴 손잡이 (클레이모어)
+  function buildGripClaymore(tier) {
+    const gripLen = tier <= 1 ? 30 : tier <= 2 ? 36 : tier <= 3 ? 42 : tier <= 4 ? 46 : 50;
+    const w = tier <= 2 ? 8 : 9;
+    const x = 50 - w / 2;
+    const y0 = 147;
+    let svg = '<rect x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + gripLen + '" rx="1.5" fill="url(#grip-leather)" stroke="#1a0f08" stroke-width="0.5"/>';
+    // 두꺼운 가로 띠 (양손 그립 표시)
+    const bands = Math.floor(gripLen / 8);
+    for (let i = 0; i <= bands; i++) {
+      const ty = y0 + 2 + i * 8;
+      svg += '<rect x="' + (x - 0.3) + '" y="' + ty + '" width="' + (w + 0.6) + '" height="2" fill="' + (tier >= 3 ? 'url(#grip-gold)' : '#3d2c18') + '"/>';
+    }
+    if (tier >= 2) {
+      // 가운데 라이서소 (clay 그립 중간 가죽-금속 전환)
+      const my = y0 + gripLen / 2;
+      svg += '<rect x="' + (x - 0.5) + '" y="' + (my - 1) + '" width="' + (w + 1) + '" height="3" fill="url(#guard-grad-low)" stroke="#3d2c18" stroke-width="0.4"/>';
+    }
+    if (tier >= 3) {
+      svg += '<circle cx="50" cy="' + (y0 + gripLen / 2 + 0.5) + '" r="1.4" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.3"/>';
+    }
+    return svg;
+  }
+  // 속검 — 가는 손잡이 (rapier wire wrap)
+  function buildGripRapier(tier) {
+    const gripLen = tier <= 1 ? 24 : tier <= 2 ? 28 : tier <= 3 ? 30 : 32;
+    const w = tier <= 2 ? 5 : 5.5;
+    const x = 50 - w / 2;
+    const y0 = 146;
+    let svg = '<rect x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + gripLen + '" rx="2" fill="url(#grip-leather)" stroke="#1a0f08" stroke-width="0.4"/>';
+    // 와이어 감기 (촘촘한 가로선)
+    const wires = Math.floor(gripLen / 1.5);
+    for (let i = 0; i < wires; i++) {
+      const ty = y0 + 0.5 + i * 1.5;
+      svg += '<line x1="' + x + '" y1="' + ty + '" x2="' + (x + w) + '" y2="' + ty + '" stroke="' + (i % 4 === 0 ? '#d4af37' : '#5a3820') + '" stroke-width="0.5"/>';
+    }
+    if (tier >= 4) {
+      // 위·아래 황금 페룰
+      svg += '<rect x="' + (x - 0.5) + '" y="' + (y0 - 0.5) + '" width="' + (w + 1) + '" height="2" fill="url(#grip-gold)" stroke="#5a3820" stroke-width="0.3"/>';
+      svg += '<rect x="' + (x - 0.5) + '" y="' + (y0 + gripLen - 1.5) + '" width="' + (w + 1) + '" height="2" fill="url(#grip-gold)" stroke="#5a3820" stroke-width="0.3"/>';
+    }
+    return svg;
+  }
+  // 기본 손잡이
+  function buildGripDefault(tier) {
     if (tier === 1) {
       // 단순 짧은 가죽
       return '<rect x="46" y="144" width="8" height="26" rx="1.5" fill="url(#grip-leather)" stroke="#1a0f08" stroke-width="0.5"/>' +
@@ -5966,8 +6229,93 @@
       '<circle cx="48" cy="166" r="1" fill="#ffffff" opacity="0.85"/>';
   }
 
-  // tier별 폼멜 (단순 원 → 별 + 빛)
-  function buildPommel(tier) {
+  // v128 形體革命 — 형별 폼멜 디자인
+  function buildPommel(tier, form) {
+    if (form === '直') return buildPommelKatana(tier);
+    if (form === '曲') return buildPommelScimitar(tier);
+    if (form === '重') return buildPommelClaymore(tier);
+    if (form === '速') return buildPommelRapier(tier);
+    return buildPommelDefault(tier);
+  }
+  // 직검 — 간소한 카시라 (작은 사각/타원 캡)
+  function buildPommelKatana(tier) {
+    const gradId = tier <= 2 ? 'guard-grad-low' : tier <= 3 ? 'guard-grad-mid' : 'guard-grad-high';
+    // 카시라 y 위치는 손잡이 끝 +1
+    const baseY = tier <= 1 ? 173 : tier <= 2 ? 179 : tier <= 3 ? 181 : tier <= 4 ? 183 : 185;
+    const w = tier <= 2 ? 8 : 9;
+    const x = 50 - w / 2;
+    let svg = '<rect x="' + x + '" y="' + baseY + '" width="' + w + '" height="3.5" rx="0.8" fill="url(#' + gradId + ')" stroke="#3d2c18" stroke-width="0.5"/>';
+    // 가운데 작은 메누키
+    if (tier >= 3) {
+      svg += '<circle cx="50" cy="' + (baseY + 1.7) + '" r="1" fill="url(#gem-red)"/>';
+    }
+    if (tier >= 5) {
+      svg += '<rect x="' + x + '" y="' + baseY + '" width="' + w + '" height="3.5" rx="0.8" fill="none" stroke="#fff5c0" stroke-width="0.4" opacity="0.8"/>';
+    }
+    return svg;
+  }
+  // 곡검 — 정교한 곡선 폼멜 (turban-shaped)
+  function buildPommelScimitar(tier) {
+    const gradId = tier <= 2 ? 'guard-grad-low' : tier <= 3 ? 'guard-grad-mid' : 'guard-grad-high';
+    const baseY = tier <= 1 ? 169 : tier <= 2 ? 174 : tier <= 3 ? 176 : tier <= 4 ? 178 : 180;
+    const filter = tier >= 4 ? ' filter="url(#strong-glow)"' : '';
+    // 곡선 폼멜 (살짝 비대칭 — 시미타르 풍)
+    let svg = '<path d="M 46 ' + baseY + ' Q 50 ' + (baseY - 3) + ' 55 ' + baseY + ' Q 56 ' + (baseY + 4) + ' 50 ' + (baseY + 6) + ' Q 44 ' + (baseY + 4) + ' 46 ' + baseY + ' Z" fill="url(#' + gradId + ')" stroke="#3d2c18" stroke-width="0.5"' + filter + '/>';
+    if (tier >= 2) {
+      svg += '<circle cx="50" cy="' + (baseY + 2) + '" r="1.5" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.3"/>';
+    }
+    if (tier >= 4) {
+      // 끝 작은 후크 (시미타르 특징)
+      svg += '<path d="M 50 ' + (baseY + 6) + ' L 53 ' + (baseY + 9) + ' L 50 ' + (baseY + 8) + ' Z" fill="url(#' + gradId + ')"/>';
+    }
+    if (tier >= 5) {
+      svg += '<circle cx="50" cy="' + (baseY + 2) + '" r="0.6" fill="#ffffff" opacity="0.9"/>';
+    }
+    return svg;
+  }
+  // 중검 — 큰 구형/피라미드 폼멜
+  function buildPommelClaymore(tier) {
+    const gradId = tier <= 2 ? 'guard-grad-low' : tier <= 3 ? 'guard-grad-mid' : 'guard-grad-high';
+    const baseY = tier <= 1 ? 178 : tier <= 2 ? 184 : tier <= 3 ? 190 : tier <= 4 ? 194 : 198;
+    const r = tier <= 1 ? 4 : tier <= 2 ? 5 : tier <= 3 ? 6 : tier <= 4 ? 6.5 : 7;
+    const filter = tier >= 4 ? ' filter="url(#strong-glow)"' : '';
+    let svg = '<circle cx="50" cy="' + baseY + '" r="' + r + '" fill="url(#' + gradId + ')" stroke="#3d2c18" stroke-width="0.6"' + filter + '/>';
+    // 가운데 보석
+    if (tier >= 2) {
+      svg += '<circle cx="50" cy="' + baseY + '" r="' + (r * 0.5) + '" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.3"/>';
+    }
+    if (tier >= 3) {
+      // 십자 무늬 (영적 상징)
+      svg += '<line x1="' + (50 - r) + '" y1="' + baseY + '" x2="' + (50 + r) + '" y2="' + baseY + '" stroke="#fff5c0" stroke-width="0.5" opacity="0.7"/>';
+      svg += '<line x1="50" y1="' + (baseY - r) + '" x2="50" y2="' + (baseY + r) + '" stroke="#fff5c0" stroke-width="0.5" opacity="0.7"/>';
+    }
+    if (tier >= 5) {
+      // 8각별
+      svg += '<polygon points="50,' + (baseY - r - 1) + ' ' + (50 + r * 0.4) + ',' + (baseY - r * 0.4) + ' ' + (50 + r + 1) + ',' + baseY + ' ' + (50 + r * 0.4) + ',' + (baseY + r * 0.4) + ' 50,' + (baseY + r + 1) + ' ' + (50 - r * 0.4) + ',' + (baseY + r * 0.4) + ' ' + (50 - r - 1) + ',' + baseY + ' ' + (50 - r * 0.4) + ',' + (baseY - r * 0.4) + '" fill="#fff5c0" opacity="0.5"/>';
+    }
+    return svg;
+  }
+  // 속검 — 작은 눈물형 폼멜 (rapier teardrop)
+  function buildPommelRapier(tier) {
+    const gradId = tier <= 2 ? 'guard-grad-low' : tier <= 3 ? 'guard-grad-mid' : 'guard-grad-high';
+    const baseY = tier <= 1 ? 172 : tier <= 2 ? 176 : tier <= 3 ? 178 : tier <= 4 ? 180 : 182;
+    const filter = tier >= 4 ? ' filter="url(#strong-glow)"' : '';
+    // 눈물 / 양파 모양
+    let svg = '<path d="M 50 ' + baseY + ' Q 46 ' + (baseY + 2) + ' 47 ' + (baseY + 5) + ' Q 50 ' + (baseY + 8) + ' 53 ' + (baseY + 5) + ' Q 54 ' + (baseY + 2) + ' 50 ' + baseY + ' Z" fill="url(#' + gradId + ')" stroke="#3d2c18" stroke-width="0.5"' + filter + '/>';
+    if (tier >= 2) {
+      svg += '<circle cx="50" cy="' + (baseY + 4) + '" r="1.2" fill="url(#gem-red)" stroke="#3a0808" stroke-width="0.3"/>';
+    }
+    if (tier >= 4) {
+      // 끝 보석
+      svg += '<circle cx="50" cy="' + (baseY + 8) + '" r="1" fill="url(#gem-white)"/>';
+    }
+    if (tier >= 5) {
+      svg += '<circle cx="50" cy="' + (baseY + 4) + '" r="0.5" fill="#ffffff" opacity="0.9"/>';
+    }
+    return svg;
+  }
+  // 기본 폼멜
+  function buildPommelDefault(tier) {
     if (tier === 1) {
       return '<circle cx="50" cy="172" r="4" fill="url(#guard-grad-low)" stroke="#3d2c18" stroke-width="0.5"/>' +
         '<circle cx="48.5" cy="170.5" r="1" fill="#a08050" opacity="0.6"/>';
@@ -6045,7 +6393,7 @@
       '<line x1="62" y1="50" x2="68" y2="50" stroke="#fff5c0" stroke-width="0.8" opacity="0.5"/>';
   }
 
-  // 검 본체 통째 빌드
+  // 검 본체 통째 빌드 — v128 形體革命: 형(form)별 완전히 다른 정체성
   function buildSwordBody(lv, form) {
     const tier = getTier(lv);
     const bladeFill = 'url(#blade-grad-' + tier + ')';
@@ -6054,10 +6402,10 @@
     svg += '<path id="blade" d="' + bladePath(tier, form) + '" fill="' + bladeFill + '" stroke="#3a3a3a" stroke-width="0.5"' + (tier >= 4 ? ' filter="url(#strong-glow)"' : '') + '/>';
     svg += bladeFuller(tier);
     svg += buildBladeDecor(tier);
-    // 가드 / 손잡이 / 폼멜
-    svg += buildGuard(tier);
-    svg += buildGrip(tier);
-    svg += buildPommel(tier);
+    // 가드 / 손잡이 / 폼멜 (형별 분기)
+    svg += buildGuard(tier, form);
+    svg += buildGrip(tier, form);
+    svg += buildPommel(tier, form);
     return svg;
   }
 
