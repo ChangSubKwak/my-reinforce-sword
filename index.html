@@ -1560,6 +1560,9 @@
     opacity: 0.8;
   }
   #shadow-form.cleaved { animation: cleave 0.6s forwards; }
+  /* v133 切式 — 수직 분할 cleave (tier 3+) */
+  #shadow-form.cleaved-split { animation: cleave-split 0.85s forwards; }
+  #shadow-form.cleaved-demon { animation: cleave-demon 1.4s forwards; }  /* 검귀 슬로 */
   @keyframes shadow-pulse {
     0%, 100% { transform: scale(1); opacity: 0.9; }
     50% { transform: scale(1.05); opacity: 1; }
@@ -1569,6 +1572,50 @@
     40% { transform: scaleX(1.4) scaleY(0.3); opacity: 0.6; filter: blur(2px); }
     100% { transform: scale(0); opacity: 0; }
   }
+  /* v133 切式 — 수직 분할 (위/아래 半 분리) */
+  @keyframes cleave-split {
+    0%   { transform: scale(1); opacity: 1; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+    15%  { transform: scale(1.05); opacity: 0.95; }
+    35%  { transform: translateX(0) scale(1); opacity: 0.85; clip-path: polygon(0 0, 100% 0, 100% 47%, 0 47%); }
+    55%  { transform: translate(-15px, -20px) scale(0.95); opacity: 0.6; clip-path: polygon(0 0, 100% 0, 100% 47%, 0 47%); }
+    100% { transform: translate(-30px, -50px) scale(0.5); opacity: 0; clip-path: polygon(0 0, 100% 0, 100% 47%, 0 47%); }
+  }
+  /* v133 切式 — 검귀 슬로 베어내기 (긴 호흡) */
+  @keyframes cleave-demon {
+    0%   { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 12px rgba(192,57,43,0.8)); }
+    20%  { transform: scale(1.08); opacity: 0.95; filter: drop-shadow(0 0 24px rgba(255,80,40,1.0)); }
+    35%  { transform: scaleX(1.2) scaleY(0.6); opacity: 0.6; filter: drop-shadow(0 0 30px rgba(255,80,40,0.8)) blur(2px); }
+    55%  { transform: scaleX(1.5) scaleY(0.2); opacity: 0.3; filter: blur(4px); }
+    100% { transform: scale(0) rotate(20deg); opacity: 0; filter: blur(8px); }
+  }
+  /* v133 切式 — 동적 추가 슬래시 라인 (tier 3+) */
+  .slash-extra {
+    position: absolute;
+    pointer-events: none;
+    height: 3px;
+    width: 120%;
+    left: -10%;
+    background: linear-gradient(90deg, transparent, #fff5c0, var(--accent), #fff5c0, transparent);
+    box-shadow: 0 0 8px rgba(255, 245, 192, 0.6);
+    transform-origin: left center;
+    opacity: 0;
+    z-index: 10;
+  }
+  .slash-extra.diag-down { transform: rotate(20deg) scaleX(0); animation: slash-diag 0.4s forwards; }
+  .slash-extra.diag-up   { transform: rotate(-20deg) scaleX(0); animation: slash-diag 0.4s forwards; }
+  .slash-extra.horiz     { transform: rotate(0deg) scaleX(0); animation: slash-horiz 0.35s forwards; }
+  .slash-extra.demon-red { background: linear-gradient(90deg, transparent, #ff8060, #c0392b, #ff8060, transparent); box-shadow: 0 0 14px rgba(255, 80, 40, 0.85); height: 4px; }
+  @keyframes slash-diag {
+    0%   { opacity: 0; transform-origin: left center; }
+    20%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes slash-horiz {
+    0%   { opacity: 0; }
+    20%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  /* tier별 위치 분기는 inline style로 */
   #shadow-strength {
     position: absolute;
     bottom: -22px;
@@ -5544,7 +5591,7 @@
       affBlock +
       verdict + '<br>' +
       '<span style="opacity:0.6">도망 — 조각 ' + FLEE_COST + ' 잃음</span>';
-    shadowForm.classList.remove('cleaved');
+    shadowForm.classList.remove('cleaved', 'cleaved-split', 'cleaved-demon');  // v133
     slashLine.classList.remove('active');
     challengeSword.classList.remove('strike');
     challengeEl.classList.add('active');
@@ -5607,10 +5654,44 @@
         setTimeout(() => { save(); render(); }, 300);
         return;
       }
-      // 베어냄
+      // 베어냄 — v133 切式 dramatic cleave choreography
       SFX.slash();
       slashLine.classList.add('active');
-      setTimeout(() => shadowForm.classList.add('cleaved'), 120);
+      // 티어/타입별 멀티 스트로크
+      const swLv = state.level;
+      const isDemonSlay = c.type.isDemon;
+      const isNamedSlay = !!c.namedFoeKey;
+      const slashCount = isDemonSlay ? 3 : isNamedSlay ? 3 : swLv >= 14 ? 3 : swLv >= 8 ? 2 : 1;
+      const challengeScene = $('challenge-scene');
+      function spawnExtraSlash(cls, delay, topPct, demonRed) {
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.className = 'slash-extra ' + cls + (demonRed ? ' demon-red' : '');
+          el.style.top = topPct + '%';
+          if (challengeScene) challengeScene.appendChild(el);
+          // 추가 슬래시 SFX (옥타브 위)
+          if (cls !== 'horiz') {
+            setTimeout(() => tone(2400 + Math.random() * 600, 0.10, 'triangle', 0.18, 240), 0);
+          }
+          setTimeout(() => el.remove(), 500);
+        }, delay);
+      }
+      if (slashCount >= 2) {
+        spawnExtraSlash('diag-down', 100, 40, isDemonSlay);
+      }
+      if (slashCount >= 3) {
+        spawnExtraSlash('diag-up', 200, 60, isDemonSlay);
+      }
+      // 베기 cleave 분기 — 검귀/명적은 슬로 모션, tier 3+ 수직 분할, 그 외 기본
+      const cleaveClass = isDemonSlay ? 'cleaved-demon'
+                        : isNamedSlay ? 'cleaved-demon'
+                        : (swLv >= 6) ? 'cleaved-split'
+                        : 'cleaved';
+      setTimeout(() => shadowForm.classList.add(cleaveClass), 120);
+      // 검귀는 화면 흔들림 추가
+      if (isDemonSlay && typeof screenShake === 'function') {
+        setTimeout(() => screenShake(false), 180);
+      }
       challengeSword.classList.add('strike');
       // v125 連斬 — streak에 따른 보상 배율 적용 (이전 streak 기준)
       const slayBonusMul = slayStreakRewardBonus();
