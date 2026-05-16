@@ -153,6 +153,59 @@
     z-index: 1;
   }
 
+  /* v159 對局 — 대국 시각 */
+  #duel-arena {
+    position: relative;
+    height: 240px;
+    background: radial-gradient(ellipse at 50% 50%, rgba(212,175,55,0.05), transparent 70%);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    margin: 14px 0;
+    overflow: hidden;
+  }
+  .duel-fighter {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 120px;
+    transition: left 1.2s cubic-bezier(0.4, 0, 0.3, 1), opacity 0.8s ease;
+  }
+  .duel-fighter.left { left: 8%; }
+  .duel-fighter.right { left: calc(100% - 8% - 60px); transform: translateY(-50%) scaleX(-1); }
+  .duel-fighter.clash-left { left: calc(50% - 60px - 4px); }
+  .duel-fighter.clash-right { left: calc(50% + 4px); }
+  .duel-fighter.lost { opacity: 0; }
+  .duel-fighter-name {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    white-space: nowrap;
+    text-align: center;
+  }
+  .duel-fighter.right .duel-fighter-name { transform: translateX(-50%) scaleX(-1); }
+  #duel-flash {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 80px; height: 80px;
+    background: radial-gradient(circle, #fff5c0, transparent 70%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  #duel-flash.active {
+    animation: duel-flash 0.6s ease-out;
+  }
+  @keyframes duel-flash {
+    0%   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    30%  { transform: translate(-50%, -50%) scale(1.8); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(3.5); opacity: 0; }
+  }
+
   /* v153 朝夕 — 실시간 시간대 기반 4단계 분위기 */
   body.tod-morning {
     background: linear-gradient(180deg, #0e0d09 0%, #0b0b0d 60%);
@@ -2204,6 +2257,7 @@
   <button id="btn-seal-craft">印  章</button>
   <button id="btn-journey">紀  程</button>
   <button id="btn-shrine">神  祠</button>
+  <button id="btn-duel">對  局</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -2760,6 +2814,24 @@
 </div>
 
 <!-- v90 처치 보고서 모달 (이름 있는 적 컬렉션) -->
+<!-- v159 對局 모달 — 봉인 검 2자루 대결 -->
+<div class="modal" id="duel-modal">
+  <div class="modal-box" style="max-width: 540px;">
+    <h2>對  局</h2>
+    <p id="duel-status" style="font-size:11px;color:var(--dim);letter-spacing:3px;text-align:center;margin-bottom:14px">두 검을 선택하시오</p>
+    <div id="duel-arena">
+      <div id="duel-flash"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin:10px 0">
+      <button id="duel-start" class="modal-close" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)" disabled>대  국  시  작</button>
+      <button id="duel-clear" class="modal-close" style="flex:1;margin:0">선  택  해  제</button>
+    </div>
+    <p style="font-size:9px;color:var(--dim);text-align:center;margin:6px 0 10px;letter-spacing:1px;opacity:0.7">갤러리 검 클릭 시 선택 / 최대 2자루</p>
+    <div id="duel-list" style="max-height: 280px; overflow-y: auto; padding: 0 4px; display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
 <!-- v149 神祠 모달 — 영구 헌사 -->
 <div class="modal" id="shrine-modal">
   <div class="modal-box" style="max-width: 480px;">
@@ -3166,6 +3238,7 @@
     swordWish: null,          // v155 寒梅 — 현재 활성 유언 (강화형)
     swordWishSlay: null,      // v155 寒梅 — 슬레이 보상 유언
     records: {},              // v156 新記 — 개인 최고 기록
+    duelWins: {},             // v159 對局 — 봉인 검 대국 승리 카운트
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
@@ -3347,6 +3420,7 @@
       if (state.swordWish !== null && typeof state.swordWish !== 'object') state.swordWish = null;  // v155
       if (state.swordWishSlay !== null && typeof state.swordWishSlay !== 'object') state.swordWishSlay = null;
       if (!state.records || typeof state.records !== 'object') state.records = {};  // v156
+      if (!state.duelWins || typeof state.duelWins !== 'object') state.duelWins = {};  // v159
       if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
         state.currentSword.foesEncountered = {};
       }
@@ -4982,6 +5056,163 @@
         }
       });
     });
+  }
+
+  // === v159 對局 — 봉인 검 2자루 자동 대결 ===
+  let duelSelected = [];  // 0~2개
+  function duelPower(sword) {
+    // 자료 기반 전투력 계산
+    const lv = sword.level || 0;
+    const soul = sword.soul || 0;
+    const ins = sword.inscriptions || [];
+    const slain = sword.slainCount || 0;
+    const stars = sword.stars ? Object.keys(sword.stars).length : 0;
+    const scars = sword.scars || 0;
+    // 가중치
+    let p = lv * 10;
+    p += soul * 0.4;
+    p += slain * 2;
+    p += stars * 3;
+    p += scars * 2;  // 흉터는 *경험*
+    // 명문 보너스
+    if (ins.includes('道')) p += 30;
+    if (ins.includes('鬼斬')) p += 15;
+    if (ins.includes('斷魔')) p += 12;
+    if (ins.includes('本')) p += 10;
+    if (ins.includes('七星')) p += 25;
+    if (ins.includes('仙')) p += 20;
+    return p;
+  }
+  function renderDuelList() {
+    const list = $('duel-list');
+    if (!list) return;
+    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    if (all.length === 0) {
+      list.innerHTML = '<div style="grid-column:span 3;color:var(--dim);text-align:center;font-size:11px;padding:24px 0;letter-spacing:2px">— 봉인 검 없음 —</div>';
+      return;
+    }
+    list.innerHTML = all.map((s, i) => {
+      const isSelected = duelSelected.indexOf(i) >= 0;
+      const ins = (s.inscriptions || []).slice(0, 2).join('·');
+      const wins = (state.duelWins && state.duelWins[i]) || 0;
+      return '<div class="duel-pick' + (isSelected ? ' selected' : '') + '" data-idx="' + i + '" style="padding:6px;border:1px solid ' + (isSelected ? 'var(--accent)' : 'var(--line)') + ';cursor:pointer;text-align:center;font-size:10px;background:' + (isSelected ? 'rgba(212,175,55,0.08)' : 'transparent') + '">' +
+        '<div style="font-size:9px;color:var(--accent);letter-spacing:2px">' + (s.name || '검') + '</div>' +
+        '<div style="font-size:8px;color:var(--dim);margin-top:2px">+' + s.level + ' · ' + (s.form || '無') + '</div>' +
+        (ins ? '<div style="font-size:8px;color:var(--dim);margin-top:1px;opacity:0.75">' + ins + '</div>' : '') +
+        (wins > 0 ? '<div style="font-size:8px;color:#fff5c0;margin-top:2px">勝 ' + wins + '</div>' : '') +
+      '</div>';
+    }).join('');
+    list.querySelectorAll('.duel-pick').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.idx, 10);
+        if (duelSelected.indexOf(idx) >= 0) {
+          duelSelected = duelSelected.filter(i => i !== idx);
+        } else if (duelSelected.length < 2) {
+          duelSelected.push(idx);
+        }
+        renderDuelList();
+        updateDuelButton();
+      });
+    });
+    updateDuelButton();
+  }
+  function updateDuelButton() {
+    const btn = $('duel-start');
+    const status = $('duel-status');
+    if (!btn) return;
+    btn.disabled = duelSelected.length !== 2;
+    if (status) status.textContent = duelSelected.length === 0 ? '두 검을 선택하시오' :
+                                    duelSelected.length === 1 ? '한 검 더 선택하시오' :
+                                    '대국 준비 완료';
+  }
+  function startDuel() {
+    if (duelSelected.length !== 2) return;
+    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    const swordA = all[duelSelected[0]];
+    const swordB = all[duelSelected[1]];
+    if (!swordA || !swordB) return;
+    const arena = $('duel-arena');
+    if (!arena) return;
+    // 기존 fighter 제거
+    arena.querySelectorAll('.duel-fighter').forEach(el => el.remove());
+    // 새 fighters 추가
+    const figA = document.createElement('div');
+    figA.className = 'duel-fighter left';
+    figA.innerHTML = '<div class="duel-fighter-name">' + (swordA.name || '검 A') + '</div>' +
+      '<svg viewBox="0 0 100 200" width="60" height="120" xmlns="http://www.w3.org/2000/svg"><g>' + buildSwordBody(swordA.level || 0, swordA.form, swordA.playerSeal || '') + '</g></svg>';
+    arena.appendChild(figA);
+    const figB = document.createElement('div');
+    figB.className = 'duel-fighter right';
+    figB.innerHTML = '<div class="duel-fighter-name">' + (swordB.name || '검 B') + '</div>' +
+      '<svg viewBox="0 0 100 200" width="60" height="120" xmlns="http://www.w3.org/2000/svg"><g>' + buildSwordBody(swordB.level || 0, swordB.form, swordB.playerSeal || '') + '</g></svg>';
+    arena.appendChild(figB);
+    $('duel-start').disabled = true;
+    $('duel-clear').disabled = true;
+    const status = $('duel-status');
+    if (status) status.textContent = '두 검이 만난다...';
+
+    // 1.5s: 가운데로 다가감
+    setTimeout(() => {
+      figA.classList.add('clash-left');
+      figB.classList.add('clash-right');
+      // 슬래시 SFX
+      if (SFX && SFX.slash) SFX.slash();
+    }, 800);
+
+    // 2.7s: clash 순간
+    setTimeout(() => {
+      const flash = $('duel-flash');
+      if (flash) {
+        flash.classList.remove('active');
+        void flash.offsetWidth;
+        flash.classList.add('active');
+      }
+      // 판정
+      const pA = duelPower(swordA) + Math.random() * 30;
+      const pB = duelPower(swordB) + Math.random() * 30;
+      const aWins = pA >= pB;
+      const winner = aWins ? swordA : swordB;
+      const winnerIdx = duelSelected[aWins ? 0 : 1];
+      const loserFig = aWins ? figB : figA;
+      // 패자 fade
+      setTimeout(() => {
+        loserFig.classList.add('lost');
+      }, 200);
+      // 결과 표시
+      setTimeout(() => {
+        if (status) status.innerHTML = '勝者 — <span style="color:var(--accent);letter-spacing:4px">' + (winner.name || '검') + '</span>';
+        // 승리 카운트 누적
+        if (!state.duelWins) state.duelWins = {};
+        state.duelWins[winnerIdx] = (state.duelWins[winnerIdx] || 0) + 1;
+        save();
+        // 종 SFX
+        const ctx = getAudio();
+        if (ctx) {
+          const now = ctx.currentTime;
+          [440, 660, 880].forEach((f, i) => {
+            const osc = ctx.createOscillator(); const g = ctx.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(f, now + i * 0.10);
+            g.gain.setValueAtTime(0.0, now + i * 0.10);
+            g.gain.linearRampToValueAtTime(0.16, now + i * 0.10 + 0.03);
+            g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.10 + 1.0);
+            osc.connect(g); g.connect(ctx.destination);
+            osc.start(now + i * 0.10); osc.stop(now + i * 0.10 + 1.1);
+          });
+        }
+        log('對局 — ' + (winner.name || '검') + ' 승리', 'success');
+        $('duel-clear').disabled = false;
+        setTimeout(() => $('duel-start').disabled = false, 500);
+        renderDuelList();
+      }, 1100);
+    }, 2700);
+  }
+  function clearDuelSelection() {
+    duelSelected = [];
+    const arena = $('duel-arena');
+    if (arena) arena.querySelectorAll('.duel-fighter').forEach(el => el.remove());
+    const status = $('duel-status');
+    if (status) status.textContent = '두 검을 선택하시오';
+    renderDuelList();
   }
 
   // === v156 新記 — 개인 최고 기록 (7종) ===
@@ -10952,6 +11183,14 @@
     $('shrine-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
+  // v159 對局 모달
+  $('btn-duel').addEventListener('click', () => {
+    clearDuelSelection();
+    $('duel-modal').classList.add('active');
+    $('menu-drop').classList.remove('open');
+  });
+  if ($('duel-start')) $('duel-start').addEventListener('click', startDuel);
+  if ($('duel-clear')) $('duel-clear').addEventListener('click', clearDuelSelection);
   function renderJourney() {
     const titleEl = $('journey-title');
     if (titleEl) titleEl.textContent = generatePlayerTitle();
@@ -11531,6 +11770,7 @@
     swordWish: null,          // v155 寒梅 — 현재 활성 유언 (강화형)
     swordWishSlay: null,      // v155 寒梅 — 슬레이 보상 유언
     records: {},              // v156 新記 — 개인 최고 기록
+    duelWins: {},             // v159 對局 — 봉인 검 대국 승리 카운트
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0, divinationStones: 0,
       firstWayReached: false,
