@@ -1926,6 +1926,7 @@
 <div id="menu-drop">
   <button id="btn-stats">기 록</button>
   <button id="btn-codex">명문 사전</button>
+  <button id="btn-scrolls">古 文 書</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -2348,6 +2349,20 @@
 </div>
 
 <!-- v90 처치 보고서 모달 (이름 있는 적 컬렉션) -->
+<!-- v124 古文書 모달 -->
+<div class="modal" id="scrolls-modal">
+  <div class="modal-box" style="max-width: 500px;">
+    <h2>古  文  書</h2>
+    <p id="scrolls-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
+    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+      검의 길에 새겨진 8장의 두루마리.<br>
+      게임의 마일스톤 달성 시 열립니다.
+    </p>
+    <div id="scrolls-list" style="max-height: 420px; overflow-y: auto; padding: 0 4px"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
 <!-- v119 奇緣 발견 모달 -->
 <div class="modal" id="blessings-modal">
   <div class="modal-box" style="max-width: 460px;">
@@ -2664,6 +2679,8 @@
     blessingsDiscovered: {},  // v119 奇緣 — 발견한 축복 영구 기록
     swordGeneration: 0,       // v123 系譜 — 누적 검 생성 횟수
     generationMilestones: {}, // v123 系譜 — 달성한 위계 마일스톤
+    scrollsUnlocked: {},      // v124 古文書 — 풀린 두루마리
+    scrollsAllRead: false,    // v124 古文書 — 모두 풀었는지
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
@@ -2754,6 +2771,8 @@
       if (!state.erasEntered || typeof state.erasEntered !== 'object') state.erasEntered = {};  // v120 紀元
       if (typeof state.swordGeneration !== 'number') state.swordGeneration = state.sealedSwords ? state.sealedSwords.length : 0;  // v123 系譜 — 기존 사용자는 봉인된 검 수로 추정 초기화
       if (!state.generationMilestones || typeof state.generationMilestones !== 'object') state.generationMilestones = {};
+      if (!state.scrollsUnlocked || typeof state.scrollsUnlocked !== 'object') state.scrollsUnlocked = {};  // v124 古文書
+      if (typeof state.scrollsAllRead !== 'boolean') state.scrollsAllRead = false;
       if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
         state.currentSword.foesEncountered = {};
       }
@@ -2870,6 +2889,177 @@
       setSanctum(false);
       log('結界 — 조각 부족으로 자동 해제', 'fail');
     }
+  }
+
+  // === v124 古文書 — 8장의 두루마리 (마일스톤 기반 잠금 해제) ===
+  const SCROLLS = [
+    {
+      key: 'sho', kanji: '始', title: '시작',
+      lines: [
+        '검은 단순한 쇠가 아니다.',
+        '그것은 손과 하늘 사이의 약속이다.',
+        '첫 강화는 검사가 되겠다는 맹세이다.',
+      ],
+      unlock: () => (state.stats && state.stats.enhanceSuccess) >= 1,
+    },
+    {
+      key: 'ei', kanji: '影', title: '그림자',
+      lines: [
+        '그림자는 검의 적이 아니다.',
+        '검을 깨우는 거울이다.',
+        '베어내지 못한 그림자는 마음에 남는다.',
+      ],
+      unlock: () => state.totalSlain >= 1,
+    },
+    {
+      key: 'ha', kanji: '破', title: '부서짐',
+      lines: [
+        '부서진 검은 실패가 아니다.',
+        '그저 다른 형태의 끝일 뿐.',
+        '회수한 조각으로 새 검이 만들어진다.',
+      ],
+      unlock: () => state.totalDestroyed >= 1,
+    },
+    {
+      key: 'kei', kanji: '形', title: '형',
+      lines: [
+        '검의 형(形)은 검사의 형(形).',
+        '강직(直)·유연(曲)·무거움(重)·빠름(速).',
+        '어느 하나도 정답은 아니다.',
+      ],
+      unlock: () => {
+        const forms = new Set(state.sealedSwords.filter(s => s.form).map(s => s.form));
+        return forms.size >= 4;
+      },
+    },
+    {
+      key: 'kon', kanji: '魂', title: '혼',
+      lines: [
+        '검에는 혼이 깃든다.',
+        '사용할수록 깊어진다.',
+        '평범에서 깨움(覺)으로, 깨움에서 본질(本)로.',
+      ],
+      unlock: () => state.sealedSwords.some(s => (s.inscriptions || []).includes('本')),
+    },
+    {
+      key: 'dou', kanji: '道', title: '도',
+      lines: [
+        '도(道)는 끝이 아니다.',
+        '새 시작의 다른 이름이다.',
+        '한 번 도에 이른 자는 다시 평범하게 살 수 없다.',
+      ],
+      unlock: () => state.firstWayReached === true,
+    },
+    {
+      key: 'en', kanji: '緣', title: '인연',
+      lines: [
+        '기연(奇緣)은 우연이 아니다.',
+        '검과 사람과 시간이 만든 보이지 않는 매듭.',
+        '한 번 묶인 인연은 영원히 풀리지 않는다.',
+      ],
+      unlock: () => state.blessingsDiscovered && Object.keys(state.blessingsDiscovered).length >= 1,
+    },
+    {
+      key: 'sen', kanji: '仙', title: '신선',
+      lines: [
+        '백 대(代)를 잇는 자는 검사가 아니다.',
+        '검과 사람의 경계가 흐려진다.',
+        '신선이 된 자에게 검은 또 다른 자기 자신이다.',
+      ],
+      unlock: () => (state.swordGeneration || 0) >= 100,
+    },
+  ];
+  function checkScrolls() {
+    if (!state.scrollsUnlocked) state.scrollsUnlocked = {};
+    let newlyUnlocked = null;
+    for (const s of SCROLLS) {
+      if (!state.scrollsUnlocked[s.key] && s.unlock()) {
+        state.scrollsUnlocked[s.key] = Date.now();
+        newlyUnlocked = s;
+      }
+    }
+    if (newlyUnlocked) {
+      // 새 문서 알림
+      log('古文書 — 「' + newlyUnlocked.kanji + ' · ' + newlyUnlocked.title + '」 열렸다', 'success');
+      setTimeout(() => {
+        announceInscription(newlyUnlocked.kanji, '古文書 — ' + newlyUnlocked.title + ' 풀렸다');
+      }, 400);
+      // 전부 읽음 체크 → 영구 보너스
+      const allRead = SCROLLS.every(s => state.scrollsUnlocked[s.key]);
+      if (allRead && !state.scrollsAllRead) {
+        state.scrollsAllRead = true;
+        setTimeout(() => {
+          showScrollsAllRead();
+          state.protections += 1;
+          log('古文書 完讀 — 모든 두루마리 풀림. 시작 보호권 +1', 'success');
+        }, 1500);
+      }
+      save();
+    }
+  }
+  function showScrollsAllRead() {
+    // 완독 의식 — 큰 페이드
+    const el = document.createElement('div');
+    el.innerHTML = '完讀<br><span style="font-size:14px;letter-spacing:3px;opacity:0.85">古文書 — 모두 읽었다</span>';
+    el.style.cssText = 'position:fixed;top:40%;left:50%;transform:translate(-50%,-50%) scale(0.5);font-size:72px;font-family:"Noto Serif KR",serif;color:#fff5c0;text-shadow:0 0 24px rgba(255,245,192,1.0);pointer-events:none;z-index:1500;letter-spacing:12px;text-align:center;opacity:0;line-height:1.5';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.5)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.3 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.7 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.9)' },
+    ], { duration: 3000, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' });
+    setTimeout(() => el.remove(), 3100);
+    burstParticles('#fff5c0', 80);
+    setTimeout(() => burstParticles('#d4af37', 50), 200);
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      [110, 165, 220, 330, 440].forEach((f, i) => {
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(f, now + i * 0.18);
+        gain.gain.setValueAtTime(0.0, now + i * 0.18);
+        gain.gain.linearRampToValueAtTime(0.18, now + i * 0.18 + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 1.6);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now + i * 0.18); osc.stop(now + i * 0.18 + 1.7);
+      });
+    }
+  }
+  function renderScrolls() {
+    const unlocked = state.scrollsUnlocked || {};
+    const found = SCROLLS.filter(s => unlocked[s.key]).length;
+    const progress = $('scrolls-progress');
+    if (progress) {
+      progress.innerHTML = '풀 림  ' + found + ' / ' + SCROLLS.length +
+        (state.scrollsAllRead ? '  ·  <span style="color:#fff5c0;text-shadow:0 0 6px rgba(255,245,192,0.6)">完讀</span>' : '');
+    }
+    const list = $('scrolls-list');
+    if (!list) return;
+    list.innerHTML = SCROLLS.map(s => {
+      const u = unlocked[s.key];
+      const date = u ? new Date(u).toLocaleDateString('ko-KR') : '';
+      if (u) {
+        return '<div style="padding:14px;border:1px solid rgba(212,175,55,0.3);border-radius:2px;margin-bottom:10px;background:linear-gradient(180deg,rgba(212,175,55,0.05),rgba(212,175,55,0.02))">' +
+          '<div style="display:flex;align-items:baseline;gap:14px;margin-bottom:10px">' +
+            '<span style="color:var(--accent);font-size:24px;text-shadow:0 0 8px rgba(212,175,55,0.5);letter-spacing:0">' + s.kanji + '</span>' +
+            '<span style="color:var(--fg);letter-spacing:3px;font-size:12px">' + s.title + '</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:var(--fg);line-height:2;letter-spacing:2px;padding-left:8px;border-left:1px solid var(--line);opacity:0.92">' +
+            s.lines.map(l => '<div>' + l + '</div>').join('') +
+          '</div>' +
+          (date ? '<div style="color:var(--dim);font-size:9px;margin-top:8px;opacity:0.55;text-align:right">' + date + ' 풀림</div>' : '') +
+        '</div>';
+      } else {
+        return '<div style="padding:14px;border:1px solid var(--line);border-radius:2px;margin-bottom:10px;opacity:0.35">' +
+          '<div style="display:flex;align-items:baseline;gap:14px;margin-bottom:8px">' +
+            '<span style="color:var(--dim);font-size:24px;letter-spacing:0">?</span>' +
+            '<span style="color:var(--dim);letter-spacing:3px;font-size:12px">미 발 견</span>' +
+          '</div>' +
+          '<div style="font-size:10px;color:var(--dim);letter-spacing:2px;padding-left:8px;opacity:0.7">— 게임 중 자연스럽게 풀립니다 —</div>' +
+        '</div>';
+      }
+    }).join('');
   }
 
   // === v123 系譜 — 누적 검 생성 기반 4단계 위계 ===
@@ -4222,6 +4412,7 @@
       checkStars();  // v116 七星
       setTimeout(() => tryBlessing('enhanceSuccess'), 250);  // v119 龍鱗
       setTimeout(() => tryBlessing('enhance'), 280);  // v119 千年松 등
+      setTimeout(() => checkScrolls(), 400);  // v124 古文書
       recordLevelHistory();
       // v84 정말 최종 강화 (+MAX_LEVEL=15 도달) 시 엔딩 발동 — 한 번만
       if (state.level >= MAX_LEVEL && !state.endingShown) {
@@ -4289,6 +4480,7 @@
         state.level = 0;
         log('검이 부서졌다 (+' + destroyedLevel + ')', 'destroy');
         showSwordVoice('destroy', destroyedLevel);  // v113 劍聲
+        setTimeout(() => checkScrolls(), 400);  // v124 古文書 — 破 scroll
         burstParticles('#c0392b', 30);
         SFX.destroy();
         screenShake(true);  // 검 파괴 — 큰 흔들림
@@ -5013,6 +5205,7 @@
       }
       checkInscriptions();
       checkStars();  // v116 七星
+      setTimeout(() => checkScrolls(), 400);  // v124 古文書
       log(c.type.name + ' 베어냄 +' + c.reward + ' 조각', 'success');
       recordEvent(c.type.name + ' 베어냄 +' + c.reward);
       burstParticles(c.type.isDemon ? '#c0392b' : '#d4af37', c.type.isDemon ? 30 : 18);
@@ -5882,6 +6075,7 @@
     if (!state.blessingsDiscovered) state.blessingsDiscovered = {};
     if (state.blessingsDiscovered[key]) return false;
     state.blessingsDiscovered[key] = Date.now();
+    setTimeout(() => checkScrolls(), 1200);  // v124 古文書 — 緣 scroll trigger
     return true;
   }
   function showBlessing(blessing, isFirst) {
@@ -6412,6 +6606,8 @@
     setTimeout(() => tryBlessing('sealAfter'), 1500);
     // v123 系譜 — 세대 마일스톤 체크 (탄생 후 약간 지연)
     setTimeout(() => checkGenerationMilestone(prevGen), 800);
+    // v124 古文書 — 세대/형 관련 스크롤 체크
+    setTimeout(() => checkScrolls(), 1100);
   }
   const NEWSWORD_COST = 50;
 
@@ -7883,6 +8079,12 @@
     $('blessings-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
+  // v124 古文書 모달
+  $('btn-scrolls').addEventListener('click', () => {
+    renderScrolls();
+    $('scrolls-modal').classList.add('active');
+    $('menu-drop').classList.remove('open');
+  });
   function renderBlessings() {
     const discovered = state.blessingsDiscovered || {};
     const found = BLESSINGS.filter(b => discovered[b.key]).length;
@@ -8228,6 +8430,8 @@
     blessingsDiscovered: {},  // v119 奇緣 — 발견한 축복 영구 기록
     swordGeneration: 0,       // v123 系譜 — 누적 검 생성 횟수
     generationMilestones: {}, // v123 系譜 — 달성한 위계 마일스톤
+    scrollsUnlocked: {},      // v124 古文書 — 풀린 두루마리
+    scrollsAllRead: false,    // v124 古文書 — 모두 풀었는지
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0, divinationStones: 0,
       firstWayReached: false,
