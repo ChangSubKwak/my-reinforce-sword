@@ -1996,6 +1996,7 @@
     padding: 6px 2px;
   }
   .legacy-card {
+    position: relative;
     background: rgba(255,255,255,0.025);
     border: 1px solid var(--line);
     border-radius: 3px;
@@ -5241,6 +5242,33 @@
       osc.connect(g); g.connect(ctx.destination);
       osc.start(now); osc.stop(now + (dur / 1000) + 0.1);
     }
+  }
+
+  // === v163 鬪將 — 봉인 검 챔피언 (대국 최다승) ===
+  function getChampionSwordIdx() {
+    if (!state.duelWins) return -1;
+    let bestIdx = -1;
+    let bestWins = 2;  // 최소 3승부터 챔피언
+    Object.keys(state.duelWins).forEach(k => {
+      const wins = state.duelWins[k];
+      const idx = parseInt(k, 10);
+      if (wins > bestWins) {
+        bestWins = wins;
+        bestIdx = idx;
+      } else if (wins === bestWins && idx > bestIdx) {
+        // 동수 시 더 최근 검 우선
+        bestIdx = idx;
+      }
+    });
+    return bestIdx;
+  }
+  function getChampionInfo() {
+    const idx = getChampionSwordIdx();
+    if (idx < 0) return null;
+    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    const sword = all[idx];
+    if (!sword) return null;
+    return { idx, sword, wins: state.duelWins[idx] || 0 };
   }
 
   // === v159 對局 — 봉인 검 2자루 자동 대결 ===
@@ -10678,6 +10706,14 @@
       '</div>' +
       (s.omenTotal >= 5 ? '<div style="text-align:center;color:var(--dim);font-size:10px;padding:4px 0;letter-spacing:2px">전조 적중률 ' + (s.omenHits || 0) + '/' + s.omenTotal + ' (' + Math.round((s.omenHits || 0) / s.omenTotal * 100) + '%)</div>' : '') +
       (s.scars > 0 ? '<div style="text-align:center;color:rgba(180,70,50,0.8);font-size:10px;padding:4px 0;letter-spacing:3px">刻痕 ' + '●'.repeat(s.scars) + '○'.repeat(3 - s.scars) + '  · 파괴 직전 ' + s.scars + '번 살아남았다</div>' : '') +
+      (function() {
+        // v163 鬪將 — 회고 모달 배지
+        const idx0 = index - 1;
+        const wins = (state.duelWins && state.duelWins[idx0]) || 0;
+        const isChamp = getChampionSwordIdx() === idx0;
+        if (wins === 0) return '';
+        return '<div style="text-align:center;font-size:10px;padding:6px 0;letter-spacing:3px;color:' + (isChamp ? '#fff5c0' : 'var(--dim)') + (isChamp ? ';text-shadow:0 0 4px rgba(255,245,192,0.4)' : '') + '">' + (isChamp ? '🏆 鬪將 ' : '') + '對局 ' + wins + '승</div>';
+      })() +
       (s.stars ? (function() {
         const lit = STARS.filter(st => s.stars[st.key]).length;
         if (lit === 0) return '';
@@ -10797,7 +10833,12 @@
         const name = s.name || makeSwordName(s.form, ins, s.level);
         const soulStr = (typeof s.soul === 'number' && s.soul > 0) ? s.soul : '';
         const keyIns = ins.filter(k => ['道','鬼斬','本','覺','斷魔','逆轉'].includes(k));
-        return '<div class="legacy-card' + (hasWay ? ' has-way' : '') + '" data-sword-idx="' + originalIdx + '">' +
+        // v163 鬪將 — 챔피언 표시
+        const champIdx = getChampionSwordIdx();
+        const isChampion = (champIdx === originalIdx);
+        const wins = (state.duelWins && state.duelWins[originalIdx]) || 0;
+        return '<div class="legacy-card' + (hasWay ? ' has-way' : '') + (isChampion ? ' champion' : '') + '" data-sword-idx="' + originalIdx + '"' + (isChampion ? ' style="border-color:#fff5c0;box-shadow:0 0 8px rgba(255,245,192,0.4)"' : '') + '>' +
+          (isChampion ? '<div style="position:absolute;top:-6px;right:-6px;background:#fff5c0;color:#1a0f08;font-size:8px;letter-spacing:1px;padding:2px 5px;border-radius:2px;font-weight:700;text-shadow:none;z-index:5">鬪將</div>' : '') +
           buildMiniSwordSVG(s) +
           '<div class="lc-name">' + name + '</div>' +
           '<div class="lc-meta">+' + (s.level || 0) + (soulStr ? ' · 魂' + soulStr : '') + '</div>' +
@@ -10806,6 +10847,7 @@
           ).join('') + '</div>' +
           (s.memo ? '<div class="lc-memo">' + s.memo + '</div>' : '') +
           (s.scars > 0 ? '<div style="font-size:8px;color:rgba(180,70,50,0.7);letter-spacing:2px;margin-top:2px">' + '刻'.repeat(s.scars) + '</div>' : '') +
+          (wins > 0 ? '<div style="font-size:8px;color:rgba(255,245,192,0.7);letter-spacing:2px;margin-top:2px">勝 ' + wins + '</div>' : '') +
           '</div>';
       });
       list.innerHTML = items.join('');
@@ -12009,6 +12051,12 @@
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">정 점</div>' +
       row('검 판매', (s.sealed || 0) + ' 회') +
       row('도(道) 달성', (s.wayReached || 0) + ' 회', '#fff5c0') +
+      (function() {
+        // v163 鬪將 — 챔피언 표시
+        const champ = getChampionInfo();
+        if (!champ) return '';
+        return '<div style="margin:10px 0;padding:8px 10px;background:rgba(255,245,192,0.06);border-left:2px solid #fff5c0;font-size:11px;letter-spacing:2px"><span style="color:#fff5c0;text-shadow:0 0 4px rgba(255,245,192,0.5)">鬪將</span> <span style="color:var(--fg)">' + (champ.sword.name || '검') + '</span> <span style="color:var(--dim);font-size:10px">— ' + champ.wins + '승</span></div>';
+      })() +
       renderRecords() +  // v156 新記
       renderHiddenAchievements();  // v152 風月
   }
