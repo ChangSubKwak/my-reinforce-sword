@@ -3115,6 +3115,7 @@
     playerSeal: '',           // v140 篆刻 — 플레이어 인장 (1자)
     collectionMilestones: {}, // v145 銘集 — 달성한 명문 수집 마일스톤
     shrineDonations: {},      // v149 神祠 — 영구 헌사 잠금 해제
+    hiddenAchievements: {},   // v152 風月 — 숨겨진 조용한 성취
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
@@ -3292,6 +3293,7 @@
       if (typeof state.playerSeal !== 'string') state.playerSeal = '';  // v140 篆刻
       if (!state.collectionMilestones || typeof state.collectionMilestones !== 'object') state.collectionMilestones = {};  // v145
       if (!state.shrineDonations || typeof state.shrineDonations !== 'object') state.shrineDonations = {};  // v149
+      if (!state.hiddenAchievements || typeof state.hiddenAchievements !== 'object') state.hiddenAchievements = {};  // v152
       if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
         state.currentSword.foesEncountered = {};
       }
@@ -4772,6 +4774,77 @@
         }
       });
     });
+  }
+
+  // === v152 風月 — 숨겨진 조용한 성취 (sealed 검 데이터 자동 패턴 발견) ===
+  const HIDDEN_ACHIEVEMENTS = [
+    {
+      key: 'shinjuu', kanji: '慎重', label: '신중의 검',
+      desc: '한 검에서 보호권 5회 이상 사용',
+      check: (sword) => (sword.protectsUsed || 0) >= 5,
+    },
+    {
+      key: 'konshu', kanji: '魂主', label: '영혼의 주인',
+      desc: '한 검의 영혼이 95 이상 도달',
+      check: (sword) => (sword.soul || 0) >= 95,
+    },
+    {
+      key: 'jusshoo', kanji: '十勝', label: '열 번의 승리',
+      desc: '한 검으로 그림자 10명 이상 베어냄',
+      check: (sword) => (sword.slainCount || 0) >= 10,
+    },
+    {
+      key: 'muyoku', kanji: '無欲', label: '욕심 없는 검',
+      desc: '+10 이상에서 보호권 한 번도 안 쓰고 봉인',
+      check: (sword) => (sword.level || 0) >= 10 && (sword.protectsUsed || 0) === 0,
+    },
+    {
+      key: 'shichisei', kanji: '七星完', label: '북두칠성을 모두 본 자',
+      desc: '한 검에서 7별 모두 달성',
+      check: (sword) => {
+        const stars = sword.stars || {};
+        return Object.keys(stars).length >= 7;
+      },
+    },
+    {
+      key: 'kessai', kanji: '潔齋', label: '깨끗한 일생',
+      desc: '+15 도달 + 흉터 없이 봉인',
+      check: (sword) => (sword.inscriptions || []).includes('道') && (sword.scars || 0) === 0,
+    },
+  ];
+  function checkHiddenAchievements(sword) {
+    if (!sword) return;
+    if (!state.hiddenAchievements) state.hiddenAchievements = {};
+    HIDDEN_ACHIEVEMENTS.forEach(a => {
+      if (state.hiddenAchievements[a.key]) return;
+      if (a.check(sword)) {
+        state.hiddenAchievements[a.key] = Date.now();
+        setTimeout(() => {
+          announceInscription(a.kanji, '風月 — ' + a.label + ' — ' + a.desc);
+          log('🌸 風月 — ' + a.label + ' 발견', 'success');
+        }, 800);
+      }
+    });
+  }
+  function renderHiddenAchievements() {
+    const found = state.hiddenAchievements || {};
+    const total = HIDDEN_ACHIEVEMENTS.length;
+    const foundCount = HIDDEN_ACHIEVEMENTS.filter(a => found[a.key]).length;
+    let html = '<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">' +
+      '<div style="font-size:11px;color:var(--accent);letter-spacing:5px;margin-bottom:8px;text-align:center">風 月  ·  ' + foundCount + ' / ' + total + '</div>' +
+      '<div style="font-size:9px;color:var(--dim);text-align:center;margin-bottom:10px;letter-spacing:1px;opacity:0.7">조용한 성취 — 알아본 자만 보는 시</div>';
+    html += HIDDEN_ACHIEVEMENTS.map(a => {
+      const ok = !!found[a.key];
+      return '<div style="padding:6px 4px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">' +
+        '<span style="font-size:18px;color:' + (ok ? 'var(--accent)' : 'var(--dim)') + ';width:40px;text-align:center;letter-spacing:0;opacity:' + (ok ? '1' : '0.35') + '">' + (ok ? a.kanji : '?') + '</span>' +
+        '<div style="flex:1;font-size:10px;line-height:1.5">' +
+          '<div style="color:' + (ok ? 'var(--fg)' : 'var(--dim)') + ';letter-spacing:2px">' + (ok ? a.label : '???') + '</div>' +
+          '<div style="color:var(--dim);font-size:9px;margin-top:2px;opacity:' + (ok ? '0.85' : '0.55') + '">' + (ok ? a.desc : '— 조용히 발견됨 —') + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    html += '</div>';
+    return html;
   }
 
   // === v145 銘集 — 명문 수집 메타 차원 ===
@@ -8514,6 +8587,9 @@
     log('🏛 殿堂 — ' + swordName + ' 박물관에 영구 진열되었다 (강화 성공 +1.5%)', 'success');
     recordEvent('殿堂 진열 ' + swordName);
     captureRubbing('firstEnshrine', { level: lv, form, inscriptions: ins.slice(), soul: state.currentSword.soul || 0 });  // v136
+    // v152 風月 — 殿堂 진열 시에도 숨겨진 성취 검사
+    const justEnshrined = state.enshrined[state.enshrined.length - 1];
+    checkHiddenAchievements(justEnshrined);
     SFX.ritual();
     burstParticles('#fff5c0', 60);
     setTimeout(() => burstParticles('#d4af37', 40), 200);
@@ -9269,6 +9345,9 @@
     if (lv >= 10) captureRubbing('firstSeal10', { level: lv, form, inscriptions: ins.slice(), soul: state.currentSword.soul || 0 });
     // v145 銘集 — 명문 수집 마일스톤 검사
     checkCollectionMilestones();
+    // v152 風月 — 숨겨진 성취 검사 (방금 push한 sealedSwords 마지막 항목)
+    const justSealed = state.sealedSwords[state.sealedSwords.length - 1];
+    checkHiddenAchievements(justSealed);
     // v117 四道 — 이 봉인으로 4형 道 모두 달성 시 큰 의식
     if (!fourWaysBefore && hasFourWays()) {
       setTimeout(() => {
@@ -11021,7 +11100,8 @@
       row('검 파괴', (state.totalDestroyed || 0) + ' 회', 'var(--danger)') +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">정 점</div>' +
       row('검 판매', (s.sealed || 0) + ' 회') +
-      row('도(道) 달성', (s.wayReached || 0) + ' 회', '#fff5c0');
+      row('도(道) 달성', (s.wayReached || 0) + ' 회', '#fff5c0') +
+      renderHiddenAchievements();  // v152 風月
   }
   // 초기 라벨 반영
   if (muted) { const mb = $('btn-mute'); if (mb) mb.textContent = '소 리  켜 기'; }
@@ -11052,6 +11132,7 @@
     playerSeal: '',           // v140 篆刻 — 플레이어 인장 (1자)
     collectionMilestones: {}, // v145 銘集 — 달성한 명문 수집 마일스톤
     shrineDonations: {},      // v149 神祠 — 영구 헌사 잠금 해제
+    hiddenAchievements: {},   // v152 風月 — 숨겨진 조용한 성취
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0, divinationStones: 0,
       firstWayReached: false,
