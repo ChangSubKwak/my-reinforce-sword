@@ -2298,6 +2298,7 @@
   <button id="btn-shrine">神  祠</button>
   <button id="btn-duel">對  局</button>
   <button id="btn-bunshu">文  集</button>
+  <button id="btn-status">現  勢</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -2854,6 +2855,18 @@
 </div>
 
 <!-- v90 처치 보고서 모달 (이름 있는 적 컬렉션) -->
+<!-- v164 現勢 모달 — 현재 활성 효과 dashboard -->
+<div class="modal" id="status-modal">
+  <div class="modal-box" style="max-width: 480px;">
+    <h2>現  勢</h2>
+    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+      지금 이 검에 작용하는 모든 활성 효과.
+    </p>
+    <div id="status-list" style="max-height: 440px; overflow-y: auto; padding: 0 4px;font-size:11px;line-height:1.9"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
 <!-- v160 文集 모달 — 사용자 글 모음 viewer -->
 <div class="modal" id="bunshu-modal">
   <div class="modal-box" style="max-width: 480px;">
@@ -5111,6 +5124,122 @@
         }
       });
     });
+  }
+
+  // === v164 現勢 — 현재 활성 효과 통합 dashboard ===
+  function renderStatus() {
+    const list = $('status-list');
+    if (!list) return;
+    const pct = (n) => (n >= 0 ? '+' : '') + Math.round(n * 1000) / 10 + '%';
+    const mul = (m) => '×' + (Math.round(m * 100) / 100);
+    const sections = [];
+    const line = (label, value, color) =>
+      '<div style="display:flex;justify-content:space-between;padding:3px 6px;border-bottom:1px solid var(--line);">' +
+        '<span style="color:var(--dim);letter-spacing:2px">' + label + '</span>' +
+        '<span style="color:' + (color || 'var(--accent)') + ';letter-spacing:2px">' + value + '</span>' +
+      '</div>';
+    const section = (title, lines) => {
+      if (lines.length === 0) return '';
+      return '<div style="margin-bottom:14px"><div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:4px 0;border-bottom:1px solid var(--line);margin-bottom:4px">' + title + '</div>' + lines.join('') + '</div>';
+    };
+
+    // 1. 글로벌 강화 성공 보너스 (각 출처)
+    const successLines = [];
+    if (typeof eraSuccessBonus === 'function') {
+      const v = eraSuccessBonus(); if (v) successLines.push(line('紀元 ' + getCurrentEra().name, pct(v)));
+    }
+    if (typeof generationSuccessBonus === 'function') {
+      const v = generationSuccessBonus(); if (v) successLines.push(line('系譜 (' + (state.swordGeneration||0) + '代)', pct(v)));
+    }
+    if (typeof fourWaySuccessBonus === 'function') {
+      const v = fourWaySuccessBonus(); if (v) successLines.push(line('四道', pct(v)));
+    }
+    if (typeof enshrineSuccessBonus === 'function') {
+      const v = enshrineSuccessBonus(); if (v) successLines.push(line('殿堂 (' + (state.enshrined||[]).length + ')', pct(v)));
+    }
+    if (typeof shrineSuccessBonus === 'function') {
+      const v = shrineSuccessBonus(); if (v) successLines.push(line('神祠 誠', pct(v)));
+    }
+    if (typeof schoolSuccessBonus === 'function') {
+      const v = schoolSuccessBonus(); if (v) successLines.push(line('유파 (流派)', pct(v)));
+    }
+    if (typeof trialSuccessBonus === 'function') {
+      const v = trialSuccessBonus(); if (v) successLines.push(line('시련의 혼', pct(v)));
+    }
+    if (typeof todSuccessBonus === 'function') {
+      const v = todSuccessBonus(); if (v) successLines.push(line('朝 (시간대)', pct(v)));
+    }
+    if (typeof breathBonus === 'function') {
+      const v = breathBonus(); if (v) successLines.push(line('호흡', pct(v)));
+    }
+    sections.push(section('강화 성공 보너스', successLines));
+
+    // 2. 활성 charges (1회용)
+    const chargeLines = [];
+    if (state.metsumaoCharges > 0) chargeLines.push(line('滅魔 (다음 슬레이 ×1.5)', '×' + state.metsumaoCharges));
+    if (state.hondoCharges > 0) chargeLines.push(line('本道 (다음 새 검 +20영혼)', '×' + state.hondoCharges));
+    if (state.swordWish && state.swordWish.charges > 0) chargeLines.push(line(state.swordWish.key + ' (강화 유언)', '×' + state.swordWish.charges));
+    if (state.swordWishSlay && state.swordWishSlay.charges > 0) chargeLines.push(line(state.swordWishSlay.key + ' (슬레이 유언)', '×' + state.swordWishSlay.charges));
+    if (typeof blessingState !== 'undefined') {
+      if (blessingState.matsuCount > 0) chargeLines.push(line('千年松 (비용 -50%)', '×' + blessingState.matsuCount));
+      if (blessingState.ginhaActive) chargeLines.push(line('銀河 (다음 봉인 ×2)', '활성'));
+      if (blessingState.sinmuPending) chargeLines.push(line('神巫 (다음 검 축복)', '예약'));
+    }
+    if (typeof lightningBonusReady !== 'undefined' && lightningBonusReady) chargeLines.push(line('雷 (다음 강화 +10%)', '활성'));
+    if (typeof dawnBonusCount !== 'undefined' && dawnBonusCount > 0) chargeLines.push(line('黎明 (강화 +10%)', '×' + dawnBonusCount));
+    if (typeof pendingBreathBoost !== 'undefined' && pendingBreathBoost) chargeLines.push(line('眞空 보너스 (다음 호흡 ×2)', '활성'));
+    if (state.divinationStones > 0) chargeLines.push(line('占卜 (전조 정확)', '×' + state.divinationStones));
+    sections.push(section('활성 효과 (1회용 / 단기)', chargeLines));
+
+    // 3. 시간층 (3 layer)
+    const timeLines = [];
+    const eraNow = getCurrentEra();
+    timeLines.push(line('紀元', eraNow.name + ' (' + (state.stats && state.stats.enhanceAttempts || 0) + ' 시도)'));
+    if (typeof getSeason === 'function') timeLines.push(line('季節', getSeason().name));
+    if (typeof getTimeOfDay === 'function') timeLines.push(line('朝夕', getTimeOfDay().name + ' (' + getTimeOfDay().label + ')'));
+    if (typeof weatherActive !== 'undefined' && weatherActive) {
+      timeLines.push(line('天候', weatherActive === 'rain' ? '雨' : '風'));
+    }
+    sections.push(section('시간 / 환경', timeLines));
+
+    // 4. 검 (현재) 상태
+    const swordLines = [];
+    if (state.hasSword && state.currentSword) {
+      const cs = state.currentSword;
+      swordLines.push(line('형', cs.form || '無'));
+      swordLines.push(line('강화도', '+' + state.level));
+      swordLines.push(line('영혼', (cs.soul || 0) + ' / 100'));
+      if (cs.scars) swordLines.push(line('흉터', cs.scars + ' / 3'));
+      const stars = cs.stars ? Object.keys(cs.stars).length : 0;
+      if (stars > 0) swordLines.push(line('七星', stars + ' / 7'));
+      if (cs.inscriptions && cs.inscriptions.length) swordLines.push(line('명문', cs.inscriptions.length + ' 종'));
+      if (typeof currentMood !== 'undefined') swordLines.push(line('기분 (氣)', currentMood === 'joy' ? '喜' : currentMood === 'rage' ? '怒' : '静'));
+      if (typeof successStreak !== 'undefined' && successStreak > 0) swordLines.push(line('강화 連', successStreak + '회'));
+      if (typeof slayStreak !== 'undefined' && slayStreak > 0) swordLines.push(line('슬레이 連斬', slayStreak + '회'));
+      if (typeof failStreak !== 'undefined' && failStreak > 0) swordLines.push(line('실패 streak', failStreak + '회'));
+      if (typeof adversityReady !== 'undefined' && adversityReady) swordLines.push(line('逆轉 준비', '활성', '#fff5c0'));
+    } else {
+      swordLines.push(line('상태', '검 없음', 'var(--dim)'));
+    }
+    sections.push(section('현재 검', swordLines));
+
+    // 5. 메타 패시브 (영구)
+    const metaLines = [];
+    if (typeof shrineHas === 'function') {
+      if (shrineHas('d1')) metaLines.push(line('誠 헌사', '강화 +1%'));
+      if (shrineHas('d2')) metaLines.push(line('護 헌사', '새 검 시작 보호권 +1'));
+      if (shrineHas('d3')) metaLines.push(line('魂 헌사', '새 검 시작 영혼 +5'));
+      if (shrineHas('d4')) metaLines.push(line('勇 헌사', '슬레이 ×1.02'));
+      if (shrineHas('d5')) metaLines.push(line('殿 헌사', '殿堂 슬롯 +1'));
+    }
+    if (typeof trialUnlocked === 'function') {
+      const trialCount = TRIALS.filter(t => trialUnlocked(t.key)).length;
+      if (trialCount > 0) metaLines.push(line('시련의 혼', trialCount + ' / ' + TRIALS.length + ' 열림'));
+    }
+    metaLines.push(line('100代 仙 명문', (state.swordGeneration || 0) >= 100 ? '활성 (모든 새 검)' : '미달성', (state.swordGeneration || 0) >= 100 ? 'var(--accent)' : 'var(--dim)'));
+    sections.push(section('영구 패시브 (메타)', metaLines));
+
+    list.innerHTML = sections.join('') || '<div style="text-align:center;color:var(--dim);padding:24px">— 활성 효과 없음 —</div>';
   }
 
   // === v160 文集 — 사용자가 새긴 모든 글 통합 viewer ===
@@ -11500,6 +11629,12 @@
   // v160 文集 모달
   $('btn-bunshu').addEventListener('click', () => {
     openBunshu();
+    $('menu-drop').classList.remove('open');
+  });
+  // v164 現勢 모달
+  $('btn-status').addEventListener('click', () => {
+    renderStatus();
+    $('status-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
   if ($('bunshu-prev')) $('bunshu-prev').addEventListener('click', () => {
