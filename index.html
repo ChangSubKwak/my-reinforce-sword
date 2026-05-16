@@ -2204,12 +2204,15 @@
     <div id="sanctum-row">
       <label><input type="checkbox" id="sanctum-check"><span id="sanctum-label">結界  ·  비용 ×3, 파괴 차단</span></label>
     </div>
-    <div id="stone-row" style="display:flex;gap:12px;justify-content:center;font-size:11px;color:var(--dim);margin-bottom:10px">
+    <div id="stone-row" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-bottom:10px">
       <label id="whet-row" style="display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="whet-check"><span id="whet-label">砥 (성공 +25%)</span>
       </label>
       <label id="spirit-row" style="display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="spirit-check"><span id="spirit-label">靈 (파괴 차단)</span>
+      </label>
+      <label id="divination-row" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="divination-check"><span id="divination-label">占 (전조 정확)</span>
       </label>
     </div>
     <div id="enhance-echo" style="display:none"></div>
@@ -2255,6 +2258,10 @@
     <div class="recipe">
       <div class="recipe-text">영석<small>조각 25 · 다음 강화 파괴 차단</small></div>
       <button class="recipe-btn" data-recipe="spiritstone">만 들 기</button>
+    </div>
+    <div class="recipe">
+      <div class="recipe-text">占卜<small>조각 15 · 다음 강화 전조 100% 정확</small></div>
+      <button class="recipe-btn" data-recipe="divinationstone">만 들 기</button>
     </div>
     <button class="modal-close" data-close>닫 기</button>
   </div>
@@ -2639,6 +2646,7 @@
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
+    divinationStones: 0,  // v122 占卜 — 정확한 전조
     firstWayReached: false,  // v16 始祖 — 첫 道 도달 시 true, 영구
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
@@ -2715,6 +2723,7 @@
       if (!Array.isArray(state.currentSword.levelHistory)) state.currentSword.levelHistory = [state.level || 0];
       if (typeof state.whetstones !== 'number') state.whetstones = 0;
       if (typeof state.spiritstones !== 'number') state.spiritstones = 0;
+      if (typeof state.divinationStones !== 'number') state.divinationStones = 0;  // v122 占卜
       if (typeof state.firstWayReached !== 'boolean') state.firstWayReached = false;
       if (typeof state.endingShown !== 'boolean') state.endingShown = false;
       if (!state.shadowOriginsSlain || typeof state.shadowOriginsSlain !== 'object') state.shadowOriginsSlain = {};
@@ -3086,8 +3095,11 @@
   }
 
   // === 前兆 — 강화 전조 오멘 ===
+  // v122 占卜 — 다음 강화의 random 롤을 미리 잠가둠 (omen이 100% 정확)
+  let divinationLockedSuccessRoll = null;
+  let divinationLockedFailRoll = null;
   function rollOmen() {
-    // 현재 강화 단계의 주사위 방향을 ~80% 정확도로 예측
+    // 현재 강화 단계의 주사위 방향을 ~80% 정확도로 예측 (v122 占卜 사용 시 100%)
     const lv = state.level;
     if (lv >= MAX_LEVEL || !state.hasSword) return 'none';
     const t = TABLE[lv];
@@ -3095,15 +3107,28 @@
     const rsv = getResolve();
     const successAdd = ((form && form.successBonus) || 0) + soulEffects().successBonus
       + schoolSuccessBonus() + breathBonus() + guardianBonus().successBonus
-      + trialSuccessBonus() + rsv.successAdd + (adversityReady ? 0.40 : 0);
+      + trialSuccessBonus() + rsv.successAdd + (adversityReady ? 0.40 : 0) + eraSuccessBonus() + enshrineSuccessBonus() + fourWaySuccessBonus();
     const destroyReduce2 = (form && form.destroyReduce) || 0;
-    const effectiveDestroy = Math.max(0, (t.destroy - destroyReduce2 - schoolDestroyReduce() - guardianBonus().destroyReduce - (adversityReady ? 0.12 : 0)) * rsv.destroyMul);
+    const effectiveDestroy = Math.max(0, (t.destroy - destroyReduce2 - schoolDestroyReduce() - guardianBonus().destroyReduce - (adversityReady ? 0.12 : 0) - getScarDestroyReduce()) * rsv.destroyMul);
     const trueSuccess = Math.min(1, t.success + successAdd);
-    // 80% accuracy: blend true prob with uniform random
-    const biasedRoll = Math.random() * 0.20 + Math.random() * 0.80;
-    if (biasedRoll < trueSuccess) return 'success';
-    if (Math.random() < effectiveDestroy / (1 - trueSuccess + 0.001)) return 'destroy';
+    // v122 占卜 — 체크박스 활성 시 실제 enhance에서 사용할 롤을 commit
+    const divCheck = $('divination-check');
+    const useDivination = divCheck && divCheck.checked && !divCheck.disabled && (state.divinationStones || 0) > 0;
+    let successRoll, failRoll;
+    if (useDivination) {
+      successRoll = divinationLockedSuccessRoll !== null ? divinationLockedSuccessRoll : (divinationLockedSuccessRoll = Math.random());
+      failRoll = divinationLockedFailRoll !== null ? divinationLockedFailRoll : (divinationLockedFailRoll = Math.random());
+    } else {
+      successRoll = Math.random() * 0.20 + Math.random() * 0.80;
+      failRoll = Math.random();
+    }
+    if (successRoll < trueSuccess) return 'success';
+    if (failRoll < effectiveDestroy / (1 - trueSuccess + 0.001)) return 'destroy';
     return 'hold';
+  }
+  function clearDivinationLock() {
+    divinationLockedSuccessRoll = null;
+    divinationLockedFailRoll = null;
   }
 
   function showOmen(omenType) {
@@ -3619,6 +3644,14 @@
       spiritLabel.textContent = '靈 ×' + state.spiritstones + (hasDestroyRisk ? ' (파괴 차단)' : ' (파괴 위험 없음)');
       spiritLabel.style.color = (state.spiritstones > 0 && hasDestroyRisk) ? 'var(--accent)' : 'var(--dim)';
     }
+    // v122 占卜 토글
+    const divCheck = $('divination-check'), divLabel = $('divination-label');
+    if (divCheck) {
+      divCheck.disabled = (state.divinationStones || 0) === 0;
+      if (divCheck.disabled) divCheck.checked = false;
+      divLabel.textContent = '占 ×' + (state.divinationStones || 0) + ' (전조 정확)';
+      divLabel.style.color = (state.divinationStones || 0) > 0 ? '#a0c0d8' : 'var(--dim)';
+    }
   }
 
   // === 로그 ===
@@ -3974,6 +4007,9 @@
     const spiritCheck = $('spirit-check');
     const useWhet = whetCheck && whetCheck.checked && !whetCheck.disabled && state.whetstones > 0;
     const useSpirit = spiritCheck && spiritCheck.checked && !spiritCheck.disabled && state.spiritstones > 0;
+    // v122 占卜
+    const divCheck = $('divination-check');
+    const useDivination = divCheck && divCheck.checked && !divCheck.disabled && (state.divinationStones || 0) > 0;
     // 餘香 destroyBlock은 spirit과 동일 효과 — OR 처리 (영석/잔향 둘 다 차단)
     const echoDestroyBlock = !!(enhanceEcho && enhanceEcho.destroyBlock);
     const echoSuccessBonus = (enhanceEcho && enhanceEcho.successBonus) || 0;
@@ -3986,6 +4022,7 @@
     if (useProtect) { state.protections -= pCost; state.currentSword.protectsUsed = (state.currentSword.protectsUsed || 0) + 1; }
     if (useWhet) state.whetstones--;
     if (useSpirit) state.spiritstones--;
+    if (useDivination) { state.divinationStones--; log('占卜 — 전조가 진실이 되었다', 'success'); }
     state.currentSword.enhanceAttempts++;
     const prevAttempts = (state.stats && state.stats.enhanceAttempts) || 0;  // v120 紀元 전환 감지용
     bumpStat('enhanceAttempts');
@@ -4008,7 +4045,10 @@
     lastEnhanceTime = Date.now(); // 호흡 리셋
     const adversityAdd = adversityReady ? 0.40 : 0;
     const adversityDestroyReduce = adversityReady ? 0.12 : 0;
-    const roll = Math.random();
+    // v122 占卜: 잠긴 롤이 있으면 그것을 사용 (omen이 100% 정확)
+    const roll = (useDivination && divinationLockedSuccessRoll !== null)
+      ? divinationLockedSuccessRoll
+      : Math.random();
     if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus()) {
       // 성공 (v107 連)
       if (adversityReady) { adversityReady = false; announceInscription('逆轉', '역경을 넘어 강화에 성공했다'); }
@@ -4077,6 +4117,8 @@
       protectCheck.checked = false;
       if ($('whet-check')) $('whet-check').checked = false;
       if ($('spirit-check')) $('spirit-check').checked = false;
+      if ($('divination-check')) $('divination-check').checked = false;
+      clearDivinationLock();  // v122 占卜 — 사용 후 잠금 해제
       resolveOmen('success');  // v102 驗: 전조 적중 피드백
       checkDestiny();  // v93 天命 — 강화 성공 후 운명 점검
       bumpDaily('enhanceSuccess', 1);  // v94 天時
@@ -4091,7 +4133,10 @@
       swordWrap.classList.add('shake');
       setTimeout(() => swordWrap.classList.remove('shake'), 400);
 
-      const failRoll = Math.random();
+      // v122 占卜: failRoll도 잠긴 값 사용 가능
+      const failRoll = (useDivination && divinationLockedFailRoll !== null)
+        ? divinationLockedFailRoll
+        : Math.random();
       // 영석/餘香影盾/結界(v121): 파괴 차단 / 유파 + 수호자 + 흉터(v111) 보너스도 destroy 감소 / v91 覺悟 배율 / v96 역경전기 감소
       const effectiveDestroy = (useSpirit || echoDestroyBlock || sanctumBlocksDestroy()) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce()) * rsv.destroyMul);
       // v121 結界: 파괴 차단 시 원래 destroy 확률을 downgrade로 흡수 (단순 안전이 아닌 비용 부과형 보호)
@@ -4177,6 +4222,8 @@
     protectCheck.checked = false;
     if ($('whet-check')) $('whet-check').checked = false;
     if ($('spirit-check')) $('spirit-check').checked = false;
+    if ($('divination-check')) $('divination-check').checked = false;
+    clearDivinationLock();  // v122 占卜 — 사용 후 잠금 해제
     // 실패 분기에서도 百鍊 카운트 확인 (강화 시도 자체로 누적)
     checkInscriptions();
     checkStars();  // v116 七星
@@ -6772,6 +6819,7 @@
     protection10: { cost: 130, run: () => { state.protections += 10; } },
     whetstone: { cost: 8, run: () => { state.whetstones++; } },
     spiritstone: { cost: 25, run: () => { state.spiritstones++; } },
+    divinationstone: { cost: 15, run: () => { state.divinationStones++; } },  // v122 占卜
     newsword: {
       cost: 50,
       check: () => !state.hasSword,
@@ -7291,6 +7339,19 @@
     showLoginError(null);
     $('login-email').value = '';
     $('login-otp-code').value = '';
+  }
+  // v122 占卜 체크박스 — 체크 해제 시 잠긴 롤 무효화
+  const _divCheck = $('divination-check');
+  if (_divCheck) {
+    _divCheck.addEventListener('change', (e) => {
+      if (!e.target.checked) clearDivinationLock();
+      else {
+        // 체크 시 즉시 omen 재계산 — 잠긴 롤이 omen에 반영됨
+        if (typeof showOmen === 'function' && typeof rollOmen === 'function') {
+          showOmen(rollOmen());
+        }
+      }
+    });
   }
   // v121 結界 체크박스
   const _sanctumCheck = $('sanctum-check');
@@ -8034,7 +8095,7 @@
     enshrined: [],  // v118 殿堂 — 박물관에 모셔진 道 검 (최대 3)
     blessingsDiscovered: {},  // v119 奇緣 — 발견한 축복 영구 기록
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
-      whetstones: 0, spiritstones: 0,
+      whetstones: 0, spiritstones: 0, divinationStones: 0,
       firstWayReached: false,
       endingShown: false,
       shadowOriginsSlain: {},
