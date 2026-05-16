@@ -2144,6 +2144,7 @@
   <button id="btn-rubbings">拓 本</button>
   <button id="btn-seal-craft">印  章</button>
   <button id="btn-journey">紀  程</button>
+  <button id="btn-shrine">神  祠</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -2697,6 +2698,20 @@
 </div>
 
 <!-- v90 처치 보고서 모달 (이름 있는 적 컬렉션) -->
+<!-- v149 神祠 모달 — 영구 헌사 -->
+<div class="modal" id="shrine-modal">
+  <div class="modal-box" style="max-width: 480px;">
+    <h2>神  祠</h2>
+    <p id="shrine-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
+    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+      조각을 헌사하여 영구 보너스를 얻습니다.<br>
+      각 헌사는 1회만 가능 (영구).
+    </p>
+    <div id="shrine-list" style="max-height: 440px; overflow-y: auto; padding: 0 4px"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
 <!-- v148 紀程 모달 — 여정 timeline -->
 <div class="modal" id="journey-modal">
   <div class="modal-box" style="max-width: 500px;">
@@ -3084,6 +3099,7 @@
     hondoCharges: 0,          // v138 雙銘 — 本道 새 검 시작 영혼 +20 남은 횟수
     playerSeal: '',           // v140 篆刻 — 플레이어 인장 (1자)
     collectionMilestones: {}, // v145 銘集 — 달성한 명문 수집 마일스톤
+    shrineDonations: {},      // v149 神祠 — 영구 헌사 잠금 해제
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
@@ -3260,6 +3276,7 @@
       if (typeof state.hondoCharges !== 'number') state.hondoCharges = 0;
       if (typeof state.playerSeal !== 'string') state.playerSeal = '';  // v140 篆刻
       if (!state.collectionMilestones || typeof state.collectionMilestones !== 'object') state.collectionMilestones = {};  // v145
+      if (!state.shrineDonations || typeof state.shrineDonations !== 'object') state.shrineDonations = {};  // v149
       if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
         state.currentSword.foesEncountered = {};
       }
@@ -4469,7 +4486,7 @@
     const matsuMulShow = blessingCostMul();  // v119
     const sanctumMulShow = sanctumCostMul();  // v121 結界
     const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow);
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus();
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
 
@@ -4642,6 +4659,104 @@
         osc.start(now + i * 0.04); osc.stop(now + i * 0.04 + 0.10);
       }
     }
+  }
+
+  // === v149 神祠 — 영구 헌사 (조각 소비형 메타 진행) ===
+  const SHRINE_DONATIONS = [
+    { key: 'd1', cost: 200,  kanji: '誠', label: '誠 — 정성을 다하다',     desc: '글로벌 강화 성공 +1%' },
+    { key: 'd2', cost: 500,  kanji: '護', label: '護 — 보호를 청하다',     desc: '모든 새 검 시작 보호권 +1' },
+    { key: 'd3', cost: 1000, kanji: '魂', label: '魂 — 영혼을 깨우다',     desc: '모든 새 검 시작 영혼 +5' },
+    { key: 'd4', cost: 2000, kanji: '勇', label: '勇 — 용맹을 빌다',       desc: '글로벌 슬레이 보상 ×1.02' },
+    { key: 'd5', cost: 5000, kanji: '殿', label: '殿 — 신성한 자리를 청하다', desc: '殿堂 슬롯 +1 (총 4)' },
+  ];
+  function shrineHas(key) {
+    return !!(state.shrineDonations && state.shrineDonations[key]);
+  }
+  function shrineSuccessBonus() {
+    return shrineHas('d1') ? 0.01 : 0;
+  }
+  function shrineStartProtection() {
+    return shrineHas('d2') ? 1 : 0;
+  }
+  function shrineStartSoul() {
+    return shrineHas('d3') ? 5 : 0;
+  }
+  function shrineSlayRewardMul() {
+    return shrineHas('d4') ? 1.02 : 1.0;
+  }
+  function shrineEnshrineCapBonus() {
+    return shrineHas('d5') ? 1 : 0;
+  }
+  function donateToShrine(key) {
+    const d = SHRINE_DONATIONS.find(x => x.key === key);
+    if (!d) return false;
+    if (shrineHas(key)) return false;
+    if (state.shards < d.cost) {
+      log('神祠 — 조각 부족 (' + d.cost + ' 필요)', 'fail');
+      return false;
+    }
+    state.shards -= d.cost;
+    if (!state.shrineDonations) state.shrineDonations = {};
+    state.shrineDonations[key] = Date.now();
+    // 축하 의식
+    log('🏯 神祠 — ' + d.label + ' 헌사 완료', 'success');
+    setTimeout(() => announceInscription(d.kanji, d.label + ' — ' + d.desc), 400);
+    burstParticles('#fff5c0', 40);
+    setTimeout(() => burstParticles('#d4af37', 25), 200);
+    // 종 음
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      [220, 330, 440].forEach((f, i) => {
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(f, now + i * 0.15);
+        g.gain.setValueAtTime(0.0, now + i * 0.15);
+        g.gain.linearRampToValueAtTime(0.18, now + i * 0.15 + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 1.6);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(now + i * 0.15); osc.stop(now + i * 0.15 + 1.7);
+      });
+    }
+    save();
+    render();
+    return true;
+  }
+  function renderShrine() {
+    const list = $('shrine-list');
+    if (!list) return;
+    const progress = $('shrine-progress');
+    const completed = SHRINE_DONATIONS.filter(d => shrineHas(d.key)).length;
+    if (progress) {
+      progress.innerHTML = '헌사  ' + completed + ' / ' + SHRINE_DONATIONS.length;
+    }
+    list.innerHTML = SHRINE_DONATIONS.map(d => {
+      const done = shrineHas(d.key);
+      const canAfford = state.shards >= d.cost;
+      const btnLabel = done ? '✦ 헌사 완료' : (canAfford ? '헌  사 · ' + d.cost : '조각 부족 (' + d.cost + ')');
+      const btnStyle = done
+        ? 'background:transparent;border:1px solid var(--safe);color:var(--safe);cursor:default'
+        : (canAfford
+          ? 'background:transparent;border:1px solid var(--accent);color:var(--accent);cursor:pointer'
+          : 'background:transparent;border:1px solid var(--line);color:var(--dim);cursor:not-allowed');
+      return '<div style="display:flex;align-items:center;gap:14px;padding:12px;border:1px solid ' + (done ? 'rgba(255,245,192,0.25)' : 'var(--line)') + ';border-radius:2px;margin-bottom:10px;background:' + (done ? 'rgba(255,245,192,0.04)' : 'transparent') + '">' +
+        '<span style="font-size:32px;color:' + (done ? '#fff5c0' : 'var(--accent)') + ';letter-spacing:0;width:50px;text-align:center;text-shadow:' + (done ? '0 0 8px rgba(255,245,192,0.5)' : 'none') + '">' + d.kanji + '</span>' +
+        '<div style="flex:1">' +
+          '<div style="color:var(--accent);letter-spacing:3px;font-size:13px">' + d.label + '</div>' +
+          '<div style="color:var(--dim);font-size:10px;margin-top:3px;letter-spacing:1px">' + d.desc + '</div>' +
+          '<button class="shrine-donate-btn" data-key="' + d.key + '" style="margin-top:8px;padding:6px 12px;font-family:inherit;font-size:10px;letter-spacing:3px;' + btnStyle + '"' + (done ? ' disabled' : '') + '>' + btnLabel + '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    // 헌사 버튼 클릭
+    list.querySelectorAll('.shrine-donate-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const k = btn.dataset.key;
+        if (donateToShrine(k)) {
+          // 모달 갱신
+          renderShrine();
+        }
+      });
+    });
   }
 
   // === v145 銘集 — 명문 수집 메타 차원 ===
@@ -5375,7 +5490,7 @@
     const roll = (useDivination && divinationLockedSuccessRoll !== null)
       ? divinationLockedSuccessRoll
       : Math.random();
-    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus()) {
+    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus()) {
       // 성공 (v107 連)
       if (adversityReady) { adversityReady = false; announceInscription('逆轉', '역경을 넘어 강화에 성공했다'); }
       failStreak = 0;
@@ -5940,6 +6055,9 @@
     // v147 天候 — 風 슬레이 보상 ×1.15
     const wMul = weatherSlayRewardMul();
     if (wMul !== 1) reward = Math.floor(reward * wMul);
+    // v149 神祠 — 勇 헌사 슬레이 ×1.02
+    const shMul = shrineSlayRewardMul();
+    if (shMul !== 1) reward = Math.floor(reward * shMul);
     const origin = rollShadowOrigin();
     challenge = { strength, reward, type, origin };
     bumpStat('challengesAppeared');
@@ -8129,7 +8247,7 @@
     return (state.enshrined || []).length;
   }
   function canEnshrineMore() {
-    return enshrineCount() < ENSHRINE_CAP;
+    return enshrineCount() < (ENSHRINE_CAP + shrineEnshrineCapBonus());  // v149 神祠
   }
   function enshrineSuccessBonus() {
     return enshrineCount() * 0.015;  // 검당 +1.5% (최대 +4.5%)
@@ -8525,12 +8643,14 @@
     resolveMode = 'normal';
     swordWrap.classList.remove('resolve-focus', 'resolve-guard');
     setAmbientLevel(startLv); applyAmbientMode('idle');
-    let startSoul = trialStartSoulBonus();
+    let startSoul = trialStartSoulBonus() + shrineStartSoul();  // v149 神祠 영혼
     // v138 雙銘 — 本道 charge 활성 시 시작 영혼 +20 (한 번 소모)
     if (state.hondoCharges > 0) {
       startSoul += 20;
       state.hondoCharges--;
     }
+    // v149 神祠 — 護 헌사: 새 검 탄생 시 시작 보호권 +1
+    if (shrineHas('d2')) state.protections += 1;
     state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0, protectsUsed: 0, stars: {}, playerSeal: state.playerSeal || '' };
     // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
     const ways = (state.stats && state.stats.wayReached) || 0;
@@ -10114,6 +10234,12 @@
     $('journey-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
+  // v149 神祠 모달 — 영구 헌사
+  $('btn-shrine').addEventListener('click', () => {
+    renderShrine();
+    $('shrine-modal').classList.add('active');
+    $('menu-drop').classList.remove('open');
+  });
   function renderJourney() {
     const titleEl = $('journey-title');
     if (titleEl) titleEl.textContent = generatePlayerTitle();
@@ -10686,6 +10812,7 @@
     hondoCharges: 0,          // v138 雙銘 — 本道 새 검 시작 영혼 +20 남은 횟수
     playerSeal: '',           // v140 篆刻 — 플레이어 인장 (1자)
     collectionMilestones: {}, // v145 銘集 — 달성한 명문 수집 마일스톤
+    shrineDonations: {},      // v149 神祠 — 영구 헌사 잠금 해제
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0, divinationStones: 0,
       firstWayReached: false,
