@@ -91,6 +91,53 @@
     box-shadow: inset 0 0 60px rgba(138,176,216,0.10);
   }
 
+  /* v147 天候 — 동적 자연 이벤트 (雨/風/雷) */
+  body.weather-rain #stage::after {
+    background: linear-gradient(180deg, rgba(120, 140, 180, 0.10), transparent 50%);
+  }
+  body.weather-rain {
+    background-image: linear-gradient(180deg, rgba(80, 100, 130, 0.05), transparent);
+  }
+  body.weather-wind #stage-bg {
+    animation: weather-wind-sway 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes weather-wind-sway {
+    from { transform: translateX(-1.5px); }
+    to   { transform: translateX(1.5px); }
+  }
+  body.weather-thunder-flash {
+    animation: weather-thunder-flash 0.4s ease-out;
+  }
+  @keyframes weather-thunder-flash {
+    0%   { background: #2a2630; }
+    15%  { background: #ffffff; }
+    40%  { background: #c8d0e8; }
+    100% { background: var(--bg); }
+  }
+  #weather-mark {
+    position: fixed;
+    top: 14px;
+    right: 90px;
+    font-size: 12px;
+    color: rgba(168, 184, 200, 0);
+    pointer-events: none;
+    z-index: 25;
+    letter-spacing: 4px;
+    transition: color 1s ease, text-shadow 1s ease;
+    font-family: 'Noto Serif KR', serif;
+  }
+  body.weather-rain #weather-mark { color: rgba(120, 160, 200, 0.75); text-shadow: 0 0 6px rgba(120, 160, 200, 0.4); }
+  body.weather-wind #weather-mark { color: rgba(168, 200, 168, 0.75); text-shadow: 0 0 6px rgba(168, 200, 168, 0.4); }
+  /* 빗방울 — 무대 배경 */
+  .weather-raindrop {
+    position: fixed;
+    width: 1px;
+    height: 12px;
+    background: linear-gradient(180deg, transparent, rgba(160, 180, 220, 0.6));
+    pointer-events: none;
+    z-index: 1;
+  }
+
   /* v146 坐 — 명상 모드 (60s 무행동) */
   body.meditation #game::before {
     content: '';
@@ -2086,6 +2133,7 @@
 <div id="season-mark"></div>
 <div id="era-mark"></div>
 <div id="meditation-mark">坐</div>
+<div id="weather-mark"></div>
 <div id="gen-mark"></div>
 <div id="way-counter"></div>
 <button id="menu-toggle">≡</button>
@@ -4407,7 +4455,7 @@
     const matsuMulShow = blessingCostMul();  // v119
     const sanctumMulShow = sanctumCostMul();  // v121 結界
     const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow);
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus();
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
 
@@ -5291,6 +5339,7 @@
     bumpDaily('enhanceAttempt', 1);  // v94 天時 — 강화 시도 (성공/실패 무관)
     consumeMatsu();  // v119 千年松 카운트 소모
     consumeDawnBonus();  // v126 黎明 — 보너스 카운트 소모
+    consumeLightningBonus();  // v147 雷 — 다음 강화 +10% 1회 소모
     checkEraTransition(prevAttempts);  // v120 紀元 — 새 시대 진입 감지
     maybeForceSanctumOff();  // v121 結界 — 비용 차감 후 조각 부족 시 자동 해제
 
@@ -5312,7 +5361,7 @@
     const roll = (useDivination && divinationLockedSuccessRoll !== null)
       ? divinationLockedSuccessRoll
       : Math.random();
-    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus()) {
+    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus()) {
       // 성공 (v107 連)
       if (adversityReady) { adversityReady = false; announceInscription('逆轉', '역경을 넘어 강화에 성공했다'); }
       failStreak = 0;
@@ -5421,7 +5470,7 @@
         ? divinationLockedFailRoll
         : Math.random();
       // 영석/餘香影盾/結界(v121): 파괴 차단 / 유파 + 수호자 + 흉터(v111) 보너스도 destroy 감소 / v91 覺悟 배율 / v96 역경전기 감소
-      const effectiveDestroy = (useSpirit || echoDestroyBlock || sanctumBlocksDestroy()) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce()) * rsv.destroyMul);
+      const effectiveDestroy = (useSpirit || echoDestroyBlock || sanctumBlocksDestroy()) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce() - weatherDestroyReduce()) * rsv.destroyMul);
       // v121 結界: 파괴 차단 시 원래 destroy 확률을 downgrade로 흡수 (단순 안전이 아닌 비용 부과형 보호)
       const sanctumDestroyAbsorbed = sanctumBlocksDestroy() && !useSpirit && !echoDestroyBlock
         ? Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce()) * rsv.destroyMul)
@@ -5874,6 +5923,9 @@
       reward = Math.floor(reward * 1.5);
       state.metsumaoCharges--;
     }
+    // v147 天候 — 風 슬레이 보상 ×1.15
+    const wMul = weatherSlayRewardMul();
+    if (wMul !== 1) reward = Math.floor(reward * wMul);
     const origin = rollShadowOrigin();
     challenge = { strength, reward, type, origin };
     bumpStat('challengesAppeared');
@@ -6214,6 +6266,129 @@
     ambientPhraseTimer = setTimeout(tick, 10000);
   }
   setTimeout(() => startAmbientPhrases(), 5000);
+
+  // === v147 天候 — 동적 자연 이벤트 (雨/風/雷) ===
+  let weatherActive = null;        // null | 'rain' | 'wind'
+  let weatherEndAt = 0;
+  let weatherRainInterval = null;
+  let lightningBonusReady = false; // 雷 발동 후 다음 강화 +10% 플래그
+  function weatherDestroyReduce() {
+    return weatherActive === 'rain' ? 0.10 : 0;
+  }
+  function weatherSlayRewardMul() {
+    return weatherActive === 'wind' ? 1.15 : 1.0;
+  }
+  function weatherSuccessBonus() {
+    return lightningBonusReady ? 0.10 : 0;
+  }
+  function consumeLightningBonus() {
+    lightningBonusReady = false;
+  }
+  function spawnRaindrops() {
+    const stage = $('stage');
+    if (!stage) return;
+    const rect = stage.getBoundingClientRect();
+    if (rect.width === 0) return;
+    for (let i = 0; i < 6; i++) {
+      const drop = document.createElement('div');
+      drop.className = 'weather-raindrop';
+      const startX = rect.left + Math.random() * rect.width;
+      drop.style.left = startX + 'px';
+      drop.style.top = rect.top + 'px';
+      document.body.appendChild(drop);
+      const duration = 600 + Math.random() * 400;
+      drop.animate([
+        { opacity: 0, top: rect.top + 'px' },
+        { opacity: 0.55, offset: 0.2 },
+        { opacity: 0, top: (rect.top + rect.height + 20) + 'px' },
+      ], { duration: duration, easing: 'linear' });
+      setTimeout(() => drop.remove(), duration + 100);
+    }
+  }
+  function startWeather(type) {
+    if (weatherActive) return;
+    weatherActive = type;
+    document.body.classList.add('weather-' + type);
+    const mark = $('weather-mark');
+    const duration = type === 'rain' ? 30000 : type === 'wind' ? 25000 : 0;
+    weatherEndAt = Date.now() + duration;
+    if (mark) {
+      mark.textContent = type === 'rain' ? '雨' : type === 'wind' ? '風' : '';
+    }
+    if (type === 'rain') {
+      // 빗방울 spawner
+      weatherRainInterval = setInterval(spawnRaindrops, 350);
+      // 빗소리 SFX
+      const ctx = getAudio();
+      if (ctx) {
+        const noiseDur = 0.5;
+        const buf = ctx.createBuffer(1, ctx.sampleRate * noiseDur, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.04;
+        const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.06, ctx.currentTime);
+        const filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.setValueAtTime(1200, ctx.currentTime);
+        src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+        src.start();
+        weatherRainAudio = { src, g };
+      }
+    }
+    log('天候 — ' + (type === 'rain' ? '비가 내린다 (파괴 -10%)' : '바람이 분다 (슬레이 +15%)'), 'info');
+    setTimeout(() => endWeather(), duration);
+  }
+  let weatherRainAudio = null;
+  function endWeather() {
+    if (!weatherActive) return;
+    document.body.classList.remove('weather-' + weatherActive);
+    if (weatherRainInterval) { clearInterval(weatherRainInterval); weatherRainInterval = null; }
+    if (weatherRainAudio) {
+      try {
+        weatherRainAudio.g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+        setTimeout(() => { try { weatherRainAudio.src.stop(); } catch(e){} weatherRainAudio = null; }, 700);
+      } catch(e) { weatherRainAudio = null; }
+    }
+    weatherActive = null;
+    weatherEndAt = 0;
+    const mark = $('weather-mark');
+    if (mark) mark.textContent = '';
+  }
+  function triggerLightning() {
+    // 짧은 화면 흰 플래시 + 깊은 boom + 다음 강화 +10% 플래그
+    document.body.classList.add('weather-thunder-flash');
+    setTimeout(() => document.body.classList.remove('weather-thunder-flash'), 450);
+    // boom SFX
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      // 저음 boom
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(60, now); osc.frequency.exponentialRampToValueAtTime(30, now + 0.8);
+      g.gain.setValueAtTime(0.35, now); g.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(now); osc.stop(now + 1.3);
+      // 노이즈 burst (천둥)
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length) * 0.6;
+      const src = ctx.createBufferSource(); src.buffer = buf;
+      const ng = ctx.createGain(); ng.gain.setValueAtTime(0.25, now);
+      src.connect(ng); ng.connect(ctx.destination);
+      src.start(now);
+    }
+    lightningBonusReady = true;
+    log('🌩 雷 — 번개가 친다 · 다음 강화 +10% 성공', 'success');
+  }
+  // 매 분 ~1.5% 확률로 날씨 이벤트
+  setInterval(() => {
+    if (weatherActive) return;
+    if (!state.hasSword) return;
+    if (challenge || rescueWindow) return;
+    if (document.querySelector('.modal.active')) return;
+    const r = Math.random();
+    if (r < 0.005) startWeather('rain');
+    else if (r < 0.010) startWeather('wind');
+    else if (r < 0.013) triggerLightning();
+  }, 60000);
 
   // === v146 坐 — 60초 무행동 후 명상 모드 자동 진입 ===
   const MEDITATION_THRESHOLD_MS = 60000;  // 60초
