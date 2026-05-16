@@ -4998,6 +4998,37 @@
     showChallenge();
   }
 
+  // === v129 形相剋 — 형 × 그림자 상성 시스템 ===
+  // 각 형마다 1 강함 (+25% 보상) + 1 약함 (-15% 보상)
+  const FORM_AFFINITY = {
+    '直': { favored: 'normal', weakness: 'demon' },  // 곧음 — 평범에 강, 검귀에 약
+    '曲': { favored: 'steel',  weakness: 'flee' },   // 곡선 — 강철에 강 (휘어 베기), 도망에 약 (못따라감)
+    '重': { favored: 'demon',  weakness: 'normal' }, // 무거움 — 검귀에 강 (일격), 평범에 약 (느림)
+    '速': { favored: 'flee',   weakness: 'steel' },  // 속도 — 도망에 강 (따라잡음), 강철에 약 (못뚫음)
+  };
+  const AFFINITY_FAVORED_MUL = 1.25;
+  const AFFINITY_WEAKNESS_MUL = 0.85;
+  function getAffinity(form, shadowKey) {
+    if (!form || !shadowKey) return 'neutral';
+    const aff = FORM_AFFINITY[form];
+    if (!aff) return 'neutral';
+    if (aff.favored === shadowKey) return 'favored';
+    if (aff.weakness === shadowKey) return 'weakness';
+    return 'neutral';
+  }
+  function affinityRewardMul(form, shadowKey) {
+    const a = getAffinity(form, shadowKey);
+    if (a === 'favored') return AFFINITY_FAVORED_MUL;
+    if (a === 'weakness') return AFFINITY_WEAKNESS_MUL;
+    return 1.0;
+  }
+  function affinityLabel(form, shadowKey) {
+    const a = getAffinity(form, shadowKey);
+    if (a === 'favored') return { text: '相剋 — 이 검에 강함 (×1.25 보상)', color: '#c8e6a0' };
+    if (a === 'weakness') return { text: '相剋 — 이 검에 약함 (×0.85 보상)', color: '#e6a0a0' };
+    return null;
+  }
+
   function maybeTriggerChallenge() {
     if (!state.hasSword) return;
     if (state.level < CHALLENGE_MIN_LEVEL) return;
@@ -5030,6 +5061,10 @@
     // v127 氣 — 검의 기분 슬레이 보상 보너스
     const moodMul = moodSlayRewardMul();
     if (moodMul !== 1) reward = Math.floor(reward * moodMul);
+    // v129 形相剋 — 형 × 그림자 상성
+    const currentForm = state.hasSword && state.currentSword && state.currentSword.form;
+    const affMul = affinityRewardMul(currentForm, type.key);
+    if (affMul !== 1) reward = Math.floor(reward * affMul);
     const origin = rollShadowOrigin();
     challenge = { strength, reward, type, origin };
     bumpStat('challengesAppeared');
@@ -5264,9 +5299,16 @@
           '</div>' +
         '</div>' +
       '</div>';
+    // v129 形相剋 — 형 × 그림자 상성 표시
+    const currentSwordForm = state.hasSword && state.currentSword && state.currentSword.form;
+    const affLbl = affinityLabel(currentSwordForm, t.key);
+    const affBlock = affLbl
+      ? '<div style="margin:4px 0;padding:4px 6px;border:1px solid ' + affLbl.color + '40;background:' + affLbl.color + '10;border-radius:2px;font-size:10px;letter-spacing:2px;color:' + affLbl.color + ';text-align:center">' + affLbl.text + '</div>'
+      : '';
     challengeStakes.innerHTML =
       typeNote +
       compareBar +
+      affBlock +
       verdict + '<br>' +
       '<span style="opacity:0.6">도망 — 조각 ' + FLEE_COST + ' 잃음</span>';
     shadowForm.classList.remove('cleaved');
@@ -5726,11 +5768,19 @@
       '速': '도전 도망 무료',
     };
     const formKr = { '直': '곧은 검', '曲': '굽은 검', '重': '무거운 검', '速': '빠른 검' };
+    // v129 形相剋 — 상성 표기
+    const affName = { 'normal': '普通', 'flee': '逃影', 'steel': '鋼影', 'demon': '검귀' };
+    const formAff = {};
+    Object.keys(FORM_AFFINITY).forEach(f => {
+      const aff = FORM_AFFINITY[f];
+      formAff[f] = '<span style="color:#c8e6a0">'+affName[aff.favored]+' 강</span> · <span style="color:#e6a0a0">'+affName[aff.weakness]+' 약</span>';
+    });
     grid.innerHTML = FORM_KEYS.map(f =>
       '<div class="form-card' + (f === recommended ? ' recommended' : '') + '" data-form="' + f + '">' +
         '<div class="form-card-kanji">' + f + '</div>' +
         '<div class="form-card-name">' + formKr[f] + '</div>' +
         '<div class="form-card-effect">' + formDesc[f].replace('\n', '<br>') + '</div>' +
+        '<div class="form-card-effect" style="margin-top:4px;font-size:8px;letter-spacing:0">' + formAff[f] + '</div>' +
       '</div>'
     ).join('');
     modal.classList.add('active');
