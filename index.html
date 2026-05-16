@@ -4544,6 +4544,49 @@
     }
   }
 
+  // === v143 慰 — 실패/작별 위로 메시지 (동양 해탈 미학) ===
+  const CONSOLATIONS = {
+    destroy: [
+      '검은 영원하지 않다',
+      '부서짐 또한 검의 길이다',
+      '한 검이 갔다 — 다음 검을 부른다',
+      '쇠는 깨지지만 의지는 남는다',
+      '죽음 없는 검은 없다 — 그것이 검의 본성이다',
+    ],
+    rescueFail: [
+      '잃은 것은 잃은 것 — 다시 모으라',
+      '한 번의 시련 — 다시 시작하라',
+      '조각도 검도 잠시의 것이었다',
+      '비어 있음이 새 시작의 자리다',
+    ],
+    flee: [
+      '물러섬도 검사의 길이다',
+      '오늘은 베지 않는다 — 내일을 위해',
+      '바람처럼 비켜선 자',
+    ],
+    seal: [
+      '검은 그곳에 있다 — 다시 만날 날까지',
+      '잘 가라, 한 자루의 검',
+      '봉인은 이별이 아닌 약속',
+      '검의 일생은 끝나도 검사의 길은 이어진다',
+    ],
+  };
+  function showConsolation(type) {
+    const pool = CONSOLATIONS[type];
+    if (!pool) return;
+    const msg = pool[Math.floor(Math.random() * pool.length)];
+    const stage = $('stage');
+    if (!stage) return;
+    const el = document.createElement('div');
+    el.textContent = msg;
+    el.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:3px;color:#a8b8c8;text-shadow:0 0 4px rgba(168,184,200,0.4);pointer-events:none;z-index:20;opacity:0;white-space:nowrap;font-style:italic;font-family:"Noto Serif KR", serif;';
+    stage.appendChild(el);
+    el.animate([
+      { opacity: 0 }, { opacity: 0.85, offset: 0.25 }, { opacity: 0.85, offset: 0.7 }, { opacity: 0 }
+    ], { duration: 4000, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 4100);
+  }
+
   // === v138 雙銘 — 명문 쌍 공명 (paired inscription resonance) ===
   const PAIRED_RESONANCES = [
     {
@@ -5299,6 +5342,7 @@
         maybeMilestone('firstDestroy', '부서짐', '검이 부서졌습니다 — 5초 안에 조각을 주우세요');
         // v134: showVoid을 살짝 지연시켜 산산조각 비주얼이 먼저 보이게 (검집 동시 등장 시 시각 충돌 회피)
         setTimeout(() => showVoid(destroyedLevel), 350);
+        setTimeout(() => showConsolation('destroy'), 1500);  // v143 慰
       } else if (failRoll < effectiveDestroy + effectiveDowngrade && !useProtect) {
         // 하락 (v105 落)
         if (successStreak >= 3) log('連 ' + successStreak + '회 streak 종료 — 하락', 'fail');
@@ -5469,6 +5513,7 @@
       log('조각도 모두 잃었다', 'destroy');
       // 검 + 조각 모두 잃었음을 페이드로 강조 — 다음 흐름 안내
       inscribeQueue.push({ key: '失', label: '검을 잃었다 · 새 검을 만드세요' });
+      setTimeout(() => showConsolation('rescueFail'), 1200);  // v143 慰
       if (!inscribeRunning) runInscribeQueue();
     }
     save();
@@ -6397,6 +6442,7 @@
     state.shards -= cost;
     bumpStat('fled');
     log(cost ? ('도망 (조각 -' + cost + ')') : '바람처럼 도망', 'fail');
+    setTimeout(() => showConsolation('flee'), 600);  // v143 慰
     clearSlayStreak();  // v125 連斬 — 도망 시 리셋
     endChallenge();
     save();
@@ -8546,6 +8592,7 @@
       SFX.seal();
       // v130 音律 — 봉인 시 형 시그니처 (작별 인사)
       if (form) setTimeout(() => SFX.formMotif(form, 0.75), 250);
+      setTimeout(() => showConsolation('seal'), 1800);  // v143 慰
       // v64 일반 봉인 — 검이 빛으로 솟구쳐 사라지는 dissolve (0.8초)
       // 그동안 state는 이미 sealedSwords에 push됨 — 새 검은 0.8초 후
       save();
