@@ -65,6 +65,32 @@
   #season-mark.season-autumn { color: #c0883a; opacity: 0.7; }
   #season-mark.season-winter { color: #6a8a9a; opacity: 0.75; }
 
+  /* v121 結界 — 신성 보호 공간 (파괴 차단, 비용 ×3) */
+  #sanctum-row {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--dim);
+  }
+  #sanctum-row.unlocked { display: flex; }
+  #sanctum-row label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  #sanctum-row .sanctum-active-label { color: #8ab0d8; text-shadow: 0 0 6px rgba(138,176,216,0.55); }
+  body.sanctum-on #stage::before {
+    background: radial-gradient(circle at 50% 60%, rgba(138,176,216,0.16), transparent 55%) !important;
+    transition: background 1.2s;
+  }
+  body.sanctum-on #sword-wrap svg {
+    filter: drop-shadow(0 0 12px rgba(138,176,216,0.45));
+    transition: filter 1.2s;
+  }
+  body.sanctum-on #stage::after {
+    box-shadow: inset 0 0 60px rgba(138,176,216,0.10);
+  }
+
   /* v120 紀元 — 시대 마크 (우측 상단, season-mark 위) */
   #era-mark {
     position: fixed;
@@ -2175,6 +2201,9 @@
       <button class="resolve-btn guard-mode" data-resolve="guard">保身</button>
     </div>
     <div id="resolve-desc">마음을 비운다</div>
+    <div id="sanctum-row">
+      <label><input type="checkbox" id="sanctum-check"><span id="sanctum-label">結界  ·  비용 ×3, 파괴 차단</span></label>
+    </div>
     <div id="stone-row" style="display:flex;gap:12px;justify-content:center;font-size:11px;color:var(--dim);margin-bottom:10px">
       <label id="whet-row" style="display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="whet-check"><span id="whet-label">砥 (성공 +25%)</span>
@@ -2753,6 +2782,61 @@
       mark.classList.remove('season-spring', 'season-summer', 'season-autumn', 'season-winter');
       mark.classList.add('season-' + s.key);
       mark.textContent = s.name;
+    }
+  }
+
+  // === v121 結界 — 신성 보호 공간 (조각 1000+ 시 활성 가능, 비용 ×3, 파괴 차단) ===
+  const SANCTUM_UNLOCK = 1000;       // 조각 1000+ 시 활성 가능
+  const SANCTUM_MIN_KEEP = 100;      // 활성 중 조각 100 미만 시 자동 해제
+  const SANCTUM_COST_MUL = 3.0;
+  let sanctumActive = false;         // 휘발성 (새 검 시 reset, 세이브 안 됨)
+  function sanctumAvailable() {
+    return state.shards >= SANCTUM_UNLOCK || sanctumActive;
+  }
+  function sanctumCostMul() { return sanctumActive ? SANCTUM_COST_MUL : 1.0; }
+  function sanctumBlocksDestroy() { return sanctumActive; }
+  function setSanctum(on) {
+    sanctumActive = !!on;
+    document.body.classList.toggle('sanctum-on', sanctumActive);
+    const check = $('sanctum-check');
+    if (check) check.checked = sanctumActive;
+    const lbl = $('sanctum-label');
+    if (lbl) {
+      lbl.textContent = sanctumActive
+        ? '結界 ON  ·  비용 ×3, 파괴→하락'
+        : '結界  ·  비용 ×3, 파괴 차단';
+      lbl.classList.toggle('sanctum-active-label', sanctumActive);
+    }
+    if (sanctumActive) {
+      log('結界 — 신성 공간 진입 (비용 ×3, 파괴 차단)', 'success');
+      // 신성 차임
+      const ctx = getAudio();
+      if (ctx) {
+        const now = ctx.currentTime;
+        [330, 495, 660].forEach((f, i) => {
+          const osc = ctx.createOscillator(); const g = ctx.createGain();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(f, now + i * 0.06);
+          g.gain.setValueAtTime(0.0, now + i * 0.06);
+          g.gain.linearRampToValueAtTime(0.14, now + i * 0.06 + 0.04);
+          g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.9);
+          osc.connect(g); g.connect(ctx.destination);
+          osc.start(now + i * 0.06); osc.stop(now + i * 0.06 + 1.0);
+        });
+      }
+    } else {
+      log('結界 해제', 'info');
+    }
+  }
+  function renderSanctumRow() {
+    const row = $('sanctum-row');
+    if (!row) return;
+    row.classList.toggle('unlocked', sanctumAvailable() && state.hasSword);
+  }
+  function maybeForceSanctumOff() {
+    // 조각이 너무 줄어들면 자동 해제 (긴급 차단)
+    if (sanctumActive && state.shards < SANCTUM_MIN_KEEP) {
+      setSanctum(false);
+      log('結界 — 조각 부족으로 자동 해제', 'fail');
     }
   }
 
@@ -3355,6 +3439,7 @@
     renderCurrentChart();
     applySeason();
     applyEra();  // v120 紀元
+    renderSanctumRow();  // v121 結界
     renderWayCounter();
     renderGuardianDisplay();
     renderDestiny();  // v93 天命
@@ -3461,10 +3546,11 @@
     const echoSuccessShow = (enhanceEcho && enhanceEcho.successBonus) || 0;
     const echoDestroyBlockShow = !!(enhanceEcho && enhanceEcho.destroyBlock);
     const matsuMulShow = blessingCostMul();  // v119
-    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow);
+    const sanctumMulShow = sanctumCostMul();  // v121 結界
+    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow);
     const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
-    const showDestroy = echoDestroyBlockShow ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
+    const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
 
     const canAfford = state.shards >= actualCost;
     btnEnhance.disabled = !canAfford;
@@ -3479,7 +3565,11 @@
       : '';
     oddsSuccess.innerHTML = '성공률 ' + Math.round(showSuccess * 100) + '%' + freeNote +
       (breathStr ? '  <span style="color:#6a8a9a;font-size:10px">· ' + breathStr + '</span>' : '');
-    const showDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul);
+    // v121 結界: 파괴가 차단되면 그 확률이 하락으로 흡수되어 표시
+    const sanctumAbsorbedShow = sanctumActive
+      ? Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul)
+      : 0;
+    const showDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul) + sanctumAbsorbedShow;
     let failMsg = '';
     if (showDestroy > 0) {
       failMsg = '실패 시 파괴 ' + Math.round(showDestroy * 100) + '% · 하락 ' + Math.round(showDowngrade * 100) + '%';
@@ -3873,7 +3963,8 @@
     // v114 餘香 — 잔향을 미리 잠가두고(consume은 비용 차감 후) 효과 적용
     const echoCostMul = (enhanceEcho && enhanceEcho.costMul) || 1;
     const matsuMul = blessingCostMul();  // v119 千年松
-    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMul * matsuMul);
+    const sanctumMul = sanctumCostMul();  // v121 結界
+    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMul * matsuMul * sanctumMul);
     if (state.shards < actualCost) return;
 
     const useProtect = protectCheck.checked && !protectCheck.disabled;
@@ -3901,6 +3992,7 @@
     bumpDaily('enhanceAttempt', 1);  // v94 天時 — 강화 시도 (성공/실패 무관)
     consumeMatsu();  // v119 千年松 카운트 소모
     checkEraTransition(prevAttempts);  // v120 紀元 — 새 시대 진입 감지
+    maybeForceSanctumOff();  // v121 結界 — 비용 차감 후 조각 부족 시 자동 해제
 
     // 첫 강화 시 검의 형 결정
     if (!state.currentSword.form) decideForm();
@@ -4000,9 +4092,13 @@
       setTimeout(() => swordWrap.classList.remove('shake'), 400);
 
       const failRoll = Math.random();
-      // 영석/餘香影盾: 파괴 차단 / 유파 + 수호자 + 흉터(v111) 보너스도 destroy 감소 / v91 覺悟 배율 / v96 역경전기 감소
-      const effectiveDestroy = (useSpirit || echoDestroyBlock) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce()) * rsv.destroyMul);
-      const effectiveDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul);
+      // 영석/餘香影盾/結界(v121): 파괴 차단 / 유파 + 수호자 + 흉터(v111) 보너스도 destroy 감소 / v91 覺悟 배율 / v96 역경전기 감소
+      const effectiveDestroy = (useSpirit || echoDestroyBlock || sanctumBlocksDestroy()) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce()) * rsv.destroyMul);
+      // v121 結界: 파괴 차단 시 원래 destroy 확률을 downgrade로 흡수 (단순 안전이 아닌 비용 부과형 보호)
+      const sanctumDestroyAbsorbed = sanctumBlocksDestroy() && !useSpirit && !echoDestroyBlock
+        ? Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce()) * rsv.destroyMul)
+        : 0;
+      const effectiveDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul) + sanctumDestroyAbsorbed;
       if (failRoll < effectiveDestroy && !useProtect) {
         // v119 涅槃 — 파괴 직전 1% 확률로 유지로 변환
         const nirvana = BLESSINGS.find(b => b.key === '涅槃');
@@ -6070,6 +6166,7 @@
     state.level = startLv;
     failStreak = 0; adversityReady = false; clearOmen(); clearStreak();
     enhanceEcho = null;  // v114 餘香: 잔향은 검 단위로 휘발
+    if (sanctumActive) setSanctum(false);  // v121 結界: 새 검 시 해제
     if (swordVoiceTimer) { clearTimeout(swordVoiceTimer); swordVoiceTimer = null; }
     const voiceEl = $('sword-voice'); if (voiceEl) { voiceEl.className = ''; voiceEl.textContent = ''; }
     // v103 意志: 새 검 시 마음가짐 중립 복귀
@@ -7194,6 +7291,19 @@
     showLoginError(null);
     $('login-email').value = '';
     $('login-otp-code').value = '';
+  }
+  // v121 結界 체크박스
+  const _sanctumCheck = $('sanctum-check');
+  if (_sanctumCheck) {
+    _sanctumCheck.addEventListener('change', (e) => {
+      if (e.target.checked && state.shards < SANCTUM_UNLOCK) {
+        e.target.checked = false;
+        log('結界 — 조각 ' + SANCTUM_UNLOCK + ' 필요', 'fail');
+        return;
+      }
+      setSanctum(e.target.checked);
+      save(); render();
+    });
   }
   // 자동 동기화 체크박스
   const _autosyncCheck = $('cloud-autosync-check');
