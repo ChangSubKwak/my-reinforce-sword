@@ -2058,6 +2058,7 @@
   <button id="btn-codex">명문 사전</button>
   <button id="btn-scrolls">古 文 書</button>
   <button id="btn-rubbings">拓 本</button>
+  <button id="btn-seal-craft">印  章</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -2611,6 +2612,27 @@
 </div>
 
 <!-- v90 처치 보고서 모달 (이름 있는 적 컬렉션) -->
+<!-- v140 篆刻 모달 — 플레이어 인장 설정 -->
+<div class="modal" id="seal-craft-modal">
+  <div class="modal-box" style="max-width: 380px;">
+    <h2>印  章</h2>
+    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+      모든 새 검에 영구 새겨질 당신의 인장 (1자).<br>
+      한자 / 한글 / 기호 모두 가능. 빈 칸 = 인장 없음.
+    </p>
+    <div style="text-align:center;margin:14px 0">
+      <div id="seal-preview" style="display:inline-block;width:60px;height:60px;background:#c0392b;border:1px solid #3a0a08;border-radius:2px;line-height:60px;font-size:36px;color:#fff5c0;font-family:'Noto Serif KR', serif;font-weight:700;letter-spacing:0;text-shadow:0 0 4px rgba(255,245,192,0.3)"></div>
+    </div>
+    <input id="seal-craft-input" type="text" maxlength="1" placeholder=""
+      style="width:100%;padding:14px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:'Noto Serif KR',serif;font-size:28px;letter-spacing:0;text-align:center;margin-bottom:14px;outline:none;"
+      autocomplete="off">
+    <div style="display:flex;gap:8px">
+      <button class="modal-close" id="seal-craft-clear" style="flex:1;margin:0">제 거</button>
+      <button class="modal-close" id="seal-craft-save" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)">새 김</button>
+    </div>
+  </div>
+</div>
+
 <!-- v136 拓本 모달 -->
 <div class="modal" id="rubbings-modal">
   <div class="modal-box" style="max-width: 500px;">
@@ -2961,6 +2983,7 @@
     resonancesDiscovered: {}, // v138 雙銘 — 발견한 명문 쌍
     metsumaoCharges: 0,       // v138 雙銘 — 滅魔 슬레이 ×1.5 남은 횟수
     hondoCharges: 0,          // v138 雙銘 — 本道 새 검 시작 영혼 +20 남은 횟수
+    playerSeal: '',           // v140 篆刻 — 플레이어 인장 (1자)
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
@@ -3135,6 +3158,7 @@
       if (!state.resonancesDiscovered || typeof state.resonancesDiscovered !== 'object') state.resonancesDiscovered = {};  // v138
       if (typeof state.metsumaoCharges !== 'number') state.metsumaoCharges = 0;
       if (typeof state.hondoCharges !== 'number') state.hondoCharges = 0;
+      if (typeof state.playerSeal !== 'string') state.playerSeal = '';  // v140 篆刻
       if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
         state.currentSword.foesEncountered = {};
       }
@@ -4623,7 +4647,7 @@
       const dateStr = date.getFullYear() + '.' + String(date.getMonth() + 1).padStart(2, '0') + '.' + String(date.getDate()).padStart(2, '0');
       const insStr = (r.inscriptions && r.inscriptions.length) ? r.inscriptions.slice(0, 4).join(' · ') : '無';
       return '<div style="display:flex;align-items:center;gap:12px;padding:10px;border:1px solid rgba(212,175,55,0.2);border-radius:2px;margin-bottom:8px;background:rgba(212,175,55,0.03)">' +
-        '<svg viewBox="0 0 100 200" width="28" height="56" style="flex-shrink:0"><g>' + buildSwordBody(r.level || 0, r.form) + '</g></svg>' +
+        '<svg viewBox="0 0 100 200" width="28" height="56" style="flex-shrink:0"><g>' + buildSwordBody(r.level || 0, r.form, '') + '</g></svg>' +
         '<div style="flex:1">' +
           '<div style="color:var(--accent);letter-spacing:3px;font-size:11px">' + r.reasonLabel + '</div>' +
           '<div style="color:var(--fg);font-size:10px;margin-top:3px;letter-spacing:2px;opacity:0.85">' + (r.form || '無') + '  ·  +' + r.level + '  ·  魂' + r.soul + (r.generation ? '  ·  ' + r.generation + '代' : '') + '</div>' +
@@ -7243,7 +7267,7 @@
   }
 
   // 검 본체 통째 빌드 — v128 形體革命: 형(form)별 완전히 다른 정체성
-  function buildSwordBody(lv, form) {
+  function buildSwordBody(lv, form, sealText) {
     const tier = getTier(lv);
     const bladeFill = 'url(#blade-grad-' + tier + ')';
     let svg = '';
@@ -7255,6 +7279,14 @@
     svg += buildGuard(tier, form);
     svg += buildGrip(tier, form);
     svg += buildPommel(tier, form);
+    // v140 篆刻 — 플레이어 인장 (제공된 경우 폼멜 영역에 작은 텍스트)
+    if (sealText) {
+      // 폼멜 y 위치는 form/tier에 따라 다르지만 대략 180~195
+      const sealY = form === '直' ? 183 : form === '曲' ? 178 : form === '重' ? 197 : form === '速' ? 180 : 188;
+      const fillColor = '#c0392b';  // 봉인 인장은 붉은 인주 색
+      svg += '<rect x="46" y="' + (sealY - 4) + '" width="8" height="8" fill="' + fillColor + '" opacity="0.85" stroke="#3a0a08" stroke-width="0.3"/>';
+      svg += '<text x="50" y="' + (sealY + 2) + '" text-anchor="middle" font-size="5.5" fill="#fff5c0" font-family="\'Noto Serif KR\', serif" style="font-weight:700">' + sealText.substring(0, 1) + '</text>';
+    }
     return svg;
   }
 
@@ -7264,7 +7296,9 @@
     const lv = Math.min(MAX_LEVEL, Math.max(0, state.level));
     const form = state.currentSword.form || null;
     const body = $('sword-body');
-    if (body) body.innerHTML = buildSwordBody(lv, form);
+    // v140 篆刻 — 현재 검에 플레이어 인장 적용 (스냅샷 우선, 아니면 현재 인장)
+    const seal = (state.currentSword && state.currentSword.playerSeal) || state.playerSeal || '';
+    if (body) body.innerHTML = buildSwordBody(lv, form, seal);
     // 칼날 광채 (glow class)
     swordSvg.setAttribute('class', '');
     if (lv >= MAX_LEVEL) swordSvg.setAttribute('class', 'glow-divine');
@@ -7829,7 +7863,7 @@
     if (!g) { wrap.classList.remove('active'); return; }
     wrap.classList.add('active');
     const body = $('guardian-body');
-    if (body) body.innerHTML = buildSwordBody(g.level || 0, g.form);
+    if (body) body.innerHTML = buildSwordBody(g.level || 0, g.form, g.playerSeal || '');
     $('guardian-name').textContent = (g.name || '검') + ' · 守';
     const bonusMap = {
       '直': '강화 +2%',
@@ -8024,7 +8058,7 @@
       startSoul += 20;
       state.hondoCharges--;
     }
-    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0, protectsUsed: 0, stars: {} };
+    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0, protectsUsed: 0, stars: {}, playerSeal: state.playerSeal || '' };
     // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (state.firstWayReached) {
@@ -8368,6 +8402,7 @@
       memo: (userMemo && userMemo.trim()) ? userMemo.trim() : null,
       scars: state.currentSword.scars || 0,
       stars: Object.assign({}, state.currentSword.stars || {}),
+      playerSeal: state.currentSword.playerSeal || state.playerSeal || '',  // v140 篆刻
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -8745,7 +8780,7 @@
   function buildDetailSwordSVG(s) {
     // 검 SVG (form + level 기반) + 명문 마크 + v69 한자 새김
     const ins = s.inscriptions || [];
-    const body = buildSwordBody(s.level || 0, s.form);
+    const body = buildSwordBody(s.level || 0, s.form, s.playerSeal || '');
     const wayOpacity = ins.includes('道') ? '0.85' : '0';
     const demonOpacity = ins.includes('鬼斬') ? '0.9' : '0';
     const honestOpacity = ins.includes('本') ? '0.7' : '0';
@@ -9597,6 +9632,45 @@
     $('rubbings-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
+  // v140 篆刻 모달
+  $('btn-seal-craft').addEventListener('click', () => {
+    const inp = $('seal-craft-input');
+    const prv = $('seal-preview');
+    inp.value = state.playerSeal || '';
+    prv.textContent = state.playerSeal || '';
+    $('seal-craft-modal').classList.add('active');
+    $('menu-drop').classList.remove('open');
+    setTimeout(() => inp.focus(), 100);
+  });
+  if ($('seal-craft-input')) {
+    $('seal-craft-input').addEventListener('input', (e) => {
+      const v = e.target.value.substring(0, 1);
+      e.target.value = v;
+      $('seal-preview').textContent = v;
+    });
+  }
+  if ($('seal-craft-save')) {
+    $('seal-craft-save').addEventListener('click', () => {
+      const v = $('seal-craft-input').value.substring(0, 1);
+      state.playerSeal = v;
+      // 현재 검에도 즉시 반영 (스냅샷 갱신)
+      if (state.hasSword && state.currentSword) {
+        state.currentSword.playerSeal = v;
+      }
+      save();
+      render();
+      log(v ? '印章 — 「' + v + '」 새겨졌다 (모든 새 검에 적용)' : '印章 제거됨', 'success');
+    });
+  }
+  if ($('seal-craft-clear')) {
+    $('seal-craft-clear').addEventListener('click', () => {
+      state.playerSeal = '';
+      if (state.hasSword && state.currentSword) state.currentSword.playerSeal = '';
+      save();
+      render();
+      log('印章 제거됨', 'fail');
+    });
+  }
   function renderBlessings() {
     const discovered = state.blessingsDiscovered || {};
     const found = BLESSINGS.filter(b => discovered[b.key]).length;
@@ -9644,7 +9718,7 @@
       const insStr = ins.slice(0, 4).join(' · ');
       const date = s.enshrinedAt ? new Date(s.enshrinedAt).toLocaleDateString('ko-KR') : '';
       return '<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid rgba(255,245,192,0.25);border-radius:2px;margin-bottom:8px;background:linear-gradient(180deg,rgba(255,245,192,0.05),rgba(212,175,55,0.02))">' +
-        '<svg viewBox="0 0 100 200" width="32" height="64" style="flex-shrink:0"><g>' + buildSwordBody(s.level, s.form) + '</g></svg>' +
+        '<svg viewBox="0 0 100 200" width="32" height="64" style="flex-shrink:0"><g>' + buildSwordBody(s.level, s.form, s.playerSeal || '') + '</g></svg>' +
         '<div style="flex:1">' +
           '<div style="color:#fff5c0;letter-spacing:5px;font-size:14px;text-shadow:0 0 6px rgba(255,245,192,0.5)">' + (s.name || '검 #' + (i + 1)) + '</div>' +
           '<div style="color:var(--dim);font-size:10px;margin-top:3px;letter-spacing:2px">' + (s.form || '無') + '  ·  +' + s.level + '  ·  魂' + (s.soul || 0) + '</div>' +
@@ -9948,6 +10022,7 @@
     resonancesDiscovered: {}, // v138 雙銘 — 발견한 명문 쌍
     metsumaoCharges: 0,       // v138 雙銘 — 滅魔 슬레이 ×1.5 남은 횟수
     hondoCharges: 0,          // v138 雙銘 — 本道 새 검 시작 영혼 +20 남은 횟수
+    playerSeal: '',           // v140 篆刻 — 플레이어 인장 (1자)
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0, divinationStones: 0,
       firstWayReached: false,
