@@ -4333,6 +4333,67 @@
     }
   }
 
+  // === v134 砕散 — 검 파괴 시 SVG 산산조각 비산 ===
+  function shatterSword() {
+    const rect = swordWrap.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    // 검 본체 페이드 (현재 검 SVG 흐려짐)
+    const swordSvgEl = $('sword-svg');
+    if (swordSvgEl) {
+      swordSvgEl.animate([
+        { opacity: 1, filter: 'none' },
+        { opacity: 0.4, filter: 'blur(2px) drop-shadow(0 0 12px rgba(192,57,43,0.8))', offset: 0.3 },
+        { opacity: 0, filter: 'blur(6px)' },
+      ], { duration: 700, fill: 'forwards', easing: 'ease-out' });
+      setTimeout(() => { swordSvgEl.style.opacity = ''; swordSvgEl.style.filter = ''; }, 750);
+    }
+    // 산산조각 fragment 12~15개
+    const fragmentCount = 13 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < fragmentCount; i++) {
+      const frag = document.createElement('div');
+      // 파편 모양 — 작은 polygon shape via clip-path 또는 transform
+      const sz = 4 + Math.random() * 6;
+      const isGold = Math.random() < 0.55;  // 절반 이상은 황금 (검의 영혼), 나머지 어두운 강철
+      const color = isGold
+        ? 'linear-gradient(45deg, #d4af37, #fff5c0)'
+        : 'linear-gradient(45deg, #4a3a2a, #2a1f15)';
+      frag.style.cssText = 'position:fixed;width:' + sz + 'px;height:' + (sz * 0.4) + 'px;background:' + color + ';pointer-events:none;z-index:1100;left:' + cx + 'px;top:' + cy + 'px;transform-origin:center;box-shadow:0 0 4px rgba(212,175,55,0.6);';
+      document.body.appendChild(frag);
+      // 시작 위치: 검 본체 영역 안에서 randomized
+      const startX = (Math.random() - 0.5) * rect.width * 0.4;
+      const startY = (Math.random() - 0.5) * rect.height * 0.7;
+      // 종료 위치: 임의 방향 + 중력 (아래로 더 멀리)
+      const angle = Math.random() * Math.PI - Math.PI / 2;  // -90도~90도 (위쪽 위주)
+      const speed = 90 + Math.random() * 140;
+      const endX = startX + Math.cos(angle) * speed;
+      const endY = startY + Math.sin(angle) * speed * 0.4 + 80 + Math.random() * 60;  // 중력
+      const rotStart = Math.random() * 360;
+      const rotEnd = rotStart + (Math.random() < 0.5 ? -1 : 1) * (180 + Math.random() * 540);
+      frag.animate([
+        { transform: 'translate(' + startX + 'px,' + startY + 'px) rotate(' + rotStart + 'deg)', opacity: 1 },
+        { transform: 'translate(' + (startX + (endX-startX)*0.4) + 'px,' + (startY + (endY-startY)*0.2) + 'px) rotate(' + (rotStart + (rotEnd-rotStart)*0.4) + 'deg)', opacity: 1, offset: 0.4 },
+        { transform: 'translate(' + endX + 'px,' + endY + 'px) rotate(' + rotEnd + 'deg)', opacity: 0 },
+      ], { duration: 1200 + Math.random() * 600, easing: 'cubic-bezier(0.3, 0.5, 0.6, 1)' });
+      setTimeout(() => frag.remove(), 1900);
+    }
+    // 추가 SFX — 짧은 chitter (파편 부딪힘)
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      for (let i = 0; i < 5; i++) {
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(800 + Math.random() * 1600, now + i * 0.04);
+        g.gain.setValueAtTime(0.08 + Math.random() * 0.05, now + i * 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.08);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(now + i * 0.04); osc.stop(now + i * 0.04 + 0.10);
+      }
+    }
+  }
+
   // === v116 七星 — 한 자루 검의 7가지 결실 ===
   const STARS = [
     { key: '始', label: '시작',     hint: '+5 도달',           trigger: () => state.hasSword && state.level >= 5 },
@@ -4829,11 +4890,14 @@
         showSwordVoice('destroy', destroyedLevel);  // v113 劍聲
         setTimeout(() => checkScrolls(), 400);  // v124 古文書 — 破 scroll
         burstParticles('#c0392b', 30);
+        setTimeout(() => burstParticles('#d4af37', 18), 80);  // v134: 황금 잔영 (검의 영혼)
+        shatterSword();  // v134 砕散 — SVG 산산조각 비산
         SFX.destroy();
         screenShake(true);  // 검 파괴 — 큰 흔들림
         recordEvent('검 파괴 (+' + destroyedLevel + ')');
         maybeMilestone('firstDestroy', '부서짐', '검이 부서졌습니다 — 5초 안에 조각을 주우세요');
-        showVoid(destroyedLevel);
+        // v134: showVoid을 살짝 지연시켜 산산조각 비주얼이 먼저 보이게 (검집 동시 등장 시 시각 충돌 회피)
+        setTimeout(() => showVoid(destroyedLevel), 350);
       } else if (failRoll < effectiveDestroy + effectiveDowngrade && !useProtect) {
         // 하락 (v105 落)
         if (successStreak >= 3) log('連 ' + successStreak + '회 streak 종료 — 하락', 'fail');
