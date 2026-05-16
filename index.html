@@ -2175,37 +2175,105 @@
         <div id="slash-line"></div>
         <div id="challenge-shadow">
           <div id="shadow-form"></div>
+          <!-- v131 影體革命 — 검귀: 거대한 뿔, 빛나는 눈, 송곳니, 발톱 -->
           <svg id="demon-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
-            <polygon points="50,75 58,90 50,105 42,90" fill="#3a0a0a" stroke="#c0392b" stroke-width="0.8"/>
-            <polygon points="50,80 54,90 50,100 46,90" fill="#c0392b" opacity="0.7"/>
-            <path d="M 22 95 L 18 105 L 25 108 L 23 112 L 28 110 Z" fill="#0a0a0d" stroke="#3a0a0a" stroke-width="0.4"/>
-            <path d="M 78 95 L 82 105 L 75 108 L 77 112 L 72 110 Z" fill="#0a0a0d" stroke="#3a0a0a" stroke-width="0.4"/>
-            <path d="M 50 30 Q 45 50 48 70" fill="none" stroke="#c0392b" stroke-width="0.4" opacity="0.6"/>
-            <path d="M 50 30 Q 55 50 52 70" fill="none" stroke="#c0392b" stroke-width="0.4" opacity="0.6"/>
-            <path d="M 42 55 Q 50 60 58 55" fill="none" stroke="#3a0a0a" stroke-width="1.2"/>
+            <!-- 거대한 뿔 (양쪽) -->
+            <path d="M 30 35 Q 22 18 26 8 Q 30 12 32 25 Q 34 30 36 40 Z" fill="#1a0408" stroke="#c0392b" stroke-width="0.6"/>
+            <path d="M 70 35 Q 78 18 74 8 Q 70 12 68 25 Q 66 30 64 40 Z" fill="#1a0408" stroke="#c0392b" stroke-width="0.6"/>
+            <!-- 뿔 내부 광채 -->
+            <path d="M 30 32 Q 26 22 27 14" fill="none" stroke="#ff5040" stroke-width="0.3" opacity="0.6"/>
+            <path d="M 70 32 Q 74 22 73 14" fill="none" stroke="#ff5040" stroke-width="0.3" opacity="0.6"/>
+            <!-- 빛나는 눈 (큰 + 동공) -->
+            <ellipse cx="38" cy="55" rx="5" ry="3.5" fill="#c0392b" filter="url(#strong-glow)"/>
+            <ellipse cx="62" cy="55" rx="5" ry="3.5" fill="#c0392b" filter="url(#strong-glow)"/>
+            <ellipse cx="38" cy="55" rx="2" ry="2" fill="#ffff80"/>
+            <ellipse cx="62" cy="55" rx="2" ry="2" fill="#ffff80"/>
+            <ellipse cx="38" cy="55" rx="0.8" ry="0.8" fill="#000"/>
+            <ellipse cx="62" cy="55" rx="0.8" ry="0.8" fill="#000"/>
+            <!-- 입 — 사악한 미소 + 송곳니 4개 -->
+            <path d="M 38 75 Q 50 85 62 75" fill="none" stroke="#3a0a0a" stroke-width="1.5"/>
+            <polygon points="42,75 44,82 46,75" fill="#fff5c0" stroke="#3a0a0a" stroke-width="0.3"/>
+            <polygon points="46,77 48,84 50,77" fill="#fff5c0" stroke="#3a0a0a" stroke-width="0.3"/>
+            <polygon points="50,77 52,84 54,77" fill="#fff5c0" stroke="#3a0a0a" stroke-width="0.3"/>
+            <polygon points="54,75 56,82 58,75" fill="#fff5c0" stroke="#3a0a0a" stroke-width="0.3"/>
+            <!-- 가슴 룬 (붉은 마름모) -->
+            <polygon points="50,95 56,103 50,113 44,103" fill="#3a0a0a" stroke="#c0392b" stroke-width="0.8"/>
+            <polygon points="50,99 53,103 50,109 47,103" fill="#c0392b" opacity="0.85"/>
+            <!-- 양쪽 발톱 (보강) -->
+            <path d="M 18 100 L 12 108 L 18 112 L 14 116 L 22 114 L 16 120 L 24 118 Z" fill="#0a0a0d" stroke="#3a0a0a" stroke-width="0.4"/>
+            <path d="M 82 100 L 88 108 L 82 112 L 86 116 L 78 114 L 84 120 L 76 118 Z" fill="#0a0a0d" stroke="#3a0a0a" stroke-width="0.4"/>
+            <!-- 어깨 spikes -->
+            <polygon points="30,42 28,38 32,40" fill="#1a0408"/>
+            <polygon points="70,42 72,38 68,40" fill="#1a0408"/>
+            <polygon points="26,48 22,45 26,46" fill="#1a0408"/>
+            <polygon points="74,48 78,45 74,46" fill="#1a0408"/>
           </svg>
-          <!-- v58 逃影 디테일 (작은 눈 + 작은 발) -->
+          <!-- v131 影體革命 — 逃影: 작고 재빠른, 다중 눈, 화살표 같은 다리 -->
           <svg id="flee-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;display:none;pointer-events:none">
-            <ellipse cx="40" cy="55" rx="3" ry="2" fill="#aac0c8" opacity="0.85"/>
-            <ellipse cx="60" cy="55" rx="3" ry="2" fill="#aac0c8" opacity="0.85"/>
-            <ellipse cx="35" cy="100" rx="3" ry="5" fill="#1a1a25"/>
-            <ellipse cx="65" cy="100" rx="3" ry="5" fill="#1a1a25"/>
-            <path d="M 44 65 Q 50 68 56 65" fill="none" stroke="#1a1a1f" stroke-width="0.8"/>
+            <!-- 작은 머리 (가운데 작은 형체) -->
+            <ellipse cx="50" cy="55" rx="14" ry="11" fill="#1a1a25" stroke="#3a3a48" stroke-width="0.5"/>
+            <!-- 다중 눈 (좌우 + 가운데 큰) — 사방을 보는 -->
+            <ellipse cx="42" cy="52" rx="2.5" ry="2" fill="#aac0c8" opacity="0.95"/>
+            <ellipse cx="58" cy="52" rx="2.5" ry="2" fill="#aac0c8" opacity="0.95"/>
+            <ellipse cx="50" cy="48" rx="2" ry="1.5" fill="#c0d0e0" opacity="0.85"/>
+            <ellipse cx="36" cy="58" rx="1.5" ry="1" fill="#8a9aaa" opacity="0.7"/>
+            <ellipse cx="64" cy="58" rx="1.5" ry="1" fill="#8a9aaa" opacity="0.7"/>
+            <!-- 눈 동공 -->
+            <circle cx="42" cy="52" r="0.6" fill="#000"/>
+            <circle cx="58" cy="52" r="0.6" fill="#000"/>
+            <!-- 입 (작고 가는) -->
+            <path d="M 47 65 Q 50 67 53 65" fill="none" stroke="#1a1a1f" stroke-width="0.6"/>
+            <!-- 화살촉 같은 다리/발 (속도감) -->
+            <polygon points="38,88 32,108 38,104 36,114 40,108 42,102" fill="#1a1a25" stroke="#3a3a48" stroke-width="0.3"/>
+            <polygon points="62,88 68,108 62,104 64,114 60,108 58,102" fill="#1a1a25" stroke="#3a3a48" stroke-width="0.3"/>
+            <!-- 잔상 (속도 흐름) -->
+            <path d="M 35 75 L 25 78" stroke="#5a6a78" stroke-width="0.5" opacity="0.5"/>
+            <path d="M 32 80 L 22 82" stroke="#5a6a78" stroke-width="0.5" opacity="0.4"/>
+            <path d="M 65 75 L 75 78" stroke="#5a6a78" stroke-width="0.5" opacity="0.5"/>
+            <path d="M 68 80 L 78 82" stroke="#5a6a78" stroke-width="0.5" opacity="0.4"/>
           </svg>
-          <!-- v58 鋼影 디테일 (갑옷 패턴) -->
+          <!-- v131 影體革命 — 鋼影: 중장갑 무장 (헬멧, 어깨 보호대, 흉갑) -->
           <svg id="steel-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;display:none;pointer-events:none">
-            <rect x="35" y="40" width="30" height="6" fill="none" stroke="#5a6a7a" stroke-width="0.6" opacity="0.7"/>
-            <rect x="35" y="50" width="30" height="6" fill="none" stroke="#5a6a7a" stroke-width="0.6" opacity="0.7"/>
-            <rect x="35" y="60" width="30" height="6" fill="none" stroke="#5a6a7a" stroke-width="0.6" opacity="0.7"/>
-            <rect x="35" y="70" width="30" height="6" fill="none" stroke="#5a6a7a" stroke-width="0.6" opacity="0.7"/>
-            <rect x="35" y="80" width="30" height="6" fill="none" stroke="#5a6a7a" stroke-width="0.6" opacity="0.7"/>
-            <circle cx="50" cy="55" r="1.2" fill="#7a8898" opacity="0.6"/>
-            <circle cx="50" cy="75" r="1.2" fill="#7a8898" opacity="0.6"/>
+            <!-- 헬멧 (양각 형태) -->
+            <path d="M 35 35 L 35 50 L 38 55 L 50 58 L 62 55 L 65 50 L 65 35 Q 50 22 35 35 Z" fill="#2a3340" stroke="#5a6a78" stroke-width="0.7"/>
+            <!-- 헬멧 가운데 척추 (등판) -->
+            <line x1="50" y1="25" x2="50" y2="55" stroke="#7a8898" stroke-width="0.8"/>
+            <!-- 눈 슬릿 (가로 좁은 빨간 눈) -->
+            <rect x="40" y="45" width="6" height="1.5" fill="#c0392b" opacity="0.9"/>
+            <rect x="54" y="45" width="6" height="1.5" fill="#c0392b" opacity="0.9"/>
+            <!-- 어깨 보호대 (큰 양각) -->
+            <path d="M 26 58 L 22 65 Q 24 75 30 80 L 34 70 L 30 60 Z" fill="#3a4350" stroke="#5a6a78" stroke-width="0.5"/>
+            <path d="M 74 58 L 78 65 Q 76 75 70 80 L 66 70 L 70 60 Z" fill="#3a4350" stroke="#5a6a78" stroke-width="0.5"/>
+            <!-- 흉갑 (가운데 두꺼운 판) -->
+            <rect x="38" y="65" width="24" height="35" rx="2" fill="#2a3340" stroke="#5a6a78" stroke-width="0.6"/>
+            <line x1="38" y1="75" x2="62" y2="75" stroke="#5a6a78" stroke-width="0.5" opacity="0.8"/>
+            <line x1="38" y1="85" x2="62" y2="85" stroke="#5a6a78" stroke-width="0.5" opacity="0.8"/>
+            <line x1="38" y1="95" x2="62" y2="95" stroke="#5a6a78" stroke-width="0.5" opacity="0.8"/>
+            <!-- 흉갑 가운데 보석/리벳 -->
+            <circle cx="50" cy="80" r="2" fill="#7a8898" stroke="#3a4350" stroke-width="0.4"/>
+            <circle cx="50" cy="90" r="2" fill="#7a8898" stroke="#3a4350" stroke-width="0.4"/>
+            <!-- 리벳 (모서리) -->
+            <circle cx="40" cy="68" r="0.8" fill="#7a8898"/>
+            <circle cx="60" cy="68" r="0.8" fill="#7a8898"/>
+            <circle cx="40" cy="98" r="0.8" fill="#7a8898"/>
+            <circle cx="60" cy="98" r="0.8" fill="#7a8898"/>
           </svg>
-          <!-- v58 影 디테일 (소용돌이) -->
+          <!-- v131 影體革命 — 影: 후드 망령 (떠다니는 잘린 형체) -->
           <svg id="normal-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;display:none;pointer-events:none">
-            <path d="M 50 60 Q 60 55 60 65 Q 60 75 50 75 Q 40 75 40 65 Q 40 55 50 55" fill="none" stroke="#3a3a45" stroke-width="0.8" opacity="0.7"/>
-            <path d="M 50 60 Q 55 58 55 64 Q 55 70 50 70 Q 45 70 45 64" fill="none" stroke="#5a5a65" stroke-width="0.6" opacity="0.6"/>
+            <!-- 후드 (위에서 내려오는 망토) -->
+            <path d="M 30 25 Q 30 45 35 60 L 40 80 Q 50 88 60 80 L 65 60 Q 70 45 70 25 Q 50 18 30 25 Z" fill="#1a1a22" stroke="#3a3a45" stroke-width="0.5" opacity="0.92"/>
+            <!-- 후드 내부 그림자 (얼굴 부분) -->
+            <ellipse cx="50" cy="58" rx="13" ry="14" fill="#08080c" opacity="0.85"/>
+            <!-- 빛나는 눈 (창백한 흰빛) -->
+            <ellipse cx="44" cy="55" rx="1.8" ry="1.2" fill="#c8d0d8" opacity="0.85"/>
+            <ellipse cx="56" cy="55" rx="1.8" ry="1.2" fill="#c8d0d8" opacity="0.85"/>
+            <!-- 후드 끝 (작은 누더기) -->
+            <path d="M 35 80 L 33 90 L 36 88" fill="#1a1a22" opacity="0.7"/>
+            <path d="M 65 80 L 67 90 L 64 88" fill="#1a1a22" opacity="0.7"/>
+            <path d="M 50 82 L 48 92 L 52 92 Z" fill="#1a1a22" opacity="0.7"/>
+            <!-- 아래에서 솟아나는 안개 (휘발성) -->
+            <path d="M 32 100 Q 36 96 40 100 Q 44 96 48 100 Q 52 96 56 100 Q 60 96 64 100 Q 68 96 70 100" fill="none" stroke="#3a3a48" stroke-width="0.6" opacity="0.55"/>
+            <path d="M 38 110 Q 42 106 46 110 Q 50 106 54 110 Q 58 106 62 110" fill="none" stroke="#3a3a48" stroke-width="0.5" opacity="0.4"/>
           </svg>
           <div id="shadow-strength">강도 +0</div>
         </div>
