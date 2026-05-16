@@ -91,6 +91,41 @@
     box-shadow: inset 0 0 60px rgba(138,176,216,0.10);
   }
 
+  /* v146 坐 — 명상 모드 (60s 무행동) */
+  body.meditation #game::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.18);
+    pointer-events: none;
+    z-index: 5;
+    transition: background 1.4s ease;
+  }
+  #meditation-mark {
+    position: fixed; top: 14%; left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+    color: rgba(212, 175, 55, 0);
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0);
+    pointer-events: none;
+    z-index: 25;
+    letter-spacing: 6px;
+    transition: color 1.6s ease, text-shadow 1.6s ease;
+    font-family: 'Noto Serif KR', serif;
+  }
+  body.meditation #meditation-mark {
+    color: rgba(212, 175, 55, 0.55);
+    text-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+    animation: medi-breathe 4s ease-in-out infinite alternate;
+  }
+  @keyframes medi-breathe {
+    from { color: rgba(212, 175, 55, 0.40); }
+    to   { color: rgba(212, 175, 55, 0.75); }
+  }
+  body.meditation #sword-wrap svg {
+    filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.25));
+    transition: filter 2s ease;
+  }
+
   /* v120 紀元 — 시대 마크 (우측 상단, season-mark 위) */
   #era-mark {
     position: fixed;
@@ -2050,6 +2085,7 @@
 <body>
 <div id="season-mark"></div>
 <div id="era-mark"></div>
+<div id="meditation-mark">坐</div>
 <div id="gen-mark"></div>
 <div id="way-counter"></div>
 <button id="menu-toggle">≡</button>
@@ -6178,6 +6214,59 @@
     ambientPhraseTimer = setTimeout(tick, 10000);
   }
   setTimeout(() => startAmbientPhrases(), 5000);
+
+  // === v146 坐 — 60초 무행동 후 명상 모드 자동 진입 ===
+  const MEDITATION_THRESHOLD_MS = 60000;  // 60초
+  let lastUserAction = Date.now();
+  let inMeditation = false;
+  let preMeditationDronePitch = 1.0;
+  function touchUserAction() {
+    lastUserAction = Date.now();
+    if (inMeditation) exitMeditation();
+  }
+  function checkMeditation() {
+    // 조건: 검 있음, 도전/회수 없음, 모달 없음
+    if (!state.hasSword) return;
+    if (challenge || rescueWindow) return;
+    if (document.querySelector('.modal.active')) return;
+    const idleMs = Date.now() - lastUserAction;
+    if (idleMs >= MEDITATION_THRESHOLD_MS && !inMeditation) {
+      enterMeditation();
+    }
+  }
+  function enterMeditation() {
+    inMeditation = true;
+    document.body.classList.add('meditation');
+    // 호흡 즉시 최대로 (깊은 호흡 차원)
+    if (typeof lastEnhanceTime !== 'undefined') {
+      lastEnhanceTime = Date.now() - 70000;  // 60초+ 경과 = 깊은 호흡
+    }
+    // 드론 옥타브 내려감 (현재 음정 절반)
+    if (ambientNodes && audioCtx && ambientMode === 'idle') {
+      const t = audioCtx.currentTime;
+      const currentBase = ambientFreq(ambientLevel);
+      ambientNodes.osc.frequency.linearRampToValueAtTime(currentBase * 0.85, t + 2);
+      ambientNodes.subOsc.frequency.linearRampToValueAtTime(currentBase * 0.425, t + 2);
+    }
+  }
+  function exitMeditation() {
+    if (!inMeditation) return;
+    inMeditation = false;
+    document.body.classList.remove('meditation');
+    // 드론 원래 음정 복귀
+    if (ambientNodes && audioCtx && ambientMode === 'idle') {
+      const t = audioCtx.currentTime;
+      const baseFreq = ambientFreq(ambientLevel);
+      ambientNodes.osc.frequency.linearRampToValueAtTime(baseFreq, t + 1.0);
+      ambientNodes.subOsc.frequency.linearRampToValueAtTime(baseFreq / 2, t + 1.0);
+    }
+  }
+  // 매 3초마다 체크
+  setInterval(checkMeditation, 3000);
+  // 사용자 인터랙션 감지 — 모든 클릭/키 입력
+  document.addEventListener('click', touchUserAction, true);
+  document.addEventListener('keydown', touchUserAction, true);
+  document.addEventListener('touchstart', touchUserAction, { capture: true, passive: true });
 
   // v137 山水 — 가끔 가로질러 나는 새 (紀元 開眼+ 시점부터)
   function spawnLandscapeBird() {
