@@ -3394,6 +3394,7 @@
     }
   }
 
+  let lastSeenSeason = null;  // v157 季變
   function applySeason() {
     const s = getSeason();
     const body = document.body;
@@ -3405,6 +3406,92 @@
       mark.classList.add('season-' + s.key);
       mark.textContent = s.name;
     }
+    // v157 季變 — 계절 전환 의식
+    if (lastSeenSeason && lastSeenSeason !== s.key) {
+      playSeasonTransition(s.key);
+    }
+    lastSeenSeason = s.key;
+  }
+  // === v157 季變 — 계절 전환 의식 ===
+  const SEASON_VERSES = {
+    'spring': '봄이 왔다 — 검도 깨어난다',
+    'summer': '여름이 깊다 — 검은 뜨겁다',
+    'autumn': '가을이 들었다 — 검에 쓸쓸함이 깃든다',
+    'winter': '겨울이 왔다 — 검은 침묵으로 단련된다',
+  };
+  function playSeasonTransition(seasonKey) {
+    const verse = SEASON_VERSES[seasonKey];
+    const kanji = ({ 'spring': '春', 'summer': '夏', 'autumn': '秋', 'winter': '冬' })[seasonKey];
+    if (!verse || !kanji) return;
+    // 한자 페이드 (3초)
+    const k = document.createElement('div');
+    k.textContent = kanji;
+    const color = ({ 'spring': '#ffc8d8', 'summer': '#fff2a0', 'autumn': '#e6a070', 'winter': '#c8d8f0' })[seasonKey];
+    k.style.cssText = 'position:fixed;top:32%;left:50%;transform:translate(-50%,-50%) scale(0.5);font-size:80px;font-family:"Noto Serif KR",serif;color:' + color + ';text-shadow:0 0 20px ' + color + ';pointer-events:none;z-index:1500;letter-spacing:12px;opacity:0;';
+    document.body.appendChild(k);
+    k.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.5)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.25 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.7 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+    ], { duration: 3000, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' });
+    setTimeout(() => k.remove(), 3100);
+    // 시구
+    const lbl = document.createElement('div');
+    lbl.textContent = verse;
+    lbl.style.cssText = 'position:fixed;top:calc(32% + 50px);left:50%;transform:translateX(-50%);font-size:12px;letter-spacing:4px;color:' + color + ';text-shadow:0 0 6px rgba(0,0,0,0.4);pointer-events:none;z-index:1500;opacity:0;text-align:center;line-height:1.8;font-style:italic;font-family:"Noto Serif KR",serif;';
+    document.body.appendChild(lbl);
+    lbl.animate([
+      { opacity: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }
+    ], { duration: 3000, easing: 'ease-in-out' });
+    setTimeout(() => lbl.remove(), 3100);
+    // 계절별 SFX
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      if (seasonKey === 'spring') {
+        // 春: 밝은 종 — C-E-G ascending
+        [523, 659, 784].forEach((f, i) => {
+          const osc = ctx.createOscillator(); const g = ctx.createGain();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(f, now + i * 0.15);
+          g.gain.setValueAtTime(0.0, now + i * 0.15);
+          g.gain.linearRampToValueAtTime(0.16, now + i * 0.15 + 0.04);
+          g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 1.2);
+          osc.connect(g); g.connect(ctx.destination);
+          osc.start(now + i * 0.15); osc.stop(now + i * 0.15 + 1.3);
+        });
+      } else if (seasonKey === 'summer') {
+        // 夏: 풍성한 드론 — 톤 침묵 후 부드러운 발성
+        [392, 494].forEach((f, i) => {
+          const osc = ctx.createOscillator(); const g = ctx.createGain();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(f, now);
+          g.gain.setValueAtTime(0.0, now); g.gain.linearRampToValueAtTime(0.12, now + 0.4);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+          osc.connect(g); g.connect(ctx.destination);
+          osc.start(now); osc.stop(now + 2.1);
+        });
+      } else if (seasonKey === 'autumn') {
+        // 秋: 낮은 종 — 슬픔
+        [220, 277].forEach((f, i) => {
+          const osc = ctx.createOscillator(); const g = ctx.createGain();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(f, now + i * 0.3);
+          g.gain.setValueAtTime(0.0, now + i * 0.3);
+          g.gain.linearRampToValueAtTime(0.14, now + i * 0.3 + 0.05);
+          g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.3 + 1.8);
+          osc.connect(g); g.connect(ctx.destination);
+          osc.start(now + i * 0.3); osc.stop(now + i * 0.3 + 1.9);
+        });
+      } else {
+        // 冬: 깊은 침묵 + 단음
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(110, now);
+        g.gain.setValueAtTime(0.0, now); g.gain.linearRampToValueAtTime(0.10, now + 0.6);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(now); osc.stop(now + 3.1);
+      }
+    }
+    log('季變 — ' + verse, 'info');
   }
 
   // === v121 結界 — 신성 보호 공간 (조각 1000+ 시 활성 가능, 비용 ×3, 파괴 차단) ===
