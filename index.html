@@ -3160,6 +3160,8 @@
     collectionMilestones: {}, // v145 銘集 — 달성한 명문 수집 마일스톤
     shrineDonations: {},      // v149 神祠 — 영구 헌사 잠금 해제
     hiddenAchievements: {},   // v152 風月 — 숨겨진 조용한 성취
+    swordWish: null,          // v155 寒梅 — 현재 활성 유언 (강화형)
+    swordWishSlay: null,      // v155 寒梅 — 슬레이 보상 유언
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
@@ -3338,6 +3340,8 @@
       if (!state.collectionMilestones || typeof state.collectionMilestones !== 'object') state.collectionMilestones = {};  // v145
       if (!state.shrineDonations || typeof state.shrineDonations !== 'object') state.shrineDonations = {};  // v149
       if (!state.hiddenAchievements || typeof state.hiddenAchievements !== 'object') state.hiddenAchievements = {};  // v152
+      if (state.swordWish !== null && typeof state.swordWish !== 'object') state.swordWish = null;  // v155
+      if (state.swordWishSlay !== null && typeof state.swordWishSlay !== 'object') state.swordWishSlay = null;
       if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
         state.currentSword.foesEncountered = {};
       }
@@ -4445,6 +4449,7 @@
     renderAdversity();  // v96 厄運轉機
     renderEnhanceEcho();  // v114 餘香
     renderSevenStars();  // v116 七星
+    renderWishIndicator();  // v155 寒梅
     updateStageBg();   // v97 梵境
     // v81 조합소 버튼 시각 잠금 — +0 일 때만 활성
     const forgeBtn = $('btn-forge');
@@ -4546,8 +4551,9 @@
     const echoDestroyBlockShow = !!(enhanceEcho && enhanceEcho.destroyBlock);
     const matsuMulShow = blessingCostMul();  // v119
     const sanctumMulShow = sanctumCostMul();  // v121 結界
-    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow);
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus();
+    const wishMulShow = wishCostMul();  // v155 寒梅
+    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow * wishMulShow);
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
 
@@ -4720,6 +4726,72 @@
         osc.start(now + i * 0.04); osc.stop(now + i * 0.04 + 0.10);
       }
     }
+  }
+
+  // === v155 寒梅 — 高 lv 봉인 검의 유언이 다음 검에 (4 형 × 4 유언) ===
+  const SWORD_WISHES = {
+    '直': { key: '寒梅', label: '寒梅 — 차가운 매화의 약속', successBonus: 0.05,                  desc: '다음 검 첫 5강화 성공 +5%' },
+    '曲': { key: '流水', label: '流水 — 흐르는 물의 약속',     destroyReduce: 0.10,                desc: '다음 검 첫 5강화 파괴 -10%' },
+    '重': { key: '雷神', label: '雷神 — 천둥의 약속',         slayRewardMul: 1.2,                 desc: '다음 검 첫 5슬레이 보상 ×1.2' },
+    '速': { key: '風影', label: '風影 — 바람 그림자의 약속',   costMul: 0.9,                       desc: '다음 검 첫 5강화 비용 -10%' },
+  };
+  function wishSuccessBonus() {
+    return (state.swordWish && state.swordWish.charges > 0 && state.swordWish.successBonus) || 0;
+  }
+  function wishDestroyReduce() {
+    return (state.swordWish && state.swordWish.charges > 0 && state.swordWish.destroyReduce) || 0;
+  }
+  function wishCostMul() {
+    return (state.swordWish && state.swordWish.charges > 0 && state.swordWish.costMul) || 1.0;
+  }
+  function wishSlayRewardMul() {
+    // 슬레이 charge는 슬레이 시점에 소비 (별도 카운터)
+    return (state.swordWishSlay && state.swordWishSlay.charges > 0 && state.swordWishSlay.slayRewardMul) || 1.0;
+  }
+  function consumeWishEnhance() {
+    if (state.swordWish && state.swordWish.charges > 0) {
+      state.swordWish.charges--;
+      if (state.swordWish.charges === 0) {
+        log('유언이 다하였다 — ' + state.swordWish.key, 'info');
+      }
+    }
+  }
+  function consumeWishSlay() {
+    if (state.swordWishSlay && state.swordWishSlay.charges > 0) {
+      state.swordWishSlay.charges--;
+    }
+  }
+  function setSwordWishFromSeal(form, lv) {
+    if (lv < 13) return;
+    const w = SWORD_WISHES[form];
+    if (!w) return;
+    // 슬레이 보상 유언은 별도 슬롯 (강화 vs 슬레이 분리)
+    if (w.slayRewardMul) {
+      state.swordWishSlay = { key: w.key, label: w.label, slayRewardMul: w.slayRewardMul, charges: 5 };
+    } else {
+      state.swordWish = Object.assign({ charges: 5 }, w);
+    }
+    setTimeout(() => announceInscription(w.key, w.label + ' — ' + w.desc), 1600);
+  }
+  function renderWishIndicator() {
+    let el = $('wish-indicator');
+    if (!el) {
+      // 처음 생성
+      el = document.createElement('div');
+      el.id = 'wish-indicator';
+      el.style.cssText = 'position:absolute;top:-44px;right:8px;font-size:9px;letter-spacing:2px;color:rgba(212,175,55,0.7);pointer-events:none;font-family:"Noto Serif KR",serif;text-align:right;line-height:1.5';
+      const stage = $('stage');
+      if (stage) stage.appendChild(el);
+    }
+    const parts = [];
+    if (state.swordWish && state.swordWish.charges > 0) {
+      parts.push(state.swordWish.key + ' ×' + state.swordWish.charges);
+    }
+    if (state.swordWishSlay && state.swordWishSlay.charges > 0) {
+      parts.push(state.swordWishSlay.key + ' ×' + state.swordWishSlay.charges);
+    }
+    el.innerHTML = parts.join('<br>');
+    el.style.display = parts.length ? 'block' : 'none';
   }
 
   // === v149 神祠 — 영구 헌사 (조각 소비형 메타 진행) ===
@@ -5674,7 +5746,8 @@
     const echoCostMul = (enhanceEcho && enhanceEcho.costMul) || 1;
     const matsuMul = blessingCostMul();  // v119 千年松
     const sanctumMul = sanctumCostMul();  // v121 結界
-    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMul * matsuMul * sanctumMul);
+    const wishMul = wishCostMul();  // v155 寒梅 — 風影 유언
+    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMul * matsuMul * sanctumMul * wishMul);
     if (state.shards < actualCost) return;
 
     const useProtect = protectCheck.checked && !protectCheck.disabled;
@@ -5707,6 +5780,7 @@
     consumeMatsu();  // v119 千年松 카운트 소모
     consumeDawnBonus();  // v126 黎明 — 보너스 카운트 소모
     consumeLightningBonus();  // v147 雷 — 다음 강화 +10% 1회 소모
+    consumeWishEnhance();  // v155 寒梅 — 유언 강화 카운트 1 소모
     checkEraTransition(prevAttempts);  // v120 紀元 — 새 시대 진입 감지
     maybeForceSanctumOff();  // v121 結界 — 비용 차감 후 조각 부족 시 자동 해제
 
@@ -5728,7 +5802,7 @@
     const roll = (useDivination && divinationLockedSuccessRoll !== null)
       ? divinationLockedSuccessRoll
       : Math.random();
-    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus()) {
+    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus()) {
       // 성공 (v107 連)
       if (adversityReady) { adversityReady = false; announceInscription('逆轉', '역경을 넘어 강화에 성공했다'); }
       failStreak = 0;
@@ -5837,7 +5911,7 @@
         ? divinationLockedFailRoll
         : Math.random();
       // 영석/餘香影盾/結界(v121): 파괴 차단 / 유파 + 수호자 + 흉터(v111) 보너스도 destroy 감소 / v91 覺悟 배율 / v96 역경전기 감소
-      const effectiveDestroy = (useSpirit || echoDestroyBlock || sanctumBlocksDestroy()) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce() - weatherDestroyReduce()) * rsv.destroyMul);
+      const effectiveDestroy = (useSpirit || echoDestroyBlock || sanctumBlocksDestroy()) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce() - weatherDestroyReduce() - wishDestroyReduce()) * rsv.destroyMul);
       // v121 結界: 파괴 차단 시 원래 destroy 확률을 downgrade로 흡수 (단순 안전이 아닌 비용 부과형 보호)
       const sanctumDestroyAbsorbed = sanctumBlocksDestroy() && !useSpirit && !echoDestroyBlock
         ? Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce()) * rsv.destroyMul)
@@ -6299,6 +6373,9 @@
     // v153 朝夕 — 夜 슬레이 ×1.02 (밤의 그림자 보상)
     const todMul = todSlayRewardBonus();
     if (todMul !== 1) reward = Math.floor(reward * todMul);
+    // v155 寒梅 — 雷神 유언 슬레이 보상 ×1.2 (5회)
+    const wishSlayM = wishSlayRewardMul();
+    if (wishSlayM !== 1) { reward = Math.floor(reward * wishSlayM); consumeWishSlay(); }
     const origin = rollShadowOrigin();
     challenge = { strength, reward, type, origin };
     bumpStat('challengesAppeared');
@@ -9471,6 +9548,8 @@
     // v152 風月 — 숨겨진 성취 검사 (방금 push한 sealedSwords 마지막 항목)
     const justSealed = state.sealedSwords[state.sealedSwords.length - 1];
     checkHiddenAchievements(justSealed);
+    // v155 寒梅 — lv13+ 봉인 시 유언이 다음 검에
+    setSwordWishFromSeal(form, lv);
     // v117 四道 — 이 봉인으로 4형 道 모두 달성 시 큰 의식
     if (!fourWaysBefore && hasFourWays()) {
       setTimeout(() => {
@@ -11256,6 +11335,8 @@
     collectionMilestones: {}, // v145 銘集 — 달성한 명문 수집 마일스톤
     shrineDonations: {},      // v149 神祠 — 영구 헌사 잠금 해제
     hiddenAchievements: {},   // v152 風月 — 숨겨진 조용한 성취
+    swordWish: null,          // v155 寒梅 — 현재 활성 유언 (강화형)
+    swordWishSlay: null,      // v155 寒梅 — 슬레이 보상 유언
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0, divinationStones: 0,
       firstWayReached: false,
