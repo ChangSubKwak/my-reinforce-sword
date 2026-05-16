@@ -249,6 +249,44 @@
   body.tod-evening #tod-mark { color: rgba(220, 130, 80, 0.65); opacity: 0.85; }
   body.tod-night #tod-mark   { color: rgba(140, 160, 220, 0.65); opacity: 0.85; }
 
+  /* v162 真空 — 극도의 침묵 (메디테이션 10분+) */
+  body.true-emptiness #game header,
+  body.true-emptiness #game footer,
+  body.true-emptiness #log-wrap,
+  body.true-emptiness .stats-strip,
+  body.true-emptiness #btn-enhance,
+  body.true-emptiness #btn-seal-direct,
+  body.true-emptiness #btn-fusion,
+  body.true-emptiness #resolve-row,
+  body.true-emptiness #stone-row,
+  body.true-emptiness #sanctum-row,
+  body.true-emptiness #key-hint,
+  body.true-emptiness #season-mark,
+  body.true-emptiness #era-mark,
+  body.true-emptiness #tod-mark,
+  body.true-emptiness #weather-mark,
+  body.true-emptiness #way-counter,
+  body.true-emptiness #gen-mark,
+  body.true-emptiness #odds {
+    opacity: 0.05 !important;
+    transition: opacity 4s ease;
+    pointer-events: none;
+  }
+  body.true-emptiness #stage::before {
+    background: radial-gradient(circle at 50% 50%, rgba(255,245,192,0.04), transparent 60%) !important;
+  }
+  .true-empty-star {
+    position: fixed;
+    width: 2px;
+    height: 2px;
+    background: #fff5c0;
+    border-radius: 50%;
+    box-shadow: 0 0 4px rgba(255,245,192,0.6);
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+  }
+
   /* v146 坐 — 명상 모드 (60s 무행동) */
   body.meditation #game::before {
     content: '';
@@ -6319,7 +6357,8 @@
     const whetBonus = useWhet ? 0.25 : 0;
     const soulBonus = soulEffects().successBonus;
     const schoolBonus = schoolSuccessBonus();
-    const breath = breathBonus();
+    let breath = breathBonus();
+    if (pendingBreathBoost) { breath *= 2; pendingBreathBoost = false; log('眞空 보너스 — 호흡 ×2 적용', 'success'); }
     const guardBonus = guardianBonus().successBonus;
     addSoul(1); // 강화 시도 자체로 혼 +1
     if (echoSoulBonus > 0) addSoul(echoSoulBonus); // v114 餘香 靈魂 보너스
@@ -7563,8 +7602,14 @@
 
   // === v146 坐 — 60초 무행동 후 명상 모드 자동 진입 ===
   const MEDITATION_THRESHOLD_MS = 60000;  // 60초
+  const TRUE_EMPTINESS_THRESHOLD_MS = 10 * 60 * 1000;  // 10분 (메디테이션 후 추가)
   let lastUserAction = Date.now();
   let inMeditation = false;
+  let inTrueEmptiness = false;
+  let meditationStartTime = 0;
+  let trueEmptyStarInterval = null;
+  let trueEmptyBellInterval = null;
+  let pendingBreathBoost = false;  // v162: 真空 종료 시 다음 강화 호흡 보너스 ×2
   let preMeditationDronePitch = 1.0;
   function touchUserAction() {
     lastUserAction = Date.now();
@@ -7582,6 +7627,7 @@
   }
   function enterMeditation() {
     inMeditation = true;
+    meditationStartTime = Date.now();
     document.body.classList.add('meditation');
     // 호흡 즉시 최대로 (깊은 호흡 차원)
     if (typeof lastEnhanceTime !== 'undefined') {
@@ -7610,9 +7656,80 @@
     }
     // v154 沈黙 — 명상 종료 시 지혜 schedule 정지
     stopSilenceWisdom();
+    // v162 真空 — 真空 모드면 종료 + 호흡 보너스 예약
+    if (inTrueEmptiness) {
+      exitTrueEmptiness();
+      pendingBreathBoost = true;
+      log('真空 종료 — 다음 강화 호흡 보너스 ×2', 'success');
+    }
+    meditationStartTime = 0;
   }
+  function checkTrueEmptiness() {
+    if (!inMeditation || inTrueEmptiness) return;
+    if (Date.now() - meditationStartTime >= TRUE_EMPTINESS_THRESHOLD_MS) {
+      enterTrueEmptiness();
+    }
+  }
+  function enterTrueEmptiness() {
+    inTrueEmptiness = true;
+    document.body.classList.add('true-emptiness');
+    // 드론 더 낮춤
+    if (ambientNodes && audioCtx) {
+      const t = audioCtx.currentTime;
+      const base = ambientFreq(ambientLevel);
+      ambientNodes.osc.frequency.linearRampToValueAtTime(base * 0.65, t + 3);
+      ambientNodes.subOsc.frequency.linearRampToValueAtTime(base * 0.325, t + 3);
+    }
+    // 별 spawner
+    trueEmptyStarInterval = setInterval(spawnTrueEmptyStar, 1500);
+    // 깊은 종 (4분마다)
+    trueEmptyBellInterval = setInterval(playTrueEmptyBell, 4 * 60 * 1000);
+    setTimeout(playTrueEmptyBell, 5000);  // 처음 5초 후 한 번
+    log('真空 — 깊은 침묵에 들었다', 'info');
+  }
+  function exitTrueEmptiness() {
+    inTrueEmptiness = false;
+    document.body.classList.remove('true-emptiness');
+    if (trueEmptyStarInterval) { clearInterval(trueEmptyStarInterval); trueEmptyStarInterval = null; }
+    if (trueEmptyBellInterval) { clearInterval(trueEmptyBellInterval); trueEmptyBellInterval = null; }
+    // 별 모두 제거
+    document.querySelectorAll('.true-empty-star').forEach(el => el.remove());
+  }
+  function spawnTrueEmptyStar() {
+    if (!inTrueEmptiness) return;
+    const star = document.createElement('div');
+    star.className = 'true-empty-star';
+    star.style.left = (5 + Math.random() * 90) + 'vw';
+    star.style.top = (5 + Math.random() * 90) + 'vh';
+    document.body.appendChild(star);
+    star.animate([
+      { opacity: 0, transform: 'scale(0)' },
+      { opacity: 0.8, offset: 0.3, transform: 'scale(1)' },
+      { opacity: 0.8, offset: 0.7 },
+      { opacity: 0, transform: 'scale(0.5)' },
+    ], { duration: 8000 + Math.random() * 4000, easing: 'ease-in-out' });
+    setTimeout(() => star.remove(), 13000);
+  }
+  function playTrueEmptyBell() {
+    if (!inTrueEmptiness) return;
+    const ctx = getAudio();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.setValueAtTime(82, now);
+    g.gain.setValueAtTime(0.0, now); g.gain.linearRampToValueAtTime(0.10, now + 0.3);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 4.5);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(now); osc.stop(now + 4.6);
+  }
+  // checkMeditation 호출 시 같이 체크
+  function checkBoth() {
+    checkMeditation();
+    checkTrueEmptiness();
+  }
+  setInterval(checkBoth, 5000);
   // 매 3초마다 체크
-  setInterval(checkMeditation, 3000);
+  // setInterval(checkMeditation, 3000);  // v162: checkBoth로 대체
   // 사용자 인터랙션 감지 — 모든 클릭/키 입력
   document.addEventListener('click', touchUserAction, true);
   document.addEventListener('keydown', touchUserAction, true);
