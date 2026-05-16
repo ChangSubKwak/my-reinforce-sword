@@ -1699,6 +1699,16 @@
     border: 1px solid rgba(212, 175, 55, 0.35); border-radius: 2px;
     background: linear-gradient(180deg, rgba(212,175,55,0.06), rgba(212,175,55,0.02));
     animation: echo-breathe 2.6s ease-in-out infinite alternate;
+    position: relative;
+    --echo-life: 100%;
+  }
+  /* v115 流逝 — 잔향 수명 바 (하단) */
+  #enhance-echo::after {
+    content: '';
+    position: absolute; left: 0; bottom: 0; height: 2px;
+    width: var(--echo-life);
+    background: linear-gradient(90deg, rgba(212,175,55,0.7), rgba(212,175,55,0.2));
+    transition: width 0.4s linear;
   }
   #enhance-echo .echo-kanji { font-size: 18px; color: var(--accent); letter-spacing: 0; text-shadow: 0 0 8px rgba(212,175,55,0.6); font-family: 'Noto Serif KR', serif; }
   #enhance-echo .echo-label { font-size: 10px; color: var(--fg); letter-spacing: 2px; opacity: 0.85; }
@@ -2047,6 +2057,7 @@
           <div id="shadow-strength">강도 +0</div>
         </div>
       </div>
+      <div id="challenge-timer" style="display:none;text-align:center;font-size:10px;letter-spacing:3px;margin:6px 0;font-style:italic"></div>
       <div id="challenge-actions">
         <button class="challenge-btn" id="btn-slay"><span>베 기</span><span id="slay-reward-label" style="color:var(--accent);margin-left:8px;font-size:11px;letter-spacing:3px">+0</span></button>
         <button class="challenge-btn flee" id="btn-flee">도 망</button>
@@ -3356,8 +3367,11 @@
     }
   }
 
-  // === v114 餘香 — 슬레이 후 다음 강화에 남는 잔향 ===
+  // === v114 餘香 — 슬레이 후 다음 강화에 남는 잔향 + v115 流逝 시간 제한 ===
   let enhanceEcho = null;  // 휘발성. 한 번 사용 후 소멸
+  let enhanceEchoTimer = null;  // v115 流逝 — 잔향 수명 타이머
+  let enhanceEchoDeadline = 0;  // 만료 timestamp (ms)
+  const ECHO_LIFESPAN_MS = 30000;  // 30초 후 자연 소멸
   const ECHO_TYPES = {
     demon:  { kanji: '神', label: '神髓 — 다음 강화 성공 +30%',  successBonus: 0.30, color: '#c0392b' },
     steel:  { kanji: '盾', label: '影盾 — 다음 강화 파괴 차단',  destroyBlock: true,  color: '#8ab0c8' },
@@ -3368,10 +3382,22 @@
     const def = ECHO_TYPES[typeKey];
     if (!def) return;
     enhanceEcho = Object.assign({ type: typeKey }, def);
+    // v115 流逝 — 잔향 수명 타이머
+    if (enhanceEchoTimer) clearTimeout(enhanceEchoTimer);
+    enhanceEchoDeadline = Date.now() + ECHO_LIFESPAN_MS;
+    enhanceEchoTimer = setTimeout(() => expireEnhanceEcho(), ECHO_LIFESPAN_MS);
     // 슬레이 위치에서 강화 버튼으로 흐르는 잔향 한자
     spawnEchoKanji(def.kanji, def.color, sourceRect);
     setTimeout(() => render(), 600);
-    log('餘香 — ' + def.label, 'success');
+    log('餘香 — ' + def.label + ' · 30초', 'success');
+  }
+  function expireEnhanceEcho() {
+    if (!enhanceEcho) return;
+    log('餘香 흩어졌다 — ' + (enhanceEcho.kanji || '?'), 'fail');
+    enhanceEcho = null;
+    if (enhanceEchoTimer) { clearTimeout(enhanceEchoTimer); enhanceEchoTimer = null; }
+    enhanceEchoDeadline = 0;
+    render();
   }
   function spawnEchoKanji(kanji, color, sourceRect) {
     const target = btnEnhance && btnEnhance.getBoundingClientRect();
@@ -3413,11 +3439,22 @@
       return;
     }
     el.style.display = 'flex';
-    el.innerHTML = '<span class="echo-kanji">' + enhanceEcho.kanji + '</span><span class="echo-label">' + enhanceEcho.label + '</span>';
+    // v115 流逝 — 남은 시간 표시
+    const remainMs = Math.max(0, enhanceEchoDeadline - Date.now());
+    const remainSec = Math.ceil(remainMs / 1000);
+    const remainPct = enhanceEchoDeadline > 0 ? Math.max(0, Math.min(100, (remainMs / ECHO_LIFESPAN_MS) * 100)) : 100;
+    el.innerHTML =
+      '<span class="echo-kanji">' + enhanceEcho.kanji + '</span>' +
+      '<span class="echo-label">' + enhanceEcho.label + '</span>' +
+      '<span class="echo-timer" style="font-size:9px;color:var(--dim);min-width:24px;text-align:right">' + remainSec + 's</span>';
+    el.style.setProperty('--echo-life', remainPct + '%');
+    el.style.opacity = remainMs < 5000 ? 0.6 : 1;
   }
   function consumeEnhanceEcho() {
     const echo = enhanceEcho;
     enhanceEcho = null;
+    if (enhanceEchoTimer) { clearTimeout(enhanceEchoTimer); enhanceEchoTimer = null; }
+    enhanceEchoDeadline = 0;
     return echo;
   }
 
@@ -3923,6 +3960,10 @@
   const CHALLENGE_MIN_LEVEL = 1;
   const FLEE_COST = 3;
   let challenge = null;
+  // v115 流逝 — 도전 그림자 자동 후퇴 (인내심 한계)
+  let challengeTimer = null;
+  let challengeDeadline = 0;
+  const CHALLENGE_LIFESPAN_MS = 60000;  // 60초 후 그림자 자발 후퇴
 
   // v5: 그림자 종류 — 각 type은 시각·메커니즘·보상 변형
   const SHADOW_TYPES = [
@@ -4229,6 +4270,11 @@
       render();
     }
   }, 3000);
+  // v115 流逝 — 잔향 / 도전 잔여 시간 표시 갱신 (1초)
+  setInterval(() => {
+    if (enhanceEcho) renderEnhanceEcho();
+    if (challenge && challengeDeadline) renderChallengeTimer();
+  }, 1000);
 
   function showChallenge() {
     const t = challenge.type;
@@ -4286,6 +4332,33 @@
     challengeEl.classList.add('active');
     swordWrap.style.opacity = 0;
     levelBadge.style.opacity = 0;
+    // v115 流逝 — 그림자 인내 타이머 시작 (60초 후 자발 후퇴)
+    if (challengeTimer) clearTimeout(challengeTimer);
+    challengeDeadline = Date.now() + CHALLENGE_LIFESPAN_MS;
+    challengeTimer = setTimeout(() => autoRetreatChallenge(), CHALLENGE_LIFESPAN_MS);
+    renderChallengeTimer();
+  }
+
+  function renderChallengeTimer() {
+    const el = $('challenge-timer');
+    if (!el) return;
+    if (!challenge || !challengeDeadline) { el.style.display = 'none'; el.textContent = ''; return; }
+    const remainMs = Math.max(0, challengeDeadline - Date.now());
+    const remainSec = Math.ceil(remainMs / 1000);
+    el.style.display = 'block';
+    el.textContent = remainSec + 's';
+    el.style.color = remainSec <= 10 ? 'var(--danger)' : 'var(--dim)';
+  }
+
+  function autoRetreatChallenge() {
+    if (!challenge) return;
+    bumpStat('evaded');
+    log('그림자가 인내심을 잃고 떠났다', 'fail');
+    inscribeQueue.push({ key: '逝', label: '그림자가 흩어졌다 — 결단의 시간을 놓쳤다' });
+    if (!inscribeRunning) runInscribeQueue();
+    endChallenge();
+    save();
+    render();
   }
 
   function endChallenge() {
@@ -4293,6 +4366,10 @@
     swordWrap.style.opacity = 1;
     levelBadge.style.opacity = 1;
     challenge = null;
+    // v115 流逝 — 타이머 정리
+    if (challengeTimer) { clearTimeout(challengeTimer); challengeTimer = null; }
+    challengeDeadline = 0;
+    renderChallengeTimer();
     if (ambientMode !== 'way') applyAmbientMode('idle');
   }
 
