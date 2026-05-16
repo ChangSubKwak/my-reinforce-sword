@@ -4794,6 +4794,112 @@
     }
   }
 
+  // === v150 道至 — 첫 道 도달 거대 의식 ===
+  function playFirstWayCeremony() {
+    // 1) 화면 황금 파동 (3.5초)
+    const wave = document.createElement('div');
+    wave.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:1400;background:radial-gradient(circle at 50% 50%, rgba(255,245,192,0.0) 0%, transparent 100%);opacity:0;';
+    document.body.appendChild(wave);
+    wave.animate([
+      { opacity: 0, background: 'radial-gradient(circle at 50% 50%, rgba(255,245,192,0.0) 0%, transparent 100%)' },
+      { opacity: 1, background: 'radial-gradient(circle at 50% 50%, rgba(255,245,192,0.30) 0%, rgba(212,175,55,0.10) 40%, transparent 80%)', offset: 0.3 },
+      { opacity: 1, background: 'radial-gradient(circle at 50% 50%, rgba(255,245,192,0.30) 0%, rgba(212,175,55,0.10) 40%, transparent 80%)', offset: 0.7 },
+      { opacity: 0, background: 'radial-gradient(circle at 50% 50%, rgba(255,245,192,0.0) 0%, transparent 100%)' },
+    ], { duration: 4500, easing: 'ease-in-out' });
+    setTimeout(() => wave.remove(), 4600);
+
+    // 2) 거대 한자 "道至" 페이드 (4초)
+    const k = document.createElement('div');
+    k.textContent = '道至';
+    k.style.cssText = 'position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) scale(0.3);font-size:120px;font-family:"Noto Serif KR",serif;color:#fff5c0;text-shadow:0 0 40px rgba(255,245,192,1.0),0 0 20px rgba(212,175,55,1.0);pointer-events:none;z-index:1500;letter-spacing:24px;opacity:0;';
+    document.body.appendChild(k);
+    k.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.3)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.25 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.75 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+    ], { duration: 4000, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' });
+    setTimeout(() => k.remove(), 4100);
+
+    // 3) 부제
+    const lbl = document.createElement('div');
+    lbl.innerHTML = '道를 본 자<br><span style="font-size:13px;letter-spacing:4px;opacity:0.85">새로운 시작 — 검의 길이 무한히 열린다</span>';
+    lbl.style.cssText = 'position:fixed;top:calc(38% + 100px);left:50%;transform:translateX(-50%);font-size:16px;letter-spacing:6px;color:#fff5c0;text-shadow:0 0 10px rgba(212,175,55,0.7);pointer-events:none;z-index:1500;opacity:0;text-align:center;line-height:2.2;';
+    document.body.appendChild(lbl);
+    lbl.animate([
+      { opacity: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 1, offset: 0.75 }, { opacity: 0 }
+    ], { duration: 4000, easing: 'ease-in-out' });
+    setTimeout(() => lbl.remove(), 4100);
+
+    // 4) 봉인 검 영혼 한자들이 모임 (招魂 변형)
+    const sealed = state.sealedSwords || [];
+    if (sealed.length > 0) {
+      const stage = $('stage');
+      if (stage) {
+        const rect = stage.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const spawnCount = Math.min(8, sealed.length);
+        for (let i = 0; i < spawnCount; i++) {
+          const sword = sealed[sealed.length - 1 - i];
+          const firstChar = (sword.name && sword.name.substring(0, 1)) || sword.form || '?';
+          const sp = document.createElement('div');
+          sp.textContent = firstChar;
+          const angle = (i / spawnCount) * Math.PI * 2 - Math.PI / 2;
+          const radius = 180 + Math.random() * 60;
+          const startX = cx + Math.cos(angle) * (radius + 80);
+          const startY = cy + Math.sin(angle) * (radius + 80);
+          const endX = cx + Math.cos(angle) * 60;
+          const endY = cy + Math.sin(angle) * 60;
+          sp.style.cssText = 'position:fixed;font-size:24px;font-family:"Noto Serif KR",serif;color:rgba(255,245,192,0.9);text-shadow:0 0 12px rgba(255,245,192,0.7);pointer-events:none;z-index:1450;left:' + startX + 'px;top:' + startY + 'px;transform:translate(-50%,-50%) scale(0.5);opacity:0;letter-spacing:0;';
+          document.body.appendChild(sp);
+          const delay = 800 + i * 200;
+          sp.animate([
+            { opacity: 0, transform: 'translate(-50%,-50%) scale(0.5)', left: startX + 'px', top: startY + 'px' },
+            { opacity: 1, transform: 'translate(-50%,-50%) scale(1.2)', offset: 0.4, left: ((startX + endX) / 2) + 'px', top: ((startY + endY) / 2) + 'px' },
+            { opacity: 0, transform: 'translate(-50%,-50%) scale(0.7)', left: endX + 'px', top: endY + 'px' },
+          ], { duration: 2800, delay: delay, easing: 'cubic-bezier(0.3, 0.5, 0.6, 1)', fill: 'forwards' });
+          setTimeout(() => sp.remove(), 2900 + delay);
+        }
+      }
+    }
+
+    // 5) 펜타토닉 5음 ascending + 봉인 화음
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      // 5음 ascending (C-D-E-G-A pentatonic)
+      [262, 294, 330, 392, 440].forEach((f, i) => {
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(f, now + i * 0.18);
+        g.gain.setValueAtTime(0.0, now + i * 0.18);
+        g.gain.linearRampToValueAtTime(0.20, now + i * 0.18 + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 1.5);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(now + i * 0.18); osc.stop(now + i * 0.18 + 1.6);
+      });
+      // 1초 후 봉인 화음 (C major + perfect 5th)
+      setTimeout(() => {
+        const t2 = ctx.currentTime;
+        [262, 330, 392, 523].forEach(f => {
+          const osc = ctx.createOscillator(); const g = ctx.createGain();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(f, t2);
+          g.gain.setValueAtTime(0.0, t2);
+          g.gain.linearRampToValueAtTime(0.16, t2 + 0.1);
+          g.gain.exponentialRampToValueAtTime(0.001, t2 + 2.8);
+          osc.connect(g); g.connect(ctx.destination);
+          osc.start(t2); osc.stop(t2 + 2.9);
+        });
+      }, 1100);
+    }
+    // 6) 거대 파티클 burst (4중 leg)
+    burstParticles('#fff5c0', 100);
+    setTimeout(() => burstParticles('#d4af37', 60), 300);
+    setTimeout(() => burstParticles('#a8c0e0', 40), 600);
+    setTimeout(() => burstParticles('#fff5c0', 40), 900);
+    log('道至 — 새로운 시작. 검의 길이 열렸다', 'success');
+  }
+
   // === v144 招魂 — 검 파괴 시 봉인된 선대 검들이 목격 ===
   function summonAncestorSpirits() {
     // 선대 검들의 이름 첫 글자 수집 (sealedSwords + enshrined)
@@ -9060,6 +9166,8 @@
       if (!state.firstWayReached) {
         state.firstWayReached = true;
         setTimeout(() => announceInscription('始祖', '첫 도(道) 달성 — 선조의 길이 열렸다'), 5800);
+        // v150 道至 — 첫 道 도달 거대 의식 (표준 ritual 후)
+        setTimeout(() => playFirstWayCeremony(), 6400);
       }
       const ways = (state.stats && state.stats.wayReached) || 0;
       if (ways === 5) setTimeout(() => announceInscription('達人', '도(道) 5번 달성 — 달인의 경지'), 6200);
