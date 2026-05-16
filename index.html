@@ -3162,6 +3162,7 @@
     hiddenAchievements: {},   // v152 風月 — 숨겨진 조용한 성취
     swordWish: null,          // v155 寒梅 — 현재 활성 유언 (강화형)
     swordWishSlay: null,      // v155 寒梅 — 슬레이 보상 유언
+    records: {},              // v156 新記 — 개인 최고 기록
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
@@ -3342,6 +3343,7 @@
       if (!state.hiddenAchievements || typeof state.hiddenAchievements !== 'object') state.hiddenAchievements = {};  // v152
       if (state.swordWish !== null && typeof state.swordWish !== 'object') state.swordWish = null;  // v155
       if (state.swordWishSlay !== null && typeof state.swordWishSlay !== 'object') state.swordWishSlay = null;
+      if (!state.records || typeof state.records !== 'object') state.records = {};  // v156
       if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
         state.currentSword.foesEncountered = {};
       }
@@ -4892,6 +4894,64 @@
     });
   }
 
+  // === v156 新記 — 개인 최고 기록 (7종) ===
+  const RECORDS = [
+    { key: 'maxSlayStreak',    label: '최고 連斬',          unit: '회' },
+    { key: 'maxSwordLife',     label: '최장 검 일생',       unit: '강화' },
+    { key: 'maxSealReward',    label: '최고 봉인 보상',     unit: '조각' },
+    { key: 'maxSoul',          label: '최고 영혼',          unit: '魂' },
+    { key: 'maxSlainPerSword', label: '한 검 최다 슬레이',  unit: '회' },
+    { key: 'maxSuccessStreak', label: '최고 강화 連 streak', unit: '회' },
+    { key: 'minWayAttempts',   label: '최단 道 도달',       unit: '강화', isMin: true },  // 작을수록 좋음
+  ];
+  function updateRecord(key, value) {
+    if (!state.records) state.records = {};
+    const def = RECORDS.find(r => r.key === key);
+    if (!def) return;
+    const prev = state.records[key];
+    let isNew = false;
+    if (def.isMin) {
+      if (prev == null || value < prev) { state.records[key] = value; isNew = (prev != null); }
+    } else {
+      if (prev == null || value > prev) { state.records[key] = value; isNew = (prev != null); }
+    }
+    if (isNew) {
+      showNewRecord(def, value, prev);
+    }
+  }
+  function showNewRecord(def, value, prev) {
+    const stage = $('stage');
+    if (!stage) return;
+    const el = document.createElement('div');
+    el.innerHTML = '新記 — ' + def.label + ' <span style="color:#fff5c0">' + value + def.unit + '</span> <span style="opacity:0.55;font-size:9px">(이전 ' + prev + def.unit + ')</span>';
+    el.style.cssText = 'position:absolute;top:30%;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:2px;color:#d4af37;text-shadow:0 0 6px rgba(212,175,55,0.5);pointer-events:none;z-index:30;white-space:nowrap;opacity:0;font-family:"Noto Serif KR", serif';
+    stage.appendChild(el);
+    el.animate([
+      { opacity: 0, top: '32%' },
+      { opacity: 1, offset: 0.25, top: '30%' },
+      { opacity: 1, offset: 0.7 },
+      { opacity: 0, top: '28%' },
+    ], { duration: 3500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 3600);
+    log('🏆 新記 — ' + def.label + ' ' + value + def.unit, 'success');
+  }
+  function renderRecords() {
+    const r = state.records || {};
+    let html = '<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">' +
+      '<div style="font-size:11px;color:var(--accent);letter-spacing:5px;margin-bottom:10px;text-align:center">新  記</div>';
+    html += RECORDS.map(def => {
+      const v = r[def.key];
+      const display = (v == null) ? '— 미기록 —' : (v + def.unit);
+      const color = (v == null) ? 'var(--dim)' : 'var(--fg)';
+      return '<div style="display:flex;justify-content:space-between;padding:5px 4px;border-bottom:1px solid var(--line);font-size:11px">' +
+        '<span style="color:var(--dim);letter-spacing:2px">' + def.label + '</span>' +
+        '<span style="color:' + color + ';letter-spacing:2px">' + display + '</span>' +
+      '</div>';
+    }).join('');
+    html += '</div>';
+    return html;
+  }
+
   // === v152 風月 — 숨겨진 조용한 성취 (sealed 검 데이터 자동 패턴 발견) ===
   const HIDDEN_ACHIEVEMENTS = [
     {
@@ -5808,6 +5868,7 @@
       failStreak = 0;
       successStreak++;
       applyStreak();
+      updateRecord('maxSuccessStreak', successStreak);  // v156
       state.level++;
       if (state.level > state.bestLevel) state.bestLevel = state.level;
       // v135 鍛 — 티어 전환 의식 (1→2, 2→3, 3→4, 4→5)
@@ -5869,6 +5930,10 @@
       // v136 拓本 — 의미있는 마일스톤 포착
       if (state.level === 10) captureRubbing('first10');
       if (state.level === MAX_LEVEL && !state.firstWayReached) captureRubbing('firstWay');
+      // v156 新記 — 道 도달 시 강화 시도 수 (최단 道 도달 기록)
+      if (state.level === MAX_LEVEL) {
+        updateRecord('minWayAttempts', state.currentSword.enhanceAttempts || 0);
+      }
       if (state.level === SEAL_MIN_LEVEL) maybeMilestone('firstSeal', '팔기', '+' + SEAL_MIN_LEVEL + ' 도달 — 이제 검을 팔 수 있습니다');
       log('+' + state.level + ' 성공', 'success');
       showSwordVoice('success', state.level);  // v113 劍聲
@@ -7308,6 +7373,7 @@
       addSoul(6); // 베기 성공 +6
       // v125 連斬 — 슬레이 streak 증가 + 단계별 보너스
       slayStreak++;
+      updateRecord('maxSlayStreak', slayStreak);  // v156
       const newTierLabel = slayStreak === 3 ? '連斬 三' : slayStreak === 5 ? '連斬 五' : slayStreak === 7 ? '連斬 七' : null;
       if (newTierLabel) {
         const tierMsg = slayStreak === 3 ? '세 번 이어졌다 — 검의 흐름이 살아난다' :
@@ -9550,6 +9616,11 @@
     checkHiddenAchievements(justSealed);
     // v155 寒梅 — lv13+ 봉인 시 유언이 다음 검에
     setSwordWishFromSeal(form, lv);
+    // v156 新記 — 봉인 시 4 기록 갱신
+    updateRecord('maxSealReward', reward);
+    updateRecord('maxSoul', justSealed.soul || 0);
+    updateRecord('maxSwordLife', (state.currentSword && state.currentSword.enhanceAttempts) || 0);
+    updateRecord('maxSlainPerSword', justSealed.slainCount || 0);
     // v117 四道 — 이 봉인으로 4형 道 모두 달성 시 큰 의식
     if (!fourWaysBefore && hasFourWays()) {
       setTimeout(() => {
@@ -11303,6 +11374,7 @@
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">정 점</div>' +
       row('검 판매', (s.sealed || 0) + ' 회') +
       row('도(道) 달성', (s.wayReached || 0) + ' 회', '#fff5c0') +
+      renderRecords() +  // v156 新記
       renderHiddenAchievements();  // v152 風月
   }
   // 초기 라벨 반영
@@ -11337,6 +11409,7 @@
     hiddenAchievements: {},   // v152 風月 — 숨겨진 조용한 성취
     swordWish: null,          // v155 寒梅 — 현재 활성 유언 (강화형)
     swordWishSlay: null,      // v155 寒梅 — 슬레이 보상 유언
+    records: {},              // v156 新記 — 개인 최고 기록
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0, divinationStones: 0,
       firstWayReached: false,
