@@ -6905,6 +6905,52 @@
     else if (r < 0.013) triggerLightning();
   }, 60000);
 
+  // === v154 沈黙 — 명상 모드 중 검의 짧은 지혜 ===
+  const SILENT_WISDOMS = [
+    '기다림은 검의 본성이다',
+    '고요할 때 검은 깊어진다',
+    '비어야 채워진다',
+    '도(道)는 가는 것이 아니다 — 보는 것이다',
+    '마음이 머무는 곳에 검이 머문다',
+    '한 호흡이 천 번의 시도보다 깊다',
+    '검을 잊을 때 검이 된다',
+    '들리지 않는 것을 듣는 자가 검사다',
+    '날카로움은 단단함에서 오지 않는다',
+    '느림이 빠름을 이긴다',
+    '말하지 않는 검이 가장 멀리 간다',
+    '잠시 멈춤도 한 검의 일생이다',
+  ];
+  let silenceTimer = null;
+  function showSilenceWisdom() {
+    if (!inMeditation) return;
+    const stage = $('stage');
+    if (!stage) return;
+    const rect = stage.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const msg = SILENT_WISDOMS[Math.floor(Math.random() * SILENT_WISDOMS.length)];
+    const el = document.createElement('div');
+    el.textContent = msg;
+    el.style.cssText = 'position:fixed;bottom:50%;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:3px;color:rgba(168, 184, 200, 0.8);text-shadow:0 0 4px rgba(168, 184, 200, 0.3);pointer-events:none;z-index:30;white-space:nowrap;font-style:italic;font-family:"Noto Serif KR", serif;opacity:0;';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, bottom: '48%' }, { opacity: 0.85, offset: 0.25, bottom: '50%' }, { opacity: 0.85, offset: 0.7 }, { opacity: 0, bottom: '52%' }
+    ], { duration: 5000, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 5100);
+  }
+  function scheduleSilenceWisdom() {
+    if (silenceTimer) clearTimeout(silenceTimer);
+    // 명상 진입 후 첫 30~45초 후 첫 번째, 이후 30~45초마다
+    function tick() {
+      if (!inMeditation) { silenceTimer = null; return; }
+      showSilenceWisdom();
+      silenceTimer = setTimeout(tick, 30000 + Math.random() * 15000);
+    }
+    silenceTimer = setTimeout(tick, 30000 + Math.random() * 15000);
+  }
+  function stopSilenceWisdom() {
+    if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+  }
+
   // === v146 坐 — 60초 무행동 후 명상 모드 자동 진입 ===
   const MEDITATION_THRESHOLD_MS = 60000;  // 60초
   let lastUserAction = Date.now();
@@ -6938,6 +6984,8 @@
       ambientNodes.osc.frequency.linearRampToValueAtTime(currentBase * 0.85, t + 2);
       ambientNodes.subOsc.frequency.linearRampToValueAtTime(currentBase * 0.425, t + 2);
     }
+    // v154 沈黙 — 명상 중 검의 지혜 schedule
+    scheduleSilenceWisdom();
   }
   function exitMeditation() {
     if (!inMeditation) return;
@@ -6950,6 +6998,8 @@
       ambientNodes.osc.frequency.linearRampToValueAtTime(baseFreq, t + 1.0);
       ambientNodes.subOsc.frequency.linearRampToValueAtTime(baseFreq / 2, t + 1.0);
     }
+    // v154 沈黙 — 명상 종료 시 지혜 schedule 정지
+    stopSilenceWisdom();
   }
   // 매 3초마다 체크
   setInterval(checkMeditation, 3000);
