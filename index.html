@@ -2808,6 +2808,7 @@
 <div class="modal" id="stats-modal">
   <div class="modal-box">
     <h2>기 록</h2>
+    <div id="stats-title" style="font-size:11px;color:#fff5c0;letter-spacing:4px;text-align:center;margin:-8px 0 14px;padding:6px;border:1px solid rgba(212,175,55,0.25);background:rgba(212,175,55,0.04);text-shadow:0 0 6px rgba(212,175,55,0.4)"></div>
     <div id="stats-list" style="font-size:12px;color:var(--fg);line-height:2"></div>
     <button class="modal-close" data-close>닫 기</button>
   </div>
@@ -4634,7 +4635,9 @@
     if (!list) return;
     const rubbings = state.rubbings || [];
     if (progress) {
-      progress.innerHTML = '拓本  ' + rubbings.length + ' / ' + RUBBING_MAX;
+      // v141 道號 — 호 + 拓本 진척도
+      progress.innerHTML = '<div style="color:#fff5c0;letter-spacing:3px;margin-bottom:6px;text-shadow:0 0 6px rgba(212,175,55,0.4)">' + generatePlayerTitle() + '</div>' +
+        '<div style="opacity:0.7">拓本  ' + rubbings.length + ' / ' + RUBBING_MAX + '</div>';
     }
     if (rubbings.length === 0) {
       list.innerHTML = '<p style="color:var(--dim);text-align:center;font-size:11px;padding:24px 0;letter-spacing:2px">— 拓本 없음 —<br><br><span style="font-size:10px;opacity:0.7">게임 마일스톤 자동 포착</span></p>';
@@ -9893,9 +9896,44 @@
     return personas;
   }
 
+  // === v141 道號 — 사용자 누적 성취 기반 자동 호 생성 ===
+  function generatePlayerTitle() {
+    const s = state.stats || {};
+    const ways = s.wayReached || 0;
+    const gen = state.swordGeneration || 0;
+    const enshrines = (state.enshrined || []).length;
+    const foes = state.foesSlain ? Object.keys(state.foesSlain).length : 0;
+    const origins = state.shadowOriginsSlain ? Object.keys(state.shadowOriginsSlain).length : 0;
+    const fourW = (typeof hasFourWays === 'function') && hasFourWays();
+    const blessingsFound = state.blessingsDiscovered ? Object.keys(state.blessingsDiscovered).length : 0;
+    // 우선순위 — 가장 희귀/높은 성취가 우선
+    if (gen >= 100 && enshrines >= 3 && ways >= 15) return '百代道仙 — 백 대를 잇는 검선';
+    if (gen >= 100) return '百代仙 — 백 대를 잇는 자';
+    if (ways >= 15) return '十五道師 — 열다섯 길의 사범';
+    if (ways >= 10 && enshrines >= 2) return '殿堂의 검선 — 둘을 영구 진열한 자';
+    if (ways >= 10) return '十道師 — 열 길의 사범';
+    if (foes >= 5) return '五帝를 멸한 자';
+    if (blessingsFound >= 6) return '奇緣盡知 — 모든 인연을 본 자';
+    if (fourW) return '四道의 검사';
+    if (ways >= 5) return '五道師 — 다섯 길의 사범';
+    if (origins >= 4) return '斷魔者 — 모든 어둠을 베다';
+    if (ways >= 3) return '三道의 검수';
+    if (ways >= 1) return '道를 본 자';
+    if (gen >= 25) return '千鍛士 — 천 번 두드린 장인';
+    if (gen >= 10) return '百鍊宗 — 백 번 단련하는 자';
+    if (s.sealed >= 5) return '검의 길에 든 검사';
+    if (s.sealed >= 1) return '봉인을 아는 자';
+    if (s.enhanceAttempts >= 30) return '단련 중인 수련생';
+    if (s.enhanceAttempts >= 5) return '입문한 수련생';
+    return '검의 길에 든 자 — 환영';
+  }
+
   function renderStats() {
     const s = state.stats || {};
     const rate = s.enhanceAttempts > 0 ? Math.round((s.enhanceSuccess / s.enhanceAttempts) * 100) : 0;
+    // v141 道號 — 호 표시
+    const titleEl = $('stats-title');
+    if (titleEl) titleEl.textContent = generatePlayerTitle();
     const row = (label, val, color) => '<div style="display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px solid var(--line)"><span style="color:var(--dim);letter-spacing:2px">' + label + '</span><span style="color:' + (color || 'var(--accent)') + ';letter-spacing:3px">' + val + '</span></div>';
     const bar = (label, val, max, color) => {
       const pct = max > 0 ? Math.round((val / max) * 100) : 0;
