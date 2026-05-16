@@ -1941,6 +1941,45 @@
     z-index: 0;
     overflow: hidden;
   }
+  /* v137 山水 — 紀元별 산수화 풍경 */
+  #stage-landscape {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    opacity: 1;
+  }
+  #stage-landscape .ls-mountain,
+  #stage-landscape .ls-tree,
+  #stage-landscape .ls-pagoda,
+  #stage-landscape .ls-moon {
+    opacity: 0;
+    transition: opacity 3s ease;
+  }
+  body.era-shuren #stage-landscape .ls-mountain,
+  body.era-kaigan #stage-landscape .ls-mountain,
+  body.era-takkan #stage-landscape .ls-mountain,
+  body.era-shinki #stage-landscape .ls-mountain { opacity: 0.10; }
+  body.era-kaigan #stage-landscape .ls-tree,
+  body.era-takkan #stage-landscape .ls-tree,
+  body.era-shinki #stage-landscape .ls-tree { opacity: 0.13; }
+  body.era-takkan #stage-landscape .ls-pagoda,
+  body.era-shinki #stage-landscape .ls-pagoda { opacity: 0.11; }
+  body.era-shinki #stage-landscape .ls-moon { opacity: 0.18; animation: ls-moon-breathe 6s ease-in-out infinite alternate; }
+  @keyframes ls-moon-breathe {
+    from { opacity: 0.14; }
+    to   { opacity: 0.22; }
+  }
+  /* 가끔 가로질러 나는 새 */
+  .ls-bird {
+    position: absolute;
+    pointer-events: none;
+    font-size: 14px;
+    color: rgba(120, 100, 80, 0.45);
+    z-index: 0;
+    opacity: 0;
+  }
   #stage::after {
     content: '';
     position: absolute;
@@ -2049,6 +2088,67 @@
 
   <div id="stage">
     <div id="stage-bg" aria-hidden="true"></div>
+    <!-- v137 山水 — 紀元 기반 산수화 풍경 (배경) -->
+    <svg id="stage-landscape" viewBox="0 0 400 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <!-- 달 (神域만) — 상단 -->
+      <g class="ls-moon">
+        <circle cx="320" cy="80" r="32" fill="none" stroke="#fff5c0" stroke-width="0.8" opacity="0.9"/>
+        <circle cx="320" cy="80" r="32" fill="#fff5c0" opacity="0.15"/>
+        <!-- 달 표면 미세 텍스처 -->
+        <circle cx="312" cy="76" r="3" fill="#d4c890" opacity="0.4"/>
+        <circle cx="326" cy="84" r="2" fill="#d4c890" opacity="0.3"/>
+      </g>
+      <!-- 먼 산 (修練+) — 중하단, 3겹 능선 -->
+      <g class="ls-mountain">
+        <!-- 가장 먼 산 (가장 흐림) -->
+        <path d="M 0 400 L 40 360 L 90 380 L 140 340 L 200 370 L 260 345 L 320 365 L 380 350 L 400 360 L 400 600 L 0 600 Z"
+              fill="#1a1a22" opacity="0.55"/>
+        <!-- 중간 산 -->
+        <path d="M 0 440 L 60 410 L 120 420 L 180 395 L 240 415 L 300 400 L 360 410 L 400 405 L 400 600 L 0 600 Z"
+              fill="#22222a" opacity="0.75"/>
+        <!-- 가까운 산 (가장 진함) -->
+        <path d="M 0 480 L 50 460 L 110 465 L 170 445 L 220 460 L 280 450 L 340 465 L 400 455 L 400 600 L 0 600 Z"
+              fill="#2a2a32" opacity="0.85"/>
+      </g>
+      <!-- 외로운 나무 (開眼+) — 가까운 산 위 -->
+      <g class="ls-tree">
+        <!-- 줄기 -->
+        <path d="M 80 460 L 78 470 Q 76 475 80 480 L 82 478 L 84 472 Z" fill="#3a3530"/>
+        <!-- 가지 (불규칙한 한국 산 소나무 형태) -->
+        <path d="M 80 465 Q 70 462 65 467 M 80 462 Q 88 458 93 462 M 80 458 Q 72 454 70 458 M 80 455 Q 86 451 90 454"
+              stroke="#3a3530" stroke-width="0.6" fill="none"/>
+        <!-- 잎 무리 -->
+        <circle cx="68" cy="463" r="3" fill="#1a2a1f" opacity="0.7"/>
+        <circle cx="90" cy="459" r="3" fill="#1a2a1f" opacity="0.7"/>
+        <circle cx="78" cy="453" r="2.5" fill="#1a2a1f" opacity="0.7"/>
+        <circle cx="85" cy="451" r="2" fill="#1a2a1f" opacity="0.65"/>
+      </g>
+      <!-- 누각/탑 (達觀+) — 먼 산 능선 -->
+      <g class="ls-pagoda">
+        <!-- 5층 탑 silhouette -->
+        <g transform="translate(280, 370)">
+          <!-- 기단 -->
+          <rect x="-10" y="40" width="20" height="3" fill="#3a3a45"/>
+          <!-- 1층 -->
+          <rect x="-8" y="32" width="16" height="8" fill="#3a3a45"/>
+          <path d="M -10 32 L 10 32 L 8 30 L -8 30 Z" fill="#2a2a32"/>
+          <!-- 2층 -->
+          <rect x="-7" y="22" width="14" height="6" fill="#3a3a45"/>
+          <path d="M -9 22 L 9 22 L 7 20 L -7 20 Z" fill="#2a2a32"/>
+          <!-- 3층 -->
+          <rect x="-6" y="14" width="12" height="5" fill="#3a3a45"/>
+          <path d="M -8 14 L 8 14 L 6 12 L -6 12 Z" fill="#2a2a32"/>
+          <!-- 4층 -->
+          <rect x="-5" y="7" width="10" height="4" fill="#3a3a45"/>
+          <path d="M -7 7 L 7 7 L 5 5 L -5 5 Z" fill="#2a2a32"/>
+          <!-- 5층 + 첨탑 -->
+          <rect x="-3" y="2" width="6" height="3" fill="#3a3a45"/>
+          <path d="M -4 2 L 4 2 L 0 -2 Z" fill="#2a2a32"/>
+          <line x1="0" y1="-2" x2="0" y2="-8" stroke="#3a3a45" stroke-width="0.6"/>
+          <circle cx="0" cy="-9" r="1" fill="#3a3a45"/>
+        </g>
+      </g>
+    </svg>
     <div id="guardian-display">
       <svg id="guardian-svg" viewBox="0 0 100 200" width="30" height="60" xmlns="http://www.w3.org/2000/svg">
         <g id="guardian-body"></g>
@@ -5809,6 +5909,45 @@
   }
   // 시작 시 자동 활성
   setTimeout(() => startSeasonParticles(), 2000);
+
+  // v137 山水 — 가끔 가로질러 나는 새 (紀元 開眼+ 시점부터)
+  function spawnLandscapeBird() {
+    // 開眼(1000+) 이전엔 안 뜸
+    const era = getCurrentEra();
+    if (era.key === 'hoga' || era.key === 'shuren') return;
+    const stage = $('stage');
+    if (!stage) return;
+    const rect = stage.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const fromLeft = Math.random() < 0.5;
+    const startX = fromLeft ? rect.left - 20 : rect.left + rect.width + 20;
+    const endX = fromLeft ? rect.left + rect.width + 30 : rect.left - 30;
+    const startY = rect.top + 40 + Math.random() * 60;  // 위쪽 1/3 영역
+    const endY = startY + (Math.random() - 0.5) * 30;  // 살짝 위아래
+    const bird = document.createElement('div');
+    bird.className = 'ls-bird';
+    bird.textContent = fromLeft ? '〜' : '〜';  // 새의 silhouette
+    bird.style.position = 'fixed';
+    bird.style.left = startX + 'px';
+    bird.style.top = startY + 'px';
+    bird.style.transform = fromLeft ? 'scaleX(1)' : 'scaleX(-1)';
+    bird.style.pointerEvents = 'none';
+    bird.style.zIndex = '0';
+    bird.style.fontFamily = '"Noto Serif KR", serif';
+    document.body.appendChild(bird);
+    bird.animate([
+      { opacity: 0, left: startX + 'px', top: startY + 'px' },
+      { opacity: 0.55, offset: 0.1 },
+      { opacity: 0.55, offset: 0.85, left: ((startX + endX) / 2) + 'px', top: ((startY + endY) / 2) + 'px' },
+      { opacity: 0, left: endX + 'px', top: endY + 'px' },
+    ], { duration: 8000 + Math.random() * 4000, easing: 'linear' });
+    setTimeout(() => bird.remove(), 12500);
+  }
+  // 30~60초마다 한 마리
+  setInterval(() => {
+    if (Math.random() < 0.4) spawnLandscapeBird();
+  }, 30000);
+  setTimeout(spawnLandscapeBird, 6000);  // 초기 6초 후 한 번
 
   // 呼吸 단계 변화 감지용 — 매 3초 odds 갱신
   let lastBreathTier = -1;
