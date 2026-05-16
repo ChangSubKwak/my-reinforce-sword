@@ -2717,6 +2717,9 @@
     <input id="memo-input" type="text" maxlength="24" placeholder="한 마디를 새기다 (선택 · 24자)"
       style="width:100%;padding:8px;background:transparent;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:2px;text-align:center;margin-bottom:14px;outline:none;opacity:0.7;"
       autocomplete="off">
+    <!-- v158 寄言 — 道 검에만 보이는 후일 편지 (textarea) -->
+    <textarea id="kigen-input" maxlength="80" placeholder="후일의 검사에게 한 줄 (선택 · 道 검만 · 80자)"
+      style="display:none;width:100%;padding:8px;background:transparent;border:1px solid rgba(212,175,55,0.3);color:var(--accent);font-family:inherit;font-size:11px;letter-spacing:2px;text-align:center;margin-bottom:14px;outline:none;opacity:0.8;resize:none;height:60px;"></textarea>
     <div style="display:flex;gap:8px">
       <button class="modal-close" id="name-cancel" style="flex:1;margin:0">자 동 이 름</button>
       <button class="modal-close" id="name-confirm" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)">이 름 새 김 · 팔 기</button>
@@ -8915,7 +8918,7 @@
   function enshrineSuccessBonus() {
     return enshrineCount() * 0.015;  // 검당 +1.5% (최대 +4.5%)
   }
-  function enshrineSeal(form, ins, lv, swordName, userMemo) {
+  function enshrineSeal(form, ins, lv, swordName, userMemo, userKigen) {
     const slainHere = state.currentSword.slainCount || 0;
     const verse = generateVerse(form, ins, lv, slainHere, 0, state.currentSword.soul || 0);
     state.enshrined.push({
@@ -8931,6 +8934,7 @@
       scars: state.currentSword.scars || 0,
       stars: Object.assign({}, state.currentSword.stars || {}),
       enshrinedAt: Date.now(),
+      kigen: (userKigen && userKigen.trim()) ? userKigen.trim() : null,  // v158 寄言
     });
     bumpStat('wayReached');
     if (!state.firstWayReached) {
@@ -9391,6 +9395,26 @@
     setTimeout(() => checkGenerationMilestone(prevGen), 800);
     // v124 古文書 — 세대/형 관련 스크롤 체크
     setTimeout(() => checkScrolls(), 1100);
+    // v158 寄言 — 25% 확률로 과거 道 검의 편지가 도착
+    setTimeout(() => maybeShowKigen(), 1800);
+  }
+  function maybeShowKigen() {
+    if (Math.random() > 0.25) return;
+    const allLetters = [].concat(state.sealedSwords || [], state.enshrined || []).filter(s => s.kigen);
+    if (allLetters.length === 0) return;
+    const source = allLetters[Math.floor(Math.random() * allLetters.length)];
+    const stage = $('stage');
+    if (!stage) return;
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:9px;color:rgba(212,175,55,0.7);letter-spacing:3px;margin-bottom:6px">— ' + (source.name || '지난 검') + ' —</div>' +
+                    '<div style="font-size:11px;color:rgba(255,245,192,0.85);letter-spacing:2px;line-height:1.7;font-style:italic">' + source.kigen + '</div>';
+    el.style.cssText = 'position:absolute;top:18%;left:50%;transform:translateX(-50%);font-family:"Noto Serif KR", serif;pointer-events:none;z-index:30;text-align:center;max-width:280px;opacity:0;';
+    stage.appendChild(el);
+    el.animate([
+      { opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 1, offset: 0.8 }, { opacity: 0 }
+    ], { duration: 6500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 6600);
+    log('寄言 — 「' + (source.name || '지난 검') + '」의 편지가 도착했다', 'success');
   }
   const NEWSWORD_COST = 50;
 
@@ -9611,13 +9635,13 @@
       const slainHere = state.currentSword.slainCount || 0;
       const preVerse = isWay ? generateVerse(form, ins, lv, slainHere, preReward, state.currentSword.soul || 0) : null;
       askName(autoName, form, ins, lv, preReward, preVerse,
-        (userName, userMemo) => doSeal(form, ins, lv, isWay, userName || autoName, userMemo));
+        (userName, userMemo, userKigen) => doSeal(form, ins, lv, isWay, userName || autoName, userMemo, userKigen));
     } else {
       doSeal(form, ins, lv, isWay, autoName);
     }
   }
 
-  function doSeal(form, ins, lv, isWay, swordName, userMemo) {
+  function doSeal(form, ins, lv, isWay, swordName, userMemo, userKigen) {
     // v119 奇緣 — 銀河 시도 (보상 계산 전)
     tryBlessing('sealBefore');
     let reward = sealReward(lv);
@@ -9662,6 +9686,7 @@
       scars: state.currentSword.scars || 0,
       stars: Object.assign({}, state.currentSword.stars || {}),
       playerSeal: state.currentSword.playerSeal || state.playerSeal || '',  // v140 篆刻
+      kigen: (userKigen && userKigen.trim()) ? userKigen.trim() : null,  // v158 寄言
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -9851,7 +9876,14 @@
     const showEnshrine = isWay && canEnshrineMore();
     if (enshrineBtn) enshrineBtn.style.display = showEnshrine ? 'block' : 'none';
     if (enshrineHint) enshrineHint.style.display = showEnshrine ? 'block' : 'none';
+    // v158 寄言 — 道 검만 textarea 보임
+    const kigenInput = $('kigen-input');
+    if (kigenInput) {
+      kigenInput.style.display = isWay ? 'block' : 'none';
+      kigenInput.value = '';
+    }
     function getMemo() { return memoInput ? memoInput.value.trim().slice(0, 24) : ''; }
+    function getKigen() { return (isWay && kigenInput) ? kigenInput.value.trim().slice(0, 80) : ''; }
     function cleanup() {
       modal.classList.remove('active');
       confirmBtn.removeEventListener('click', onConfirm);
@@ -9859,16 +9891,17 @@
       input.removeEventListener('keydown', onKey);
       if (enshrineBtn) enshrineBtn.removeEventListener('click', onEnshrine);
     }
-    function onConfirm() { const v = input.value.trim().slice(0, 16); const m = getMemo(); cleanup(); callback(v, m); }
-    function onCancel() { const m = getMemo(); cleanup(); callback('', m); }
+    function onConfirm() { const v = input.value.trim().slice(0, 16); const m = getMemo(); const k = getKigen(); cleanup(); callback(v, m, k); }
+    function onCancel() { const m = getMemo(); const k = getKigen(); cleanup(); callback('', m, k); }
     function onEnshrine() {
       const v = input.value.trim().slice(0, 16);
       const m = getMemo();
+      const k = getKigen();
       cleanup();
-      enshrineSeal(form, ins, lv, v || autoName, m);
+      enshrineSeal(form, ins, lv, v || autoName, m, k);
     }
     function onKey(e) {
-      if (e.key === 'Enter' && document.activeElement !== memoInput) { e.preventDefault(); onConfirm(); }
+      if (e.key === 'Enter' && document.activeElement !== memoInput && document.activeElement !== kigenInput) { e.preventDefault(); onConfirm(); }
       if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
     }
     confirmBtn.addEventListener('click', onConfirm);
@@ -10161,6 +10194,7 @@
         '</div>';
       })() : '') +
       (s.memo ? '<div style="margin:12px 0;padding:10px 14px;background:rgba(212,175,55,0.04);border:1px dashed rgba(212,175,55,0.2);text-align:center;font-size:12px;letter-spacing:3px;color:var(--fg);line-height:1.8">' + s.memo + '</div>' : '') +
+      (s.kigen ? '<div style="margin:12px 0;padding:14px 16px;background:rgba(212,175,55,0.06);border-left:2px solid rgba(212,175,55,0.5);font-size:11px;letter-spacing:2px;color:#fff5c0;line-height:1.9;font-style:italic"><div style="font-size:9px;letter-spacing:3px;opacity:0.7;margin-bottom:6px;font-style:normal">寄  言</div>' + s.kigen + '</div>' : '') +
       guardianBlock;
     $('sword-detail-modal').classList.add('active');
     // 수호자 지정 / 해제 이벤트
