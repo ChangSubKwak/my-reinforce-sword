@@ -4544,6 +4544,64 @@
     }
   }
 
+  // === v144 招魂 — 검 파괴 시 봉인된 선대 검들이 목격 ===
+  function summonAncestorSpirits() {
+    // 선대 검들의 이름 첫 글자 수집 (sealedSwords + enshrined)
+    const ancestors = [].concat(state.sealedSwords || [], state.enshrined || []);
+    if (ancestors.length === 0) return;
+    // 道 검 우선 + 최근 검 우선 (최근 7자루)
+    const recent = ancestors.slice(-7);
+    const stage = $('stage');
+    if (!stage) return;
+    const rect = stage.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const spawnCount = Math.min(6, recent.length);
+    for (let i = 0; i < spawnCount; i++) {
+      const sword = recent[recent.length - 1 - i];
+      const name = sword.name || '';
+      const firstChar = name.length > 0 ? name.substring(0, 1) : (sword.form || '?');
+      const isWay = (sword.inscriptions || []).includes('道');
+      const el = document.createElement('div');
+      el.textContent = firstChar;
+      // 원형 배치 (회수 윈도우 주변)
+      const angle = (i / spawnCount) * Math.PI * 2 - Math.PI / 2;
+      const radius = 100 + Math.random() * 30;
+      const startX = cx + Math.cos(angle) * radius;
+      const startY = cy + Math.sin(angle) * radius;
+      const driftAngle = angle + 0.3;  // 살짝 회전
+      const endX = cx + Math.cos(driftAngle) * (radius + 20);
+      const endY = cy + Math.sin(driftAngle) * (radius + 20);
+      const color = isWay ? '#fff5c0' : 'rgba(168, 184, 200, 0.7)';
+      const glow = isWay ? '0 0 8px rgba(255,245,192,0.6)' : '0 0 4px rgba(168,184,200,0.4)';
+      el.style.cssText = 'position:fixed;font-size:22px;font-family:"Noto Serif KR", serif;color:' + color + ';text-shadow:' + glow + ';pointer-events:none;z-index:900;left:' + startX + 'px;top:' + startY + 'px;transform:translate(-50%,-50%) scale(0.5);opacity:0;letter-spacing:0;';
+      document.body.appendChild(el);
+      const delay = i * 150;
+      el.animate([
+        { opacity: 0, transform: 'translate(-50%,-50%) scale(0.5)', left: startX + 'px', top: startY + 'px' },
+        { opacity: 0.85, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.25 },
+        { opacity: 0.65, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.7, left: ((startX + endX) / 2) + 'px', top: ((startY + endY) / 2) + 'px' },
+        { opacity: 0, transform: 'translate(-50%,-50%) scale(0.7)', left: endX + 'px', top: endY + 'px' },
+      ], { duration: 5500, delay: delay, easing: 'cubic-bezier(0.3, 0.5, 0.6, 1)', fill: 'forwards' });
+      setTimeout(() => el.remove(), 6000 + delay);
+    }
+    // 깊은 종 음 — 위령제 (한 번)
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      [110, 165].forEach((f, i) => {
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(f, now + i * 0.4);
+        g.gain.setValueAtTime(0.0, now + i * 0.4);
+        g.gain.linearRampToValueAtTime(0.12, now + i * 0.4 + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.4 + 2.2);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(now + i * 0.4); osc.stop(now + i * 0.4 + 2.3);
+      });
+    }
+  }
+
   // === v143 慰 — 실패/작별 위로 메시지 (동양 해탈 미학) ===
   const CONSOLATIONS = {
     destroy: [
@@ -5343,6 +5401,10 @@
         // v134: showVoid을 살짝 지연시켜 산산조각 비주얼이 먼저 보이게 (검집 동시 등장 시 시각 충돌 회피)
         setTimeout(() => showVoid(destroyedLevel), 350);
         setTimeout(() => showConsolation('destroy'), 1500);  // v143 慰
+        // v144 招魂 — 봉인 5자루+ 시 선대 검들이 목격
+        if ((state.sealedSwords || []).length >= 5 || (state.enshrined || []).length >= 1) {
+          setTimeout(() => summonAncestorSpirits(), 700);
+        }
       } else if (failRoll < effectiveDestroy + effectiveDowngrade && !useProtect) {
         // 하락 (v105 落)
         if (successStreak >= 3) log('連 ' + successStreak + '회 streak 종료 — 하락', 'fail');
