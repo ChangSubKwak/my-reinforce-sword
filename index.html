@@ -286,6 +286,28 @@
     white-space: nowrap;
   }
   #streak-counter.visible { opacity: 1; }
+
+  /* v125 連斬 — 슬레이 streak 카운터 (도전 모달 내부) */
+  #slay-streak {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(120, 200, 160, 0.0);
+    pointer-events: none;
+    transition: color 0.4s ease, text-shadow 0.4s ease;
+    font-family: 'Noto Serif KR', serif;
+    white-space: nowrap;
+    z-index: 5;
+  }
+  #slay-streak.tier-1 { color: rgba(120, 200, 160, 0.7); }
+  #slay-streak.tier-2 { color: rgba(140, 220, 170, 0.85); text-shadow: 0 0 6px rgba(140, 220, 170, 0.4); }
+  #slay-streak.tier-3 { color: rgba(160, 240, 180, 1.0); text-shadow: 0 0 10px rgba(160, 240, 180, 0.65); animation: slay-streak-pulse 1.8s ease-in-out infinite alternate; }
+  @keyframes slay-streak-pulse {
+    from { text-shadow: 0 0 6px rgba(160, 240, 180, 0.5); }
+    to   { text-shadow: 0 0 14px rgba(160, 240, 180, 0.9); }
+  }
   /* v63 강화 merge — 부드럽게 떠올라 빛나며 안착 */
   #sword-wrap.merge { animation: enhance-merge 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
   /* v78 봉인 직후 작은 카드 */
@@ -2113,6 +2135,7 @@
       </div>
     </div>
     <div id="challenge">
+      <div id="slay-streak"></div>
       <div id="challenge-info">
         <div class="title">도 전</div>
         <div>그림자가 나타났다</div>
@@ -3552,6 +3575,27 @@
   let adversityReady = false;
   let lastOmenType = 'none'; // v102 驗: 전조 추적
   let successStreak = 0;    // v107 連: 연속 성공 횟수
+  let slayStreak = 0;       // v125 連斬: 연속 슬레이 횟수 (휘발성, 검 단위)
+  function applySlayStreak() {
+    const el = $('slay-streak');
+    if (!el) return;
+    el.classList.remove('tier-1', 'tier-2', 'tier-3');
+    if (slayStreak >= 7) { el.classList.add('tier-3'); el.textContent = '連斬 ' + slayStreak; }
+    else if (slayStreak >= 5) { el.classList.add('tier-2'); el.textContent = '連斬 ' + slayStreak; }
+    else if (slayStreak >= 3) { el.classList.add('tier-1'); el.textContent = '連斬 ' + slayStreak; }
+    else el.textContent = slayStreak >= 1 ? '連斬 ' + slayStreak : '';
+  }
+  function clearSlayStreak() {
+    slayStreak = 0;
+    const el = $('slay-streak');
+    if (el) { el.className = ''; el.textContent = ''; }
+  }
+  function slayStreakRewardBonus() {
+    if (slayStreak >= 7) return 1.30;
+    if (slayStreak >= 5) return 1.20;
+    if (slayStreak >= 3) return 1.10;
+    return 1.0;
+  }
 
   function checkAdversity() {
     if (adversityReady) return;
@@ -5107,6 +5151,7 @@
     log('그림자가 인내심을 잃고 떠났다', 'fail');
     inscribeQueue.push({ key: '逝', label: '그림자가 흩어졌다 — 결단의 시간을 놓쳤다' });
     if (!inscribeRunning) runInscribeQueue();
+    clearSlayStreak();  // v125 連斬 — 자발 후퇴도 리셋
     endChallenge();
     save();
     render();
@@ -5144,13 +5189,37 @@
       slashLine.classList.add('active');
       setTimeout(() => shadowForm.classList.add('cleaved'), 120);
       challengeSword.classList.add('strike');
-      state.shards += c.reward;
+      // v125 連斬 — streak에 따른 보상 배율 적용 (이전 streak 기준)
+      const slayBonusMul = slayStreakRewardBonus();
+      const finalReward = Math.floor(c.reward * slayBonusMul);
+      state.shards += finalReward;
       state.totalSlain++;
       state.currentSword.slainCount++;
       addSoul(6); // 베기 성공 +6
+      // v125 連斬 — 슬레이 streak 증가 + 단계별 보너스
+      slayStreak++;
+      const newTierLabel = slayStreak === 3 ? '連斬 三' : slayStreak === 5 ? '連斬 五' : slayStreak === 7 ? '連斬 七' : null;
+      if (newTierLabel) {
+        const tierMsg = slayStreak === 3 ? '세 번 이어졌다 — 검의 흐름이 살아난다' :
+                        slayStreak === 5 ? '다섯 번 — 보호권 +1' :
+                        slayStreak === 7 ? '일곱 번 — 숫돌 +1' : '';
+        announceInscription(newTierLabel, tierMsg);
+        if (slayStreak === 5) state.protections++;
+        if (slayStreak === 7) state.whetstones++;
+      }
+      if (slayStreak === 10) {
+        // 連一閃 명문 + 카운터 리셋
+        if (!state.currentSword.inscriptions.includes('連一閃')) {
+          state.currentSword.inscriptions.push('連一閃');
+          setTimeout(() => announceInscription('連一閃', '열 번의 一閃이 검에 새겨졌다'), 500);
+        }
+        clearSlayStreak();
+      } else {
+        applySlayStreak();
+      }
       showSwordVoice('slay', state.level);  // v113 劍聲
-      // v34 一閃 결과 페이드 (의식)
-      inscribeQueue.push({ key: '斬', label: c.type.name + ' · 조각 +' + c.reward });
+      // v34 一閃 결과 페이드 (의식) — v125 streak bonus 반영
+      inscribeQueue.push({ key: '斬', label: c.type.name + ' · 조각 +' + finalReward + (slayBonusMul > 1 ? ' (連斬 ×' + slayBonusMul.toFixed(2) + ')' : '') });
       if (!inscribeRunning) runInscribeQueue();
       // 통계: type별 격파 수
       if (c.type.key === 'normal') bumpStat('slainNormal');
@@ -5206,8 +5275,8 @@
       checkInscriptions();
       checkStars();  // v116 七星
       setTimeout(() => checkScrolls(), 400);  // v124 古文書
-      log(c.type.name + ' 베어냄 +' + c.reward + ' 조각', 'success');
-      recordEvent(c.type.name + ' 베어냄 +' + c.reward);
+      log(c.type.name + ' 베어냄 +' + finalReward + ' 조각', 'success');
+      recordEvent(c.type.name + ' 베어냄 +' + finalReward);
       burstParticles(c.type.isDemon ? '#c0392b' : '#d4af37', c.type.isDemon ? 30 : 18);
       // v114 餘香 — 슬레이 타입별 다음 강화 잔향 (검귀/이름있는적은 위에서 처리, 여기서는 일반/逃影/鋼影)
       const shadowEl = $('shadow-form');
@@ -5231,6 +5300,7 @@
       setTimeout(() => { endChallenge(); save(); render(); }, 900);
     } else {
       // 베기 실패 — 검 흔들림
+      clearSlayStreak();  // v125 連斬 — 실패도 streak 리셋
       const guardCost = Math.max(1, Math.ceil((c.strength - state.level) / 2));
       const hasGuard = state.protections >= guardCost;
       challengeEl.classList.remove('active');
@@ -5266,6 +5336,7 @@
     state.shards -= cost;
     bumpStat('fled');
     log(cost ? ('도망 (조각 -' + cost + ')') : '바람처럼 도망', 'fail');
+    clearSlayStreak();  // v125 連斬 — 도망 시 리셋
     endChallenge();
     save();
     render();
@@ -6284,6 +6355,7 @@
     { key: '傷',   label: '세 번 무너지기 직전 살아남은 검', verse: '상처가 검을 더 단단하게 만들었다',   trigger: () => (state.currentSword.scars || 0) >= 3 },
     { key: '七星', label: '북두칠성이 깃든 검',              verse: '일곱 별이 한 검에 모였다',           trigger: () => false },
     { key: '仙',   label: '백 대를 잇는 신선의 검',          verse: '백 대의 계보가 한 검에 흐른다',     trigger: () => false },
+    { key: '連一閃', label: '열 번의 一閃을 한 검에 새긴 자', verse: '열 번이 한 흐름이 되었다',           trigger: () => false },
   ];
 
   function grantInscription(key) {
@@ -6529,6 +6601,7 @@
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
     state.level = startLv;
     failStreak = 0; adversityReady = false; clearOmen(); clearStreak();
+    clearSlayStreak();  // v125 連斬 — 새 검 시 리셋
     enhanceEcho = null;  // v114 餘香: 잔향은 검 단위로 휘발
     if (sanctumActive) setSanctum(false);  // v121 結界: 새 검 시 해제
     if (swordVoiceTimer) { clearTimeout(swordVoiceTimer); swordVoiceTimer = null; }
