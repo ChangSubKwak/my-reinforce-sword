@@ -108,6 +108,24 @@
   #era-mark.era-kaigan  { color: #b8a878; opacity: 0.7; text-shadow: 0 0 4px rgba(184,168,120,0.3); }
   #era-mark.era-takkan  { color: #d4af37; opacity: 0.8; text-shadow: 0 0 6px rgba(212,175,55,0.4); }
   #era-mark.era-shinki  { color: #fff5c0; opacity: 0.95; text-shadow: 0 0 8px rgba(255,245,192,0.7); }
+
+  /* v123 系譜 — 세대 카운터 (era-mark 아래) */
+  #gen-mark {
+    position: fixed;
+    top: 50px;
+    right: 18px;
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 3px;
+    opacity: 0.55;
+    transition: color 2s, opacity 2s;
+    pointer-events: none;
+    z-index: 25;
+  }
+  #gen-mark.gen-tier-1 { color: #b8a878; opacity: 0.75; }
+  #gen-mark.gen-tier-2 { color: #d4af37; opacity: 0.85; }
+  #gen-mark.gen-tier-3 { color: #fff5c0; opacity: 0.90; text-shadow: 0 0 4px rgba(255,245,192,0.45); }
+  #gen-mark.gen-tier-4 { color: #fff5c0; opacity: 1.00; text-shadow: 0 0 8px rgba(255,245,192,0.85); }
   /* 시대별 배경 미세 색조 */
   body.era-shuren  { background: #0c0b09; }
   body.era-kaigan  { background: #0c0a08; }
@@ -1902,6 +1920,7 @@
 <body>
 <div id="season-mark"></div>
 <div id="era-mark"></div>
+<div id="gen-mark"></div>
 <div id="way-counter"></div>
 <button id="menu-toggle">≡</button>
 <div id="menu-drop">
@@ -2643,6 +2662,8 @@
     sealedSwords: [],
     enshrined: [],  // v118 殿堂 — 박물관에 모셔진 道 검 (최대 3)
     blessingsDiscovered: {},  // v119 奇緣 — 발견한 축복 영구 기록
+    swordGeneration: 0,       // v123 系譜 — 누적 검 생성 횟수
+    generationMilestones: {}, // v123 系譜 — 달성한 위계 마일스톤
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
@@ -2731,6 +2752,8 @@
       if (!Array.isArray(state.enshrined)) state.enshrined = [];  // v118 殿堂
       if (!state.blessingsDiscovered || typeof state.blessingsDiscovered !== 'object') state.blessingsDiscovered = {};  // v119 奇緣
       if (!state.erasEntered || typeof state.erasEntered !== 'object') state.erasEntered = {};  // v120 紀元
+      if (typeof state.swordGeneration !== 'number') state.swordGeneration = state.sealedSwords ? state.sealedSwords.length : 0;  // v123 系譜 — 기존 사용자는 봉인된 검 수로 추정 초기화
+      if (!state.generationMilestones || typeof state.generationMilestones !== 'object') state.generationMilestones = {};
       if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
         state.currentSword.foesEncountered = {};
       }
@@ -2847,6 +2870,98 @@
       setSanctum(false);
       log('結界 — 조각 부족으로 자동 해제', 'fail');
     }
+  }
+
+  // === v123 系譜 — 누적 검 생성 기반 4단계 위계 ===
+  const GENERATIONS = [
+    { key: 'g10',  threshold: 10,  name: '百鍊宗', label: '백 번 단련하는 종가', successBonus: 0.01 },
+    { key: 'g25',  threshold: 25,  name: '千鍛士', label: '천 번 두드린 장인',  sealMul: 1.05 },
+    { key: 'g50',  threshold: 50,  name: '萬代將', label: '만 대를 잇는 장수',  successBonus: 0.01 },
+    { key: 'g100', threshold: 100, name: '百代仙', label: '백 대의 신선',       slayMul: 1.10, autoInscription: '仙' },
+  ];
+  function getGenerationMilestones() {
+    return GENERATIONS.filter(g => (state.swordGeneration || 0) >= g.threshold);
+  }
+  function generationSuccessBonus() {
+    return getGenerationMilestones().reduce((a, g) => a + (g.successBonus || 0), 0);
+  }
+  function generationSealMul() {
+    return getGenerationMilestones().reduce((a, g) => a * (g.sealMul || 1), 1);
+  }
+  function generationSlayMul() {
+    return getGenerationMilestones().reduce((a, g) => a * (g.slayMul || 1), 1);
+  }
+  function hasGenerationInscription() {
+    const g = GENERATIONS.find(g => g.autoInscription && (state.swordGeneration || 0) >= g.threshold);
+    return g ? g.autoInscription : null;
+  }
+  function applyGeneration() {
+    const el = $('gen-mark');
+    if (!el) return;
+    const n = state.swordGeneration || 0;
+    el.classList.remove('gen-tier-1', 'gen-tier-2', 'gen-tier-3', 'gen-tier-4');
+    if (n >= 100) el.classList.add('gen-tier-4');
+    else if (n >= 50) el.classList.add('gen-tier-3');
+    else if (n >= 25) el.classList.add('gen-tier-2');
+    else if (n >= 10) el.classList.add('gen-tier-1');
+    el.textContent = n > 0 ? n + '代' : '';
+  }
+  function checkGenerationMilestone(prevGen) {
+    if (!state.generationMilestones) state.generationMilestones = {};
+    const n = state.swordGeneration || 0;
+    for (const g of GENERATIONS) {
+      if (prevGen < g.threshold && n >= g.threshold) {
+        if (!state.generationMilestones[g.key]) {
+          state.generationMilestones[g.key] = Date.now();
+          showGenerationMilestone(g);
+        }
+      }
+    }
+  }
+  function showGenerationMilestone(g) {
+    // 마일스톤 의식 — 큰 한자 페이드 (3.5초)
+    const el = document.createElement('div');
+    el.textContent = g.name;
+    el.style.cssText = 'position:fixed;top:42%;left:50%;transform:translate(-50%,-50%) scale(0.4);font-size:88px;font-family:"Noto Serif KR",serif;color:#fff5c0;text-shadow:0 0 28px rgba(255,245,192,1.0),0 0 14px rgba(212,175,55,1.0);pointer-events:none;z-index:1500;letter-spacing:16px;opacity:0;';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.4)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.25 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.7 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+    ], { duration: 3500, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' });
+    setTimeout(() => el.remove(), 3600);
+    // 부제
+    const lbl = document.createElement('div');
+    const bonus = g.successBonus ? '강화 성공 +' + (g.successBonus * 100) + '%'
+                : g.sealMul ? '봉인 보상 ×' + g.sealMul.toFixed(2)
+                : g.slayMul ? '슬레이 보상 ×' + g.slayMul.toFixed(2)
+                : '';
+    lbl.innerHTML = g.label + '<br><span style="font-size:11px;letter-spacing:3px;opacity:0.85">' + g.threshold + '代 系譜 — ' + bonus + (g.autoInscription ? ' + 仙 명문' : '') + '</span>';
+    lbl.style.cssText = 'position:fixed;top:calc(42% + 75px);left:50%;transform:translateX(-50%);font-size:14px;letter-spacing:5px;color:#fff5c0;text-shadow:0 0 8px rgba(212,175,55,0.7);pointer-events:none;z-index:1500;opacity:0;text-align:center;line-height:2;';
+    document.body.appendChild(lbl);
+    lbl.animate([
+      { opacity: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }
+    ], { duration: 3500, easing: 'ease-in-out' });
+    setTimeout(() => lbl.remove(), 3600);
+    // SFX — 깊은 5중주
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      [98, 147, 196, 294, 392].forEach((f, i) => {
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(f, now + i * 0.22);
+        gain.gain.setValueAtTime(0.0, now + i * 0.22);
+        gain.gain.linearRampToValueAtTime(0.20, now + i * 0.22 + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.22 + 2.0);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now + i * 0.22); osc.stop(now + i * 0.22 + 2.1);
+      });
+    }
+    burstParticles('#fff5c0', 80);
+    setTimeout(() => burstParticles('#d4af37', 50), 200);
+    setTimeout(() => burstParticles('#a0c0d0', 30), 400);
+    log('🌟 系譜 — ' + g.name + ' · ' + g.label + ' 도달', 'success');
   }
 
   // === v120 紀元 — 누적 강화 시도 기반 5시대 ===
@@ -3464,6 +3579,7 @@
     renderCurrentChart();
     applySeason();
     applyEra();  // v120 紀元
+    applyGeneration();  // v123 系譜
     renderSanctumRow();  // v121 結界
     renderWayCounter();
     renderGuardianDisplay();
@@ -3573,7 +3689,7 @@
     const matsuMulShow = blessingCostMul();  // v119
     const sanctumMulShow = sanctumCostMul();  // v121 結界
     const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow);
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus();
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
 
@@ -3696,7 +3812,7 @@
     { key: '心', label: '본질',     hint: '영혼 67(本) 도달',  trigger: () => state.hasSword && (state.currentSword.soul || 0) >= 67 },
     { key: '銘', label: '기록',     hint: '명문 3개 새김 (메타 제외)', trigger: () => {
       if (!state.hasSword) return false;
-      const meta = new Set(['始祖','達人','聖','七星','逆轉','先代']);
+      const meta = new Set(['始祖','達人','聖','七星','逆轉','先代','仙']);
       const real = (state.currentSword.inscriptions || []).filter(k => !meta.has(k));
       return real.length >= 3;
     }},
@@ -4049,7 +4165,7 @@
     const roll = (useDivination && divinationLockedSuccessRoll !== null)
       ? divinationLockedSuccessRoll
       : Math.random();
-    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus()) {
+    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus()) {
       // 성공 (v107 連)
       if (adversityReady) { adversityReady = false; announceInscription('逆轉', '역경을 넘어 강화에 성공했다'); }
       failStreak = 0;
@@ -4527,6 +4643,9 @@
     if (sMul !== 1) reward = Math.floor(reward * sMul);
     const gMul = guardianBonus().rewardMul;
     if (gMul !== 1) reward = Math.floor(reward * gMul);
+    // v123 系譜 — 100代+ 슬레이 보상 보너스
+    const slayMul = generationSlayMul();
+    if (slayMul !== 1) reward = Math.floor(reward * slayMul);
     const origin = rollShadowOrigin();
     challenge = { strength, reward, type, origin };
     bumpStat('challengesAppeared');
@@ -5970,6 +6089,7 @@
     { key: '讀劍', label: '전조를 능숙하게 읽는 검',        verse: '검과 사람이 같은 하늘을 보았다',     trigger: () => (state.currentSword.omenTotal || 0) >= 10 && (state.currentSword.omenHits || 0) / (state.currentSword.omenTotal || 1) >= 0.8 },
     { key: '傷',   label: '세 번 무너지기 직전 살아남은 검', verse: '상처가 검을 더 단단하게 만들었다',   trigger: () => (state.currentSword.scars || 0) >= 3 },
     { key: '七星', label: '북두칠성이 깃든 검',              verse: '일곱 별이 한 검에 모였다',           trigger: () => false },
+    { key: '仙',   label: '백 대를 잇는 신선의 검',          verse: '백 대의 계보가 한 검에 흐른다',     trigger: () => false },
   ];
 
   function grantInscription(key) {
@@ -6207,6 +6327,9 @@
   }
   function newSword() {
     state.hasSword = true;
+    // v123 系譜 — 세대 카운터 증가 + 마일스톤 체크
+    const prevGen = state.swordGeneration || 0;
+    state.swordGeneration = prevGen + 1;
     // v89 시련의 혼: 시작 강화 + 영혼 보너스
     let startLv = startBonus() + trialStartLevelBonus();
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
@@ -6239,6 +6362,11 @@
     // v117 四道 — 4형의 道 검 모두 보유 시 영구 시작 영혼 +50
     if (hasFourWays()) {
       state.currentSword.soul = Math.max(state.currentSword.soul, fourWayStartSoul());
+    }
+    // v123 系譜 — 100代+ 시 仙 명문 자동 부여
+    const genIns = hasGenerationInscription();
+    if (genIns && !state.currentSword.inscriptions.includes(genIns)) {
+      state.currentSword.inscriptions.push(genIns);
     }
     // v33 傳授: 도(道) 검 봉인 직후 전수된 명문 적용 (한 번만 — null로 비움)
     if (state.heritageInscription) {
@@ -6282,6 +6410,8 @@
     }
     // 봉인 직후 일반 sealAfter 이벤트 (神巫 등)
     setTimeout(() => tryBlessing('sealAfter'), 1500);
+    // v123 系譜 — 세대 마일스톤 체크 (탄생 후 약간 지연)
+    setTimeout(() => checkGenerationMilestone(prevGen), 800);
   }
   const NEWSWORD_COST = 50;
 
@@ -6520,6 +6650,8 @@
     else if (ins.includes('久')) reward = Math.floor(reward * 1.05);
     // v116 七星: 7별 채운 검은 봉인 보상 ×1.5
     if (ins.includes('七星')) reward = Math.floor(reward * 1.5);
+    // v123 系譜 — 25代+ 봉인 보너스
+    reward = Math.floor(reward * generationSealMul());
     // v119 奇緣 — 銀河 활성 시 봉인 보상 ×2
     if (blessingState.ginhaActive) { reward = Math.floor(reward * 2); blessingState.ginhaActive = false; }
     const schoolsBefore = getActiveSchools();
@@ -8094,6 +8226,8 @@
       sealedSwords: [],
     enshrined: [],  // v118 殿堂 — 박물관에 모셔진 道 검 (최대 3)
     blessingsDiscovered: {},  // v119 奇緣 — 발견한 축복 영구 기록
+    swordGeneration: 0,       // v123 系譜 — 누적 검 생성 횟수
+    generationMilestones: {}, // v123 系譜 — 달성한 위계 마일스톤
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0, divinationStones: 0,
       firstWayReached: false,
