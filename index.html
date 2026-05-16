@@ -2258,6 +2258,7 @@
   <button id="btn-journey">紀  程</button>
   <button id="btn-shrine">神  祠</button>
   <button id="btn-duel">對  局</button>
+  <button id="btn-bunshu">文  集</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -2814,6 +2815,21 @@
 </div>
 
 <!-- v90 처치 보고서 모달 (이름 있는 적 컬렉션) -->
+<!-- v160 文集 모달 — 사용자 글 모음 viewer -->
+<div class="modal" id="bunshu-modal">
+  <div class="modal-box" style="max-width: 480px;">
+    <h2>文  集</h2>
+    <p id="bunshu-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px;text-align:center;margin-bottom:14px"></p>
+    <div id="bunshu-page" style="min-height: 260px; display:flex; align-items:center; justify-content:center; padding:14px; border:1px solid var(--line); border-radius:2px; margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="bunshu-prev" class="modal-close" style="flex:1;margin:0">◀  이 전</button>
+      <span id="bunshu-counter" style="font-size:10px;color:var(--dim);letter-spacing:3px;min-width:60px;text-align:center"></span>
+      <button id="bunshu-next" class="modal-close" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)">다 음  ▶</button>
+    </div>
+    <button class="modal-close" data-close style="margin-top:8px">닫 기</button>
+  </div>
+</div>
+
 <!-- v159 對局 모달 — 봉인 검 2자루 대결 -->
 <div class="modal" id="duel-modal">
   <div class="modal-box" style="max-width: 540px;">
@@ -5056,6 +5072,96 @@
         }
       });
     });
+  }
+
+  // === v160 文集 — 사용자가 새긴 모든 글 통합 viewer ===
+  let bunshuPages = [];
+  let bunshuIndex = 0;
+  function collectBunshuPages() {
+    const pages = [];
+    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    all.forEach(s => {
+      // 검명 (모든 검) — 자동 생성된 검명도 포함
+      const swordName = s.name || makeSwordName(s.form, s.inscriptions || [], s.level || 0);
+      pages.push({
+        kind: 'name', sword: s,
+        kanji: '名', label: '검명',
+        title: swordName,
+        body: '+' + (s.level || 0) + '  ·  ' + (s.form || '無'),
+      });
+      // 메모 (有刻 검)
+      if (s.memo) {
+        pages.push({
+          kind: 'memo', sword: s,
+          kanji: '刻', label: '한 마디',
+          title: swordName,
+          body: s.memo,
+        });
+      }
+      // 寄言 (道 검 + kigen 있음)
+      if (s.kigen) {
+        pages.push({
+          kind: 'kigen', sword: s,
+          kanji: '寄', label: '후일에게',
+          title: swordName,
+          body: s.kigen,
+        });
+      }
+      // 일생시 (verse 4행, 道 검만)
+      if (s.verse && Array.isArray(s.verse) && s.verse.length >= 4) {
+        pages.push({
+          kind: 'verse', sword: s,
+          kanji: '詩', label: '일생시',
+          title: swordName,
+          body: s.verse,
+        });
+      }
+    });
+    return pages;
+  }
+  function renderBunshuPage() {
+    const page = $('bunshu-page');
+    const counter = $('bunshu-counter');
+    const progress = $('bunshu-progress');
+    if (!page) return;
+    if (bunshuPages.length === 0) {
+      page.innerHTML = '<div style="text-align:center;color:var(--dim);font-size:11px;letter-spacing:2px;line-height:1.8">— 아직 새긴 글 없다 —<br><span style="font-size:9px;opacity:0.7">검에 메모하거나 道에 이르면 채워진다</span></div>';
+      if (counter) counter.textContent = '0 / 0';
+      if (progress) progress.textContent = '내가 새긴 글';
+      $('bunshu-prev').disabled = true;
+      $('bunshu-next').disabled = true;
+      return;
+    }
+    const p = bunshuPages[bunshuIndex];
+    let bodyHtml;
+    if (p.kind === 'verse') {
+      bodyHtml = '<div style="font-size:13px;color:var(--fg);letter-spacing:3px;line-height:2.4">' +
+        p.body.map(line => '<div>' + line + '</div>').join('') +
+      '</div>';
+    } else {
+      bodyHtml = '<div style="font-size:' + (p.kind === 'name' ? '20px' : '14px') + ';color:var(--fg);letter-spacing:' + (p.kind === 'name' ? '6px' : '3px') + ';line-height:1.9;' + (p.kind === 'memo' || p.kind === 'kigen' ? 'font-style:italic;' : '') + 'text-align:center">' + p.body + '</div>';
+    }
+    page.innerHTML =
+      '<div style="text-align:center;width:100%;">' +
+        '<div style="font-size:32px;color:var(--accent);letter-spacing:0;margin-bottom:4px;text-shadow:0 0 8px rgba(212,175,55,0.4)">' + p.kanji + '</div>' +
+        '<div style="font-size:9px;color:var(--dim);letter-spacing:3px;margin-bottom:14px">' + p.label + '</div>' +
+        '<div style="font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:10px;opacity:0.7">— ' + p.title + ' —</div>' +
+        bodyHtml +
+      '</div>';
+    if (counter) counter.textContent = (bunshuIndex + 1) + ' / ' + bunshuPages.length;
+    if (progress) {
+      const counts = { name: 0, memo: 0, kigen: 0, verse: 0 };
+      bunshuPages.forEach(p => counts[p.kind]++);
+      progress.textContent = '검명 ' + counts.name + '  ·  메모 ' + counts.memo + '  ·  寄言 ' + counts.kigen + '  ·  일생시 ' + counts.verse;
+    }
+    $('bunshu-prev').disabled = bunshuIndex <= 0;
+    $('bunshu-next').disabled = bunshuIndex >= bunshuPages.length - 1;
+  }
+  function openBunshu() {
+    bunshuPages = collectBunshuPages();
+    bunshuIndex = 0;
+    renderBunshuPage();
+    $('bunshu-modal').classList.add('active');
   }
 
   // === v159 對局 — 봉인 검 2자루 자동 대결 ===
@@ -11191,6 +11297,17 @@
   });
   if ($('duel-start')) $('duel-start').addEventListener('click', startDuel);
   if ($('duel-clear')) $('duel-clear').addEventListener('click', clearDuelSelection);
+  // v160 文集 모달
+  $('btn-bunshu').addEventListener('click', () => {
+    openBunshu();
+    $('menu-drop').classList.remove('open');
+  });
+  if ($('bunshu-prev')) $('bunshu-prev').addEventListener('click', () => {
+    if (bunshuIndex > 0) { bunshuIndex--; renderBunshuPage(); }
+  });
+  if ($('bunshu-next')) $('bunshu-next').addEventListener('click', () => {
+    if (bunshuIndex < bunshuPages.length - 1) { bunshuIndex++; renderBunshuPage(); }
+  });
   function renderJourney() {
     const titleEl = $('journey-title');
     if (titleEl) titleEl.textContent = generatePlayerTitle();
