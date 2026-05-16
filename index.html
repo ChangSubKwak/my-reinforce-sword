@@ -4394,6 +4394,120 @@
     }
   }
 
+  // === v135 鍛 — 티어 전환 의식 + 高險 성공 의식 ===
+  const TIER_NAMES = ['', '初', '練', '剛', '靈', '聖'];  // tier 1~5
+  const TIER_LABELS = ['', '단검 — 첫 단련', '사벨 — 정련된 강철', '양손검 — 영혼이 깃들다', '마법사검 — 신묘한 검', '신검 — 도(道)의 영역'];
+  function playTierTransition(tier) {
+    if (tier < 2 || tier > 5) return;
+    const rect = swordWrap.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    // 검 본체 shimmer (브리프 페이드 → 새 형태)
+    const swordSvgEl = $('sword-svg');
+    if (swordSvgEl) {
+      swordSvgEl.animate([
+        { opacity: 1, filter: 'none' },
+        { opacity: 0.5, filter: 'drop-shadow(0 0 24px #fff5c0) brightness(2)', offset: 0.4 },
+        { opacity: 1, filter: 'none' },
+      ], { duration: 800, easing: 'ease-in-out' });
+    }
+    // 큰 한자 + 부제 페이드
+    const k = document.createElement('div');
+    k.textContent = TIER_NAMES[tier];
+    k.style.cssText = 'position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) scale(0.4);font-size:78px;font-family:"Noto Serif KR",serif;color:#fff5c0;text-shadow:0 0 24px rgba(255,245,192,1.0),0 0 12px rgba(212,175,55,1.0);pointer-events:none;z-index:1500;letter-spacing:12px;opacity:0;';
+    document.body.appendChild(k);
+    k.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.4)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.25 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.65 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+    ], { duration: 2200, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' });
+    setTimeout(() => k.remove(), 2300);
+    // 부제
+    const lbl = document.createElement('div');
+    lbl.textContent = TIER_LABELS[tier];
+    lbl.style.cssText = 'position:fixed;top:calc(38% + 55px);left:50%;transform:translateX(-50%);font-size:12px;letter-spacing:4px;color:#fff5c0;text-shadow:0 0 8px rgba(212,175,55,0.7);pointer-events:none;z-index:1500;opacity:0;text-align:center;line-height:1.8;';
+    document.body.appendChild(lbl);
+    lbl.animate([
+      { opacity: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }
+    ], { duration: 2200, easing: 'ease-in-out' });
+    setTimeout(() => lbl.remove(), 2300);
+    // SFX — 티어별 옥타브 화음 ascending
+    const baseFreqs = { 2: [330, 415, 494], 3: [392, 494, 587], 4: [523, 659, 784], 5: [659, 831, 988] };
+    const freqs = baseFreqs[tier];
+    const ctx = getAudio();
+    if (ctx && freqs) {
+      const now = ctx.currentTime;
+      freqs.forEach((f, i) => {
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(f, now + i * 0.10);
+        g.gain.setValueAtTime(0.0, now + i * 0.10);
+        g.gain.linearRampToValueAtTime(0.18, now + i * 0.10 + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.10 + 1.4);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(now + i * 0.10); osc.stop(now + i * 0.10 + 1.5);
+      });
+    }
+    // 추가 파티클
+    burstParticles('#fff5c0', 30);
+    setTimeout(() => burstParticles('#d4af37', 20), 150);
+    log('鍛 — ' + TIER_NAMES[tier] + '의 영역 진입', 'success');
+  }
+  function playHighRiskCeremony(destroyChance) {
+    const rect = swordWrap.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    // 황금 링 확장 (3개 ring stagger)
+    for (let i = 0; i < 3; i++) {
+      const ring = document.createElement('div');
+      const sizeStart = 30;
+      const sizeEnd = 160 + i * 40;
+      ring.style.cssText = 'position:fixed;left:' + cx + 'px;top:' + cy + 'px;width:' + sizeStart + 'px;height:' + sizeStart + 'px;border:2px solid #fff5c0;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:1100;box-shadow:0 0 20px rgba(255,245,192,0.7);opacity:0;';
+      document.body.appendChild(ring);
+      ring.animate([
+        { width: sizeStart + 'px', height: sizeStart + 'px', opacity: 0, borderColor: 'rgba(255,245,192,1)' },
+        { width: (sizeStart + 30) + 'px', height: (sizeStart + 30) + 'px', opacity: 0.95, offset: 0.15 },
+        { width: sizeEnd + 'px', height: sizeEnd + 'px', opacity: 0, borderColor: 'rgba(212,175,55,0)' },
+      ], { duration: 900 + i * 100, easing: 'cubic-bezier(0.2, 0.5, 0.4, 1)' });
+      setTimeout(() => ring.remove(), 1100 + i * 100);
+    }
+    // 위험 한자 페이드 (작게)
+    const k = document.createElement('div');
+    k.textContent = '險昇';
+    k.style.cssText = 'position:fixed;top:30%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-family:"Noto Serif KR",serif;color:#fff5c0;text-shadow:0 0 12px rgba(255,200,100,0.9);pointer-events:none;z-index:1500;letter-spacing:8px;opacity:0;';
+    document.body.appendChild(k);
+    k.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.5)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.3 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.2)' },
+    ], { duration: 1400, easing: 'ease-out' });
+    setTimeout(() => k.remove(), 1500);
+    // 단일 高音 차임 (chance에 따라 pitch 상승)
+    const pitch = 1320 + Math.floor(destroyChance * 4000);  // 0.20=2120, 0.40=2920
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(pitch, now);
+      g.gain.setValueAtTime(0.0, now);
+      g.gain.linearRampToValueAtTime(0.20, now + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(now); osc.stop(now + 0.7);
+      // 옥타브 위 shimmer
+      setTimeout(() => {
+        const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
+        o2.type = 'sine'; o2.frequency.setValueAtTime(pitch * 2, ctx.currentTime);
+        g2.gain.setValueAtTime(0.10, ctx.currentTime);
+        g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        o2.connect(g2); g2.connect(ctx.destination);
+        o2.start(); o2.stop(ctx.currentTime + 0.35);
+      }, 100);
+    }
+  }
+
   // === v116 七星 — 한 자루 검의 7가지 결실 ===
   const STARS = [
     { key: '始', label: '시작',     hint: '+5 도달',           trigger: () => state.hasSword && state.level >= 5 },
@@ -4765,6 +4879,16 @@
       applyStreak();
       state.level++;
       if (state.level > state.bestLevel) state.bestLevel = state.level;
+      // v135 鍛 — 티어 전환 의식 (1→2, 2→3, 3→4, 4→5)
+      const tierBefore = getTier(state.level - 1);
+      const tierAfter = getTier(state.level);
+      if (tierAfter > tierBefore) {
+        setTimeout(() => playTierTransition(tierAfter), 250);
+      }
+      // v135 鍛 — 高險 성공 의식 (파괴 확률 20%+ 강화 성공)
+      if (t.destroy >= 0.20) {
+        setTimeout(() => playHighRiskCeremony(t.destroy), 180);
+      }
       swordWrap.classList.remove('shake', 'flash', 'merge');
       void swordWrap.offsetWidth;
       swordWrap.classList.add('merge');
