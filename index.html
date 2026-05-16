@@ -5988,6 +5988,53 @@
   // 시작 시 자동 활성
   setTimeout(() => startSeasonParticles(), 2000);
 
+  // === v142 月光 — 紀元별 ambient 멜로디 phrase (펜타토닉) ===
+  const ERA_PHRASES = {
+    'hoga':   { notes: [],                                       interval: 0     },
+    'shuren': { notes: [440, 523, 659],                          interval: 40000 },  // 3음 펜타
+    'kaigan': { notes: [392, 466, 523, 622, 698],                interval: 30000 },  // 5음
+    'takkan': { notes: [349, 392, 466, 523, 622, 698, 784],      interval: 25000 },  // 7음
+    'shinki': { notes: [330, 392, 466, 523, 622, 698, 784, 932], interval: 20000 },  // 8음 풍성
+  };
+  let ambientPhraseTimer = null;
+  function playAmbientPhrase() {
+    // 도전/파괴 중에는 양보 (crisis ambientMode)
+    if (ambientMode === 'crisis' || ambientMode === 'way' || ambientMode === 'void') return;
+    if (muted) return;
+    const era = getCurrentEra();
+    const phrase = ERA_PHRASES[era.key];
+    if (!phrase || !phrase.notes.length) return;
+    // 펜타토닉에서 랜덤 음 1~3개 선택 (그날의 노래)
+    const ctx = getAudio();
+    if (!ctx) return;
+    const noteCount = 1 + Math.floor(Math.random() * 2);  // 1~2음
+    const now = ctx.currentTime;
+    for (let i = 0; i < noteCount; i++) {
+      const f = phrase.notes[Math.floor(Math.random() * phrase.notes.length)];
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, now + i * 0.7);
+      g.gain.setValueAtTime(0.0, now + i * 0.7);
+      g.gain.linearRampToValueAtTime(0.09, now + i * 0.7 + 0.15);
+      g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.7 + 1.4);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(now + i * 0.7); osc.stop(now + i * 0.7 + 1.5);
+    }
+  }
+  function startAmbientPhrases() {
+    if (ambientPhraseTimer) clearTimeout(ambientPhraseTimer);
+    function tick() {
+      const era = getCurrentEra();
+      const phrase = ERA_PHRASES[era.key];
+      const next = (phrase && phrase.interval > 0) ? phrase.interval : 30000;
+      playAmbientPhrase();
+      ambientPhraseTimer = setTimeout(tick, next + (Math.random() - 0.5) * 8000);  // ±4s jitter
+    }
+    // 초기 첫 phrase는 짧게 (10초 후)
+    ambientPhraseTimer = setTimeout(tick, 10000);
+  }
+  setTimeout(() => startAmbientPhrases(), 5000);
+
   // v137 山水 — 가끔 가로질러 나는 새 (紀元 開眼+ 시점부터)
   function spawnLandscapeBird() {
     // 開眼(1000+) 이전엔 안 뜸
