@@ -5350,6 +5350,127 @@
   }
   setInterval(spawnDust, 900);
 
+  // === v132 季氣 — 4계절 시그니처 파티클 (무대 전체) ===
+  function spawnSeasonParticle() {
+    const stage = $('stage');
+    if (!stage) return;
+    const rect = stage.getBoundingClientRect();
+    if (rect.width === 0) return;  // 화면에 없음
+    const season = getSeason();
+    const p = document.createElement('div');
+    p.style.position = 'fixed';
+    p.style.pointerEvents = 'none';
+    p.style.zIndex = '1';  // 무대 위, UI 아래
+    document.body.appendChild(p);
+    if (season.key === 'spring') {
+      // 벚꽃 잎 — 분홍, 좌우로 흔들며 떨어짐
+      const startX = rect.left + Math.random() * rect.width;
+      const startY = rect.top - 10;
+      const fallY = rect.height + 40;
+      const swayX = (Math.random() - 0.5) * 60;
+      const size = 4 + Math.random() * 3;
+      const rot = Math.random() * 360;
+      p.style.left = startX + 'px';
+      p.style.top = startY + 'px';
+      p.style.width = size + 'px';
+      p.style.height = size * 0.6 + 'px';
+      p.style.background = 'radial-gradient(ellipse, rgba(255,180,200,0.8), rgba(255,140,170,0.4))';
+      p.style.borderRadius = '50% 0 50% 50%';
+      p.style.transform = 'rotate(' + rot + 'deg)';
+      p.animate([
+        { opacity: 0, transform: 'translate(0, 0) rotate(' + rot + 'deg)' },
+        { opacity: 0.85, offset: 0.15 },
+        { opacity: 0.7, offset: 0.7, transform: 'translate(' + (swayX * 0.6) + 'px, ' + (fallY * 0.6) + 'px) rotate(' + (rot + 180) + 'deg)' },
+        { opacity: 0, transform: 'translate(' + swayX + 'px, ' + fallY + 'px) rotate(' + (rot + 360) + 'deg)' },
+      ], { duration: 6000 + Math.random() * 3000, easing: 'cubic-bezier(0.4, 0.2, 0.6, 0.9)' });
+      setTimeout(() => p.remove(), 9500);
+    } else if (season.key === 'summer') {
+      // 햇빛 먼지 — 황금, 천천히 떠다님
+      const startX = rect.left + Math.random() * rect.width;
+      const startY = rect.top + Math.random() * rect.height;
+      const driftY = -30 - Math.random() * 50;
+      const driftX = (Math.random() - 0.5) * 40;
+      const size = 2 + Math.random() * 2;
+      p.style.left = startX + 'px';
+      p.style.top = startY + 'px';
+      p.style.width = size + 'px';
+      p.style.height = size + 'px';
+      p.style.background = 'radial-gradient(circle, rgba(255,230,150,0.7), transparent)';
+      p.style.borderRadius = '50%';
+      p.style.boxShadow = '0 0 4px rgba(255,210,120,0.5)';
+      p.animate([
+        { opacity: 0, transform: 'translate(0, 0) scale(0.5)' },
+        { opacity: 0.85, offset: 0.25, transform: 'translate(' + (driftX * 0.3) + 'px, ' + (driftY * 0.3) + 'px) scale(1)' },
+        { opacity: 0.65, offset: 0.7 },
+        { opacity: 0, transform: 'translate(' + driftX + 'px, ' + driftY + 'px) scale(0.6)' },
+      ], { duration: 5000 + Math.random() * 2500, easing: 'cubic-bezier(0.3, 0.4, 0.5, 1)' });
+      setTimeout(() => p.remove(), 7800);
+    } else if (season.key === 'autumn') {
+      // 낙엽 — 주황/붉음, 회전하며 천천히 떨어짐
+      const startX = rect.left + Math.random() * rect.width;
+      const startY = rect.top - 10;
+      const fallY = rect.height + 50;
+      const swayX = (Math.random() - 0.5) * 80;
+      const size = 5 + Math.random() * 3;
+      const rotEnd = 360 + Math.random() * 360 * (Math.random() < 0.5 ? -1 : 1);
+      const leafColor = Math.random() < 0.5 ? 'rgba(200,90,40,0.85)' : 'rgba(180,60,30,0.8)';
+      p.style.left = startX + 'px';
+      p.style.top = startY + 'px';
+      p.style.width = size + 'px';
+      p.style.height = size * 0.7 + 'px';
+      p.style.background = leafColor;
+      p.style.borderRadius = '0 50% 0 50%';
+      p.style.boxShadow = '0 0 2px rgba(120,40,20,0.4)';
+      p.animate([
+        { opacity: 0, transform: 'translate(0, 0) rotate(0deg)' },
+        { opacity: 0.9, offset: 0.15 },
+        { opacity: 0.75, offset: 0.7, transform: 'translate(' + (swayX * 0.6) + 'px, ' + (fallY * 0.6) + 'px) rotate(' + (rotEnd * 0.6) + 'deg)' },
+        { opacity: 0, transform: 'translate(' + swayX + 'px, ' + fallY + 'px) rotate(' + rotEnd + 'deg)' },
+      ], { duration: 7000 + Math.random() * 3500, easing: 'cubic-bezier(0.4, 0.2, 0.6, 0.9)' });
+      setTimeout(() => p.remove(), 11000);
+    } else {  // winter
+      // 눈송이 — 흰색, 천천히 회전하며 떨어짐
+      const startX = rect.left + Math.random() * rect.width;
+      const startY = rect.top - 10;
+      const fallY = rect.height + 40;
+      const swayX = (Math.random() - 0.5) * 30;
+      const size = 3 + Math.random() * 3;
+      p.style.left = startX + 'px';
+      p.style.top = startY + 'px';
+      p.style.width = size + 'px';
+      p.style.height = size + 'px';
+      p.style.background = 'radial-gradient(circle, rgba(240,245,255,0.85), rgba(200,220,240,0.4))';
+      p.style.borderRadius = '50%';
+      p.style.boxShadow = '0 0 3px rgba(220,230,250,0.5)';
+      p.animate([
+        { opacity: 0, transform: 'translate(0, 0)' },
+        { opacity: 0.9, offset: 0.15 },
+        { opacity: 0.75, offset: 0.75, transform: 'translate(' + (swayX * 0.5) + 'px, ' + (fallY * 0.7) + 'px)' },
+        { opacity: 0, transform: 'translate(' + swayX + 'px, ' + fallY + 'px)' },
+      ], { duration: 8000 + Math.random() * 4000, easing: 'cubic-bezier(0.35, 0.2, 0.55, 0.9)' });
+      setTimeout(() => p.remove(), 12500);
+    }
+  }
+  // 계절별 빈도 (간격 ms): 春 3500, 夏 2500, 秋 4000, 冬 5500
+  function getSeasonParticleInterval() {
+    const k = getSeason().key;
+    if (k === 'spring') return 3500;
+    if (k === 'summer') return 2500;
+    if (k === 'autumn') return 4000;
+    return 5500;
+  }
+  let seasonParticleTimer = null;
+  function startSeasonParticles() {
+    if (seasonParticleTimer) clearTimeout(seasonParticleTimer);
+    function tick() {
+      spawnSeasonParticle();
+      seasonParticleTimer = setTimeout(tick, getSeasonParticleInterval());
+    }
+    seasonParticleTimer = setTimeout(tick, 1500);  // 초기 1.5초 지연
+  }
+  // 시작 시 자동 활성
+  setTimeout(() => startSeasonParticles(), 2000);
+
   // 呼吸 단계 변화 감지용 — 매 3초 odds 갱신
   let lastBreathTier = -1;
   setInterval(() => {
