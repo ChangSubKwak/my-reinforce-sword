@@ -680,6 +680,40 @@
   #way-progress .dot.active { background: var(--accent); }
   #way-progress .dot.way { background: #fff5c0; box-shadow: 0 0 6px #fff5c0; }
 
+  /* v116 七星 — 한 자루 검의 7가지 결실 */
+  #seven-stars {
+    position: absolute;
+    bottom: -88px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    pointer-events: auto;
+    z-index: 5;
+  }
+  #seven-stars .star {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 11px;
+    color: rgba(120, 110, 90, 0.35);
+    letter-spacing: 0;
+    cursor: help;
+    transition: color 0.4s, text-shadow 0.4s;
+    width: 14px; text-align: center;
+  }
+  #seven-stars .star.lit {
+    color: var(--accent);
+    text-shadow: 0 0 6px rgba(212,175,55,0.65);
+  }
+  #seven-stars .star.all-lit {
+    color: #fff5c0;
+    text-shadow: 0 0 10px rgba(255,245,192,0.9);
+    animation: star-pulse 2.2s ease-in-out infinite alternate;
+  }
+  @keyframes star-pulse {
+    from { text-shadow: 0 0 6px rgba(255,245,192,0.7); }
+    to   { text-shadow: 0 0 14px rgba(255,245,192,1.0); }
+  }
+
   /* 魂 — 검 아래 게이지 */
   #soul-bar {
     position: absolute;
@@ -1988,6 +2022,7 @@
       <div id="soul-bar"><div id="soul-fill"></div></div>
       <div id="soul-stage-label"></div>
       <div id="way-progress"></div>
+      <div id="seven-stars" title="七星 — 한 자루 검의 7가지 결실"></div>
       <div id="sword-voice"></div>
       <div id="omen-indicator"></div>
       <div id="streak-counter"></div>
@@ -2514,7 +2549,7 @@
     totalDestroyed: 0,
     totalSlain: 0,
     sealedSwords: [],
-    currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0 },
+    currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
     firstWayReached: false,  // v16 始祖 — 첫 道 도달 시 true, 영구
@@ -2580,6 +2615,8 @@
       if (state.currentSword.form === undefined) state.currentSword.form = null;
       if (typeof state.currentSword.soul !== 'number') state.currentSword.soul = 0;
       if (typeof state.currentSword.scars !== 'number') state.currentSword.scars = 0;
+      if (typeof state.currentSword.protectsUsed !== 'number') state.currentSword.protectsUsed = 0;
+      if (!state.currentSword.stars || typeof state.currentSword.stars !== 'object') state.currentSword.stars = {};
       // v93 天命 — 기존 검에 천명 없으면 부여
       if (state.hasSword && !state.currentSword.destiny) {
         try { assignDestiny(); } catch (e) {}
@@ -3165,6 +3202,7 @@
     renderDestiny();  // v93 天命
     renderAdversity();  // v96 厄運轉機
     renderEnhanceEcho();  // v114 餘香
+    renderSevenStars();  // v116 七星
     updateStageBg();   // v97 梵境
     // v81 조합소 버튼 시각 잠금 — +0 일 때만 활성
     const forgeBtn = $('btn-forge');
@@ -3365,6 +3403,70 @@
       ], { duration: 700 + Math.random() * 400, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
       setTimeout(() => p.remove(), 1200);
     }
+  }
+
+  // === v116 七星 — 한 자루 검의 7가지 결실 ===
+  const STARS = [
+    { key: '始', label: '시작',     hint: '+5 도달',           trigger: () => state.hasSword && state.level >= 5 },
+    { key: '戰', label: '전투',     hint: '그림자 3 베어내기', trigger: () => state.hasSword && (state.currentSword.slainCount || 0) >= 3 },
+    { key: '護', label: '수호',     hint: '방지권 3회 사용',   trigger: () => state.hasSword && (state.currentSword.protectsUsed || 0) >= 3 },
+    { key: '刻', label: '시련',     hint: '흉터 1개 새김',     trigger: () => state.hasSword && (state.currentSword.scars || 0) >= 1 },
+    { key: '心', label: '본질',     hint: '영혼 67(本) 도달',  trigger: () => state.hasSword && (state.currentSword.soul || 0) >= 67 },
+    { key: '銘', label: '기록',     hint: '명문 3개 새김 (메타 제외)', trigger: () => {
+      if (!state.hasSword) return false;
+      const meta = new Set(['始祖','達人','聖','七星','逆轉','先代']);
+      const real = (state.currentSword.inscriptions || []).filter(k => !meta.has(k));
+      return real.length >= 3;
+    }},
+    { key: '道', label: '극점',     hint: '+15 도달',          trigger: () => state.hasSword && state.level >= MAX_LEVEL },
+  ];
+  function awardStar(key) {
+    if (!state.hasSword || !state.currentSword) return;
+    if (!state.currentSword.stars) state.currentSword.stars = {};
+    if (state.currentSword.stars[key]) return;
+    state.currentSword.stars[key] = true;
+    const def = STARS.find(s => s.key === key);
+    if (def) {
+      announceInscription(def.key, def.label + ' — ' + def.hint);
+    }
+    // 7별 모두 채워졌는지 검사 → 七星 명문
+    const allLit = STARS.every(s => state.currentSword.stars[s.key]);
+    if (allLit && !state.currentSword.inscriptions.includes('七星')) {
+      state.currentSword.inscriptions.push('七星');
+      setTimeout(() => {
+        announceInscription('七星', '북두칠성이 검에 깃들었다 — 봉인 보상 ×1.5');
+        // 七星 도달 의식 — 큰 빛 파티클
+        burstParticles('#fff5c0', 60);
+        setTimeout(() => burstParticles('#d4af37', 30), 200);
+        SFX.ritual();
+        log('🌟 七星 — 별이 검에 깃들었다', 'success');
+      }, 500);
+    }
+  }
+  function checkStars() {
+    if (!state.hasSword || !state.currentSword) return;
+    if (!state.currentSword.stars) state.currentSword.stars = {};
+    STARS.forEach(s => {
+      if (!state.currentSword.stars[s.key] && s.trigger()) awardStar(s.key);
+    });
+  }
+  function renderSevenStars() {
+    const el = $('seven-stars');
+    if (!el) return;
+    if (!state.hasSword || !state.currentSword) {
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = 'flex';
+    const stars = state.currentSword.stars || {};
+    const allLit = STARS.every(s => stars[s.key]);
+    el.innerHTML = STARS.map(s => {
+      const lit = !!stars[s.key];
+      let cls = 'star';
+      if (allLit) cls += ' all-lit';
+      else if (lit) cls += ' lit';
+      return '<span class="' + cls + '" title="' + s.label + ' — ' + s.hint + (lit ? ' ✓' : '') + '">' + s.key + '</span>';
+    }).join('');
   }
 
   // === v114 餘香 — 슬레이 후 다음 강화에 남는 잔향 + v115 流逝 시간 제한 ===
@@ -3630,7 +3732,7 @@
 
     // 비용 차감
     state.shards -= actualCost;
-    if (useProtect) state.protections -= pCost;
+    if (useProtect) { state.protections -= pCost; state.currentSword.protectsUsed = (state.currentSword.protectsUsed || 0) + 1; }
     if (useWhet) state.whetstones--;
     if (useSpirit) state.spiritstones--;
     state.currentSword.enhanceAttempts++;
@@ -3706,6 +3808,7 @@
       showSwordVoice('success', state.level);  // v113 劍聲
       // 강화 성공 → 일대기 점검 (百鍊·剛體·道)
       checkInscriptions();
+      checkStars();  // v116 七星
       recordLevelHistory();
       // v84 정말 최종 강화 (+MAX_LEVEL=15 도달) 시 엔딩 발동 — 한 번만
       if (state.level >= MAX_LEVEL && !state.endingShown) {
@@ -3797,6 +3900,7 @@
     if ($('spirit-check')) $('spirit-check').checked = false;
     // 실패 분기에서도 百鍊 카운트 확인 (강화 시도 자체로 누적)
     checkInscriptions();
+    checkStars();  // v116 七星
     recordLevelHistory();
     checkDestiny();  // v93 天命 — 강화 시도(횟수) 후 운명 점검
     save();
@@ -3895,6 +3999,7 @@
       setTimeout(() => checkInscriptions(), 300);
     }
     log('刻痕 · ' + n + '  — 파괴의 충격이 검에 새겨졌다 (파괴 확률 -' + n + '%)', 'info');
+    checkStars();  // v116 七星
     save();
   }
 
@@ -4453,6 +4558,7 @@
         }
       }
       checkInscriptions();
+      checkStars();  // v116 七星
       log(c.type.name + ' 베어냄 +' + c.reward + ' 조각', 'success');
       recordEvent(c.type.name + ' 베어냄 +' + c.reward);
       burstParticles(c.type.isDemon ? '#c0392b' : '#d4af37', c.type.isDemon ? 30 : 18);
@@ -4548,6 +4654,7 @@
     if (before < SOUL_AWAKEN && after >= SOUL_AWAKEN) grantInscription('覺');
     if (before < SOUL_TRUE && after >= SOUL_TRUE) grantInscription('本');
     checkDestiny();  // v93 혼 기반 천명
+    checkStars();  // v116 七星 — 心 별 (本 도달)
   }
 
   // === v93 天命 — 검의 운명 (검 한 자루의 일생 목표) ===
@@ -5324,6 +5431,7 @@
     { key: '古',   label: '100번 강화한 아주 오랜 검',      verse: '검은 잊혀진 시대를 기억한다',       trigger: () => state.currentSword.enhanceAttempts >= 100 },
     { key: '讀劍', label: '전조를 능숙하게 읽는 검',        verse: '검과 사람이 같은 하늘을 보았다',     trigger: () => (state.currentSword.omenTotal || 0) >= 10 && (state.currentSword.omenHits || 0) / (state.currentSword.omenTotal || 1) >= 0.8 },
     { key: '傷',   label: '세 번 무너지기 직전 살아남은 검', verse: '상처가 검을 더 단단하게 만들었다',   trigger: () => (state.currentSword.scars || 0) >= 3 },
+    { key: '七星', label: '북두칠성이 깃든 검',              verse: '일곱 별이 한 검에 모였다',           trigger: () => false },
   ];
 
   function grantInscription(key) {
@@ -5333,6 +5441,7 @@
     if (!def) return;
     state.currentSword.inscriptions.push(key);
     announceInscription(key, def.label);
+    checkStars();  // v116 七星 — 銘 별 (명문 수)
   }
 
   function checkInscriptions() {
@@ -5431,6 +5540,7 @@
     reward = Math.floor(reward * getSeason().sealMul);
     if (ins.includes('古')) reward = Math.floor(reward * 1.10);
     else if (ins.includes('久')) reward = Math.floor(reward * 1.05);
+    if (ins.includes('七星')) reward = Math.floor(reward * 1.5);  // v116 七星 미리 보기 반영
     const autoName = makeSwordName(form, ins, state.level);
     btn.disabled = false;
     // 팔기 시 자동 검명도 함께 — 검 정체성 미리 보기
@@ -5444,6 +5554,7 @@
       if (nextLv >= MAX_LEVEL && !nextIns.includes('道')) nextIns.push('道');
       if (nextIns.includes('道')) nextReward = Math.floor(nextReward * 1.5);
       nextReward = Math.floor(nextReward * schoolSealMul() * getSeason().sealMul);
+      if (nextIns.includes('七星')) nextReward = Math.floor(nextReward * 1.5);  // v116
       const diff = nextReward - reward;
       if (diff > 0) extraHint = '  <span style="font-size:9px;opacity:0.6;letter-spacing:1px">(+1 성공 시 +' + diff + '↑)</span>';
     }
@@ -5571,7 +5682,7 @@
     swordWrap.classList.remove('resolve-focus', 'resolve-guard');
     setAmbientLevel(startLv); applyAmbientMode('idle');
     const startSoul = trialStartSoulBonus();
-    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0 };
+    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0, protectsUsed: 0, stars: {} };
     // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (state.firstWayReached) {
@@ -5853,6 +5964,8 @@
     // 久/古 효과는 *봉인 시점*의 ins로 계산 (이미 정점 명문 보유 시)
     if (ins.includes('古')) reward = Math.floor(reward * 1.10);
     else if (ins.includes('久')) reward = Math.floor(reward * 1.05);
+    // v116 七星: 7별 채운 검은 봉인 보상 ×1.5
+    if (ins.includes('七星')) reward = Math.floor(reward * 1.5);
     const schoolsBefore = getActiveSchools();
     // v106 合: 마스터리 단계 — 봉인 전 상태
     const masteryBefore = {};
@@ -5874,6 +5987,7 @@
       omenTotal: state.currentSword.omenTotal || 0,
       memo: (userMemo && userMemo.trim()) ? userMemo.trim() : null,
       scars: state.currentSword.scars || 0,
+      stars: Object.assign({}, state.currentSword.stars || {}),
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -5899,6 +6013,11 @@
       }
     });
     state.shards += reward;
+    // v116 七星: 7별 채운 검 봉인 시 보호권 +1 보너스
+    if (ins.includes('七星')) {
+      state.protections++;
+      setTimeout(() => log('七星 봉인 보너스 — 보호권 +1', 'success'), 800);
+    }
     bumpStat('sealed');
     bumpDaily('seal', 1);  // v94 天時
     if (isWay) bumpStat('wayReached');
@@ -6303,6 +6422,16 @@
       '</div>' +
       (s.omenTotal >= 5 ? '<div style="text-align:center;color:var(--dim);font-size:10px;padding:4px 0;letter-spacing:2px">전조 적중률 ' + (s.omenHits || 0) + '/' + s.omenTotal + ' (' + Math.round((s.omenHits || 0) / s.omenTotal * 100) + '%)</div>' : '') +
       (s.scars > 0 ? '<div style="text-align:center;color:rgba(180,70,50,0.8);font-size:10px;padding:4px 0;letter-spacing:3px">刻痕 ' + '●'.repeat(s.scars) + '○'.repeat(3 - s.scars) + '  · 파괴 직전 ' + s.scars + '번 살아남았다</div>' : '') +
+      (s.stars ? (function() {
+        const lit = STARS.filter(st => s.stars[st.key]).length;
+        if (lit === 0) return '';
+        const allLit = lit === STARS.length;
+        const cls = allLit ? 'color:#fff5c0;text-shadow:0 0 6px rgba(255,245,192,0.7)' : 'color:var(--accent)';
+        return '<div style="text-align:center;font-size:10px;padding:4px 0;letter-spacing:4px;' + cls + '">' +
+          STARS.map(st => s.stars[st.key] ? st.key : '·').join(' ') +
+          '<div style="font-size:9px;color:var(--dim);margin-top:3px;letter-spacing:2px">七星 ' + lit + '/' + STARS.length + (allLit ? ' — 별이 깃든 검' : '') + '</div>' +
+        '</div>';
+      })() : '') +
       (s.memo ? '<div style="margin:12px 0;padding:10px 14px;background:rgba(212,175,55,0.04);border:1px dashed rgba(212,175,55,0.2);text-align:center;font-size:12px;letter-spacing:3px;color:var(--fg);line-height:1.8">' + s.memo + '</div>' : '') +
       guardianBlock;
     $('sword-detail-modal').classList.add('active');
@@ -6543,7 +6672,7 @@
     state = Object.assign({}, state, cloudData);
     if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
     if (!state.currentSword || typeof state.currentSword !== 'object') {
-      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0 };
+      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} };
     }
     if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
     if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
@@ -6759,7 +6888,7 @@
     // load 보정 재실행
     if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
     if (!state.currentSword || typeof state.currentSword !== 'object') {
-      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0 };
+      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} };
     }
     if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
     if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
@@ -7283,7 +7412,7 @@
       level: 0, shards: 50, protections: 0, hasSword: true,
       bestLevel: 0, totalDestroyed: 0, totalSlain: 0,
       sealedSwords: [],
-      currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0 },
+      currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0,
       firstWayReached: false,
       endingShown: false,
