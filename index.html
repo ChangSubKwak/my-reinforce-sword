@@ -4441,7 +4441,7 @@
     const rsv = getResolve();
     const successAdd = ((form && form.successBonus) || 0) + soulEffects().successBonus
       + schoolSuccessBonus() + breathBonus() + guardianBonus().successBonus
-      + trialSuccessBonus() + rsv.successAdd + (adversityReady ? 0.40 : 0) + eraSuccessBonus() + enshrineSuccessBonus() + fourWaySuccessBonus();
+      + trialSuccessBonus() + rsv.successAdd + (adversityReady ? 0.40 : 0) + eraSuccessBonus() + enshrineSuccessBonus() + fourWaySuccessBonus() + resonanceBonus();
     const destroyReduce2 = (form && form.destroyReduce) || 0;
     const effectiveDestroy = Math.max(0, (t.destroy - destroyReduce2 - schoolDestroyReduce() - guardianBonus().destroyReduce - (adversityReady ? 0.12 : 0) - getScarDestroyReduce()) * rsv.destroyMul);
     const trueSuccess = Math.min(1, t.success + successAdd);
@@ -4856,6 +4856,7 @@
     applyInscriptionVisual();
     renderSoul();
     renderWayProgress();
+    renderResonanceDisplay();  // v178 共鳴
     renderSealButton();
     renderCurrentChart();
     applySeason();
@@ -4976,7 +4977,7 @@
     const sanctumMulShow = sanctumCostMul();  // v121 結界
     const wishMulShow = wishCostMul();  // v155 寒梅
     const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow * wishMulShow * solarCostMul());
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus();
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus() + resonanceBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
 
@@ -5313,6 +5314,75 @@
         }
       });
     });
+  }
+
+  // === v178 共鳴 — 같은 형 봉인 검과의 공명 ===
+  function sameFormSealedCount(form) {
+    if (!form) return 0;
+    return (state.sealedSwords || []).filter(s => s.form === form).length;
+  }
+  function resonanceBonus() {
+    const f = state.hasSword && state.currentSword && state.currentSword.form;
+    if (!f) return 0;
+    const n = sameFormSealedCount(f);
+    return Math.min(0.05, n * 0.005);
+  }
+  function resonanceStage() {
+    const f = state.hasSword && state.currentSword && state.currentSword.form;
+    if (!f) return null;
+    const n = sameFormSealedCount(f);
+    if (n >= 10) return { stage: '極', count: n, color: '#fff5c0' };
+    if (n >= 6)  return { stage: '大', count: n, color: '#d4af37' };
+    if (n >= 3)  return { stage: '中', count: n, color: '#a8c0d8' };
+    if (n >= 1)  return { stage: '小', count: n, color: '#888888' };
+    return null;
+  }
+  function renderResonanceDisplay() {
+    let el = $('resonance-display');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'resonance-display';
+      el.style.cssText = 'text-align:center;font-size:9px;letter-spacing:3px;color:rgba(168,184,200,0.7);margin-top:4px;font-family:"Noto Serif KR",serif;min-height:14px';
+      const soulBar = $('soul-bar');
+      if (soulBar && soulBar.parentNode) soulBar.parentNode.insertBefore(el, soulBar.nextSibling);
+      else return;
+    }
+    const r = resonanceStage();
+    if (!r) { el.textContent = ''; return; }
+    const f = state.currentSword.form;
+    const bonus = (resonanceBonus() * 100).toFixed(1);
+    el.innerHTML = '<span style="color:' + r.color + '">' + f + ' 공명 ' + r.stage + '</span>' +
+                   ' <span style="opacity:0.6">×' + r.count + ' · 강화 +' + bonus + '%</span>';
+  }
+  function spawnResonanceRays() {
+    const f = state.hasSword && state.currentSword && state.currentSword.form;
+    if (!f) return;
+    const n = sameFormSealedCount(f);
+    if (n < 1) return;
+    const stage = $('stage');
+    const swordWrap = $('sword-wrap');
+    if (!stage || !swordWrap) return;
+    const sr = stage.getBoundingClientRect();
+    const cx = sr.width / 2;
+    const cy = sr.height / 2;
+    const rayCount = Math.min(8, n);
+    for (let i = 0; i < rayCount; i++) {
+      const ray = document.createElement('div');
+      const angle = (i / rayCount) * Math.PI * 2 + Math.random() * 0.3;
+      const dist = sr.width * 0.45;
+      const sx = cx + Math.cos(angle) * dist;
+      const sy = cy + Math.sin(angle) * dist;
+      ray.style.cssText = 'position:absolute;left:' + sx + 'px;top:' + sy + 'px;width:3px;height:3px;background:radial-gradient(circle,#d4af37,transparent);border-radius:50%;pointer-events:none;z-index:14;box-shadow:0 0 6px #d4af37';
+      stage.appendChild(ray);
+      const dx = cx - sx;
+      const dy = cy - sy;
+      ray.animate([
+        { transform: 'translate(0,0) scale(1)', opacity: 0 },
+        { transform: 'translate(0,0) scale(1.5)', opacity: 0.9, offset: 0.1 },
+        { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(0.4)', opacity: 0 }
+      ], { duration: 700 + Math.random() * 200, easing: 'cubic-bezier(0.4, 0, 0.6, 1)', delay: i * 40 });
+      setTimeout(() => ray.remove(), 1000 + i * 40);
+    }
   }
 
   // === v177 節氣 — 실시간 24절기 중 8주요 ===
@@ -7366,6 +7436,8 @@
       }
       // 조각이 검에 흘러드는 빛줄 (4방향)
       spawnMergeRays();
+      // v178 共鳴 — 같은 형 봉인 검의 광선 (random ~ 1/4 빈도)
+      if (Math.random() < 0.28) spawnResonanceRays();
       // v60 강화도별 파티클 양 증가 — 道 도달 시 압도적
       let particleCount = 12 + lv * 2;
       if (state.level >= MAX_LEVEL) particleCount = 80;
