@@ -3406,6 +3406,8 @@
     swordWishSlay: null,      // v155 寒梅 — 슬레이 보상 유언
     records: {},              // v156 新記 — 개인 최고 기록
     duelWins: {},             // v159 對局 — 봉인 검 대국 승리 카운트
+    ultimateAchieved: false,  // v170 千秋萬代 — 모든 메타 완성 1회 표식
+    ultimateAchievedAt: 0,    // v170 — 달성 시각
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
@@ -3588,6 +3590,8 @@
       if (state.swordWishSlay !== null && typeof state.swordWishSlay !== 'object') state.swordWishSlay = null;
       if (!state.records || typeof state.records !== 'object') state.records = {};  // v156
       if (!state.duelWins || typeof state.duelWins !== 'object') state.duelWins = {};  // v159
+      if (typeof state.ultimateAchieved !== 'boolean') state.ultimateAchieved = false;  // v170
+      if (typeof state.ultimateAchievedAt !== 'number') state.ultimateAchievedAt = 0;
       if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
         state.currentSword.foesEncountered = {};
       }
@@ -4889,7 +4893,7 @@
     const sanctumMulShow = sanctumCostMul();  // v121 結界
     const wishMulShow = wishCostMul();  // v155 寒梅
     const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow * wishMulShow);
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus();
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
 
@@ -5249,6 +5253,86 @@
     const scale = 1 + (lv / 30);  // 0=1.0 / 15=1.5
     if (flames[0]) flames[0].style.transform = 'scale(' + scale + ')';
     if (flames[1]) flames[1].style.transform = 'scale(' + scale + ')';
+  }
+
+  // === v170 千秋萬代 — 모든 메타 완성 시 1회 끝점 의식 (milestone) ===
+  function checkUltimateAchievement() {
+    if (state.ultimateAchieved) return false;
+    // 모든 조건 충족 검사
+    const trialsAll = (typeof TRIALS !== 'undefined') ? TRIALS.every(t => trialUnlocked(t.key)) : false;
+    const scrollsAll = (typeof SCROLLS !== 'undefined') ? SCROLLS.every(s => state.scrollsUnlocked && state.scrollsUnlocked[s.key]) : false;
+    const collectionAll = (typeof COLLECTION_MILESTONES !== 'undefined') ? COLLECTION_MILESTONES.every(m => state.collectionMilestones && state.collectionMilestones[m.key]) : false;
+    const shrineAll = (typeof SHRINE_DONATIONS !== 'undefined') ? SHRINE_DONATIONS.every(d => state.shrineDonations && state.shrineDonations[d.key]) : false;
+    const hiddenAll = (typeof HIDDEN_ACHIEVEMENTS !== 'undefined') ? HIDDEN_ACHIEVEMENTS.every(a => state.hiddenAchievements && state.hiddenAchievements[a.key]) : false;
+    const gen100 = (state.swordGeneration || 0) >= 100;
+    const ways5 = (state.stats && state.stats.wayReached) >= 5;
+    const fourWayDone = (typeof hasFourWays === 'function') && hasFourWays();
+    const enshrines1 = (state.enshrined || []).length >= 1;
+    const allDone = trialsAll && scrollsAll && collectionAll && shrineAll && hiddenAll && gen100 && ways5 && fourWayDone && enshrines1;
+    if (allDone) {
+      state.ultimateAchieved = true;
+      state.ultimateAchievedAt = Date.now();
+      playUltimateCeremony();
+      save();
+      return true;
+    }
+    return false;
+  }
+  function ultimateSuccessBonus() {
+    return state.ultimateAchieved ? 0.01 : 0;  // 영구 +1% 글로벌 성공
+  }
+  function playUltimateCeremony() {
+    // 1) 화면 황금 폭발 (6초)
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:1400;background:radial-gradient(circle at 50% 50%, rgba(255,245,192,0) 0%, transparent 100%);opacity:0';
+    document.body.appendChild(overlay);
+    overlay.animate([
+      { opacity: 0, background: 'radial-gradient(circle at 50% 50%, rgba(255,245,192,0) 0%, transparent 100%)' },
+      { opacity: 1, background: 'radial-gradient(circle at 50% 50%, rgba(255,245,192,0.55) 0%, rgba(212,175,55,0.20) 40%, transparent 80%)', offset: 0.3 },
+      { opacity: 1, offset: 0.7 },
+      { opacity: 0 },
+    ], { duration: 7000, easing: 'ease-in-out' });
+    setTimeout(() => overlay.remove(), 7100);
+    // 2) 거대 한자 千秋萬代 (5초)
+    const k = document.createElement('div');
+    k.textContent = '千秋萬代';
+    k.style.cssText = 'position:fixed;top:36%;left:50%;transform:translate(-50%,-50%) scale(0.3);font-size:80px;font-family:"Noto Serif KR",serif;color:#fff5c0;text-shadow:0 0 40px rgba(255,245,192,1.0),0 0 20px rgba(212,175,55,1.0);pointer-events:none;z-index:1500;letter-spacing:20px;opacity:0;';
+    document.body.appendChild(k);
+    k.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.3)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.25 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.0)', offset: 0.75 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+    ], { duration: 5500, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' });
+    setTimeout(() => k.remove(), 5600);
+    // 3) 부제
+    const lbl = document.createElement('div');
+    lbl.innerHTML = '검의 길은 영원하나 한 차례의 끝<br><span style="font-size:13px;letter-spacing:4px;opacity:0.85">모든 길을 보고 모든 글을 쓰고 모든 검을 빚었다 — 글로벌 +1%</span>';
+    lbl.style.cssText = 'position:fixed;top:calc(36% + 80px);left:50%;transform:translateX(-50%);font-size:16px;letter-spacing:6px;color:#fff5c0;text-shadow:0 0 10px rgba(212,175,55,0.7);pointer-events:none;z-index:1500;opacity:0;text-align:center;line-height:2.2;';
+    document.body.appendChild(lbl);
+    lbl.animate([
+      { opacity: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 1, offset: 0.75 }, { opacity: 0 }
+    ], { duration: 5500, easing: 'ease-in-out' });
+    setTimeout(() => lbl.remove(), 5600);
+    // 4) 거대 SFX — 7음 펜타토닉 + 큰 화음
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      [196, 220, 262, 294, 330, 392, 440, 523].forEach((f, i) => {
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(f, now + i * 0.18);
+        g.gain.setValueAtTime(0.0, now + i * 0.18);
+        g.gain.linearRampToValueAtTime(0.22, now + i * 0.18 + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 2.5);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(now + i * 0.18); osc.stop(now + i * 0.18 + 2.6);
+      });
+    }
+    // 5) 거대 파티클 burst (5중 leg)
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => burstParticles(i % 2 === 0 ? '#fff5c0' : '#d4af37', 100), i * 250);
+    }
+    log('🌟 千秋萬代 — 모든 길을 보았다. 영원한 검선', 'success');
   }
 
   // === v169 道師 — 사용자 상태 분석 후 짧은 조언 ===
@@ -6865,7 +6949,7 @@
     const roll = (useDivination && divinationLockedSuccessRoll !== null)
       ? divinationLockedSuccessRoll
       : Math.random();
-    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus()) {
+    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus()) {
       // 성공 (v107 連)
       if (adversityReady) { adversityReady = false; announceInscription('逆轉', '역경을 넘어 강화에 성공했다'); }
       failStreak = 0;
@@ -10719,6 +10803,8 @@
     // v152 風月 — 숨겨진 성취 검사 (방금 push한 sealedSwords 마지막 항목)
     const justSealed = state.sealedSwords[state.sealedSwords.length - 1];
     checkHiddenAchievements(justSealed);
+    // v170 千秋萬代 — 모든 메타 완성 검사 (지연 시작으로 다른 보상 announce 후)
+    setTimeout(() => checkUltimateAchievement(), 2400);
     // v155 寒梅 — lv13+ 봉인 시 유언이 다음 검에
     setSwordWishFromSeal(form, lv);
     // v156 新記 — 봉인 시 4 기록 갱신
@@ -12401,6 +12487,7 @@
     const fourW = (typeof hasFourWays === 'function') && hasFourWays();
     const blessingsFound = state.blessingsDiscovered ? Object.keys(state.blessingsDiscovered).length : 0;
     // 우선순위 — 가장 희귀/높은 성취가 우선
+    if (state.ultimateAchieved) return '千秋萬代 — 영원한 검선';
     if (gen >= 100 && enshrines >= 3 && ways >= 15) return '百代道仙 — 백 대를 잇는 검선';
     if (gen >= 100) return '百代仙 — 백 대를 잇는 자';
     if (ways >= 15) return '十五道師 — 열다섯 길의 사범';
@@ -12570,6 +12657,8 @@
     swordWishSlay: null,      // v155 寒梅 — 슬레이 보상 유언
     records: {},              // v156 新記 — 개인 최고 기록
     duelWins: {},             // v159 對局 — 봉인 검 대국 승리 카운트
+    ultimateAchieved: false,  // v170 千秋萬代 — 모든 메타 완성 1회 표식
+    ultimateAchievedAt: 0,    // v170 — 달성 시각
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0, divinationStones: 0,
       firstWayReached: false,
