@@ -340,6 +340,30 @@
   #era-mark.era-takkan  { color: #d4af37; opacity: 0.8; text-shadow: 0 0 6px rgba(212,175,55,0.4); }
   #era-mark.era-shinki  { color: #fff5c0; opacity: 0.95; text-shadow: 0 0 8px rgba(255,245,192,0.7); }
 
+  /* v165 行 — 전체 path 진행도 (우측 상단) */
+  #path-progress {
+    position: fixed;
+    top: 68px;
+    right: 18px;
+    font-size: 9px;
+    color: rgba(212, 175, 55, 0.5);
+    letter-spacing: 3px;
+    pointer-events: auto;
+    z-index: 25;
+    transition: color 2s ease;
+    font-family: 'Noto Serif KR', serif;
+    cursor: help;
+  }
+  #path-progress.full {
+    color: #fff5c0;
+    text-shadow: 0 0 6px rgba(255, 245, 192, 0.5);
+    animation: path-glow 3s ease-in-out infinite alternate;
+  }
+  @keyframes path-glow {
+    from { text-shadow: 0 0 4px rgba(255,245,192,0.4); }
+    to   { text-shadow: 0 0 10px rgba(255,245,192,0.8); }
+  }
+
   /* v123 系譜 — 세대 카운터 (era-mark 아래) */
   #gen-mark {
     position: fixed;
@@ -2286,6 +2310,7 @@
 <div id="weather-mark"></div>
 <div id="tod-mark"></div>
 <div id="gen-mark"></div>
+<div id="path-progress" title="行 — 검의 길 진행도"></div>
 <div id="way-counter"></div>
 <button id="menu-toggle">≡</button>
 <div id="menu-drop">
@@ -4684,6 +4709,7 @@
     renderEnhanceEcho();  // v114 餘香
     renderSevenStars();  // v116 七星
     renderWishIndicator();  // v155 寒梅
+    renderPathProgress();   // v165 行
     updateStageBg();   // v97 梵境
     // v81 조합소 버튼 시각 잠금 — +0 일 때만 활성
     const forgeBtn = $('btn-forge');
@@ -5124,6 +5150,71 @@
         }
       });
     });
+  }
+
+  // === v165 行 — 전체 path 진행도 (0-100%) ===
+  function computeOverallProgress() {
+    let total = 0;
+    // 시련의 혼 (10점)
+    if (typeof TRIALS !== 'undefined' && typeof trialUnlocked === 'function') {
+      const unlocked = TRIALS.filter(t => trialUnlocked(t.key)).length;
+      total += (unlocked / TRIALS.length) * 10;
+    }
+    // 紀元 (20점) — 현재 era index 기준
+    if (typeof getCurrentEra === 'function' && typeof ERAS !== 'undefined') {
+      const idx = ERAS.findIndex(e => e.key === getCurrentEra().key);
+      total += (Math.max(0, idx) / (ERAS.length - 1)) * 20;
+    }
+    // 系譜 (10점) — generationMilestones 달성 비율
+    if (state.generationMilestones && typeof GENERATIONS !== 'undefined') {
+      const done = GENERATIONS.filter(g => state.generationMilestones[g.key]).length;
+      total += (done / GENERATIONS.length) * 10;
+    }
+    // 古文書 (10점)
+    if (state.scrollsUnlocked && typeof SCROLLS !== 'undefined') {
+      const done = SCROLLS.filter(s => state.scrollsUnlocked[s.key]).length;
+      total += (done / SCROLLS.length) * 10;
+    }
+    // 銘集 (5점)
+    if (state.collectionMilestones && typeof COLLECTION_MILESTONES !== 'undefined') {
+      const done = COLLECTION_MILESTONES.filter(m => state.collectionMilestones[m.key]).length;
+      total += (done / COLLECTION_MILESTONES.length) * 5;
+    }
+    // 神祠 (10점)
+    if (state.shrineDonations && typeof SHRINE_DONATIONS !== 'undefined') {
+      const done = SHRINE_DONATIONS.filter(d => state.shrineDonations[d.key]).length;
+      total += (done / SHRINE_DONATIONS.length) * 10;
+    }
+    // 風月 (5점)
+    if (state.hiddenAchievements && typeof HIDDEN_ACHIEVEMENTS !== 'undefined') {
+      const done = HIDDEN_ACHIEVEMENTS.filter(a => state.hiddenAchievements[a.key]).length;
+      total += (done / HIDDEN_ACHIEVEMENTS.length) * 5;
+    }
+    // 4道 완성 (10점)
+    if (typeof hasFourWays === 'function' && hasFourWays()) total += 10;
+    else if (typeof getWayFormCounts === 'function') {
+      const wc = getWayFormCounts();
+      const formsWithWay = ['直','曲','重','速'].filter(f => wc[f] > 0).length;
+      total += (formsWithWay / 4) * 10;
+    }
+    // 道 누적 (10점) — min(wayReached, 10)
+    const ways = (state.stats && state.stats.wayReached) || 0;
+    total += Math.min(ways, 10);
+    // 100代 (5점)
+    const gen = state.swordGeneration || 0;
+    if (gen >= 100) total += 5;
+    else total += (gen / 100) * 5;
+    // 殿堂 (5점) — 진열된 검 / 4 (神祠 d5까지 4)
+    const enshrines = (state.enshrined || []).length;
+    total += Math.min(enshrines, 4) * 1.25;
+    return Math.min(100, Math.round(total));
+  }
+  function renderPathProgress() {
+    const el = $('path-progress');
+    if (!el) return;
+    const p = computeOverallProgress();
+    el.textContent = '行 ' + p + '%';
+    el.classList.toggle('full', p >= 100);
   }
 
   // === v164 現勢 — 현재 활성 효과 통합 dashboard ===
