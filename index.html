@@ -2197,6 +2197,33 @@
     z-index: 0;
     overflow: hidden;
   }
+  /* v166 灯火 — stage 좌측 상단 작은 등불 */
+  #stage-lantern {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    width: 24px;
+    height: 38px;
+    pointer-events: none;
+    z-index: 4;
+    opacity: 0.7;
+    transition: opacity 2s ease, transform 0.3s ease;
+  }
+  #stage-lantern .lantern-flame {
+    transform-origin: center bottom;
+    transition: fill 3s ease, transform 0.4s ease;
+  }
+  body.weather-wind #stage-lantern {
+    animation: lantern-sway 1.4s ease-in-out infinite alternate;
+  }
+  @keyframes lantern-sway {
+    from { transform: rotate(-3deg); }
+    to   { transform: rotate(3deg); }
+  }
+  body.tod-night #stage-lantern { opacity: 0.95; }
+  body.tod-evening #stage-lantern { opacity: 0.85; }
+  body.tod-day #stage-lantern { opacity: 0.55; }
+
   /* v137 山水 — 紀元별 산수화 풍경 */
   #stage-landscape {
     position: absolute;
@@ -2354,6 +2381,35 @@
 
   <div id="stage">
     <div id="stage-bg" aria-hidden="true"></div>
+    <!-- v166 灯火 — 무대 좌측 상단 작은 등불 -->
+    <svg id="stage-lantern" viewBox="0 0 24 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <!-- 줄 (위에서) -->
+      <line x1="12" y1="0" x2="12" y2="4" stroke="#3a3a45" stroke-width="0.6"/>
+      <!-- 등불 갓 (상단) -->
+      <rect x="6" y="4" width="12" height="2.5" rx="0.5" fill="#3a3a45" stroke="#1a1a22" stroke-width="0.3"/>
+      <!-- 등불 몸체 (사각 격자) -->
+      <rect x="5" y="7" width="14" height="18" rx="1" fill="rgba(60,40,20,0.4)" stroke="#3a2a18" stroke-width="0.5"/>
+      <!-- 격자 세로 -->
+      <line x1="9" y1="7" x2="9" y2="25" stroke="#3a2a18" stroke-width="0.3"/>
+      <line x1="13" y1="7" x2="13" y2="25" stroke="#3a2a18" stroke-width="0.3"/>
+      <line x1="17" y1="7" x2="17" y2="25" stroke="#3a2a18" stroke-width="0.3"/>
+      <!-- 격자 가로 -->
+      <line x1="5" y1="13" x2="19" y2="13" stroke="#3a2a18" stroke-width="0.3"/>
+      <line x1="5" y1="19" x2="19" y2="19" stroke="#3a2a18" stroke-width="0.3"/>
+      <!-- 불꽃 -->
+      <path class="lantern-flame" d="M 12 22 Q 8 18 10 13 Q 12 16 14 13 Q 16 18 12 22 Z" fill="#fff5c0" filter="url(#strong-glow)"/>
+      <circle class="lantern-flame" cx="12" cy="17" r="2" fill="#ff8c40" opacity="0.7"/>
+      <!-- 등불 받침 (하단) -->
+      <rect x="6" y="25" width="12" height="2.5" rx="0.5" fill="#3a3a45" stroke="#1a1a22" stroke-width="0.3"/>
+      <!-- 글로우 (불꽃 주위) -->
+      <circle cx="12" cy="17" r="5" fill="url(#stage-lantern-glow)" opacity="0.4"/>
+      <defs>
+        <radialGradient id="stage-lantern-glow">
+          <stop offset="0%" stop-color="#fff5c0" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#fff5c0" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+    </svg>
     <!-- v137 山水 — 紀元 기반 산수화 풍경 (배경) -->
     <svg id="stage-landscape" viewBox="0 0 400 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
       <!-- 달 (神域만) — 상단 -->
@@ -4710,6 +4766,7 @@
     renderSevenStars();  // v116 七星
     renderWishIndicator();  // v155 寒梅
     renderPathProgress();   // v165 行
+    updateStageLantern();   // v166 灯火
     updateStageBg();   // v97 梵境
     // v81 조합소 버튼 시각 잠금 — +0 일 때만 활성
     const forgeBtn = $('btn-forge');
@@ -5150,6 +5207,29 @@
         }
       });
     });
+  }
+
+  // === v166 灯火 — 무대 등불 동적 (季節 색 / 강화도 크기) ===
+  function updateStageLantern() {
+    const lantern = $('stage-lantern');
+    if (!lantern) return;
+    const flames = lantern.querySelectorAll('.lantern-flame');
+    // 季節별 불꽃 색
+    const seasonColors = {
+      'spring': { core: '#fff5c0', outer: '#ff8c40' },
+      'summer': { core: '#fff8e0', outer: '#ffaa30' },
+      'autumn': { core: '#ffdab0', outer: '#c87030' },
+      'winter': { core: '#e0e8ff', outer: '#7088c8' },
+    };
+    const season = (typeof getSeason === 'function') ? getSeason() : { key: 'spring' };
+    const c = seasonColors[season.key] || seasonColors.spring;
+    if (flames[0]) flames[0].setAttribute('fill', c.core);
+    if (flames[1]) flames[1].setAttribute('fill', c.outer);
+    // 강화도별 불꽃 크기 (path scale)
+    const lv = state.level || 0;
+    const scale = 1 + (lv / 30);  // 0=1.0 / 15=1.5
+    if (flames[0]) flames[0].style.transform = 'scale(' + scale + ')';
+    if (flames[1]) flames[1].style.transform = 'scale(' + scale + ')';
   }
 
   // === v165 行 — 전체 path 진행도 (0-100%) ===
