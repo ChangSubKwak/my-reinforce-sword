@@ -64,6 +64,20 @@
   #season-mark.season-summer { color: #d4af37; opacity: 0.6; }
   #season-mark.season-autumn { color: #c0883a; opacity: 0.7; }
   #season-mark.season-winter { color: #6a8a9a; opacity: 0.75; }
+  /* v177 節氣 — 우측 상단 절기 한자 */
+  #solar-term-mark {
+    position: fixed;
+    top: 14px;
+    right: 110px;
+    font-size: 11px;
+    color: rgba(212, 175, 55, 0.72);
+    letter-spacing: 5px;
+    pointer-events: none;
+    z-index: 25;
+    display: none;
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.25);
+    cursor: help;
+  }
 
   /* v121 結界 — 신성 보호 공간 (파괴 차단, 비용 ×3) */
   #sanctum-row {
@@ -2404,6 +2418,7 @@
 </head>
 <body>
 <div id="season-mark"></div>
+<div id="solar-term-mark" title="節氣"></div>
 <div id="era-mark"></div>
 <div id="meditation-mark">坐</div>
 <div id="weather-mark"></div>
@@ -3478,6 +3493,7 @@
     spiritstones: 0,
     divinationStones: 0,  // v122 占卜 — 정확한 전조
     firstWayReached: false,  // v16 始祖 — 첫 道 도달 시 true, 영구
+    lastSolarTerm: null,  // v177 節氣 — 마지막 발견된 절기 key
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -4959,7 +4975,7 @@
     const matsuMulShow = blessingCostMul();  // v119
     const sanctumMulShow = sanctumCostMul();  // v121 結界
     const wishMulShow = wishCostMul();  // v155 寒梅
-    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow * wishMulShow);
+    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow * wishMulShow * solarCostMul());
     const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
@@ -5297,6 +5313,81 @@
         }
       });
     });
+  }
+
+  // === v177 節氣 — 실시간 24절기 중 8주요 ===
+  const SOLAR_TERMS = [
+    { key:'lichun',  name:'立春', month:2,  day:4,  verse:'봄이 시작된다 · 새 검을 빚을 때', costMul:0.97 },
+    { key:'chunfen', name:'春分', month:3,  day:20, verse:'낮과 밤이 같다 · 균형의 시각', soulMul:1.05 },
+    { key:'lixia',   name:'立夏', month:5,  day:5,  verse:'여름이 깊다 · 그림자 짙어진다', challengeMul:1.05 },
+    { key:'xiazhi',  name:'夏至', month:6,  day:21, verse:'해가 정점 · 검이 가장 빛난다', rewardMul:1.10 },
+    { key:'liqiu',   name:'立秋', month:8,  day:7,  verse:'가을 시작 · 거두어 봉인하라', sealMul:1.05 },
+    { key:'qiufen',  name:'秋分', month:9,  day:23, verse:'결실의 균형 · 봉인이 무거워진다', sealMul:1.08 },
+    { key:'lidong',  name:'立冬', month:11, day:7,  verse:'겨울 시작 · 회수의 시간이 늘어난다', rescueSec:1.0 },
+    { key:'dongzhi', name:'冬至', month:12, day:22, verse:'가장 긴 밤 · 침묵이 검을 지킨다', destroyReduce:0.02 },
+  ];
+  function getCurrentSolarTerm() {
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    const d = now.getDate();
+    let active = SOLAR_TERMS[SOLAR_TERMS.length - 1];
+    for (const t of SOLAR_TERMS) {
+      if (m > t.month || (m === t.month && d >= t.day)) active = t;
+    }
+    return active;
+  }
+  function applySolarTerm() {
+    const t = getCurrentSolarTerm();
+    const el = $('solar-term-mark');
+    if (el) {
+      el.textContent = t.name;
+      el.title = t.name + ' — ' + t.verse;
+      el.style.display = '';
+    }
+    if (state.lastSolarTerm !== t.key) {
+      const isFirst = !state.lastSolarTerm;
+      state.lastSolarTerm = t.key;
+      save();
+      if (!isFirst) showSolarTermFade(t);
+      else setTimeout(() => showSolarTermFade(t), 3500);
+    }
+  }
+  function solarCostMul() { const t = getCurrentSolarTerm(); return t.costMul || 1; }
+  function solarChallengeMul() { const t = getCurrentSolarTerm(); return t.challengeMul || 1; }
+  function solarRewardMul() { const t = getCurrentSolarTerm(); return t.rewardMul || 1; }
+  function solarSealMul() { const t = getCurrentSolarTerm(); return t.sealMul || 1; }
+  function solarRescueSec() { const t = getCurrentSolarTerm(); return t.rescueSec || 0; }
+  function solarDestroyReduce() { const t = getCurrentSolarTerm(); return t.destroyReduce || 0; }
+  function solarSoulMul() { const t = getCurrentSolarTerm(); return t.soulMul || 1; }
+  function showSolarTermFade(t) {
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:11px;color:rgba(212,175,55,0.7);letter-spacing:6px;margin-bottom:14px">節 氣</div>' +
+                    '<div style="font-size:74px;color:#fff5c0;letter-spacing:18px;text-shadow:0 0 30px rgba(255,245,192,0.7);font-weight:200">' + t.name + '</div>' +
+                    '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:4px;margin-top:18px;font-style:italic">' + t.verse + '</div>';
+    el.style.cssText = 'position:fixed;top:38%;left:50%;transform:translateX(-50%);text-align:center;z-index:5000;pointer-events:none;opacity:0;font-family:"Noto Serif KR", serif;padding:30px 50px;background:radial-gradient(ellipse,rgba(20,30,45,0.85) 0%,rgba(20,30,45,0) 75%);';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translateX(-50%) translateY(20px) scale(0.92)' },
+      { opacity: 1, transform: 'translateX(-50%) translateY(0) scale(1)', offset: 0.18 },
+      { opacity: 1, transform: 'translateX(-50%) translateY(0) scale(1)', offset: 0.75 },
+      { opacity: 0, transform: 'translateX(-50%) translateY(-15px) scale(1.02)' }
+    ], { duration: 4500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 4600);
+    // Soft entry chime
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [330, 440, 660].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.25);
+          g.gain.exponentialRampToValueAtTime(0.10, ct + i*0.25 + 0.05);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.25 + 2.5);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.25); osc.stop(ct + i*0.25 + 2.6);
+        });
+      }
+    } catch (e) {}
+    log('節氣 — ' + t.name + ' · ' + t.verse, 'success');
   }
 
   // === v176 玩月 — 수동 달 감상 mode (30s) ===
@@ -7186,7 +7277,7 @@
     const matsuMul = blessingCostMul();  // v119 千年松
     const sanctumMul = sanctumCostMul();  // v121 結界
     const wishMul = wishCostMul();  // v155 寒梅 — 風影 유언
-    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMul * matsuMul * sanctumMul * wishMul);
+    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMul * matsuMul * sanctumMul * wishMul * solarCostMul());
     if (state.shards < actualCost) return;
 
     const useProtect = protectCheck.checked && !protectCheck.disabled;
@@ -10099,7 +10190,7 @@
     // 비용 부족 시 자동 중지
     const f = getForm();
     const formCostMul = (f && f.costMul) || 1;
-    const actualCost = Math.ceil(t.cost * formCostMul * getSeason().costMul * getAgeEffect().costMul);
+    const actualCost = Math.ceil(t.cost * formCostMul * getSeason().costMul * getAgeEffect().costMul * solarCostMul());
     if (state.shards < actualCost) { stopAutoEnhance('修練 중지 — 조각 부족'); return; }
     // 강화 실행
     enhance();
@@ -13371,6 +13462,8 @@
   // === 시작 ===
   load();
   ensureDailyTrial();  // v94 天時 — 오늘의 도전 초기화/갱신
+  applySolarTerm();    // v177 節氣 — 현재 절기 적용 + 진입 시 페이드
+  setInterval(applySolarTerm, 60 * 60 * 1000);  // 매시간 절기 재확인 (자정 경계)
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
