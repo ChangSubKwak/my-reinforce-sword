@@ -5259,6 +5259,28 @@
     });
   }
 
+  // === v175 回憶 — 매 10代마다 첫 검 회상 ===
+  function showFirstSwordMemory() {
+    const first = (state.sealedSwords && state.sealedSwords[0]) || (state.enshrined && state.enshrined[0]);
+    if (!first) return;
+    const gen = state.swordGeneration || 0;
+    const stage = $('stage');
+    if (!stage) return;
+    const firstName = first.name || ('첫 ' + (first.form || '검'));
+    const firstLevel = first.level || 0;
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:9px;color:rgba(168,184,200,0.7);letter-spacing:3px;margin-bottom:4px">回 憶</div>' +
+                    '<div style="font-size:11px;color:rgba(212,175,55,0.85);letter-spacing:3px;line-height:1.7">첫 검 <span style="color:#fff5c0">' + firstName + '</span></div>' +
+                    '<div style="font-size:9px;color:rgba(168,184,200,0.6);letter-spacing:2px;margin-top:3px">+' + firstLevel + ' · ' + (first.form || '無') + ' · 그 후 ' + gen + '代</div>';
+    el.style.cssText = 'position:absolute;top:24%;left:50%;transform:translateX(-50%);pointer-events:none;z-index:30;text-align:center;opacity:0;font-family:"Noto Serif KR", serif;font-style:italic;padding:10px;background:rgba(20,30,45,0.4);border-radius:2px;';
+    stage.appendChild(el);
+    el.animate([
+      { opacity: 0 }, { opacity: 0.95, offset: 0.2 }, { opacity: 0.95, offset: 0.75 }, { opacity: 0 }
+    ], { duration: 5500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 5600);
+    log('回憶 — 첫 검 ' + firstName + ' · 그 후 ' + gen + '代', 'info');
+  }
+
   // === v174 歲月 — 누적 active play 시간 ===
   function formatPlayTime(ms) {
     const totalMin = Math.floor((ms || 0) / 60000);
@@ -10652,6 +10674,10 @@
     setTimeout(() => checkScrolls(), 1100);
     // v158 寄言 — 25% 확률로 과거 道 검의 편지가 도착
     setTimeout(() => maybeShowKigen(), 1800);
+    // v175 回憶 — 매 10代마다 첫 검 회상
+    if ((state.swordGeneration || 0) > 0 && (state.swordGeneration || 0) % 10 === 0) {
+      setTimeout(() => showFirstSwordMemory(), 2400);
+    }
   }
   function maybeShowKigen() {
     if (Math.random() > 0.25) return;
@@ -13256,6 +13282,8 @@
   // v126 黎明 — 4시간+ 부재 시 새벽 의식 (도움말 모달 없을 때만)
   if (state.seenHelp) {
     setTimeout(() => checkDawn(), 600);
+    // v175 回憶 — 게임 로드 후 5초 + 5+ 봉인 검 있으면 첫 검 회상
+    if ((state.sealedSwords || []).length >= 5) setTimeout(() => showFirstSwordMemory(), 5000);
   }
 })();
 </script>
