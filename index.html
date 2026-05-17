@@ -5330,6 +5330,58 @@
     });
   }
 
+  // === v181 老師 — 큰 마일스톤에서 스승의 가르침 ===
+  const MASTER_TEACHINGS = {
+    hundredEnhance: { kanji:'器', verse:'그릇이 깊어지면 물도 깊다 — 너의 검도 그렇다' },
+    fiveWays:       { kanji:'道', verse:'길은 보는 것이 아니라 걸어서 안다' },
+    thirtyGens:     { kanji:'流', verse:'강이 끊이지 않는 까닭 — 흐르기 때문이다' },
+    firstSpring:    { kanji:'萌', verse:'봄에 칼을 뽑지 마라 — 잎이 먼저 나야 한다' },
+    firstSummer:    { kanji:'炎', verse:'여름의 그림자는 깊다 — 그러나 검도 깊어진다' },
+    firstAutumn:    { kanji:'熟', verse:'가을은 거두는 계절 — 검도 봉인할 때를 안다' },
+    firstWinter:    { kanji:'凝', verse:'겨울은 머무름 — 멈춤이 검의 일부다' },
+    firstFusion:    { kanji:'融', verse:'두 검이 하나가 될 때 — 그것은 죽음이 아니라 강이다' },
+    firstUltimate:  { kanji:'極', verse:'정점에 이르렀다 — 이제 처음으로 돌아갈 차례다' },
+  };
+  function maybeMaster(triggerKey) {
+    if (!state.masterShown) state.masterShown = {};
+    if (state.masterShown[triggerKey]) return;
+    state.masterShown[triggerKey] = true;
+    save();
+    showMasterFade(triggerKey);
+  }
+  function showMasterFade(triggerKey) {
+    const t = MASTER_TEACHINGS[triggerKey];
+    if (!t) return;
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:9px;color:rgba(212,175,55,0.6);letter-spacing:8px;margin-bottom:18px">老  師</div>' +
+                    '<div style="font-size:90px;color:#fff5c0;letter-spacing:14px;text-shadow:0 0 35px rgba(255,245,192,0.7),0 0 70px rgba(212,175,55,0.4);font-weight:200;line-height:1">' + t.kanji + '</div>' +
+                    '<div style="font-size:14px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:24px;font-style:italic;line-height:1.7">' + t.verse + '</div>';
+    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5500;pointer-events:none;opacity:0;font-family:"Noto Serif KR", serif;padding:40px 60px;background:radial-gradient(ellipse,rgba(15,18,25,0.92) 0%,rgba(15,18,25,0.6) 60%,transparent 90%);max-width:520px;';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.92)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.14 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.78 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.04)' }
+    ], { duration: 6500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 6600);
+    // 老師 entrance bell — low 3-tone descend
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [165, 220, 330].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.4);
+          g.gain.exponentialRampToValueAtTime(0.12, ct + i*0.4 + 0.06);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.4 + 3.5);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.4); osc.stop(ct + i*0.4 + 3.6);
+        });
+      }
+    } catch (e) {}
+    log('老師 — ' + t.verse, 'success');
+  }
+
   // === v180 劍名片 — 검명함 (identity card SVG) ===
   function buildMeishiSVG() {
     const W = 480, H = 320;
@@ -5646,6 +5698,10 @@
       save();
       if (!isFirst) showSolarTermFade(t);
       else setTimeout(() => showSolarTermFade(t), 3500);
+      // v181 老師 — 각 계절 첫 진입 시 가르침
+      const cat = seasonalCategory();
+      const masterKey = { spring:'firstSpring', summer:'firstSummer', autumn:'firstAutumn', winter:'firstWinter' }[cat];
+      if (masterKey) setTimeout(() => maybeMaster(masterKey), 5500);
     }
   }
   function solarCostMul() { const t = getCurrentSolarTerm(); return t.costMul || 1; }
@@ -5928,6 +5984,7 @@
       state.ultimateAchieved = true;
       state.ultimateAchievedAt = Date.now();
       playUltimateCeremony();
+      setTimeout(() => maybeMaster('firstUltimate'), 8000);  // v181 老師
       save();
       return true;
     }
@@ -7603,6 +7660,7 @@
     const prevAttempts = (state.stats && state.stats.enhanceAttempts) || 0;  // v120 紀元 전환 감지용
     bumpStat('enhanceAttempts');
     bumpDaily('enhanceAttempt', 1);  // v94 天時 — 강화 시도 (성공/실패 무관)
+    if (((state.stats && state.stats.enhanceAttempts) || 0) === 100) setTimeout(() => maybeMaster('hundredEnhance'), 1500);  // v181 老師
     consumeMatsu();  // v119 千年松 카운트 소모
     consumeDawnBonus();  // v126 黎明 — 보너스 카운트 소모
     consumeLightningBonus();  // v147 雷 — 다음 강화 +10% 1회 소모
@@ -10708,6 +10766,7 @@
       state.firstWayReached = true;
       setTimeout(() => announceInscription('始祖', '첫 도(道) 달성 — 선조의 길이 열렸다'), 5800);
     }
+    if (((state.stats && state.stats.wayReached) || 0) === 5) setTimeout(() => maybeMaster('fiveWays'), 6800);  // v181 老師
     log('🏛 殿堂 — ' + swordName + ' 박물관에 영구 진열되었다 (강화 성공 +1.5%)', 'success');
     recordEvent('殿堂 진열 ' + swordName);
     captureRubbing('firstEnshrine', { level: lv, form, inscriptions: ins.slice(), soul: state.currentSword.soul || 0 });  // v136
@@ -11065,6 +11124,7 @@
     // v123 系譜 — 세대 카운터 증가 + 마일스톤 체크
     const prevGen = state.swordGeneration || 0;
     state.swordGeneration = prevGen + 1;
+    if (state.swordGeneration === 30) setTimeout(() => maybeMaster('thirtyGens'), 1800);  // v181 老師
     // v89 시련의 혼: 시작 강화 + 영혼 보너스
     let startLv = startBonus() + trialStartLevelBonus();
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
@@ -11241,6 +11301,7 @@
     SFX.forge();
     spawnLegacyRays(24);
     log('融劍 — ' + nameA + ' + ' + nameB + ' → 새 검 (형·명문·혼 계승)', 'success');
+    setTimeout(() => maybeMaster('firstFusion'), 2200);  // v181 老師
     recordEvent('融劍 ' + nameA + ' + ' + nameB);
     if (p.inscription) {
       setTimeout(() => announceInscription(p.inscription, '두 검의 유산이 깃들었다'), 500);
