@@ -5316,6 +5316,105 @@
     });
   }
 
+  // === v179 季韻 — 節氣에 따른 환경 입자 (桃花/螢/紅葉/雪) ===
+  function seasonalCategory() {
+    const t = getCurrentSolarTerm();
+    if (!t) return 'spring';
+    if (['lichun','chunfen'].indexOf(t.key) >= 0) return 'spring';
+    if (['lixia','xiazhi'].indexOf(t.key) >= 0) return 'summer';
+    if (['liqiu','qiufen'].indexOf(t.key) >= 0) return 'autumn';
+    return 'winter';
+  }
+  const SEASONAL_PARTICLE = {
+    spring: { name:'桃花', color:'#f8a8c0', glow:false, shape:'flower', verse:'복숭아꽃' },
+    summer: { name:'螢',   color:'#fff5a0', glow:true,  shape:'dot',    verse:'반딧불' },
+    autumn: { name:'紅葉', color:'#d4683a', glow:false, shape:'leaf',   verse:'단풍' },
+    winter: { name:'雪',   color:'#ffffff', glow:false, shape:'snow',   verse:'눈' },
+  };
+  let seasonalParticleTimer = null;
+  function spawnSeasonalParticle() {
+    if (challenge || rescueWindow || moonGazing) return;
+    const stage = $('stage');
+    if (!stage) return;
+    const existing = stage.querySelectorAll('.seasonal-particle').length;
+    if (existing >= 6) return;
+    const cat = seasonalCategory();
+    const cfg = SEASONAL_PARTICLE[cat];
+    const sr = stage.getBoundingClientRect();
+    const startX = Math.random() * sr.width;
+    const driftX = (Math.random() - 0.5) * sr.width * 0.4;
+    const particle = document.createElement('div');
+    particle.className = 'seasonal-particle';
+    particle.dataset.cat = cat;
+    let size = 8, css = '';
+    if (cfg.shape === 'flower') {
+      size = 7;
+      css = 'background:radial-gradient(circle,' + cfg.color + ' 0%,#a85878 80%);border-radius:50% 0 50% 0;transform:rotate(45deg)';
+    } else if (cfg.shape === 'dot') {
+      size = 5;
+      css = 'background:radial-gradient(circle,' + cfg.color + ' 0%,transparent 90%);border-radius:50%;box-shadow:0 0 10px ' + cfg.color + ',0 0 20px rgba(255,245,160,0.5)';
+    } else if (cfg.shape === 'leaf') {
+      size = 8;
+      css = 'background:linear-gradient(135deg,' + cfg.color + ',#8a4020);border-radius:50% 10% 50% 10%;transform:rotate(' + (Math.random() * 360) + 'deg)';
+    } else {
+      size = 6;
+      css = 'background:radial-gradient(circle,' + cfg.color + ' 0%,rgba(255,255,255,0.3) 80%,transparent 100%);border-radius:50%;box-shadow:0 0 4px rgba(255,255,255,0.6)';
+    }
+    particle.style.cssText = 'position:absolute;left:' + startX + 'px;top:-12px;width:' + size + 'px;height:' + size + 'px;pointer-events:auto;z-index:18;cursor:pointer;opacity:0.85;' + css;
+    particle.title = cfg.name + ' — 클릭 시 +3 조각';
+    particle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.shards = (state.shards || 0) + 3;
+      if (state.hasSword) addSoul(1);
+      // small pop
+      const rect = particle.getBoundingClientRect();
+      const stageRect = stage.getBoundingClientRect();
+      const px = rect.left - stageRect.left + size/2;
+      const py = rect.top - stageRect.top + size/2;
+      const pop = document.createElement('div');
+      pop.style.cssText = 'position:absolute;left:' + px + 'px;top:' + py + 'px;color:#d4af37;font-size:11px;font-family:"Noto Serif KR",serif;pointer-events:none;z-index:30;letter-spacing:2px;transform:translate(-50%,-50%)';
+      pop.textContent = '+3 ' + cfg.name;
+      stage.appendChild(pop);
+      pop.animate([
+        { opacity: 0, transform: 'translate(-50%,-50%) translateY(0)' },
+        { opacity: 1, transform: 'translate(-50%,-50%) translateY(-10px)', offset: 0.3 },
+        { opacity: 0, transform: 'translate(-50%,-50%) translateY(-30px)' }
+      ], { duration: 1400, easing: 'ease-out' });
+      setTimeout(() => pop.remove(), 1450);
+      // chime
+      try {
+        const a = getAudio && getAudio();
+        if (a) {
+          const ct = a.currentTime;
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = 1320;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct);
+          g.gain.exponentialRampToValueAtTime(0.10, ct + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + 0.45);
+          osc.connect(g); g.connect(a.destination); osc.start(ct); osc.stop(ct + 0.5);
+        }
+      } catch(e){}
+      particle.remove();
+      save(); render();
+    });
+    stage.appendChild(particle);
+    const fallDist = sr.height + 24;
+    const rot = cfg.shape === 'leaf' ? (Math.random() * 720 - 360) : (Math.random() * 60 - 30);
+    particle.animate([
+      { transform: 'translate(0,0) rotate(0deg)', opacity: 0 },
+      { transform: 'translate(' + (driftX/2) + 'px,' + (fallDist/2) + 'px) rotate(' + (rot/2) + 'deg)', opacity: 0.85, offset: 0.5 },
+      { transform: 'translate(' + driftX + 'px,' + fallDist + 'px) rotate(' + rot + 'deg)', opacity: 0 }
+    ], { duration: 6500 + Math.random() * 2500, easing: 'linear' });
+    setTimeout(() => particle.remove(), 9500);
+  }
+  function startSeasonalParticles() {
+    if (seasonalParticleTimer) clearInterval(seasonalParticleTimer);
+    const tick = () => {
+      spawnSeasonalParticle();
+      seasonalParticleTimer = setTimeout(tick, 6000 + Math.random() * 6000);
+    };
+    seasonalParticleTimer = setTimeout(tick, 5000);
+  }
+
   // === v178 共鳴 — 같은 형 봉인 검과의 공명 ===
   function sameFormSealedCount(form) {
     if (!form) return 0;
@@ -13536,6 +13635,7 @@
   ensureDailyTrial();  // v94 天時 — 오늘의 도전 초기화/갱신
   applySolarTerm();    // v177 節氣 — 현재 절기 적용 + 진입 시 페이드
   setInterval(applySolarTerm, 60 * 60 * 1000);  // 매시간 절기 재확인 (자정 경계)
+  startSeasonalParticles();  // v179 季韻 — 환경 입자 spawner
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
