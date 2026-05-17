@@ -5251,6 +5251,74 @@
     if (flames[1]) flames[1].style.transform = 'scale(' + scale + ')';
   }
 
+  // === v169 道師 — 사용자 상태 분석 후 짧은 조언 ===
+  const ADVISOR_SUGGESTIONS = [
+    {
+      key: 'a_shards',
+      check: () => state.shards >= 1500 && state.hasSword && state.level >= 12,
+      msg: '조각이 풍부하다 — 結界를 시도해 보시오',
+      cooldownMs: 12 * 60 * 1000,
+    },
+    {
+      key: 'a_protections',
+      check: () => state.protections >= 8 && state.hasSword && state.level >= 10,
+      msg: '보호권이 쌓였다 — 한 번 위험을 시도하시오',
+      cooldownMs: 15 * 60 * 1000,
+    },
+    {
+      key: 'a_idle_long',
+      check: () => state.hasSword && (Date.now() - lastUserAction > 5 * 60 * 1000) && !inMeditation,
+      msg: '검이 기다린다 — 깊이 멈춰 보시오',
+      cooldownMs: 20 * 60 * 1000,
+    },
+    {
+      key: 'a_stuck_high',
+      check: () => state.hasSword && state.level >= 12 && state.level <= 14 && (state.currentSword && (state.currentSword.enhanceAttempts || 0) >= 25) && state.shards >= 50,
+      msg: '+' + (state.level || 0) + '에서 멈춤 — 占卜으로 길을 보시오',
+      cooldownMs: 10 * 60 * 1000,
+    },
+    {
+      key: 'a_no_sword',
+      check: () => !state.hasSword && state.shards >= 50 && (Date.now() - lastUserAction > 60 * 1000),
+      msg: '새 검을 빚으시오 — 조각이 부르고 있다',
+      cooldownMs: 8 * 60 * 1000,
+    },
+  ];
+  let advisorLastShown = {};  // key → timestamp
+  let advisorLastAny = 0;
+  function checkAdvisor() {
+    // 마지막 조언으로부터 최소 5분 경과
+    if (Date.now() - advisorLastAny < 5 * 60 * 1000) return;
+    if (document.querySelector('.modal.active')) return;
+    for (const s of ADVISOR_SUGGESTIONS) {
+      const lastTime = advisorLastShown[s.key] || 0;
+      if (Date.now() - lastTime < s.cooldownMs) continue;
+      if (!s.check()) continue;
+      // 동적 메시지 — string 또는 function
+      const msg = typeof s.msg === 'function' ? s.msg() : s.msg;
+      showAdvisorMessage(msg);
+      advisorLastShown[s.key] = Date.now();
+      advisorLastAny = Date.now();
+      return;  // 한 번에 하나만
+    }
+  }
+  function showAdvisorMessage(msg) {
+    const el = document.createElement('div');
+    el.textContent = '道師 — ' + msg;
+    el.style.cssText = 'position:fixed;top:90px;right:18px;font-size:11px;letter-spacing:2px;color:#a8c0d8;text-shadow:0 0 6px rgba(168,192,216,0.4);background:rgba(20,30,45,0.85);border-left:2px solid #a8c0d8;padding:8px 14px;pointer-events:none;z-index:1300;max-width:280px;line-height:1.7;opacity:0;font-family:"Noto Serif KR", serif;border-radius:2px;';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translateY(-8px)' },
+      { opacity: 0.95, offset: 0.15, transform: 'translateY(0)' },
+      { opacity: 0.95, offset: 0.85 },
+      { opacity: 0, transform: 'translateY(-8px)' },
+    ], { duration: 7000, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 7100);
+    log('道師 — ' + msg, 'info');
+  }
+  // 매 2분 체크
+  setInterval(checkAdvisor, 2 * 60 * 1000);
+
   // === v167 喜 — 작은 좋은 일 sparkle ===
   function spawnJoySparkle(targetEl, color) {
     if (!targetEl) return;
