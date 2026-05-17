@@ -5257,6 +5257,56 @@
     });
   }
 
+  // === v173 鐘 — 매 정시 1회 깊은 종 + 시간 표식 ===
+  let lastBellHour = -1;
+  function checkHourlyBell() {
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes();
+    // 정시 도달 (분 0-2)에서 + 아직 이번 시 종 안 침
+    if (m > 2) return;
+    if (lastBellHour === h) return;
+    lastBellHour = h;
+    playHourlyBell(h);
+  }
+  function playHourlyBell(hour) {
+    // 종 페이드 — "鐘 N時"
+    const stage = $('stage');
+    if (!stage) return;
+    const el = document.createElement('div');
+    el.innerHTML = '<span style="font-size:24px;color:#fff5c0;text-shadow:0 0 12px rgba(212,175,55,0.6);letter-spacing:6px">鐘</span><br><span style="font-size:11px;color:rgba(212,175,55,0.7);letter-spacing:4px;margin-top:4px;display:inline-block">' + hour + '時</span>';
+    el.style.cssText = 'position:absolute;top:25%;left:50%;transform:translateX(-50%);pointer-events:none;z-index:30;text-align:center;opacity:0;font-family:"Noto Serif KR",serif;line-height:1.4';
+    stage.appendChild(el);
+    el.animate([
+      { opacity: 0 }, { opacity: 1, offset: 0.25 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }
+    ], { duration: 3500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 3600);
+    // 깊은 종 SFX (110Hz, 5초 fade)
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      // 메인 종 음
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(110, now);
+      g.gain.setValueAtTime(0.0, now);
+      g.gain.linearRampToValueAtTime(0.18, now + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 4.5);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(now); osc.stop(now + 4.6);
+      // 옥타브 위 — 종의 광채
+      const osc2 = ctx.createOscillator(); const g2 = ctx.createGain();
+      osc2.type = 'sine'; osc2.frequency.setValueAtTime(220, now + 0.1);
+      g2.gain.setValueAtTime(0.0, now + 0.1);
+      g2.gain.linearRampToValueAtTime(0.08, now + 0.15);
+      g2.gain.exponentialRampToValueAtTime(0.001, now + 3.5);
+      osc2.connect(g2); g2.connect(ctx.destination);
+      osc2.start(now + 0.1); osc2.stop(now + 3.6);
+    }
+    log('鐘 — ' + hour + '時', 'info');
+  }
+  // 매 분 체크
+  setInterval(checkHourlyBell, 60000);
+
   // === v172 蘭 — 무대 우하단 난초 (道 도달에 따라 성장 / 형별 색) ===
   function getDominantForm() {
     const counts = { '直': 0, '曲': 0, '重': 0, '速': 0 };
