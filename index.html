@@ -340,6 +340,23 @@
   #era-mark.era-takkan  { color: #d4af37; opacity: 0.8; text-shadow: 0 0 6px rgba(212,175,55,0.4); }
   #era-mark.era-shinki  { color: #fff5c0; opacity: 0.95; text-shadow: 0 0 8px rgba(255,245,192,0.7); }
 
+  /* v168 位 — 현재 검의 역대 순위 (검 아래 작은 표시) */
+  #sword-rank {
+    position: absolute;
+    bottom: -52px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: rgba(168, 184, 200, 0.5);
+    pointer-events: none;
+    font-family: 'Noto Serif KR', serif;
+    white-space: nowrap;
+    transition: color 1s ease;
+  }
+  #sword-rank.top { color: rgba(212, 175, 55, 0.85); text-shadow: 0 0 4px rgba(212, 175, 55, 0.4); }
+  #sword-rank.first { color: #fff5c0; text-shadow: 0 0 6px rgba(255, 245, 192, 0.6); }
+
   /* v165 行 — 전체 path 진행도 (우측 상단) */
   #path-progress {
     position: fixed;
@@ -2611,6 +2628,7 @@
       <div id="seven-stars" title="七星 — 한 자루 검의 7가지 결실"></div>
       <div id="mood-mark" title="氣 — 검의 기분"></div>
       <div id="sword-voice"></div>
+      <div id="sword-rank"></div>
       <div id="omen-indicator"></div>
       <div id="streak-counter"></div>
     </div>
@@ -4767,6 +4785,7 @@
     renderWishIndicator();  // v155 寒梅
     renderPathProgress();   // v165 行
     updateStageLantern();   // v166 灯火
+    renderSwordRank();      // v168 位
     updateStageBg();   // v97 梵境
     // v81 조합소 버튼 시각 잠금 — +0 일 때만 활성
     const forgeBtn = $('btn-forge');
@@ -5275,6 +5294,42 @@
   function joyAt(selector, color) {
     const el = (typeof selector === 'string') ? $(selector) : selector;
     spawnJoySparkle(el, color);
+  }
+
+  // === v168 位 — 현재 검의 역대 순위 ===
+  function swordScore(sword) {
+    if (!sword) return 0;
+    const lv = sword.level || 0;
+    const soul = sword.soul || 0;
+    const slain = sword.slainCount || 0;
+    const ins = (sword.inscriptions || []).length;
+    const stars = sword.stars ? Object.keys(sword.stars).length : 0;
+    const scars = sword.scars || 0;
+    return Math.round(lv * 10 + soul * 0.4 + slain * 2 + ins * 3 + stars * 3 + scars * 2);
+  }
+  function renderSwordRank() {
+    const el = $('sword-rank');
+    if (!el) return;
+    if (!state.hasSword || !state.currentSword) {
+      el.textContent = '';
+      el.className = '';
+      return;
+    }
+    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    if (all.length === 0) {
+      el.textContent = '';
+      el.className = '';
+      return;
+    }
+    const curScore = swordScore(state.currentSword);
+    // 현재 검 점수보다 낮은 봉인 검의 수 → 현재 검 위치
+    const beaten = all.filter(s => swordScore(s) < curScore).length;
+    const total = all.length + 1;  // 현재 검 포함
+    const rank = total - beaten;  // 1 = 최상위
+    el.textContent = '位  ' + rank + ' / ' + total;
+    el.className = '';
+    if (rank === 1) el.classList.add('first');
+    else if (rank <= Math.max(2, Math.ceil(total * 0.2))) el.classList.add('top');
   }
 
   // === v165 行 — 전체 path 진행도 (0-100%) ===
