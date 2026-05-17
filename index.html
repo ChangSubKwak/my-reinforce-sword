@@ -249,6 +249,45 @@
   body.tod-evening #tod-mark { color: rgba(220, 130, 80, 0.65); opacity: 0.85; }
   body.tod-night #tod-mark   { color: rgba(140, 160, 220, 0.65); opacity: 0.85; }
 
+  /* v176 玩月 — 수동 달 감상 mode (30s) */
+  body.moon-gazing #game header,
+  body.moon-gazing #game footer,
+  body.moon-gazing #log-wrap,
+  body.moon-gazing .stats-strip,
+  body.moon-gazing #btn-enhance,
+  body.moon-gazing #btn-seal-direct,
+  body.moon-gazing #btn-fusion,
+  body.moon-gazing #resolve-row,
+  body.moon-gazing #stone-row,
+  body.moon-gazing #sanctum-row,
+  body.moon-gazing #key-hint,
+  body.moon-gazing #odds {
+    opacity: 0.08 !important;
+    transition: opacity 1.5s ease;
+    pointer-events: none;
+  }
+  #moon-gaze-orb {
+    position: fixed;
+    top: 22%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff5c0 0%, #d4af37 45%, transparent 80%);
+    box-shadow: 0 0 60px rgba(255, 245, 192, 0.6), 0 0 120px rgba(212, 175, 55, 0.3);
+    pointer-events: none;
+    z-index: 1500;
+    opacity: 0;
+    transition: opacity 2s ease;
+    animation: moon-orb-breathe 5s ease-in-out infinite alternate;
+  }
+  body.moon-gazing #moon-gaze-orb { opacity: 0.92; }
+  @keyframes moon-orb-breathe {
+    from { transform: translateX(-50%) scale(1); }
+    to   { transform: translateX(-50%) scale(1.04); }
+  }
+
   /* v162 真空 — 극도의 침묵 (메디테이션 10분+) */
   body.true-emptiness #game header,
   body.true-emptiness #game footer,
@@ -2384,6 +2423,7 @@
   <button id="btn-duel">對  局</button>
   <button id="btn-bunshu">文  集</button>
   <button id="btn-status">現  勢</button>
+  <button id="btn-moongaze">玩  月</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -5257,6 +5297,67 @@
         }
       });
     });
+  }
+
+  // === v176 玩月 — 수동 달 감상 mode (30s) ===
+  let moonGazing = false;
+  let moonGazeTimer = null;
+  let moonGazeOrb = null;
+  function enterMoonGaze() {
+    if (moonGazing) return;
+    if (challenge || rescueWindow) {
+      log('玩月 — 도전/회수 중에는 불가', 'warn');
+      return;
+    }
+    moonGazing = true;
+    document.body.classList.add('moon-gazing');
+    if (!moonGazeOrb) {
+      moonGazeOrb = document.createElement('div');
+      moonGazeOrb.id = 'moon-gaze-orb';
+      document.body.appendChild(moonGazeOrb);
+    }
+    // Soft bell on entry
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const t = a.currentTime;
+        const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = 220;
+        const g = a.createGain(); g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.18, t + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 3.0);
+        osc.connect(g); g.connect(a.destination); osc.start(t); osc.stop(t + 3.1);
+      }
+    } catch (e) {}
+    log('玩月 — 달을 본다 · 30초 후 자연히 끝난다', 'info');
+    moonGazeTimer = setTimeout(exitMoonGaze, 30000);
+    // ESC/click to exit early
+    document.addEventListener('keydown', moonGazeKeyHandler);
+    document.addEventListener('click', moonGazeClickHandler, { once: true, capture: true });
+  }
+  function exitMoonGaze() {
+    if (!moonGazing) return;
+    moonGazing = false;
+    document.body.classList.remove('moon-gazing');
+    if (moonGazeTimer) { clearTimeout(moonGazeTimer); moonGazeTimer = null; }
+    document.removeEventListener('keydown', moonGazeKeyHandler);
+    document.removeEventListener('click', moonGazeClickHandler, { capture: true });
+    // Pending breath bonus — 玩月 of 호흡
+    pendingBreathBoost = true;
+    log('玩月 종료 — 다음 강화 호흡 보너스 ×2', 'success');
+  }
+  function moonGazeKeyHandler(e) {
+    if (e.key === 'Escape') exitMoonGaze();
+  }
+  function moonGazeClickHandler(e) {
+    if (!moonGazing) return;
+    // Only stage/orb click — preserve other UI
+    if (e.target.id === 'moon-gaze-orb' || e.target.id === 'stage' || e.target.id === 'game') {
+      e.preventDefault(); e.stopPropagation();
+      exitMoonGaze();
+    } else {
+      // Re-register if clicking elsewhere wasn't an exit
+      document.addEventListener('click', moonGazeClickHandler, { once: true, capture: true });
+    }
   }
 
   // === v175 回憶 — 매 10代마다 첫 검 회상 ===
@@ -12267,6 +12368,11 @@
     renderStatus();
     $('status-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
+  });
+  // v176 玩月 — 수동 명상
+  if ($('btn-moongaze')) $('btn-moongaze').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    enterMoonGaze();
   });
   if ($('bunshu-prev')) $('bunshu-prev').addEventListener('click', () => {
     if (bunshuIndex > 0) { bunshuIndex--; renderBunshuPage(); }
