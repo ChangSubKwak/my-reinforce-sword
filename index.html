@@ -2439,6 +2439,7 @@
   <button id="btn-bunshu">文  集</button>
   <button id="btn-status">現  勢</button>
   <button id="btn-moongaze">玩  月</button>
+  <button id="btn-meishi">劍 名 片</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -3019,6 +3020,19 @@
     <p>도(道)에 이른 검들의 일생을 시구로</p>
     <div id="anthology-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
     <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- v180 劍名片 — 검명함 (identity card) -->
+<div class="modal" id="meishi-modal">
+  <div class="modal-box" style="max-width: 540px;">
+    <h2>劍 名 片</h2>
+    <p>당신의 검의 길 — 한 장으로</p>
+    <div id="meishi-preview" style="display:flex;justify-content:center;margin:18px 0"></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
+      <button id="meishi-download">SVG 저장</button>
+      <button class="modal-close" data-close>닫 기</button>
+    </div>
   </div>
 </div>
 
@@ -5314,6 +5328,119 @@
         }
       });
     });
+  }
+
+  // === v180 劍名片 — 검명함 (identity card SVG) ===
+  function buildMeishiSVG() {
+    const W = 480, H = 320;
+    const daoTitle = (state.daoTitle && state.daoTitle.title) || '無 名';
+    const daoSubtitle = (state.daoTitle && state.daoTitle.subtitle) || '검의 길';
+    const pathProgress = Math.min(100, Math.floor((state.pathProgress || 0) * 100) / 100);
+    const swordGen = state.swordGeneration || 1;
+    const sealed = (state.sealedSwords || []).length;
+    const wayCount = (state.stats && state.stats.wayReached) || 0;
+    const namedSlain = state.foesSlain ? Object.keys(state.foesSlain).length : 0;
+    const trialsUnlocked = (typeof TRIALS !== 'undefined') ? TRIALS.filter(t => trialUnlocked(t.key)).length : 0;
+    const trialsTotal = (typeof TRIALS !== 'undefined') ? TRIALS.length : 5;
+    const playTime = formatPlayTime(state.totalPlayTimeMs || 0);
+    const formCounts = { '直':0, '曲':0, '重':0, '速':0 };
+    (state.sealedSwords || []).forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });
+    // 메타 인장 결정
+    let seal = '初';
+    if (state.ultimateAchieved) seal = '極';
+    else if (wayCount >= 10) seal = '聖';
+    else if (wayCount >= 5) seal = '達';
+    else if (wayCount >= 1) seal = '祖';
+    else if (sealed >= 10) seal = '修';
+    else if (sealed >= 3) seal = '行';
+    const sealColor = (seal === '極') ? '#fff5c0' : (seal === '聖' ? '#fff8d8' : (seal === '達' ? '#d4af37' : '#a8a098'));
+    // 名片 SVG
+    const formBar = (label, n, color, x, y) => {
+      const max = Math.max(...Object.values(formCounts), 5);
+      const barW = Math.max(2, Math.round((n / max) * 70));
+      return `<text x="${x}" y="${y}" font-family="Noto Serif KR, serif" font-size="11" fill="#e8e6dd" letter-spacing="1.5">${label}</text>` +
+             `<rect x="${x+22}" y="${y-8}" width="${barW}" height="6" fill="${color}" opacity="0.7"/>` +
+             `<text x="${x+22+barW+5}" y="${y}" font-family="Noto Serif KR, serif" font-size="9" fill="#a8a098">${n}</text>`;
+    };
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs>
+    <radialGradient id="meishi-bg" cx="50%" cy="40%">
+      <stop offset="0%" stop-color="#1a1a22"/>
+      <stop offset="100%" stop-color="#0b0b0d"/>
+    </radialGradient>
+    <linearGradient id="meishi-frame" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d4af37" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#fff5c0" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#d4af37" stop-opacity="0.6"/>
+    </linearGradient>
+    <filter id="meishi-glow"><feGaussianBlur stdDeviation="2.5"/></filter>
+  </defs>
+  <rect x="0" y="0" width="${W}" height="${H}" fill="url(#meishi-bg)"/>
+  <rect x="3" y="3" width="${W-6}" height="${H-6}" fill="none" stroke="url(#meishi-frame)" stroke-width="1.5"/>
+  <rect x="10" y="10" width="${W-20}" height="${H-20}" fill="none" stroke="#d4af37" stroke-width="0.4" stroke-opacity="0.3"/>
+
+  <!-- title -->
+  <text x="22" y="32" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="6" fill="#888" opacity="0.7">劍  名  片</text>
+
+  <!-- 道號 (큰 글자) -->
+  <text x="${W/2}" y="78" font-family="Noto Serif KR, serif" font-size="32" font-weight="200" letter-spacing="6" fill="#fff5c0" text-anchor="middle" filter="url(#meishi-glow)">${daoTitle}</text>
+  <text x="${W/2}" y="78" font-family="Noto Serif KR, serif" font-size="32" font-weight="200" letter-spacing="6" fill="#fff5c0" text-anchor="middle">${daoTitle}</text>
+  <text x="${W/2}" y="98" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="4" fill="#a8a098" text-anchor="middle" font-style="italic">${daoSubtitle}</text>
+
+  <!-- 行 progress bar -->
+  <text x="30" y="130" font-family="Noto Serif KR, serif" font-size="11" letter-spacing="3" fill="#a8a098">行</text>
+  <rect x="50" y="120" width="${W-100}" height="8" fill="#1a2030" rx="1"/>
+  <rect x="50" y="120" width="${(W-100)*pathProgress/100}" height="8" fill="#d4af37" opacity="0.8" rx="1"/>
+  <text x="${W-30}" y="130" font-family="Noto Serif KR, serif" font-size="10" fill="#d4af37" text-anchor="end">${pathProgress.toFixed(0)}%</text>
+
+  <!-- 位 / 歲月 row -->
+  <text x="30" y="158" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">位</text>
+  <text x="50" y="158" font-family="Noto Serif KR, serif" font-size="13" fill="#e8e6dd">${swordGen} 代</text>
+  <text x="${W-30}" y="158" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888" text-anchor="end">歲 月  ${playTime}</text>
+
+  <!-- 봉인 / 道 / 名 row -->
+  <text x="30" y="183" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">封</text>
+  <text x="50" y="183" font-family="Noto Serif KR, serif" font-size="14" fill="#e8e6dd">${sealed}</text>
+  <text x="100" y="183" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">道</text>
+  <text x="120" y="183" font-family="Noto Serif KR, serif" font-size="14" fill="#d4af37">${wayCount}</text>
+  <text x="170" y="183" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">名</text>
+  <text x="190" y="183" font-family="Noto Serif KR, serif" font-size="14" fill="#c0883a">${namedSlain}</text>
+  <text x="240" y="183" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">試</text>
+  <text x="260" y="183" font-family="Noto Serif KR, serif" font-size="14" fill="#a8c0d8">${trialsUnlocked}/${trialsTotal}</text>
+
+  <!-- 4 form 분포 -->
+  ${formBar('直', formCounts['直'], '#a8c0e8', 30,  220)}
+  ${formBar('曲', formCounts['曲'], '#e8a8c0', 150, 220)}
+  ${formBar('重', formCounts['重'], '#d4af37', 30,  244)}
+  ${formBar('速', formCounts['速'], '#88e8c0', 150, 244)}
+
+  <!-- 황금 인장 -->
+  <circle cx="${W-70}" cy="225" r="38" fill="none" stroke="${sealColor}" stroke-width="1.5" opacity="0.75"/>
+  <circle cx="${W-70}" cy="225" r="32" fill="${sealColor}" opacity="0.08"/>
+  <text x="${W-70}" y="241" font-family="Noto Serif KR, serif" font-size="44" font-weight="200" fill="${sealColor}" text-anchor="middle" filter="url(#meishi-glow)">${seal}</text>
+  <text x="${W-70}" y="241" font-family="Noto Serif KR, serif" font-size="44" font-weight="200" fill="${sealColor}" text-anchor="middle">${seal}</text>
+
+  <!-- bottom signature -->
+  <text x="${W/2}" y="${H-16}" font-family="Noto Serif KR, serif" font-size="8" letter-spacing="4" fill="#555" text-anchor="middle">劍 強 化 ─ ${new Date().toISOString().slice(0,10)}</text>
+</svg>`;
+  }
+  function showMeishi() {
+    const svg = buildMeishiSVG();
+    $('meishi-preview').innerHTML = svg;
+    $('meishi-modal').classList.add('active');
+  }
+  function downloadMeishi() {
+    const svg = buildMeishiSVG();
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const title = ((state.daoTitle && state.daoTitle.title) || '無名').replace(/\s+/g,'');
+    a.href = url;
+    a.download = '劍名片_' + title + '_' + (state.swordGeneration || 1) + '代.svg';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+    log('劍名片 다운로드 — ' + title, 'success');
   }
 
   // === v179 季韻 — 節氣에 따른 환경 입자 (桃花/螢/紅葉/雪) ===
@@ -12636,6 +12763,12 @@
     $('menu-drop').classList.remove('open');
     enterMoonGaze();
   });
+  // v180 劍名片
+  if ($('btn-meishi')) $('btn-meishi').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    showMeishi();
+  });
+  if ($('meishi-download')) $('meishi-download').addEventListener('click', downloadMeishi);
   if ($('bunshu-prev')) $('bunshu-prev').addEventListener('click', () => {
     if (bunshuIndex > 0) { bunshuIndex--; renderBunshuPage(); }
   });
