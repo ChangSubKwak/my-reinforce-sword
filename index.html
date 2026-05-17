@@ -2214,6 +2214,22 @@
     z-index: 0;
     overflow: hidden;
   }
+  /* v172 蘭 — stage 우측 하단 작은 난초 (灯火와 음양 대구) */
+  #stage-orchid {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    width: 32px;
+    height: 48px;
+    pointer-events: none;
+    z-index: 4;
+    opacity: 0.7;
+    transition: opacity 2s ease;
+  }
+  body.tod-morning #stage-orchid { opacity: 0.85; }
+  body.tod-day #stage-orchid { opacity: 0.6; }
+  body.tod-night #stage-orchid { opacity: 0.5; }
+
   /* v166 灯火 — stage 좌측 상단 작은 등불 */
   #stage-lantern {
     position: absolute;
@@ -2398,6 +2414,14 @@
 
   <div id="stage">
     <div id="stage-bg" aria-hidden="true"></div>
+    <!-- v172 蘭 — 무대 우측 하단 작은 난초 (灯火와 음양 대구) -->
+    <svg id="stage-orchid" viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <!-- 화분 (기본) -->
+      <path d="M 8 42 L 24 42 L 22 48 L 10 48 Z" fill="#3a2a18" stroke="#1a0f08" stroke-width="0.4"/>
+      <path d="M 8 42 L 24 42 L 23 40 L 9 40 Z" fill="#4a3a28" stroke="#1a0f08" stroke-width="0.3"/>
+      <!-- 잎/꽃 동적 (orchid-content) -->
+      <g id="orchid-content"></g>
+    </svg>
     <!-- v166 灯火 — 무대 좌측 상단 작은 등불 -->
     <svg id="stage-lantern" viewBox="0 0 24 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <!-- 줄 (위에서) -->
@@ -4789,6 +4813,7 @@
     renderWishIndicator();  // v155 寒梅
     renderPathProgress();   // v165 行
     updateStageLantern();   // v166 灯火
+    updateStageOrchid();    // v172 蘭
     renderSwordRank();      // v168 位
     updateStageBg();   // v97 梵境
     // v81 조합소 버튼 시각 잠금 — +0 일 때만 활성
@@ -5230,6 +5255,61 @@
         }
       });
     });
+  }
+
+  // === v172 蘭 — 무대 우하단 난초 (道 도달에 따라 성장 / 형별 색) ===
+  function getDominantForm() {
+    const counts = { '直': 0, '曲': 0, '重': 0, '速': 0 };
+    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    all.forEach(s => { if (s.form && counts[s.form] !== undefined) counts[s.form]++; });
+    let best = null, bestCount = 0;
+    Object.keys(counts).forEach(f => {
+      if (counts[f] > bestCount) { bestCount = counts[f]; best = f; }
+    });
+    return best;
+  }
+  function updateStageOrchid() {
+    const content = $('orchid-content');
+    if (!content) return;
+    const ways = (state.stats && state.stats.wayReached) || 0;
+    const dominantForm = getDominantForm();
+    // 형별 꽃 색
+    const flowerColors = {
+      '直': { fill: '#f8f4e8', stroke: '#a8a090' },  // 백
+      '曲': { fill: '#e8a8c0', stroke: '#a85878' },  // 홍
+      '重': { fill: '#f0e090', stroke: '#a08830' },  // 황
+      '速': { fill: '#a8c0e8', stroke: '#5878a8' },  // 청
+    };
+    const c = (dominantForm && flowerColors[dominantForm]) || flowerColors['直'];
+    let svg = '';
+    // 단계 0: 작은 싹 (기본)
+    svg += '<path d="M 16 40 Q 14 36 14 32 Q 16 28 18 32 Q 18 36 16 40 Z" fill="#3a5a3a" opacity="0.85"/>';
+    if (ways >= 1) {
+      // 단계 1: 가지 + 봉오리
+      svg += '<line x1="16" y1="32" x2="16" y2="22" stroke="#3a5a3a" stroke-width="0.6"/>';
+      svg += '<path d="M 16 22 Q 14 18 14 14 Q 16 12 18 14 Q 18 18 16 22 Z" fill="#5a7a3a" opacity="0.85"/>';
+    }
+    if (ways >= 3) {
+      // 단계 2: 봉오리 → 작은 꽃
+      svg += '<circle cx="16" cy="11" r="2.5" fill="' + c.fill + '" stroke="' + c.stroke + '" stroke-width="0.4"/>';
+    }
+    if (ways >= 5) {
+      // 단계 3: 큰 꽃 + 잎 2개
+      svg += '<path d="M 12 28 Q 8 28 8 24 Q 12 24 12 28 Z" fill="#3a5a3a" opacity="0.7"/>';
+      svg += '<path d="M 20 28 Q 24 28 24 24 Q 20 24 20 28 Z" fill="#3a5a3a" opacity="0.7"/>';
+      svg += '<circle cx="16" cy="11" r="3.5" fill="' + c.fill + '" stroke="' + c.stroke + '" stroke-width="0.4"/>';
+      svg += '<circle cx="16" cy="11" r="1.5" fill="' + c.stroke + '" opacity="0.6"/>';
+    }
+    if (ways >= 10) {
+      // 단계 4: 만개 + 작은 꽃 3개
+      svg += '<circle cx="11" cy="14" r="2" fill="' + c.fill + '" stroke="' + c.stroke + '" stroke-width="0.3"/>';
+      svg += '<circle cx="21" cy="14" r="2" fill="' + c.fill + '" stroke="' + c.stroke + '" stroke-width="0.3"/>';
+      svg += '<circle cx="16" cy="6" r="2" fill="' + c.fill + '" stroke="' + c.stroke + '" stroke-width="0.3"/>';
+      // 메인 꽃 발광
+      svg += '<circle cx="16" cy="11" r="4.5" fill="' + c.fill + '" stroke="' + c.stroke + '" stroke-width="0.5" filter="url(#strong-glow)"/>';
+      svg += '<circle cx="16" cy="11" r="2" fill="#fff5c0" opacity="0.6"/>';
+    }
+    content.innerHTML = svg;
   }
 
   // === v166 灯火 — 무대 등불 동적 (季節 색 / 강화도 크기) ===
