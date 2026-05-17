@@ -3432,6 +3432,7 @@
     duelWins: {},             // v159 對局 — 봉인 검 대국 승리 카운트
     ultimateAchieved: false,  // v170 千秋萬代 — 모든 메타 완성 1회 표식
     ultimateAchievedAt: 0,    // v170 — 달성 시각
+    totalPlayTimeMs: 0,       // v174 歲月 — 누적 active play 시간 (ms)
     currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
     whetstones: 0,
     spiritstones: 0,
@@ -3616,6 +3617,7 @@
       if (!state.duelWins || typeof state.duelWins !== 'object') state.duelWins = {};  // v159
       if (typeof state.ultimateAchieved !== 'boolean') state.ultimateAchieved = false;  // v170
       if (typeof state.ultimateAchievedAt !== 'number') state.ultimateAchievedAt = 0;
+      if (typeof state.totalPlayTimeMs !== 'number') state.totalPlayTimeMs = 0;  // v174 歲月
       if (state.currentSword && (!state.currentSword.foesEncountered || typeof state.currentSword.foesEncountered !== 'object')) {
         state.currentSword.foesEncountered = {};
       }
@@ -5255,6 +5257,19 @@
         }
       });
     });
+  }
+
+  // === v174 歲月 — 누적 active play 시간 ===
+  function formatPlayTime(ms) {
+    const totalMin = Math.floor((ms || 0) / 60000);
+    if (totalMin < 1) return '1분 미만';
+    if (totalMin < 60) return totalMin + '분';
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    if (h < 24) return h + '시간 ' + (m > 0 ? m + '분' : '');
+    const d = Math.floor(h / 24);
+    const rh = h % 24;
+    return d + '일 ' + (rh > 0 ? rh + '시간' : '');
   }
 
   // === v173 鐘 — 매 정시 1회 깊은 종 + 시간 표식 ===
@@ -8348,7 +8363,13 @@
   let pendingBreathBoost = false;  // v162: 真空 종료 시 다음 강화 호흡 보너스 ×2
   let preMeditationDronePitch = 1.0;
   function touchUserAction() {
-    lastUserAction = Date.now();
+    const now = Date.now();
+    // v174 歲月 — 30초 미만 갭만 active session으로 누적
+    if (lastUserAction > 0) {
+      const gap = now - lastUserAction;
+      if (gap < 30000) state.totalPlayTimeMs = (state.totalPlayTimeMs || 0) + gap;
+    }
+    lastUserAction = now;
     if (inMeditation) exitMeditation();
   }
   function checkMeditation() {
@@ -12771,6 +12792,7 @@
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">정 점</div>' +
       row('검 판매', (s.sealed || 0) + ' 회') +
       row('도(道) 달성', (s.wayReached || 0) + ' 회', '#fff5c0') +
+      row('歲月 (누적)', formatPlayTime(state.totalPlayTimeMs || 0), '#a8c0d8') +  // v174
       (function() {
         // v163 鬪將 — 챔피언 표시
         const champ = getChampionInfo();
@@ -12816,6 +12838,7 @@
     duelWins: {},             // v159 對局 — 봉인 검 대국 승리 카운트
     ultimateAchieved: false,  // v170 千秋萬代 — 모든 메타 완성 1회 표식
     ultimateAchievedAt: 0,    // v170 — 달성 시각
+    totalPlayTimeMs: 0,       // v174 歲月 — 누적 active play 시간 (ms)
       currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
       whetstones: 0, spiritstones: 0, divinationStones: 0,
       firstWayReached: false,
