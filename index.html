@@ -6762,16 +6762,37 @@
       '이 검은 충분히 싸웠다',
       '이 정도면 충분하다',
     ],
-    slay: [
-      '어둠을 베었다',
-      '강함이 증명됐다',
-      '그림자가 물러났다',
-      '검이 기뻐한다',
-      '하나를 더 넘었다',
-    ],
+    // v171 餘音 — 슬레이는 그림자 종류별 차별화 (object)
+    slay: {
+      normal: [
+        '어둠을 베었다',
+        '하나의 그림자가 사라졌다',
+        '검이 일상을 베어낸다',
+      ],
+      flee: [
+        '도망쳐도 잡히는구나',
+        '바람보다 빠른 검',
+        '쫓는 자의 검',
+      ],
+      steel: [
+        '두꺼움 너머의 칼',
+        '강철을 갈랐다',
+        '단단함이 부서진다',
+      ],
+      demon: [
+        '鬼를 베었다 — 두려움이 사라졌다',
+        '검귀의 피가 칼에 묻었다',
+        '가장 큰 어둠도 베어낸다',
+      ],
+      named: [
+        '이름을 새겼다',
+        '전설을 베어냈다',
+        '영예가 검에 깃들었다',
+      ],
+    },
   };
   let swordVoiceTimer = null;
-  function showSwordVoice(outcome, lv) {
+  function showSwordVoice(outcome, lv, shadowType) {
     const el = $('sword-voice');
     if (!el) return;
     let pool;
@@ -6785,6 +6806,10 @@
     } else if (outcome === 'destroy') {
       if (Math.random() > 0.6) return; // 파괴 메시지는 60% 확률
       pool = SWORD_WHISPERS.destroy;
+    } else if (outcome === 'slay') {
+      // v171 餘音 — 그림자 종류별 차별화
+      const key = (shadowType && SWORD_WHISPERS.slay[shadowType]) ? shadowType : 'normal';
+      pool = SWORD_WHISPERS.slay[key];
     } else {
       pool = SWORD_WHISPERS[outcome] || [];
     }
@@ -8559,7 +8584,9 @@
       } else {
         applySlayStreak();
       }
-      showSwordVoice('slay', state.level);  // v113 劍聲
+      // v113 劍聲 + v171 餘音 — 그림자 종류별 차별화
+      const slayShadowType = c.namedFoeKey ? 'named' : (c.type && c.type.key) || 'normal';
+      showSwordVoice('slay', state.level, slayShadowType);
       captureRubbing('firstSlay');  // v136 拓本 — 첫 슬레이
       // v34 一閃 결과 페이드 (의식) — v125 streak bonus 반영
       inscribeQueue.push({ key: '斬', label: c.type.name + ' · 조각 +' + finalReward + (slayBonusMul > 1 ? ' (連斬 ×' + slayBonusMul.toFixed(2) + ')' : '') });
