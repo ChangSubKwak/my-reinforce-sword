@@ -5232,6 +5232,51 @@
     if (flames[1]) flames[1].style.transform = 'scale(' + scale + ')';
   }
 
+  // === v167 喜 — 작은 좋은 일 sparkle ===
+  function spawnJoySparkle(targetEl, color) {
+    if (!targetEl) return;
+    color = color || '#fff5c0';
+    const rect = targetEl.getBoundingClientRect ? targetEl.getBoundingClientRect() : null;
+    if (!rect || rect.width === 0) return;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const count = 5;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      const sz = 3 + Math.random() * 2;
+      p.style.cssText = 'position:fixed;width:' + sz + 'px;height:' + sz + 'px;border-radius:50%;background:' + color + ';box-shadow:0 0 6px ' + color + ';pointer-events:none;z-index:1100;left:' + cx + 'px;top:' + cy + 'px;transform:translate(-50%,-50%);opacity:0;';
+      document.body.appendChild(p);
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI;  // 위쪽 방향
+      const dist = 40 + Math.random() * 30;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+      p.animate([
+        { opacity: 0, transform: 'translate(-50%,-50%) scale(0.5)' },
+        { opacity: 1, transform: 'translate(-50%,-50%) scale(1.2)', offset: 0.2 },
+        { opacity: 0, transform: 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px)) scale(0.4)' },
+      ], { duration: 800 + Math.random() * 300, easing: 'cubic-bezier(0.2, 0.6, 0.4, 1)' });
+      setTimeout(() => p.remove(), 1200);
+    }
+    // 짧은 차임
+    const ctx = getAudio();
+    if (ctx) {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1320, now);
+      osc.frequency.exponentialRampToValueAtTime(1760, now + 0.15);
+      g.gain.setValueAtTime(0.0, now);
+      g.gain.linearRampToValueAtTime(0.10, now + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.30);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(now); osc.stop(now + 0.35);
+    }
+  }
+  function joyAt(selector, color) {
+    const el = (typeof selector === 'string') ? $(selector) : selector;
+    spawnJoySparkle(el, color);
+  }
+
   // === v165 行 — 전체 path 진행도 (0-100%) ===
   function computeOverallProgress() {
     let total = 0;
@@ -7711,6 +7756,7 @@
     }
     log('雲水 — 도사가 「' + gift + '」을(를) 주었다', 'success');
     setTimeout(() => announceInscription('雲', '떠도는 도사의 선물 — ' + gift), 300);
+    setTimeout(() => joyAt('stage', '#d4af37'), 200);  // v167 喜
     // 종 음 (감사)
     const ctx = getAudio();
     if (ctx) {
@@ -8293,8 +8339,8 @@
                         slayStreak === 5 ? '다섯 번 — 보호권 +1' :
                         slayStreak === 7 ? '일곱 번 — 숫돌 +1' : '';
         announceInscription(newTierLabel, tierMsg);
-        if (slayStreak === 5) state.protections++;
-        if (slayStreak === 7) state.whetstones++;
+        if (slayStreak === 5) { state.protections++; setTimeout(() => joyAt('stat-protections', '#fff5c0'), 250); }
+        if (slayStreak === 7) { state.whetstones++; setTimeout(() => joyAt('btn-enhance', '#a8e0a0'), 250); }
       }
       if (slayStreak === 10) {
         // 連一閃 명문 + 카운터 리셋
@@ -8384,6 +8430,7 @@
       if (c.strength >= 8 && Math.random() < 0.35) {
         state.protections++;
         setTimeout(() => log('보호권 +1', 'success'), 200);
+        setTimeout(() => joyAt('stat-protections', '#fff5c0'), 250);  // v167 喜
       }
       checkDestiny();  // v93 天命 — 베기 성공 후 운명 점검 (그림자/검귀/이름있는적)
       bumpDaily('slay', 1);  // v94 天時
@@ -8460,8 +8507,8 @@
     const after = Math.min(SOUL_MAX, before + amount);
     state.currentSword.soul = after;
     // 단계 진입 시 명문 자동 부여
-    if (before < SOUL_AWAKEN && after >= SOUL_AWAKEN) grantInscription('覺');
-    if (before < SOUL_TRUE && after >= SOUL_TRUE) grantInscription('本');
+    if (before < SOUL_AWAKEN && after >= SOUL_AWAKEN) { grantInscription('覺'); setTimeout(() => joyAt('soul-bar', '#a8c0e8'), 300); }
+    if (before < SOUL_TRUE && after >= SOUL_TRUE) { grantInscription('本'); setTimeout(() => joyAt('soul-bar', '#c8a0e8'), 300); }
     checkDestiny();  // v93 혼 기반 천명
     checkStars();  // v116 七星 — 心 별 (本 도달)
   }
