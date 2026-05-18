@@ -2610,6 +2610,7 @@
   <button id="btn-diary">自  書</button>
   <button id="btn-sen">籤</button>
   <button id="btn-compare">比</button>
+  <button id="btn-today-sheet">帖</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -3200,6 +3201,16 @@
     <p>도(道)에 이른 검들의 일생을 시구로</p>
     <div id="anthology-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
     <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- v215 帖 — 오늘의 24시간 활동 시트 -->
+<div class="modal" id="today-sheet-modal">
+  <div class="modal-box" style="max-width: 500px;">
+    <h2>帖 — 오늘의 시트</h2>
+    <p>오늘 24시간 활동 — 자정에 새 한 장</p>
+    <div id="today-sheet-content"></div>
+    <button class="modal-close" data-close style="margin-top:14px">닫 기</button>
   </div>
 </div>
 
@@ -3888,6 +3899,7 @@
     lastSenResult: null,        // v211 籤 — 마지막 결과 객체
     lastWeekendGreeting: '',    // v212 休 — 마지막 주말 인사 날짜
     lastThreeRitualsDate: '',   // v214 三禮 — 일일 3 의식 완성 날짜
+    todaySheet: null,           // v215 帖 — 오늘 24시간 시트 {date, hours[24]}
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -6513,6 +6525,52 @@
     bookPageIdx = 0;
     renderBookPage(0);
     $('codex-book-modal').classList.add('active');
+  }
+
+  // === v215 帖 — 오늘 24시간 활동 시트 ===
+  function ensureTodaySheet() {
+    const today = todayStr3();
+    if (!state.todaySheet || state.todaySheet.date !== today) {
+      state.todaySheet = { date: today, hours: new Array(24).fill(0) };
+    }
+  }
+  function recordTodayHour() {
+    ensureTodaySheet();
+    const h = new Date().getHours();
+    state.todaySheet.hours[h] = (state.todaySheet.hours[h] || 0) + 1;
+  }
+  function renderTodaySheet() {
+    ensureTodaySheet();
+    const wrap = $('today-sheet-content');
+    if (!wrap) return;
+    const hours = state.todaySheet.hours;
+    const total = hours.reduce((a, b) => a + b, 0);
+    const hoursCovered = hours.filter(h => h > 0).length;
+    const max = Math.max(...hours, 1);
+    const nowHour = new Date().getHours();
+    let html = '<div style="text-align:center;font-size:11px;letter-spacing:3px;color:#a8a098;margin:14px 0">';
+    html += '<span style="color:#d4af37;font-size:18px">' + total + '</span> 액션 · <span style="color:#88c8a8;font-size:14px">' + hoursCovered + '</span> / 24 시각';
+    html += '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:18px 0">';
+    for (let h = 0; h < 24; h++) {
+      const c = hours[h] || 0;
+      const intensity = c / max;
+      const isNow = h === nowHour;
+      const bg = c === 0 ? '#1a1a22' : ('rgba(212,175,55,' + (0.2 + intensity * 0.7) + ')');
+      const border = isNow ? '#fff5c0' : (c > 0 ? '#3a3a44' : '#222228');
+      html += '<div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:' + bg + ';border:1px solid ' + border + ';border-radius:2px;padding:4px 0' + (isNow ? ';box-shadow:0 0 8px rgba(255,245,192,0.5)' : '') + '">';
+      html += '<div style="font-size:9px;color:' + (c > 0 ? '#fff5c0' : '#666') + ';letter-spacing:1px">' + h + '</div>';
+      if (c > 0) html += '<div style="font-size:10px;color:#1a1a22;font-weight:600;margin-top:2px">' + c + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<div style="text-align:center;font-size:9px;color:#888;letter-spacing:3px;font-style:italic">';
+    if (total === 0) html += '오늘 아직 시작 안 됨';
+    else if (hoursCovered >= 12) html += '하루의 절반을 검과 함께';
+    else if (hoursCovered >= 6) html += '여러 시각에 검을 쥐었다';
+    else html += '몇몇 순간 검의 길 위에';
+    html += '</div>';
+    wrap.innerHTML = html;
   }
 
   // === v214 三禮 — 占/籤/拈花 일일 3 의식 완성 보너스 ===
@@ -10586,6 +10644,7 @@
     bumpStat('enhanceAttempts');
     bumpDaily('enhanceAttempt', 1);  // v94 天時 — 강화 시도 (성공/실패 무관)
     recordHourActivity();  // v195 時計
+    recordTodayHour();  // v215 帖
     pulseHeartbeat(1.5);  // v205 心拍
     if (((state.stats && state.stats.enhanceAttempts) || 0) === 100) setTimeout(() => maybeMaster('hundredEnhance'), 1500);  // v181 老師
     consumeMatsu();  // v119 千年松 카운트 소모
@@ -12276,6 +12335,7 @@
       if (!inscribeRunning) runInscribeQueue();
       // 통계: type별 격파 수
       recordHourActivity();  // v195 時計
+      recordTodayHour();  // v215 帖
       pulseHeartbeat(2.0);  // v205 心拍 — 베기는 큰 spike
       if (c.type.key === 'normal') bumpStat('slainNormal');
       else if (c.type.key === 'flee') bumpStat('slainFlee');
@@ -14631,6 +14691,7 @@
     bumpStat('sealed');
     bumpDaily('seal', 1);  // v94 天時
     recordHourActivity();  // v195 時計
+    recordTodayHour();  // v215 帖
     pulseHeartbeat(2.5);  // v205 心拍 — 봉인은 깊은 spike
     setTimeout(() => maybeDropTreasure(), 1400);  // v189 七寶 — 봉인 시 보물 drop 시도
     if (isWay) bumpStat('wayReached');
@@ -15980,6 +16041,12 @@
   if ($('btn-compare')) $('btn-compare').addEventListener('click', () => {
     $('menu-drop').classList.remove('open');
     openCompare();
+  });
+  // v215 帖
+  if ($('btn-today-sheet')) $('btn-today-sheet').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    renderTodaySheet();
+    $('today-sheet-modal').classList.add('active');
   });
   if ($('diary-save')) $('diary-save').addEventListener('click', saveDiaryEntry);
   if ($('diary-input')) $('diary-input').addEventListener('keydown', (e) => {
