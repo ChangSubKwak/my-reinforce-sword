@@ -3128,6 +3128,14 @@
   </div>
 </div>
 
+<!-- v196 週報 — 매주 자동 리포트 -->
+<div class="modal" id="weekly-report-modal">
+  <div class="modal-box" style="max-width: 460px;">
+    <div id="weekly-report-content"></div>
+    <button class="modal-close" data-close style="margin-top:14px">닫 기</button>
+  </div>
+</div>
+
 <!-- v194 殿覽 — 봉인 검 자동 슬라이드쇼 -->
 <div class="modal" id="gallery-modal">
   <div class="modal-box" style="max-width: 560px; padding: 0; background: radial-gradient(ellipse, #0d0e16 0%, #06070d 100%); border: 1px solid #2a2a32;">
@@ -3700,6 +3708,8 @@
     streakMilestonesShown: {},  // v191 練日 — 7/30/100/365 마일스톤 표시 여부
     festivalsGreetedYear: {},   // v192 節 — 명절별 마지막 인사한 년 ('01-01': '2026')
     hourActivity: new Array(24).fill(0),  // v195 時計 — 24시간 활동 카운트
+    lastReportWeek: '',         // v196 週報 — 마지막 리포트 ISO 주차 (e.g. '2026-W20')
+    lastReportSnapshot: null,   // v196 週報 — 마지막 스냅샷 stats
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -6013,6 +6023,87 @@
     el.style.color = f.color;
     el.textContent = f.kanji;
     el.title = f.name + ' — ' + f.verse;
+  }
+
+  // === v196 週報 — 매주 자동 리포트 ===
+  function getIsoWeek(d) {
+    const date = new Date(d);
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
+    const week1 = new Date(date.getFullYear(), 0, 4);
+    return date.getFullYear() + '-W' + String(Math.round(((date - week1) / 86400000 + ((week1.getDay() + 6) % 7) + 1) / 7)).padStart(2, '0');
+  }
+  function makeReportSnapshot() {
+    const stats = state.stats || {};
+    const slain = (stats.slainNormal || 0) + (stats.slainFlee || 0) + (stats.slainSteel || 0) + (stats.slainDemon || 0) + (stats.yakshaSlain || 0);
+    return {
+      enhanceAttempts: stats.enhanceAttempts || 0,
+      enhanceSuccess: stats.enhanceSuccess || 0,
+      sealed: (state.sealedSwords || []).length,
+      slain: slain,
+      wayReached: stats.wayReached || 0,
+      swordGen: state.swordGeneration || 0,
+      stalemate: stats.stalemate || 0,
+      treasures: Object.keys(state.treasures || {}).length,
+      week: getIsoWeek(new Date()),
+    };
+  }
+  function checkWeeklyReport() {
+    const curWeek = getIsoWeek(new Date());
+    if (state.lastReportWeek === curWeek) return;
+    if (state.lastReportSnapshot && state.lastReportWeek) {
+      const snap = state.lastReportSnapshot;
+      const cur = makeReportSnapshot();
+      const diff = {
+        enhanceAttempts: cur.enhanceAttempts - (snap.enhanceAttempts || 0),
+        enhanceSuccess: cur.enhanceSuccess - (snap.enhanceSuccess || 0),
+        sealed: cur.sealed - (snap.sealed || 0),
+        slain: cur.slain - (snap.slain || 0),
+        wayReached: cur.wayReached - (snap.wayReached || 0),
+        swordGen: cur.swordGen - (snap.swordGen || 0),
+        stalemate: cur.stalemate - (snap.stalemate || 0),
+        treasures: cur.treasures - (snap.treasures || 0),
+      };
+      const totalActivity = diff.enhanceAttempts + diff.sealed + diff.slain;
+      if (totalActivity > 0) {
+        setTimeout(() => showWeeklyReport(diff, snap.week, curWeek), 3000);
+      }
+    }
+    state.lastReportSnapshot = makeReportSnapshot();
+    state.lastReportWeek = curWeek;
+    save();
+  }
+  function showWeeklyReport(diff, prevWeek, curWeek) {
+    const successRate = diff.enhanceAttempts > 0 ? Math.round(diff.enhanceSuccess / diff.enhanceAttempts * 100) : 0;
+    // 결론 line — 어떤 측면이 두드러진가
+    let summary = '';
+    if (diff.wayReached >= 1) summary = '도(道)에 ' + diff.wayReached + '회 닿았다 — 정점의 주';
+    else if (diff.sealed >= 5) summary = diff.sealed + '자루를 봉인했다 — 수집의 주';
+    else if (diff.slain >= 10) summary = '그림자 ' + diff.slain + '을 베어냈다 — 전투의 주';
+    else if (diff.stalemate >= 3) summary = '평화의 길을 ' + diff.stalemate + '회 — 對峙의 주';
+    else if (diff.treasures >= 1) summary = '七寶 ' + diff.treasures + '개 발견 — 우연의 주';
+    else if (diff.enhanceAttempts >= 30) summary = '깊은 단련의 한 주';
+    else if (diff.swordGen >= 3) summary = diff.swordGen + '대의 검을 거쳤다';
+    else summary = '검의 길은 계속된다';
+    let html = '<div style="text-align:center;font-family:\'Noto Serif KR\',serif">';
+    html += '<div style="font-size:10px;letter-spacing:8px;color:rgba(212,175,55,0.7);margin-bottom:6px">週  報</div>';
+    html += '<div style="font-size:11px;letter-spacing:3px;color:#888;margin-bottom:18px">' + prevWeek + '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0;text-align:left">';
+    const row = (label, val, color) => '<div style="padding:8px 14px;background:rgba(20,20,28,0.5);border-left:2px solid ' + (color || '#444') + ';font-size:11px;letter-spacing:2px;color:#a8a098"><span style="color:' + (color || '#e8e6dd') + ';font-size:18px;font-weight:200;display:block;letter-spacing:0">' + val + '</span>' + label + '</div>';
+    html += row('강화 시도', diff.enhanceAttempts, '#d4af37');
+    html += row('성공률', successRate + '%', '#88c8a8');
+    html += row('베기', diff.slain, '#c04040');
+    html += row('봉인', diff.sealed, '#a8c0e8');
+    if (diff.wayReached > 0) html += row('道 도달', diff.wayReached, '#fff5c0');
+    if (diff.stalemate > 0) html += row('對峙', diff.stalemate, '#5878b8');
+    if (diff.treasures > 0) html += row('七寶 발견', diff.treasures, '#d4684a');
+    if (diff.swordGen > 0) html += row('代 변화', '+' + diff.swordGen, '#88e8c0');
+    html += '</div>';
+    html += '<div style="font-size:13px;letter-spacing:4px;color:#fff5c0;margin-top:22px;font-style:italic;line-height:1.7">' + summary + '</div>';
+    html += '</div>';
+    $('weekly-report-content').innerHTML = html;
+    $('weekly-report-modal').classList.add('active');
+    log('週報 — ' + prevWeek + ' · ' + summary, 'success');
   }
 
   // === v193 日言 — 매일 변하는 격언 ===
@@ -15384,6 +15475,7 @@
   setInterval(checkFestival, 60 * 60 * 1000);  // 자정 경계 자동
   renderDailySaying();       // v193 日言 — 매일의 격언 표시
   setInterval(renderDailySaying, 60 * 60 * 1000);  // 자정 경계 자동 갱신
+  checkWeeklyReport();       // v196 週報 — 주차 변경 시 자동 리포트
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
