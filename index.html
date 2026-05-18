@@ -109,6 +109,44 @@
     transform: translate(-50%, -50%);
     pointer-events: none;
   }
+  /* v197 月蝕 — 30초 한정 천문 사건 */
+  body.lunar-eclipse #stage,
+  body.lunar-eclipse #game {
+    background: linear-gradient(180deg, #18080a 0%, #0a0506 50%, #050304 100%) !important;
+    transition: background 3s ease;
+  }
+  body.lunar-eclipse #stage-bg,
+  body.lunar-eclipse #landscape-mountains {
+    filter: hue-rotate(-30deg) brightness(0.4) saturate(1.6);
+    transition: filter 3s ease;
+  }
+  #eclipse-moon {
+    position: fixed;
+    top: 18%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #802820 20%, #c04030 50%, #401010 80%, transparent 95%);
+    box-shadow: 0 0 80px rgba(192, 64, 48, 0.7), 0 0 160px rgba(128, 40, 32, 0.5);
+    pointer-events: none;
+    z-index: 1200;
+    opacity: 0;
+    animation: eclipse-pulse 4s ease-in-out infinite alternate, eclipse-fadein 3s ease forwards;
+  }
+  @keyframes eclipse-pulse {
+    from { transform: translateX(-50%) scale(1); }
+    to   { transform: translateX(-50%) scale(1.06); }
+  }
+  @keyframes eclipse-fadein {
+    from { opacity: 0; }
+    to   { opacity: 0.95; }
+  }
+  body.lunar-eclipse #sword-wrap {
+    filter: drop-shadow(0 0 14px rgba(255, 100, 80, 0.6)) brightness(1.1);
+    transition: filter 3s ease;
+  }
   /* v177 節氣 — 우측 상단 절기 한자 */
   #solar-term-mark {
     position: fixed;
@@ -3710,6 +3748,7 @@
     hourActivity: new Array(24).fill(0),  // v195 時計 — 24시간 활동 카운트
     lastReportWeek: '',         // v196 週報 — 마지막 리포트 ISO 주차 (e.g. '2026-W20')
     lastReportSnapshot: null,   // v196 週報 — 마지막 스냅샷 stats
+    eclipseSeenAt: 0,           // v197 月蝕 — 첫 영구 1회 발현 timestamp (0이면 미발현)
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -6023,6 +6062,84 @@
     el.style.color = f.color;
     el.textContent = f.kanji;
     el.title = f.name + ' — ' + f.verse;
+  }
+
+  // === v197 月蝕 — 영구 1회 천문 사건 ===
+  let eclipseActive = false;
+  const ECLIPSE_DURATION_MS = 30000;
+  function eclipseSoulMul() { return eclipseActive ? 2.0 : 1.0; }
+  function maybeTriggerEclipse() {
+    if (state.eclipseSeenAt) return;       // 영구 1회
+    if (eclipseActive) return;
+    const ways = (state.stats && state.stats.wayReached) || 0;
+    if (ways < 1) return;                  // 첫 道 도달 후만
+    if (challenge || rescueWindow || moonGazing) return;
+    if (Math.random() < 0.005) {           // 0.5% per check
+      startEclipse();
+    }
+  }
+  function startEclipse() {
+    eclipseActive = true;
+    state.eclipseSeenAt = Date.now();
+    save();
+    document.body.classList.add('lunar-eclipse');
+    // 핏빛 달
+    const moon = document.createElement('div');
+    moon.id = 'eclipse-moon';
+    document.body.appendChild(moon);
+    // 큰 페이드
+    const fade = document.createElement('div');
+    fade.innerHTML = '<div style="font-size:10px;color:rgba(192,64,48,0.85);letter-spacing:12px;margin-bottom:18px">月  蝕</div>' +
+                      '<div style="font-size:84px;color:#c04030;letter-spacing:12px;text-shadow:0 0 40px #802820,0 0 80px rgba(192,64,48,0.5);font-weight:200;line-height:1">蝕</div>' +
+                      '<div style="font-size:13px;color:rgba(220,168,168,0.85);letter-spacing:5px;margin-top:24px;font-style:italic;line-height:1.7">달이 가려진 30초 — 검의 영혼이 두 배로 깨어난다</div>' +
+                      '<div style="font-size:10px;color:#888;letter-spacing:3px;margin-top:14px">일생의 한 번</div>';
+    fade.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6500;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:40px 60px;background:radial-gradient(ellipse,rgba(24,8,10,0.95) 0%,rgba(24,8,10,0.5) 60%,transparent 90%);max-width:560px';
+    document.body.appendChild(fade);
+    fade.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.15 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.82 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.04)' }
+    ], { duration: 8000, easing: 'ease-in-out' });
+    setTimeout(() => fade.remove(), 8100);
+    // 깊은 종 + 낮은 드론
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        // 낮은 종 4음
+        [82, 110, 146, 220].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.5);
+          g.gain.exponentialRampToValueAtTime(0.14, ct + i*0.5 + 0.08);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.5 + 4.5);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.5); osc.stop(ct + i*0.5 + 4.6);
+        });
+        // 낮은 sawtooth 드론
+        const drone = a.createOscillator(); drone.type = 'sawtooth'; drone.frequency.value = 55;
+        const dg = a.createGain(); dg.gain.setValueAtTime(0.0001, ct);
+        dg.gain.exponentialRampToValueAtTime(0.04, ct + 1.5);
+        dg.gain.exponentialRampToValueAtTime(0.0001, ct + ECLIPSE_DURATION_MS/1000);
+        drone.connect(dg); dg.connect(a.destination); drone.start(ct); drone.stop(ct + ECLIPSE_DURATION_MS/1000 + 0.1);
+      }
+    } catch(e) {}
+    log('月蝕 — 30초의 천문 사건이 시작되었다', 'success');
+    // 검에 月蝕 명문 (현재 검에)
+    if (state.hasSword && state.currentSword) {
+      if (!state.currentSword.inscriptions) state.currentSword.inscriptions = [];
+      if (state.currentSword.inscriptions.indexOf('月蝕') < 0) {
+        state.currentSword.inscriptions.push('月蝕');
+      }
+      save();
+    }
+    setTimeout(endEclipse, ECLIPSE_DURATION_MS);
+  }
+  function endEclipse() {
+    eclipseActive = false;
+    document.body.classList.remove('lunar-eclipse');
+    const moon = $('eclipse-moon');
+    if (moon) moon.remove();
+    log('月蝕 종료 — 달이 다시 밝아졌다', 'info');
   }
 
   // === v196 週報 — 매주 자동 리포트 ===
@@ -11013,6 +11130,7 @@
   }
   function addSoul(amount) {
     if (!state.hasSword) return;
+    if (eclipseActive) amount = Math.floor(amount * eclipseSoulMul());  // v197 月蝕 — 영혼 ×2
     const before = state.currentSword.soul || 0;
     const after = Math.min(SOUL_MAX, before + amount);
     state.currentSword.soul = after;
@@ -12428,6 +12546,7 @@
     { key: '道',   label: '최고 단계 +15 도달',            verse: '검과 사람이 하나의 길이 되었다',     trigger: () => state.level >= MAX_LEVEL },
     { key: '鬼斬', label: '검귀를 베어냈다',               verse: '검귀의 피가 칼끝에 묻었다',         trigger: () => false },
     { key: '夜叉斬', label: '밤의 야차를 베어냈다',          verse: '달빛 아래 검이 그림자를 갈랐다',     trigger: () => false },
+    { key: '月蝕',  label: '월식의 순간에 검을 쥐었다',       verse: '달이 가려진 30초의 천문이 검에 깃들었다', trigger: () => false },
     { key: '元旦',  label: '새해 첫날 검을 단련한 날',        verse: '새해 첫 호흡이 검에 깃들었다',       trigger: () => false },
     { key: '端午',  label: '단오에 검을 단련한 날',           verse: '창포 향이 검의 결에 스며들었다',     trigger: () => false },
     { key: '七夕',  label: '칠석에 검을 단련한 날',           verse: '은하수의 다리가 검 위에 펼쳐졌다',   trigger: () => false },
@@ -15476,6 +15595,7 @@
   renderDailySaying();       // v193 日言 — 매일의 격언 표시
   setInterval(renderDailySaying, 60 * 60 * 1000);  // 자정 경계 자동 갱신
   checkWeeklyReport();       // v196 週報 — 주차 변경 시 자동 리포트
+  setInterval(maybeTriggerEclipse, 60 * 1000);  // v197 月蝕 — 매분 0.5% 체크
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
