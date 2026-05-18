@@ -4699,7 +4699,7 @@
     const rsv = getResolve();
     const successAdd = ((form && form.successBonus) || 0) + soulEffects().successBonus
       + schoolSuccessBonus() + breathBonus() + guardianBonus().successBonus
-      + trialSuccessBonus() + rsv.successAdd + (adversityReady ? 0.40 : 0) + eraSuccessBonus() + enshrineSuccessBonus() + fourWaySuccessBonus() + resonanceBonus() + beastSuccessBonus() + treasureGlobalBonus();
+      + trialSuccessBonus() + rsv.successAdd + (adversityReady ? 0.40 : 0) + eraSuccessBonus() + enshrineSuccessBonus() + fourWaySuccessBonus() + resonanceBonus() + beastSuccessBonus() + treasureGlobalBonus() + mutationSuccessBonus();
     const destroyReduce2 = (form && form.destroyReduce) || 0;
     const effectiveDestroy = Math.max(0, (t.destroy - destroyReduce2 - schoolDestroyReduce() - guardianBonus().destroyReduce - (adversityReady ? 0.12 : 0) - getScarDestroyReduce()) * rsv.destroyMul);
     const trueSuccess = Math.min(1, t.success + successAdd);
@@ -5116,6 +5116,7 @@
     renderWayProgress();
     renderResonanceDisplay();  // v178 共鳴
     syncWaterMirror();  // v182 水鏡
+    applyMutationVisualToSword();  // v199 稟賦 — 검 mutation 시각 glow
     checkBeasts();  // v188 四神 — 잠금 해제 검사 + 코너 표시
     renderSealButton();
     renderCurrentChart();
@@ -5237,7 +5238,7 @@
     const sanctumMulShow = sanctumCostMul();  // v121 結界
     const wishMulShow = wishCostMul();  // v155 寒梅
     const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow * wishMulShow * solarCostMul());
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus() + resonanceBonus() + beastSuccessBonus() + treasureGlobalBonus();
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus() + resonanceBonus() + beastSuccessBonus() + treasureGlobalBonus() + mutationSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
 
@@ -6224,6 +6225,88 @@
     $('weekly-report-content').innerHTML = html;
     $('weekly-report-modal').classList.add('active');
     log('週報 — ' + prevWeek + ' · ' + summary, 'success');
+  }
+
+  // === v199 稟賦 — 새 검 생성 시 무작위 mutation (천부적 재능) ===
+  const MUTATIONS = [
+    { key:'tenshi',  name:'天賜', chance:0.005, verse:'천부의 검 — 시작부터 두 단계 높다',     color:'#fff5c0' },
+    { key:'sohye',   name:'早慧', chance:0.005, verse:'일찍 깨어난 검 — 영혼이 이미 깊다',     color:'#a8c0e8' },
+    { key:'gangol',  name:'強骨', chance:0.005, verse:'강한 골격 — 평생 강화 성공이 높다',     color:'#d4af37' },
+    { key:'isai',    name:'異彩', chance:0.005, verse:'특별한 색이 깃든 검 — 형 색조가 깊다',  color:'#c8a0e8' },
+  ];
+  function rollMutation() {
+    for (const m of MUTATIONS) {
+      if (Math.random() < m.chance) return m;
+    }
+    return null;
+  }
+  function applyMutationToNewSword(mut) {
+    if (!mut || !state.currentSword) return;
+    state.currentSword.mutation = mut.key;
+    // 효과 적용
+    if (mut.key === 'tenshi') {
+      const newLv = Math.min(MAX_LEVEL - 1, (state.level || 0) + 2);
+      state.level = newLv;
+      state.currentSword.startLevel = newLv;
+      state.currentSword.levelHistory = [newLv];
+    }
+    else if (mut.key === 'sohye') {
+      state.currentSword.soul = Math.max(state.currentSword.soul || 0, 30);
+    }
+    // 強骨 효과는 mutationSuccessBonus()로 별도 적용 (영구)
+    // 異彩 효과는 시각만 (mutationVisual 적용)
+    save();
+    showMutationFade(mut);
+  }
+  function mutationSuccessBonus() {
+    if (state.hasSword && state.currentSword && state.currentSword.mutation === 'gangol') return 0.02;
+    return 0;
+  }
+  function showMutationFade(mut) {
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.65);letter-spacing:10px;margin-bottom:18px">稟  賦</div>' +
+                    '<div style="font-size:80px;color:' + mut.color + ';letter-spacing:14px;text-shadow:0 0 38px ' + mut.color + ',0 0 76px ' + mut.color + ';font-weight:200;line-height:1">' + mut.name + '</div>' +
+                    '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:4px;margin-top:22px;font-style:italic;line-height:1.7">' + mut.verse + '</div>' +
+                    '<div style="font-size:9px;color:#888;letter-spacing:3px;margin-top:12px">2% 확률의 천부적 재능</div>';
+    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6100;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:42px 60px;background:radial-gradient(ellipse,rgba(15,15,22,0.94) 0%,rgba(15,15,22,0.65) 60%,transparent 90%);max-width:560px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.16 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.82 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.04)' }
+    ], { duration: 6500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 6600);
+    // 차임
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [330, 440, 660, 880, 1320].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.15);
+          g.gain.exponentialRampToValueAtTime(0.12, ct + i*0.15 + 0.04);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.15 + 2.0);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.15); osc.stop(ct + i*0.15 + 2.1);
+        });
+      }
+    } catch(e) {}
+    log('稟賦 ' + mut.name + ' — ' + mut.verse, 'success');
+  }
+  function mutationVisualGlow() {
+    if (!state.hasSword || !state.currentSword || !state.currentSword.mutation) return '';
+    if (state.currentSword.mutation === 'isai') return 'drop-shadow(0 0 8px rgba(200,160,232,0.6))';
+    if (state.currentSword.mutation === 'tenshi') return 'drop-shadow(0 0 8px rgba(255,245,192,0.55))';
+    if (state.currentSword.mutation === 'sohye') return 'drop-shadow(0 0 8px rgba(168,192,232,0.55))';
+    if (state.currentSword.mutation === 'gangol') return 'drop-shadow(0 0 8px rgba(212,175,55,0.55))';
+    return '';
+  }
+  function applyMutationVisualToSword() {
+    const wrap = $('sword-wrap');
+    if (!wrap) return;
+    const glow = mutationVisualGlow();
+    if (glow) wrap.style.filter = glow;
+    else wrap.style.filter = '';
   }
 
   // === v198 占 — 일일 점쾌 ===
@@ -12983,6 +13066,9 @@
     if ((state.swordGeneration || 0) > 0 && (state.swordGeneration || 0) % 10 === 0) {
       setTimeout(() => showFirstSwordMemory(), 2400);
     }
+    // v199 稟賦 — 새 검 mutation roll (천부적 재능 2% 합)
+    const mut = rollMutation();
+    if (mut) setTimeout(() => applyMutationToNewSword(mut), 3200);
   }
   function maybeShowKigen() {
     if (Math.random() > 0.25) return;
