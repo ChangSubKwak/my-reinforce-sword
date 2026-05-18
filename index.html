@@ -2523,6 +2523,7 @@
   <button id="btn-moongaze">玩  月</button>
   <button id="btn-meishi">劍 名 片</button>
   <button id="btn-constellation">星 圖</button>
+  <button id="btn-seal-edit">印  章</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -3112,6 +3113,21 @@
   </div>
 </div>
 
+<!-- v187 印 — 사용자 한자 인장 -->
+<div class="modal" id="seal-modal">
+  <div class="modal-box" style="max-width: 460px;">
+    <h2>印 章 — 당신의 서명</h2>
+    <p>2자의 한자를 선택하라 — 당신의 검에 새겨질 인장</p>
+    <div id="seal-preview" style="display:flex;justify-content:center;align-items:center;margin:14px 0;height:90px"></div>
+    <div id="seal-palette" style="margin:10px 0"></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:10px">
+      <button id="seal-clear" style="background:transparent;color:#a8a098">초 기 화</button>
+      <button id="seal-confirm">확 정</button>
+      <button class="modal-close" data-close>닫 기</button>
+    </div>
+  </div>
+</div>
+
 <!-- v186 星圖 — 봉인 검의 별자리 -->
 <div class="modal" id="constellation-modal">
   <div class="modal-box" style="max-width: 720px; padding: 18px;">
@@ -3611,6 +3627,7 @@
     firstWayReached: false,  // v16 始祖 — 첫 道 도달 시 true, 영구
     lastSolarTerm: null,  // v177 節氣 — 마지막 발견된 절기 key
     stalematePending: false,  // v183 對峙 — 직전 對峙 후 다음 그림자 type 미리 보임 플래그
+    userSeal: [],  // v187 印 — 사용자 한자 2자 인장 (e.g. ['天','心'])
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -5536,6 +5553,92 @@
     log('老師 — ' + t.verse, 'success');
   }
 
+  // === v187 印 — 사용자 인장 (한자 2자 서명) ===
+  const SEAL_HANJI = {
+    '天': ['天','日','月','星','風','雨'],
+    '地': ['山','水','石','江','海','土'],
+    '人': ['心','志','義','勇','靜','誠'],
+    '道': ['道','虛','無','寂','禪','空'],
+  };
+  let sealEditing = [];  // [c1, c2] during editing
+  function renderSealPalette() {
+    const wrap = $('seal-palette');
+    if (!wrap) return;
+    let html = '';
+    Object.keys(SEAL_HANJI).forEach(theme => {
+      html += '<div style="margin:8px 0"><div style="font-size:9px;letter-spacing:6px;color:#888;margin-bottom:4px">' + theme + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">';
+      SEAL_HANJI[theme].forEach(c => {
+        const isSelected = sealEditing.indexOf(c) >= 0;
+        const idx = sealEditing.indexOf(c);
+        html += '<button class="seal-char-btn" data-char="' + c + '" style="width:38px;height:38px;font-size:18px;font-family:\'Noto Serif KR\',serif;background:' + (isSelected ? '#c0393a' : '#1a1a22') + ';color:' + (isSelected ? '#fff5c0' : '#e8e6dd') + ';border:1px solid ' + (isSelected ? '#c0393a' : '#3a3a44') + ';cursor:pointer;padding:0;letter-spacing:0;transition:all 0.2s' + (isSelected ? ';box-shadow:0 0 12px rgba(192,57,58,0.6)' : '') + '">' + c + (isSelected ? '<span style="font-size:8px;display:block;margin-top:-2px">' + (idx+1) + '</span>' : '') + '</button>';
+      });
+      html += '</div></div>';
+    });
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('.seal-char-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const c = e.currentTarget.dataset.char;
+        const idx = sealEditing.indexOf(c);
+        if (idx >= 0) sealEditing.splice(idx, 1);
+        else if (sealEditing.length < 2) sealEditing.push(c);
+        else { sealEditing.shift(); sealEditing.push(c); }
+        renderSealPalette();
+        renderSealPreview();
+      });
+    });
+  }
+  function renderSealPreview() {
+    const wrap = $('seal-preview');
+    if (!wrap) return;
+    if (sealEditing.length === 0) {
+      wrap.innerHTML = '<div style="font-size:10px;letter-spacing:4px;color:rgba(168,168,168,0.5);font-style:italic">한자 2자를 선택하라</div>';
+      return;
+    }
+    wrap.innerHTML = buildSealSVG(sealEditing, 70);
+  }
+  function buildSealSVG(chars, size) {
+    if (!chars || chars.length === 0) return '';
+    const s = size || 56;
+    const lineH = s / chars.length;
+    let svg = '<svg width="' + s + '" height="' + s + '" viewBox="0 0 ' + s + ' ' + s + '" xmlns="http://www.w3.org/2000/svg" style="display:block">';
+    // 붉은 사각 배경
+    svg += '<rect x="2" y="2" width="' + (s-4) + '" height="' + (s-4) + '" fill="#a02828" stroke="#7a1010" stroke-width="1.5" rx="1"/>';
+    // 내부 inner border
+    svg += '<rect x="5" y="5" width="' + (s-10) + '" height="' + (s-10) + '" fill="none" stroke="rgba(255,245,220,0.45)" stroke-width="0.4"/>';
+    // 한자 — 세로 배치
+    chars.forEach((c, i) => {
+      const y = (i + 0.5) * lineH;
+      svg += '<text x="' + (s/2) + '" y="' + (y + lineH * 0.18) + '" font-family="Noto Serif KR, serif" font-size="' + (lineH * 0.7) + '" fill="#fff5dc" text-anchor="middle" font-weight="600" letter-spacing="0">' + c + '</text>';
+    });
+    svg += '</svg>';
+    return svg;
+  }
+  function userSealMeishi(chars, x, y) {
+    if (!chars || chars.length === 0) return '';
+    const s = 42;
+    let svg = '';
+    const lineH = s / chars.length;
+    svg += '<rect x="' + x + '" y="' + y + '" width="' + s + '" height="' + s + '" fill="#a02828" stroke="#7a1010" stroke-width="1.2" rx="1"/>';
+    svg += '<rect x="' + (x+3) + '" y="' + (y+3) + '" width="' + (s-6) + '" height="' + (s-6) + '" fill="none" stroke="rgba(255,245,220,0.45)" stroke-width="0.3"/>';
+    chars.forEach((c, i) => {
+      const cy = y + (i + 0.5) * lineH + lineH * 0.18;
+      svg += '<text x="' + (x + s/2) + '" y="' + cy + '" font-family="Noto Serif KR, serif" font-size="' + (lineH * 0.7) + '" fill="#fff5dc" text-anchor="middle" font-weight="600">' + c + '</text>';
+    });
+    return svg;
+  }
+  function showSealEditor() {
+    sealEditing = (state.userSeal || []).slice();
+    renderSealPalette();
+    renderSealPreview();
+    $('seal-modal').classList.add('active');
+  }
+  function confirmSeal() {
+    state.userSeal = sealEditing.slice();
+    save();
+    log('印 — 인장이 ' + (state.userSeal.length ? state.userSeal.join('·') + '으로 새겨졌다' : '비워졌다'), 'success');
+    $('seal-modal').classList.remove('active');
+  }
+
   // === v186 星圖 — 봉인 검의 별자리 ===
   function renderConstellation() {
     const canvas = $('constellation-canvas');
@@ -5721,6 +5824,7 @@
 
   <!-- bottom signature -->
   <text x="${W/2}" y="${H-16}" font-family="Noto Serif KR, serif" font-size="8" letter-spacing="4" fill="#555" text-anchor="middle">劍 強 化 ─ ${new Date().toISOString().slice(0,10)}</text>
+  ${userSealMeishi(state.userSeal, 24, H - 60)}
 </svg>`;
   }
   function showMeishi() {
@@ -13276,6 +13380,17 @@
     $('menu-drop').classList.remove('open');
     renderConstellation();
     $('constellation-modal').classList.add('active');
+  });
+  // v187 印 — 인장 편집
+  if ($('btn-seal-edit')) $('btn-seal-edit').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    showSealEditor();
+  });
+  if ($('seal-confirm')) $('seal-confirm').addEventListener('click', confirmSeal);
+  if ($('seal-clear')) $('seal-clear').addEventListener('click', () => {
+    sealEditing = [];
+    renderSealPalette();
+    renderSealPreview();
   });
   if ($('bunshu-prev')) $('bunshu-prev').addEventListener('click', () => {
     if (bunshuIndex > 0) { bunshuIndex--; renderBunshuPage(); }
