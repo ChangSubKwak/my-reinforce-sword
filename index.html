@@ -2599,6 +2599,7 @@
   <button id="btn-oracle">占</button>
   <button id="btn-theme">配</button>
   <button id="btn-engrave">字</button>
+  <button id="btn-diary">自  書</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -3189,6 +3190,20 @@
     <p>도(道)에 이른 검들의 일생을 시구로</p>
     <div id="anthology-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
     <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- v210 自書 — 사용자 자유 일기 -->
+<div class="modal" id="diary-modal">
+  <div class="modal-box" style="max-width: 500px;">
+    <h2>自 書</h2>
+    <p>자유롭게 한 줄, 또는 여러 줄 — 검의 길에 새기는 당신의 글</p>
+    <textarea id="diary-input" placeholder="검을 쥐고 무엇을 생각하나..." style="width:100%;min-height:80px;padding:10px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;border-radius:2px;color:#e8e6dd;font-family:'Noto Serif KR',serif;font-size:12px;letter-spacing:2px;resize:vertical;line-height:1.7"></textarea>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:10px">
+      <button id="diary-save">기록</button>
+      <button class="modal-close" data-close>닫 기</button>
+    </div>
+    <div id="diary-list" style="margin-top:16px;max-height:300px;overflow-y:auto;padding-right:4px"></div>
   </div>
 </div>
 
@@ -3828,6 +3843,7 @@
     oracleResultIdx: null,      // v198 占 — 오늘 점 결과 인덱스
     visualTheme: '',            // v201 配 — 시각 테마 ('' = 古 / 'tsuki' / 'akatsuki' / 'yuki')
     lastPluckedDate: '',        // v208 拈花 — 마지막 蘭 꽃 꺾은 날짜
+    userDiary: [],              // v210 自書 — 사용자 자유 일기 항목 배열
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -6453,6 +6469,71 @@
     bookPageIdx = 0;
     renderBookPage(0);
     $('codex-book-modal').classList.add('active');
+  }
+
+  // === v210 自書 — 사용자 자유 일기 ===
+  const DIARY_MAX = 50;
+  function saveDiaryEntry() {
+    const input = $('diary-input');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text || text.length > 500) {
+      if (text.length > 500) log('自書 — 500자 이내로', 'warn');
+      return;
+    }
+    if (!state.userDiary || !Array.isArray(state.userDiary)) state.userDiary = [];
+    state.userDiary.unshift({
+      ts: Date.now(),
+      text: text,
+      gen: state.swordGeneration || 1,
+      level: state.hasSword ? state.level : -1,
+    });
+    if (state.userDiary.length > DIARY_MAX) state.userDiary = state.userDiary.slice(0, DIARY_MAX);
+    save();
+    input.value = '';
+    renderDiaryList();
+    log('自書 — 한 줄 기록되었다', 'success');
+  }
+  function deleteDiaryEntry(idx) {
+    if (!state.userDiary || !state.userDiary[idx]) return;
+    state.userDiary.splice(idx, 1);
+    save();
+    renderDiaryList();
+  }
+  function renderDiaryList() {
+    const wrap = $('diary-list');
+    if (!wrap) return;
+    const list = state.userDiary || [];
+    if (list.length === 0) {
+      wrap.innerHTML = '<div style="text-align:center;padding:20px;color:#666;font-size:10px;letter-spacing:3px;font-style:italic">아직 기록 없음 — 첫 한 줄을 남기라</div>';
+      return;
+    }
+    let html = '<div style="font-size:9px;letter-spacing:3px;color:#888;margin-bottom:8px;text-align:right">' + list.length + ' / ' + DIARY_MAX + '</div>';
+    list.forEach((e, idx) => {
+      const date = new Date(e.ts);
+      const dateStr = date.toLocaleDateString('ko-KR', { month:'2-digit', day:'2-digit' }) + ' ' + String(date.getHours()).padStart(2,'0') + ':' + String(date.getMinutes()).padStart(2,'0');
+      const lvLabel = e.level >= 0 ? ('+' + e.level) : '검 없음';
+      const safeText = String(e.text).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      html += '<div style="margin:8px 0;padding:10px 12px;border-left:2px solid rgba(212,175,55,0.4);background:rgba(20,20,28,0.4);position:relative">';
+      html += '<div style="font-size:9px;letter-spacing:3px;color:#888;margin-bottom:6px;display:flex;justify-content:space-between">';
+      html += '<span>' + dateStr + ' · ' + e.gen + '代 · ' + lvLabel + '</span>';
+      html += '<button data-diary-del="' + idx + '" style="background:transparent;color:#666;border:none;font-family:inherit;font-size:10px;cursor:pointer;padding:0;letter-spacing:2px">×</button>';
+      html += '</div>';
+      html += '<div style="font-size:11px;letter-spacing:2px;line-height:1.7;color:#e8e6dd;font-family:\'Noto Serif KR\',serif;white-space:pre-wrap">' + safeText + '</div>';
+      html += '</div>';
+    });
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('[data-diary-del]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const i = parseInt(e.currentTarget.dataset.diaryDel, 10);
+        if (confirm('이 기록을 지울까요?')) deleteDiaryEntry(i);
+      });
+    });
+  }
+  function openDiary() {
+    renderDiaryList();
+    $('diary-modal').classList.add('active');
+    setTimeout(() => { if ($('diary-input')) $('diary-input').focus(); }, 100);
   }
 
   // === v209 助言 — 사용자 상태 기반 다음 행동 미세 안내 ===
@@ -15545,6 +15626,15 @@
     showEngraveModal();
   });
   if ($('engrave-confirm')) $('engrave-confirm').addEventListener('click', confirmEngrave);
+  // v210 自書
+  if ($('btn-diary')) $('btn-diary').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    openDiary();
+  });
+  if ($('diary-save')) $('diary-save').addEventListener('click', saveDiaryEntry);
+  if ($('diary-input')) $('diary-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveDiaryEntry(); }
+  });
   if ($('gallery-pause')) $('gallery-pause').addEventListener('click', (e) => {
     galleryPaused = !galleryPaused;
     e.currentTarget.textContent = galleryPaused ? '▶' : '⏸';
