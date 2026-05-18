@@ -3900,6 +3900,7 @@
     lastWeekendGreeting: '',    // v212 休 — 마지막 주말 인사 날짜
     lastThreeRitualsDate: '',   // v214 三禮 — 일일 3 의식 완성 날짜
     todaySheet: null,           // v215 帖 — 오늘 24시간 시트 {date, hours[24]}
+    discoveredEggs: {},         // v216 秘 — 발견된 이스터에그 {key: timestamp}
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -6571,6 +6572,72 @@
     else html += '몇몇 순간 검의 길 위에';
     html += '</div>';
     wrap.innerHTML = html;
+  }
+
+  // === v216 秘 — 숨겨진 3 이스터에그 ===
+  const EASTER_EGGS = {
+    'twin1111': { kanji:'雙', verse:'11:11 — 두 1이 검을 만났다', label:'시각의 일치' },
+    'midnight': { kanji:'子', verse:'자정의 봉인 — 새 날의 첫 검', label:'子時의 발견' },
+    'rapid5':   { kanji:'流', verse:'한 호흡에 다섯 — 흐름이 검을 이끈다', label:'流의 발견' },
+  };
+  let rapidActionBuffer = [];
+  function discoverEgg(key) {
+    if (!state.discoveredEggs) state.discoveredEggs = {};
+    if (state.discoveredEggs[key]) return;
+    state.discoveredEggs[key] = Date.now();
+    // 명문 추가
+    const egg = EASTER_EGGS[key];
+    if (state.hasSword && state.currentSword) {
+      if (!state.currentSword.inscriptions) state.currentSword.inscriptions = [];
+      if (state.currentSword.inscriptions.indexOf(egg.kanji) < 0) state.currentSword.inscriptions.push(egg.kanji);
+    }
+    save();
+    showEggFade(egg);
+  }
+  function showEggFade(egg) {
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:9px;color:rgba(200,160,232,0.7);letter-spacing:12px;margin-bottom:18px">秘 — ' + egg.label + '</div>' +
+                    '<div style="font-size:80px;color:#c8a0e8;letter-spacing:14px;text-shadow:0 0 36px #c8a0e8,0 0 72px rgba(200,160,232,0.4);font-weight:200;line-height:1">' + egg.kanji + '</div>' +
+                    '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:22px;font-style:italic">' + egg.verse + '</div>' +
+                    '<div style="font-size:9px;color:#888;letter-spacing:3px;margin-top:12px">우연의 발견 — 영구 1회</div>';
+    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6100;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:42px 60px;background:radial-gradient(ellipse,rgba(20,15,28,0.94) 0%,rgba(20,15,28,0.6) 60%,transparent 90%);max-width:540px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.16 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.82 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.04)' }
+    ], { duration: 6500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 6600);
+    // 신비한 종 — 4음 chromatic
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [392, 415, 466, 622].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.18);
+          g.gain.exponentialRampToValueAtTime(0.12, ct + i*0.18 + 0.05);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.18 + 2.5);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.18); osc.stop(ct + i*0.18 + 2.6);
+        });
+      }
+    } catch(e) {}
+    log('秘 ' + egg.kanji + ' — ' + egg.verse, 'success');
+  }
+  function checkEgg11_11() {
+    const now = new Date();
+    if (now.getHours() === 11 && now.getMinutes() === 11) discoverEgg('twin1111');
+  }
+  function checkEggMidnight() {
+    const now = new Date();
+    if (now.getHours() === 0 && now.getMinutes() < 15) discoverEgg('midnight');
+  }
+  function recordRapidAction() {
+    const now = Date.now();
+    rapidActionBuffer.push(now);
+    rapidActionBuffer = rapidActionBuffer.filter(t => now - t < 60000);
+    if (rapidActionBuffer.length >= 5) discoverEgg('rapid5');
   }
 
   // === v214 三禮 — 占/籤/拈花 일일 3 의식 완성 보너스 ===
@@ -10646,6 +10713,9 @@
     recordHourActivity();  // v195 時計
     recordTodayHour();  // v215 帖
     pulseHeartbeat(1.5);  // v205 心拍
+    // v216 秘 — 11:11 + rapid 체크
+    checkEgg11_11();
+    recordRapidAction();
     if (((state.stats && state.stats.enhanceAttempts) || 0) === 100) setTimeout(() => maybeMaster('hundredEnhance'), 1500);  // v181 老師
     consumeMatsu();  // v119 千年松 카운트 소모
     consumeDawnBonus();  // v126 黎明 — 보너스 카운트 소모
@@ -12337,6 +12407,7 @@
       recordHourActivity();  // v195 時計
       recordTodayHour();  // v215 帖
       pulseHeartbeat(2.0);  // v205 心拍 — 베기는 큰 spike
+      recordRapidAction();  // v216 秘 — rapid 체크
       if (c.type.key === 'normal') bumpStat('slainNormal');
       else if (c.type.key === 'flee') bumpStat('slainFlee');
       else if (c.type.key === 'steel') bumpStat('slainSteel');
@@ -13966,6 +14037,9 @@
     { key: '半',   label: '연속 강화 성공 72회',              verse: '달이 반쯤 차올랐다',                trigger: () => false },
     { key: '圓',   label: '연속 강화 성공 108회',             verse: '둥글게 닫힌 길',                    trigger: () => false },
     { key: '精進', label: '한 세션 3시간 정진',                verse: '머무름이 길의 일부였다',             trigger: () => false },
+    { key: '雙',   label: '11:11 강화의 우연',                  verse: '두 개의 1이 검과 만났다',           trigger: () => false },
+    { key: '子',   label: '자정에 검을 봉인했다',               verse: '새 날의 첫 순간이 검에 깃들었다',   trigger: () => false },
+    { key: '流',   label: '한 호흡에 다섯 액션 흐름',           verse: '검과 사용자가 한 강이 되었다',       trigger: () => false },
     { key: '元旦',  label: '새해 첫날 검을 단련한 날',        verse: '새해 첫 호흡이 검에 깃들었다',       trigger: () => false },
     { key: '端午',  label: '단오에 검을 단련한 날',           verse: '창포 향이 검의 결에 스며들었다',     trigger: () => false },
     { key: '七夕',  label: '칠석에 검을 단련한 날',           verse: '은하수의 다리가 검 위에 펼쳐졌다',   trigger: () => false },
@@ -14693,6 +14767,9 @@
     recordHourActivity();  // v195 時計
     recordTodayHour();  // v215 帖
     pulseHeartbeat(2.5);  // v205 心拍 — 봉인은 깊은 spike
+    // v216 秘 — 자정 봉인 체크 + rapid
+    checkEggMidnight();
+    recordRapidAction();
     setTimeout(() => maybeDropTreasure(), 1400);  // v189 七寶 — 봉인 시 보물 drop 시도
     if (isWay) bumpStat('wayReached');
     recordEvent('판매 ' + swordName + ' +' + reward + ' 조각');
