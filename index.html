@@ -2055,6 +2055,21 @@
     letter-spacing: 4px;
   }
   .challenge-btn.flee:hover { border-color: var(--dim); color: var(--fg); background: transparent; }
+  /* v183 對峙 — 평화의 길 */
+  .challenge-btn.stalemate {
+    border-color: rgba(168, 192, 232, 0.55);
+    color: rgba(168, 192, 232, 0.85);
+    background: rgba(15, 25, 45, 0.35);
+  }
+  .challenge-btn.stalemate:hover:not(:disabled) {
+    border-color: rgba(168, 192, 232, 0.9);
+    color: #d8e4f0;
+    background: rgba(20, 35, 60, 0.6);
+  }
+  .challenge-btn.stalemate:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
   .challenge-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
   /* 모달 */
@@ -2899,6 +2914,7 @@
       <div id="challenge-timer" style="display:none;text-align:center;font-size:10px;letter-spacing:3px;margin:6px 0;font-style:italic"></div>
       <div id="challenge-actions">
         <button class="challenge-btn" id="btn-slay"><span>베 기</span><span id="slay-reward-label" style="color:var(--accent);margin-left:8px;font-size:11px;letter-spacing:3px">+0</span></button>
+        <button class="challenge-btn stalemate" id="btn-stalemate"><span>對 峙</span><span id="stalemate-cost-label" style="color:#888;margin-left:8px;font-size:11px;letter-spacing:3px">-0</span></button>
         <button class="challenge-btn flee" id="btn-flee">도 망</button>
       </div>
     </div>
@@ -3558,6 +3574,7 @@
     divinationStones: 0,  // v122 占卜 — 정확한 전조
     firstWayReached: false,  // v16 始祖 — 첫 道 도달 시 true, 영구
     lastSolarTerm: null,  // v177 節氣 — 마지막 발견된 절기 key
+    stalematePending: false,  // v183 對峙 — 직전 對峙 후 다음 그림자 type 미리 보임 플래그
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -8331,6 +8348,15 @@
     const chance = Math.min(CHALLENGE_MAX_CHANCE, (CHALLENGE_BASE_CHANCE + state.level * CHALLENGE_LEVEL_BONUS) * seasonMul);
     if (Math.random() >= chance) return;
     const type = rollShadowType();
+    // v183 對峙 — 직전 對峙로 이번 그림자 type 미리 보임
+    if (state.stalematePending) {
+      state.stalematePending = false;
+      setTimeout(() => {
+        inscribeQueue.push({ key: '影', label: '예지 — ' + type.name + '이 다가왔다' });
+        if (!inscribeRunning) runInscribeQueue();
+      }, 200);
+      save();
+    }
     let strength, reward;
     if (type.isDemon) {
       strength = state.bestLevel + 5;
@@ -9225,6 +9251,7 @@
   function showChallenge() {
     const t = challenge.type;
     setChallengeBodyClass(true);  // v182 水鏡 hide
+    updateStalemateButton();  // v183 對峙
     applyAmbientMode('crisis');
     // 검 종류별 시각 클래스
     shadowForm.className = '';
@@ -9542,8 +9569,66 @@
     render();
   }
 
+  // v183 對峙 — 평화의 길 (양보 + 다음 그림자 type 미리 보임)
+  function stalemateCost() {
+    if (!challenge) return 0;
+    return 10 + Math.ceil(challenge.strength * 1.2);
+  }
+  function stalemate() {
+    if (!challenge) return;
+    const cost = stalemateCost();
+    if (state.shards < cost) {
+      log('조각 부족 — 對峙 비용 ' + cost, 'destroy');
+      return;
+    }
+    const c = challenge;
+    challenge = null;
+    state.shards -= cost;
+    const soulGain = c.namedFoeKey ? 12 : (c.type.isDemon ? 10 : 5);
+    if (typeof addSoul === 'function') addSoul(soulGain);
+    bumpStat('stalemate');
+    // 다음 그림자 type 힌트
+    state.nextShadowHint = null;  // 새로 결정될 때 다음번에 보일
+    state.stalematePending = true;  // 다음 challenge spawn 시 hint 표시
+    log('對峙 — 그림자에게 양보 (조각 -' + cost + ', 영혼 +' + soulGain + ', 다음 影을 미리 본다)', 'success');
+    // 시각: 그림자가 깊이 절하며 사라짐
+    const shadowForm = $('shadow-form');
+    if (shadowForm) {
+      shadowForm.animate([
+        { opacity: 1, transform: 'translateY(0) scale(1)' },
+        { opacity: 0.5, transform: 'translateY(8px) scale(0.95)', offset: 0.5 },
+        { opacity: 0, transform: 'translateY(20px) scale(0.85)' }
+      ], { duration: 900, easing: 'ease-in' });
+    }
+    // 평화의 종 — 단음 부드러운
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [392, 523].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.3);
+          g.gain.exponentialRampToValueAtTime(0.14, ct + i*0.3 + 0.04);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.3 + 2.0);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.3); osc.stop(ct + i*0.3 + 2.1);
+        });
+      }
+    } catch(e) {}
+    setTimeout(() => endChallenge(), 950);
+    save();
+  }
+  function updateStalemateButton() {
+    const btn = $('btn-stalemate');
+    const label = $('stalemate-cost-label');
+    if (!btn || !challenge) return;
+    const cost = stalemateCost();
+    if (label) label.textContent = '-' + cost;
+    btn.disabled = state.shards < cost;
+  }
+
   $('btn-slay').addEventListener('click', slay);
   $('btn-flee').addEventListener('click', flee);
+  $('btn-stalemate').addEventListener('click', stalemate);
 
   // === 魂 — 검의 후천적 의식 (게이지 0~100) ===
   const SOUL_MAX = 100;
