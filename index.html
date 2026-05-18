@@ -2419,11 +2419,14 @@
     right: 14px;
     width: 32px;
     height: 48px;
-    pointer-events: none;
+    pointer-events: auto;
     z-index: 4;
     opacity: 0.7;
-    transition: opacity 2s ease;
+    transition: opacity 2s ease, transform 0.4s ease;
+    cursor: pointer;
   }
+  #stage-orchid:hover { transform: scale(1.18); opacity: 1; }
+  #stage-orchid.plucked { pointer-events: none; opacity: 0.45; cursor: default; }
   body.tod-morning #stage-orchid { opacity: 0.85; }
   body.tod-day #stage-orchid { opacity: 0.6; }
   body.tod-night #stage-orchid { opacity: 0.5; }
@@ -3824,6 +3827,7 @@
     oracleResultDate: '',       // v198 占 — 오늘 점 받은 날짜
     oracleResultIdx: null,      // v198 占 — 오늘 점 결과 인덱스
     visualTheme: '',            // v201 配 — 시각 테마 ('' = 古 / 'tsuki' / 'akatsuki' / 'yuki')
+    lastPluckedDate: '',        // v208 拈花 — 마지막 蘭 꽃 꺾은 날짜
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -5190,6 +5194,9 @@
     syncWaterMirror();  // v182 水鏡
     applyMutationVisualToSword();  // v199 稟賦 — 검 mutation 시각 glow
     applyEngravingToSword();  // v203 字 — 사용자 한자 새김 override
+    // v208 拈花 — 蘭 plucked 상태 토글 (오늘 이미 꺾었으면)
+    const orchidEl = $('stage-orchid');
+    if (orchidEl) orchidEl.classList.toggle('plucked', !canPluckToday());
     checkBeasts();  // v188 四神 — 잠금 해제 검사 + 코너 표시
     renderSealButton();
     renderCurrentChart();
@@ -6445,6 +6452,93 @@
     bookPageIdx = 0;
     renderBookPage(0);
     $('codex-book-modal').classList.add('active');
+  }
+
+  // === v208 拈花 — 蘭 꽃 일일 1회 클릭 ===
+  const PLUCK_VERSES = [
+    '한 송이를 꺾으니 봄이 손에 머문다',
+    '꽃은 베어도 향이 남는다',
+    '난초 한 송이 — 검의 무거움이 가벼워졌다',
+    '꽃잎이 검 위에 떨어졌다',
+    '잠시의 향 — 검의 길에 깃든다',
+    '꺾인 꽃이 더 오래 산다 — 마음 속에서',
+    '난초의 침묵이 검에 스며들었다',
+    '한 송이는 천 개의 봄이다',
+    '꽃을 따는 손은 검을 쥔 손이다',
+    '향은 사라지지만 그 순간은 영원하다',
+    '꽃잎 떨어지는 소리도 검의 일부다',
+    '난초 한 송이 — 백 자루의 검과 같은 무게',
+  ];
+  function canPluckToday() {
+    const today = new Date().toISOString().slice(0, 10);
+    return state.lastPluckedDate !== today;
+  }
+  function pluckOrchid() {
+    if (!canPluckToday()) {
+      log('拈花 — 오늘은 이미 한 송이 꺾었다', 'info');
+      return;
+    }
+    const ways = (state.stats && state.stats.wayReached) || 0;
+    if (ways < 1) {
+      log('拈花 — 蘭이 아직 피지 않았다 (道 1회 도달 필요)', 'warn');
+      return;
+    }
+    state.lastPluckedDate = new Date().toISOString().slice(0, 10);
+    // 보상
+    if (state.hasSword) addSoul(5);
+    else state.shards = (state.shards || 0) + 5;
+    // verse
+    const verse = PLUCK_VERSES[Math.floor(Math.random() * PLUCK_VERSES.length)];
+    save();
+    // 페이드
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:9px;color:rgba(232,168,192,0.7);letter-spacing:8px;margin-bottom:12px">拈  花</div>' +
+                    '<div style="font-size:14px;color:#f8d4d8;letter-spacing:4px;line-height:1.7;font-style:italic">' + verse + '</div>' +
+                    '<div style="font-size:9px;color:rgba(168,200,168,0.7);letter-spacing:3px;margin-top:12px">' + (state.hasSword ? '영혼 +5' : '조각 +5') + '</div>';
+    el.style.cssText = 'position:fixed;top:38%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5300;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:24px 40px;background:radial-gradient(ellipse,rgba(20,15,18,0.85) 0%,rgba(20,15,18,0.3) 70%,transparent 95%);max-width:520px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.92)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.2 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.78 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.04)' }
+    ], { duration: 5000, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 5100);
+    // 꽃잎 흩날림 — 8개
+    const orchid = $('stage-orchid');
+    if (orchid) {
+      const rect = orchid.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      for (let i = 0; i < 8; i++) {
+        const petal = document.createElement('div');
+        petal.style.cssText = 'position:fixed;left:' + cx + 'px;top:' + cy + 'px;width:6px;height:6px;background:radial-gradient(circle,#f8a8c0,#a85878);border-radius:50% 0 50% 0;transform:rotate(45deg);pointer-events:none;z-index:30;opacity:0.85';
+        document.body.appendChild(petal);
+        const dx = (Math.random() - 0.5) * 120;
+        const dy = 80 + Math.random() * 80;
+        const rot = Math.random() * 720;
+        petal.animate([
+          { transform: 'translate(0,0) rotate(0deg)', opacity: 0.85 },
+          { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + rot + 'deg)', opacity: 0 }
+        ], { duration: 2200 + i * 100, easing: 'ease-in', delay: i * 60 });
+        setTimeout(() => petal.remove(), 2600 + i * 160);
+      }
+    }
+    // 차임
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [660, 880, 1100].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.1);
+          g.gain.exponentialRampToValueAtTime(0.10, ct + i*0.1 + 0.03);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.1 + 1.5);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.1); osc.stop(ct + i*0.1 + 1.6);
+        });
+      }
+    } catch(e) {}
+    log('拈花 — ' + verse, 'success');
   }
 
   // === v207 精進 — 한 세션 머무름 마일스톤 ===
@@ -16407,6 +16501,11 @@
   checkWeeklyReport();       // v196 週報 — 주차 변경 시 자동 리포트
   setInterval(maybeTriggerEclipse, 60 * 1000);  // v197 月蝕 — 매분 0.5% 체크
   startHeartbeat();  // v205 心拍 — ECG 맥박 시작
+  // v208 拈花 — 蘭 클릭 가능 (조건 만족 시)
+  if ($('stage-orchid')) {
+    $('stage-orchid').addEventListener('click', pluckOrchid);
+    $('stage-orchid').title = '拈花 — 일일 1회, 蘭이 핀 후';
+  }
   renderSidinMark();  // v206 時辰 — 12지간 초기 표시
   setInterval(renderSidinMark, 5 * 60 * 1000);  // 5분 간격 갱신
   setInterval(checkSessionMilestones, 60 * 1000);  // v207 精進 — 매분 세션 마일스톤 체크
