@@ -2526,6 +2526,7 @@
   <button id="btn-seal-edit">印  章</button>
   <button id="btn-beasts">四  神</button>
   <button id="btn-treasures">七  寶</button>
+  <button id="btn-userpoem">吾  詩</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -3112,6 +3113,18 @@
     <p>도(道)에 이른 검들의 일생을 시구로</p>
     <div id="anthology-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
     <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- v190 吾詩 — 사용자 자신의 시 -->
+<div class="modal" id="user-poem-modal">
+  <div class="modal-box" style="max-width: 480px;">
+    <div id="user-poem-content" style="padding:16px 20px"></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+      <button id="poem-refresh">새 ─ 풀이</button>
+      <button id="poem-download">SVG 저장</button>
+      <button class="modal-close" data-close>닫 기</button>
+    </div>
   </div>
 </div>
 
@@ -5576,6 +5589,146 @@
       }
     } catch (e) {}
     log('老師 — ' + t.verse, 'success');
+  }
+
+  // === v190 吾詩 — 사용자 자신의 5행 시 (자동 생성) ===
+  const POEM_LINES = {
+    opening: [
+      '한 자루의 검을 빚어',
+      '검의 길 위에 서서',
+      '도(道)를 향한 발걸음 위에',
+      '검과 그림자 사이의 침묵에서',
+      '그림자가 깊은 밤,',
+      '강철의 결마다 마음을 새겨',
+    ],
+    form: {
+      '直': ['곧은 칼날의 길을 따라', '강직의 검을 쥐고', '한 직선의 마음으로'],
+      '曲': ['굽은 칼날의 길을 따라', '유연의 검을 들고', '강물처럼 휘어'],
+      '重': ['무거운 검의 무게를 지고', '느린 강철의 길에서', '중후의 검을 받아들여'],
+      '速': ['바람처럼 빠른 검과', '신속의 칼을 휘둘러', '한 호흡보다 빨리'],
+      'null': ['형을 정하지 않은 검과', '아직 본성을 모르는 칼과'],
+    },
+    achievement: [
+      '{N}대의 검을 봉인하였다',
+      '{N}자루 검의 일생을 보았다',
+      '{N}번의 끝과 시작을 지나',
+      '봉인된 {N}자루 검이 별이 되었다',
+    ],
+    season: {
+      'spring': ['봄날 꽃잎 사이에서', '복숭아꽃 흩날리는 봄에', '봄 흙냄새 깊은 곳에서'],
+      'summer': ['반딧불 떠다니는 여름밤,', '여름 빗방울처럼', '뜨거운 여름 검에 스며'],
+      'autumn': ['단풍 떨어지는 가을 산에서', '서늘한 가을바람을 들으며', '가을 깊은 호흡 끝에'],
+      'winter': ['눈 내리는 겨울 밤,', '얼어붙은 강 위 침묵에서', '겨울의 긴 어둠 속에서'],
+    },
+    closing: [
+      '검은 깊어진다',
+      '다음 한 번을 기다린다',
+      '길은 멈추지 않는다',
+      '검과 사람은 하나가 된다',
+      '아직 길의 끝은 보이지 않는다',
+      '오늘도 검을 쥐었다',
+      '도(道)는 멀지 않다',
+    ],
+  };
+  function dominantFormFromSealedSwords() {
+    const counts = { '直':0, '曲':0, '重':0, '速':0 };
+    (state.sealedSwords || []).forEach(s => { if (s.form && counts[s.form] !== undefined) counts[s.form]++; });
+    let max = 0, dom = null;
+    Object.keys(counts).forEach(f => { if (counts[f] > max) { max = counts[f]; dom = f; } });
+    if (state.hasSword && state.currentSword && state.currentSword.form && !dom) return state.currentSword.form;
+    return dom;
+  }
+  function pickPoemLine(pool, seed) {
+    const r = (seed * 2654435761) >>> 0;
+    return pool[r % pool.length];
+  }
+  let poemRerollSeed = 0;
+  function composeUserPoem() {
+    const sealed = (state.sealedSwords || []).length;
+    const ways = (state.stats && state.stats.wayReached) || 0;
+    const dom = dominantFormFromSealedSwords();
+    const seasonCat = seasonalCategory();
+    const seed = (state.swordGeneration || 1) * 100 + sealed * 17 + ways * 13 + poemRerollSeed * 31;
+    // 5행 구성
+    const lines = [];
+    lines.push(pickPoemLine(POEM_LINES.opening, seed));
+    const formPool = POEM_LINES.form[dom || 'null'] || POEM_LINES.form['null'];
+    lines.push(pickPoemLine(formPool, seed + 1));
+    let achLine = pickPoemLine(POEM_LINES.achievement, seed + 2);
+    achLine = achLine.replace('{N}', sealed);
+    lines.push(achLine);
+    const seasonPool = POEM_LINES.season[seasonCat] || POEM_LINES.season['spring'];
+    lines.push(pickPoemLine(seasonPool, seed + 3));
+    lines.push(pickPoemLine(POEM_LINES.closing, seed + 4));
+    return lines;
+  }
+  function renderUserPoem() {
+    const wrap = $('user-poem-content');
+    if (!wrap) return;
+    const lines = composeUserPoem();
+    const daoTitle = (state.daoTitle && state.daoTitle.title) || '無 名';
+    let html = '<div style="text-align:center;font-family:\'Noto Serif KR\',serif">';
+    html += '<div style="font-size:11px;letter-spacing:8px;color:rgba(212,175,55,0.7);margin-bottom:8px">吾  詩</div>';
+    html += '<div style="font-size:14px;letter-spacing:3px;color:#fff5c0;margin-bottom:22px;font-style:italic">' + daoTitle + '</div>';
+    html += '<div style="line-height:2.3;font-size:14px;letter-spacing:3px;color:#e8e6dd">';
+    lines.forEach(line => {
+      html += '<div style="margin:6px 0">' + line + '</div>';
+    });
+    html += '</div>';
+    if ((state.userSeal || []).length > 0) {
+      html += '<div style="margin-top:24px;display:flex;justify-content:center">' + buildSealSVG(state.userSeal, 50) + '</div>';
+    }
+    html += '<div style="font-size:9px;letter-spacing:3px;color:#666;margin-top:22px">劍 強 化  ─  ' + new Date().toISOString().slice(0,10) + '</div>';
+    html += '</div>';
+    wrap.innerHTML = html;
+  }
+  function buildUserPoemSVG() {
+    const W = 460, H = 600;
+    const lines = composeUserPoem();
+    const daoTitle = (state.daoTitle && state.daoTitle.title) || '無名';
+    let svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
+    svg += '<defs><radialGradient id="poem-bg" cx="50%" cy="40%"><stop offset="0%" stop-color="#15151c"/><stop offset="100%" stop-color="#08080c"/></radialGradient></defs>';
+    svg += '<rect width="' + W + '" height="' + H + '" fill="url(#poem-bg)"/>';
+    svg += '<rect x="6" y="6" width="' + (W-12) + '" height="' + (H-12) + '" fill="none" stroke="#d4af37" stroke-opacity="0.45" stroke-width="1"/>';
+    svg += '<rect x="14" y="14" width="' + (W-28) + '" height="' + (H-28) + '" fill="none" stroke="#d4af37" stroke-opacity="0.18" stroke-width="0.4"/>';
+    // Title
+    svg += '<text x="' + (W/2) + '" y="50" font-family="Noto Serif KR, serif" font-size="11" letter-spacing="10" fill="rgba(212,175,55,0.75)" text-anchor="middle">吾  詩</text>';
+    svg += '<text x="' + (W/2) + '" y="86" font-family="Noto Serif KR, serif" font-size="18" letter-spacing="6" fill="#fff5c0" font-style="italic" text-anchor="middle">' + daoTitle + '</text>';
+    // Lines
+    const startY = 160;
+    const lineGap = 56;
+    lines.forEach((line, i) => {
+      svg += '<text x="' + (W/2) + '" y="' + (startY + i * lineGap) + '" font-family="Noto Serif KR, serif" font-size="16" letter-spacing="4" fill="#e8e6dd" text-anchor="middle">' + line + '</text>';
+    });
+    // Seal (if exists)
+    if ((state.userSeal || []).length > 0) {
+      const sealSize = 42;
+      const sealX = W/2 - sealSize/2;
+      const sealY = H - 100;
+      svg += '<rect x="' + sealX + '" y="' + sealY + '" width="' + sealSize + '" height="' + sealSize + '" fill="#a02828" stroke="#7a1010" stroke-width="1.2" rx="1"/>';
+      const lineH = sealSize / state.userSeal.length;
+      state.userSeal.forEach((c, i) => {
+        const cy = sealY + (i + 0.5) * lineH + lineH * 0.18;
+        svg += '<text x="' + (sealX + sealSize/2) + '" y="' + cy + '" font-family="Noto Serif KR, serif" font-size="' + (lineH * 0.7) + '" fill="#fff5dc" text-anchor="middle" font-weight="600">' + c + '</text>';
+      });
+    }
+    // Footer
+    svg += '<text x="' + (W/2) + '" y="' + (H - 30) + '" font-family="Noto Serif KR, serif" font-size="8" letter-spacing="4" fill="#555" text-anchor="middle">劍 強 化  ─  ' + new Date().toISOString().slice(0,10) + '</text>';
+    svg += '</svg>';
+    return svg;
+  }
+  function downloadUserPoem() {
+    const svg = buildUserPoemSVG();
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const title = ((state.daoTitle && state.daoTitle.title) || '無名').replace(/\s+/g,'');
+    a.href = url;
+    a.download = '吾詩_' + title + '_' + new Date().toISOString().slice(0,10) + '.svg';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+    log('吾詩 다운로드 — ' + title, 'success');
   }
 
   // === v189 七寶 — 일곱 보물 수집 (봉인 시 확률 drop) ===
@@ -13680,6 +13833,17 @@
     renderTreasureModal();
     $('treasure-modal').classList.add('active');
   });
+  // v190 吾詩
+  if ($('btn-userpoem')) $('btn-userpoem').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    renderUserPoem();
+    $('user-poem-modal').classList.add('active');
+  });
+  if ($('poem-refresh')) $('poem-refresh').addEventListener('click', () => {
+    poemRerollSeed = (poemRerollSeed + 1) % 1024;
+    renderUserPoem();
+  });
+  if ($('poem-download')) $('poem-download').addEventListener('click', downloadUserPoem);
   if ($('seal-clear')) $('seal-clear').addEventListener('click', () => {
     sealEditing = [];
     renderSealPalette();
