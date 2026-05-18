@@ -2565,6 +2565,7 @@
   <button id="btn-beasts">四  神</button>
   <button id="btn-treasures">七  寶</button>
   <button id="btn-userpoem">吾  詩</button>
+  <button id="btn-codex-book" style="background:rgba(192,128,40,0.15);color:#d4af37">完  一  書</button>
   <button id="btn-gallery">殿  覽</button>
   <button id="btn-clock">時  計</button>
   <button id="btn-oracle">占</button>
@@ -3187,6 +3188,22 @@
       <button id="gallery-prev" style="min-width:46px">◁</button>
       <button id="gallery-pause">⏸</button>
       <button id="gallery-next" style="min-width:46px">▷</button>
+      <button class="modal-close" data-close>닫 기</button>
+    </div>
+  </div>
+</div>
+
+<!-- v200 完一書 — 사용자 전체 여정 6권 책 -->
+<div class="modal" id="codex-book-modal">
+  <div class="modal-box" style="max-width: 540px; padding: 0;">
+    <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1a1a22;background:linear-gradient(180deg,rgba(40,30,15,0.4) 0%,rgba(15,12,8,0.4) 100%)">
+      <div style="font-size:12px;letter-spacing:8px;color:#d4af37">完  一  書</div>
+      <div id="book-page-indicator" style="font-size:10px;color:#888;letter-spacing:3px">卷 1 / 6</div>
+    </div>
+    <div id="book-page-content" style="min-height: 450px; padding: 30px 32px; line-height: 1.8"></div>
+    <div style="padding:12px 18px;display:flex;justify-content:center;gap:10px;border-top:1px solid #1a1a22">
+      <button id="book-prev" style="min-width:54px">◁  前</button>
+      <button id="book-next" style="min-width:54px">後  ▷</button>
       <button class="modal-close" data-close>닫 기</button>
     </div>
   </div>
@@ -6225,6 +6242,153 @@
     $('weekly-report-content').innerHTML = html;
     $('weekly-report-modal').classList.add('active');
     log('週報 — ' + prevWeek + ' · ' + summary, 'success');
+  }
+
+  // === v200 完一書 — 사용자 전체 여정 6권 책 ===
+  let bookPageIdx = 0;
+  const BOOK_PAGES = 6;
+  function renderBookPage(idx) {
+    bookPageIdx = ((idx % BOOK_PAGES) + BOOK_PAGES) % BOOK_PAGES;
+    const indicator = $('book-page-indicator');
+    if (indicator) indicator.textContent = '卷 ' + (bookPageIdx + 1) + ' / ' + BOOK_PAGES;
+    const wrap = $('book-page-content');
+    if (!wrap) return;
+    const daoTitle = (state.daoTitle && state.daoTitle.title) || '無 名';
+    const sealed = (state.sealedSwords || []).length;
+    const ways = (state.stats && state.stats.wayReached) || 0;
+    const enhAttempts = (state.stats && state.stats.enhanceAttempts) || 0;
+    const enhSuccess = (state.stats && state.stats.enhanceSuccess) || 0;
+    const totalSlain = ((state.stats && state.stats.slainNormal) || 0) +
+                       ((state.stats && state.stats.slainFlee) || 0) +
+                       ((state.stats && state.stats.slainSteel) || 0) +
+                       ((state.stats && state.stats.slainDemon) || 0) +
+                       ((state.stats && state.stats.yakshaSlain) || 0);
+    const swordGen = state.swordGeneration || 1;
+    let html = '';
+    if (bookPageIdx === 0) {
+      // 卷一 — 표지
+      html += '<div style="text-align:center;padding:20px 0">';
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);margin-bottom:18px">卷  一  ─  표  지</div>';
+      html += '<div style="font-size:32px;color:#fff5c0;letter-spacing:8px;margin:20px 0 8px;font-family:\'Noto Serif KR\',serif;font-weight:200">' + daoTitle + '</div>';
+      html += '<div style="font-size:11px;letter-spacing:4px;color:#a8a098;font-style:italic;margin-bottom:24px">한 자루의 검에서 시작된 길</div>';
+      if ((state.userSeal || []).length > 0) {
+        html += '<div style="display:flex;justify-content:center;margin:12px 0">' + buildSealSVG(state.userSeal, 48) + '</div>';
+      }
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 14px;max-width:340px;margin-left:auto;margin-right:auto">';
+      const sCard = (label, val, color) => '<div style="text-align:center;padding:10px 4px;border:1px solid ' + (color || '#444') + ';border-radius:2px;background:rgba(15,15,22,0.5)"><div style="font-size:22px;color:' + (color || '#e8e6dd') + ';font-weight:200;letter-spacing:0">' + val + '</div><div style="font-size:9px;letter-spacing:3px;color:#888;margin-top:4px">' + label + '</div></div>';
+      html += sCard('代', swordGen, '#d4af37');
+      html += sCard('封', sealed, '#a8c0e8');
+      html += sCard('道', ways, '#fff5c0');
+      html += sCard('斬', totalSlain, '#c04040');
+      html += '</div>';
+      html += '<div style="font-size:11px;color:rgba(168,184,200,0.7);letter-spacing:3px;font-style:italic;margin-top:24px">이 책은 당신의 검의 길에 대한 것이다.</div>';
+      html += '</div>';
+    } else if (bookPageIdx === 1) {
+      // 卷二 — 검들
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">卷  二  ─  검  들</div>';
+      html += '<div style="font-size:13px;letter-spacing:4px;color:#e8e6dd;text-align:center;margin-bottom:18px;font-family:\'Noto Serif KR\',serif">' + sealed + '자루의 검 봉인, ' + swordGen + '대 이어졌다</div>';
+      const formCounts = { '直':0,'曲':0,'重':0,'速':0 };
+      (state.sealedSwords || []).forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });
+      html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:20px 0">';
+      const formCard = (f, n, c) => '<div style="text-align:center;padding:14px 4px;border:1px solid ' + c + ';border-radius:2px;background:rgba(15,15,22,0.5)"><div style="font-size:22px;color:' + c + '">' + f + '</div><div style="font-size:14px;color:#e8e6dd;margin-top:6px;font-weight:200">' + n + '</div></div>';
+      html += formCard('直', formCounts['直'], '#a8c0e8');
+      html += formCard('曲', formCounts['曲'], '#e8a8c0');
+      html += formCard('重', formCounts['重'], '#d4af37');
+      html += formCard('速', formCounts['速'], '#88e8c0');
+      html += '</div>';
+      // 流派 진행
+      if (typeof getActiveSchools === 'function') {
+        const schools = getActiveSchools();
+        if (schools && schools.length > 0) {
+          html += '<div style="font-size:11px;color:#a8a098;letter-spacing:3px;margin-top:18px;text-align:center">활성 유파 — ' + schools.map(s => s.name).join(' · ') + '</div>';
+        }
+      }
+    } else if (bookPageIdx === 2) {
+      // 卷三 — 道
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">卷  三  ─  道</div>';
+      const wayswords = (state.sealedSwords || []).filter(s => (s.inscriptions || []).indexOf('道') >= 0);
+      if (wayswords.length === 0) {
+        html += '<div style="text-align:center;padding:30px;color:#888;font-style:italic;font-size:11px;letter-spacing:3px">아직 도(道)에 닿지 않았다 — +15까지 검을 강화하라</div>';
+      } else {
+        html += '<div style="font-size:13px;color:#fff5c0;letter-spacing:4px;text-align:center;margin-bottom:18px">' + wayswords.length + '회 도(道) 도달 — 정점의 검</div>';
+        wayswords.slice(0, 6).forEach(s => {
+          html += '<div style="margin:8px 0;padding:8px 12px;border-left:2px solid #d4af37;background:rgba(212,175,55,0.06)">';
+          html += '<div style="font-size:13px;color:#fff5c0;letter-spacing:3px">' + (s.name || '無名') + '</div>';
+          if (s.verse) {
+            const v = Array.isArray(s.verse) ? s.verse[0] : s.verse;
+            html += '<div style="font-size:10px;color:rgba(168,184,200,0.75);font-style:italic;margin-top:4px;letter-spacing:1px">' + v + '</div>';
+          }
+          html += '</div>';
+        });
+      }
+    } else if (bookPageIdx === 3) {
+      // 卷四 — 메타
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">卷  四  ─  메  타</div>';
+      // 시련의 혼 / 四神 / 七寶
+      const trialsU = (typeof TRIALS !== 'undefined') ? TRIALS.filter(t => trialUnlocked(t.key)).length : 0;
+      const trialsT = (typeof TRIALS !== 'undefined') ? TRIALS.length : 5;
+      const beastsU = (typeof SACRED_BEASTS !== 'undefined') ? SACRED_BEASTS.filter(b => beastUnlocked(b.key)).length : 0;
+      const treasuresU = Object.keys(state.treasures || {}).length;
+      const foesU = state.foesSlain ? Object.keys(state.foesSlain).length : 0;
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0">';
+      const metaCard = (label, val, max, color) => '<div style="padding:10px 14px;background:rgba(15,15,22,0.5);border-left:2px solid ' + color + ';font-size:11px;color:#a8a098;letter-spacing:2px">' + label + '<div style="color:' + color + ';font-size:16px;margin-top:4px;font-weight:200">' + val + (max ? ' / ' + max : '') + '</div></div>';
+      html += metaCard('시련의 혼', trialsU, trialsT, '#88c8a8');
+      html += metaCard('四神 강림', beastsU, 4, '#d4af37');
+      html += metaCard('七寶', treasuresU, 7, '#c8a0e8');
+      html += metaCard('이름 있는 적', foesU, 5, '#c04040');
+      html += '</div>';
+      // 月蝕
+      if (state.eclipseSeenAt) {
+        html += '<div style="margin-top:18px;text-align:center;font-size:11px;letter-spacing:4px;color:#c04030;background:rgba(40,12,12,0.5);padding:14px;border:1px solid #c04030">月蝕 — 일생의 천문 사건이 깃들었다</div>';
+      }
+      if (state.ultimateAchieved) {
+        html += '<div style="margin-top:14px;text-align:center;font-size:11px;letter-spacing:6px;color:#fff5c0;background:rgba(20,16,8,0.5);padding:14px;border:1px solid #d4af37">千秋萬代 — 모든 길이 완성되었다</div>';
+      }
+    } else if (bookPageIdx === 4) {
+      // 卷五 — 시간
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">卷  五  ─  시  간</div>';
+      const playTime = (typeof formatPlayTime === 'function') ? formatPlayTime(state.totalPlayTimeMs || 0) : '0';
+      const streak = state.playStreak || 0;
+      const bestStreak = state.bestStreak || 0;
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0">';
+      const tCard = (label, val) => '<div style="text-align:center;padding:14px 4px;background:rgba(15,15,22,0.5);border:1px solid #2a2a32"><div style="font-size:18px;color:#d4af37;font-weight:200">' + val + '</div><div style="font-size:9px;letter-spacing:3px;color:#888;margin-top:6px">' + label + '</div></div>';
+      html += tCard('歲月 (누적)', playTime);
+      html += tCard('代', swordGen);
+      html += tCard('현재 연속', streak + '일');
+      html += tCard('최고 연속', bestStreak + '일');
+      html += '</div>';
+      // 강화 통계
+      const successRate = enhAttempts > 0 ? Math.round(enhSuccess / enhAttempts * 100) : 0;
+      html += '<div style="margin-top:18px;text-align:center;font-size:11px;color:#a8a098;letter-spacing:3px">';
+      html += '강화 시도 ' + enhAttempts + '회 · 성공률 ' + successRate + '%';
+      html += '</div>';
+    } else {
+      // 卷六 — 종결
+      html += '<div style="text-align:center;padding:20px 0">';
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);margin-bottom:24px">卷  六  ─  종  결</div>';
+      // narrative summary
+      let summary = '';
+      if (ways >= 5) summary = '여러 번 도(道)에 닿았다 — 검의 정점을 알았다.';
+      else if (ways >= 1) summary = '도(道)를 한 번 보았다 — 길이 보였다.';
+      else if (sealed >= 10) summary = '많은 검을 봉인했다 — 손이 길을 안다.';
+      else if (sealed >= 1) summary = '검을 봉인하기 시작했다 — 길이 열렸다.';
+      else summary = '아직 길 위에 서 있다 — 검의 본성을 찾는 중.';
+      html += '<div style="font-size:14px;color:#fff5c0;letter-spacing:4px;margin:30px 0;line-height:1.9;font-family:\'Noto Serif KR\',serif">' + summary + '</div>';
+      html += '<div style="font-size:13px;color:rgba(168,184,200,0.8);letter-spacing:3px;margin:24px 0;font-style:italic;line-height:1.8">검의 길은 끊임없다.<br/>이 책의 다음 권은<br/>당신이 다음에 쥐는 검이다.</div>';
+      html += '<div style="font-size:9px;letter-spacing:4px;color:#666;margin-top:36px">完一書 ─ v200</div>';
+      html += '<div style="font-size:9px;letter-spacing:3px;color:#555;margin-top:6px">' + new Date().toISOString().slice(0,10) + '</div>';
+      html += '</div>';
+    }
+    wrap.innerHTML = html;
+    wrap.animate([
+      { opacity: 0, transform: 'translateX(' + (idx > bookPageIdx ? '-20px' : '20px') + ')' },
+      { opacity: 1, transform: 'translateX(0)' }
+    ], { duration: 350, easing: 'ease-out' });
+  }
+  function openBook() {
+    bookPageIdx = 0;
+    renderBookPage(0);
+    $('codex-book-modal').classList.add('active');
   }
 
   // === v199 稟賦 — 새 검 생성 시 무작위 mutation (천부적 재능) ===
@@ -14708,6 +14872,13 @@
     renderUserPoem();
   });
   if ($('poem-download')) $('poem-download').addEventListener('click', downloadUserPoem);
+  // v200 完一書
+  if ($('btn-codex-book')) $('btn-codex-book').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    openBook();
+  });
+  if ($('book-prev')) $('book-prev').addEventListener('click', () => renderBookPage(bookPageIdx - 1));
+  if ($('book-next')) $('book-next').addEventListener('click', () => renderBookPage(bookPageIdx + 1));
   // v194 殿覽
   if ($('btn-gallery')) $('btn-gallery').addEventListener('click', () => {
     $('menu-drop').classList.remove('open');
