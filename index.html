@@ -6443,6 +6443,54 @@
     $('codex-book-modal').classList.add('active');
   }
 
+  // === v204 起念 — 새 검의 탄생 한 줄 ===
+  const BIRTH_TEMPLATES = {
+    opening: [
+      '한 자루 검이 빚어졌다',
+      '새 칼이 손에 떨어졌다',
+      '강철이 다시 단련 받기 시작했다',
+      '검의 새 길이 열렸다',
+      '한 시작이 두 손에 놓였다',
+    ],
+    season: {
+      'spring': '복숭아꽃 흩날리는 봄에',
+      'summer': '반딧불 떠다니는 여름밤에',
+      'autumn': '단풍 떨어지는 가을에',
+      'winter': '눈 내리는 겨울에',
+    },
+    closing: [
+      '시작은 무엇이 될지 모른다',
+      '오늘의 한 호흡이 첫 호흡이다',
+      '한 자루의 끝은 아직 멀다',
+      '검은 사용자를 기다린다',
+      '길은 한 걸음에서 시작된다',
+    ],
+  };
+  function composeBirthStatement() {
+    const gen = state.swordGeneration || 1;
+    const season = seasonalCategory();
+    const seed = gen * 23 + ((state.sealedSwords || []).length) * 7;
+    const opening = BIRTH_TEMPLATES.opening[seed % BIRTH_TEMPLATES.opening.length];
+    const sLine = BIRTH_TEMPLATES.season[season] || BIRTH_TEMPLATES.season['spring'];
+    const closing = BIRTH_TEMPLATES.closing[(seed + 3) % BIRTH_TEMPLATES.closing.length];
+    return opening + ' · ' + sLine + ' (' + gen + '代). ' + closing + '.';
+  }
+  function showBirthStatement(statement) {
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:9px;color:rgba(212,175,55,0.6);letter-spacing:8px;margin-bottom:10px">起  念</div>' +
+                    '<div style="font-size:12px;color:rgba(232,224,221,0.92);letter-spacing:3px;line-height:1.7;font-style:italic">' + statement + '</div>';
+    el.style.cssText = 'position:fixed;top:22%;left:50%;transform:translateX(-50%);text-align:center;z-index:24;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:18px 32px;background:radial-gradient(ellipse,rgba(15,15,22,0.65) 0%,rgba(15,15,22,0.2) 70%,transparent 95%);max-width:560px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translateX(-50%) translateY(-12px)' },
+      { opacity: 1, transform: 'translateX(-50%) translateY(0)', offset: 0.2 },
+      { opacity: 1, transform: 'translateX(-50%) translateY(0)', offset: 0.78 },
+      { opacity: 0, transform: 'translateX(-50%) translateY(-12px)' }
+    ], { duration: 5500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 5600);
+    log('起念 — ' + statement, 'info');
+  }
+
   // === v203 字 — 검 칼날 한자 새김 (사용자 선택) ===
   const ENGRAVE_HANJI = {
     '五常': ['義','仁','禮','智','信'],
@@ -13463,6 +13511,13 @@
     // v199 稟賦 — 새 검 mutation roll (천부적 재능 2% 합)
     const mut = rollMutation();
     if (mut) setTimeout(() => applyMutationToNewSword(mut), 3200);
+    // v204 起念 — 탄생문 자동 작성 + 표시
+    if (state.currentSword && !state.currentSword.birthStatement) {
+      const stmt = composeBirthStatement();
+      state.currentSword.birthStatement = stmt;
+      save();
+      setTimeout(() => showBirthStatement(stmt), 2700);
+    }
   }
   function maybeShowKigen() {
     if (Math.random() > 0.25) return;
@@ -14240,6 +14295,8 @@
         '<div><span style="color:var(--dim)">강화도</span> <span style="color:var(--accent);margin-left:6px">+' + s.level + '</span></div>' +
       '</div>' +
       verseBlock +
+      // v204 起念 — 탄생문 (회고에 영구 표시)
+      (s.birthStatement ? '<div style="margin:14px 0;padding:12px;background:rgba(168,184,200,0.04);border-left:2px solid rgba(168,184,200,0.4);font-size:10.5px;line-height:1.8;letter-spacing:2px;color:var(--fg);font-style:italic"><div style="color:var(--dim);font-size:9px;letter-spacing:3px;margin-bottom:5px;font-style:normal">起 念 — 탄생</div>' + s.birthStatement + '</div>' : '') +
       // v139 一代記 — 자동 일대기 narrative
       '<div style="margin:14px 0;padding:14px 12px;background:rgba(212,175,55,0.025);border-left:2px solid rgba(212,175,55,0.4);font-size:11px;line-height:1.9;letter-spacing:1.5px;color:var(--fg);font-style:italic">' +
         '<div style="color:var(--dim);font-size:9px;letter-spacing:3px;margin-bottom:6px;font-style:normal">一 代 記</div>' +
