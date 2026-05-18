@@ -6447,6 +6447,45 @@
     $('codex-book-modal').classList.add('active');
   }
 
+  // === v206 時辰 — 12지간 시진 (좌상단 항상 표시) ===
+  const SIDIN_HOURS = [
+    { kanji:'子', label:'쥐', hStart:23, hEnd:1,  color:'#5878a8', tone:'night'  },  // 23-01
+    { kanji:'丑', label:'소', hStart:1,  hEnd:3,  color:'#4a6890', tone:'night'  },  // 01-03
+    { kanji:'寅', label:'호랑이', hStart:3,  hEnd:5,  color:'#48688a', tone:'night'  },  // 03-05
+    { kanji:'卯', label:'토끼', hStart:5,  hEnd:7,  color:'#c89898', tone:'dawn'   },  // 05-07
+    { kanji:'辰', label:'용',  hStart:7,  hEnd:9,  color:'#d4a880', tone:'dawn'   },  // 07-09
+    { kanji:'巳', label:'뱀',  hStart:9,  hEnd:11, color:'#d4af55', tone:'day'    },  // 09-11
+    { kanji:'午', label:'말',  hStart:11, hEnd:13, color:'#e8c454', tone:'day'    },  // 11-13
+    { kanji:'未', label:'양',  hStart:13, hEnd:15, color:'#d8b454', tone:'day'    },  // 13-15
+    { kanji:'申', label:'원숭이', hStart:15, hEnd:17, color:'#c89858', tone:'evening' }, // 15-17
+    { kanji:'酉', label:'닭',  hStart:17, hEnd:19, color:'#c8784a', tone:'evening' }, // 17-19
+    { kanji:'戌', label:'개',  hStart:19, hEnd:21, color:'#8a6878', tone:'evening' }, // 19-21
+    { kanji:'亥', label:'멧돼지', hStart:21, hEnd:23, color:'#6a5878', tone:'night' },   // 21-23
+  ];
+  function getCurrentSidin() {
+    const h = new Date().getHours();
+    return SIDIN_HOURS.find(s => {
+      if (s.hStart < s.hEnd) return h >= s.hStart && h < s.hEnd;
+      return h >= s.hStart || h < s.hEnd;
+    }) || SIDIN_HOURS[0];
+  }
+  function renderSidinMark() {
+    let el = document.getElementById('sidin-mark');
+    const s = getCurrentSidin();
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'sidin-mark';
+      el.style.cssText = 'position:fixed;top:14px;left:18px;font-size:13px;letter-spacing:3px;font-family:"Noto Serif KR",serif;pointer-events:auto;z-index:25;cursor:help;transition:color 1.5s';
+      document.body.appendChild(el);
+    }
+    el.style.color = s.color;
+    el.style.textShadow = '0 0 10px ' + s.color + '55';
+    el.textContent = s.kanji;
+    const startH = String(s.hStart).padStart(2, '0');
+    const endH = String(s.hEnd).padStart(2, '0');
+    el.title = s.kanji + ' (' + s.label + ') 시 — ' + startH + ':00 ~ ' + endH + ':00';
+  }
+
   // === v205 心拍 — 검/사용자의 살아있는 맥박 ECG ===
   let heartbeatPhase = 0;
   let heartbeatActivity = 1;  // 1 = idle, spike up to 4
@@ -16305,6 +16344,8 @@
   checkWeeklyReport();       // v196 週報 — 주차 변경 시 자동 리포트
   setInterval(maybeTriggerEclipse, 60 * 1000);  // v197 月蝕 — 매분 0.5% 체크
   startHeartbeat();  // v205 心拍 — ECG 맥박 시작
+  renderSidinMark();  // v206 時辰 — 12지간 초기 표시
+  setInterval(renderSidinMark, 5 * 60 * 1000);  // 5분 간격 갱신
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
