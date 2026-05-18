@@ -5827,6 +5827,106 @@
     el.title = f.name + ' — ' + f.verse;
   }
 
+  // === v193 日言 — 매일 변하는 격언 ===
+  const DAILY_SAYINGS = [
+    '검은 사람을 닮는다',
+    '강한 검은 부드럽다',
+    '도(道)는 멈춤에 있다',
+    '한 번의 실패가 백 번의 성공보다 깊다',
+    '검을 쥔 자는 검의 마음을 안다',
+    '강은 가장 깊은 곳에서 가장 조용하다',
+    '베지 않는 칼이 가장 날카롭다',
+    '검의 노쇠가 검의 영혼이다',
+    '오래된 검은 침묵으로 말한다',
+    '진정한 강자는 자신을 베어낸다',
+    '바람이 그치면 검이 깨어난다',
+    '도(道)는 들리지 않으나 늘 있다',
+    '검의 길은 자신의 발자국 위에 있다',
+    '봉인된 검도 살아있다',
+    '한 자루의 검에 천 자루의 삶이 있다',
+    '강함은 약함을 끌어안는다',
+    '그림자가 깊은 곳에서 검이 빛난다',
+    '검은 베지 않을 때 가장 검답다',
+    '도(道)의 끝은 도(道)의 시작이다',
+    '검을 잃은 자가 검을 안다',
+    '천 번의 강화가 한 호흡만 못하다',
+    '검은 무게로 쥐는 것이 아니다',
+    '도(道)는 멀지 않다 — 한 발자국이다',
+    '오늘의 검이 어제의 검을 잊는다',
+    '강한 그림자가 강한 검을 만든다',
+    '봉인은 끝이 아닌 시작이다',
+    '검의 수명은 사용자의 호흡이다',
+    '하나를 베면 만이 산다',
+    '검은 사용자를 키운다',
+    '도(道)는 검 안에 있고, 사용자 안에 있다',
+    '바람의 검은 멈추지 않는다',
+    '굽은 검도 곧은 길을 간다',
+    '무거운 검이 가벼움을 안다',
+    '빠른 검은 침묵을 안다',
+    '도(道)는 끊임없는 강화가 아니라 끊임없는 호흡이다',
+    '검을 보는 자가 검을 안다',
+    '검을 잊은 자가 도(道)에 닿는다',
+    '한 자루의 검이 우주를 담는다',
+    '한 번의 봉인이 만 가지 선택이다',
+    '검의 무거움은 사용자의 사랑이다',
+    '도(道)의 검은 도(道)를 잊는다',
+    '강한 검은 부서지지 않는 검이 아니다',
+    '검은 사용자보다 오래 산다',
+    '봉인된 검은 살아있는 영혼이다',
+    '한 호흡이 검의 일생이다',
+    '검의 노래는 사용자의 침묵이다',
+    '검의 강도는 사용자의 의지다',
+    '도(道)는 손에 있고, 검에 있고, 마음에 있다',
+    '검과 사용자가 하나가 될 때 도(道)가 보인다',
+    '봉인된 검들이 별이 된다',
+    '한 자루 검의 일생이 사용자의 일생이다',
+    '검을 베면 그림자가 깊어진다',
+    '검을 사랑하는 자가 검을 떠난다',
+    '도(道)의 끝은 도(道)의 처음이다',
+    '검은 강화될수록 가벼워진다',
+    '오래된 검이 새 검을 가르친다',
+    '검의 길은 사용자의 발자국이다',
+    '한 자루 검이 천 자루 그림자를 베다',
+    '검은 강화하는 것이 아니라 깨어나는 것이다',
+    '도(道)는 한 호흡으로 완성된다',
+  ];
+  function dailySayingIdx() {
+    const today = new Date();
+    const day = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    return day % DAILY_SAYINGS.length;
+  }
+  function getDailySaying() {
+    return DAILY_SAYINGS[dailySayingIdx()];
+  }
+  function renderDailySaying() {
+    let el = document.getElementById('daily-saying');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'daily-saying';
+      el.style.cssText = 'position:fixed;bottom:54px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;color:rgba(168,168,168,0.45);font-family:"Noto Serif KR",serif;font-style:italic;pointer-events:auto;z-index:8;cursor:pointer;transition:opacity 0.4s,color 0.4s;max-width:80%;text-align:center';
+      el.title = '日言 — 클릭하여 큰 글로 본다';
+      el.addEventListener('mouseenter', () => { el.style.opacity = '0.9'; el.style.color = '#d4af37'; });
+      el.addEventListener('mouseleave', () => { el.style.opacity = ''; el.style.color = ''; });
+      el.addEventListener('click', showDailySayingFade);
+      document.body.appendChild(el);
+    }
+    el.textContent = getDailySaying();
+  }
+  function showDailySayingFade() {
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.65);letter-spacing:8px;margin-bottom:24px">日  言</div>' +
+                    '<div style="font-size:22px;color:#e8e6dd;letter-spacing:6px;line-height:1.8;font-style:italic;font-weight:200">' + getDailySaying() + '</div>';
+    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5300;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:42px 60px;background:radial-gradient(ellipse,rgba(15,15,22,0.92) 0%,rgba(15,15,22,0.55) 65%,transparent 92%);max-width:600px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.92)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.2 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.78 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.04)' }
+    ], { duration: 5500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 5600);
+  }
+
   // === v191 練日 — 연속 플레이 일자 (지속성 reward) ===
   const STREAK_MILESTONES = [
     { n: 7,   kanji:'七', label:'7일 연속 — 한 주의 수행', reward:30 },
@@ -15056,6 +15156,8 @@
   renderStreakMark();        // v191 練日 — 우상단 표식 초기 렌더
   checkFestival();           // v192 節 — 명절 체크
   setInterval(checkFestival, 60 * 60 * 1000);  // 자정 경계 자동
+  renderDailySaying();       // v193 日言 — 매일의 격언 표시
+  setInterval(renderDailySaying, 60 * 60 * 1000);  // 자정 경계 자동 갱신
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
