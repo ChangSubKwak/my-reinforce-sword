@@ -3665,6 +3665,10 @@
     userSeal: [],  // v187 印 — 사용자 한자 2자 인장 (e.g. ['天','心'])
     beastsUnlocked: {},  // v188 四神 — 4신수 잠금 해제 상태 {genbu/suzaku/seiryu/byakko: true}
     treasures: {},  // v189 七寶 — 발견된 보물 (gold/silver/jade/pearl/agate/lapis/coral)
+    lastPlayDate: '',  // v191 練日 — 마지막 플레이 날짜 'YYYY-MM-DD'
+    playStreak: 0,    // v191 練日 — 현재 연속 일자
+    bestStreak: 0,    // v191 練日 — 최고 연속 일자
+    streakMilestonesShown: {},  // v191 練日 — 7/30/100/365 마일스톤 표시 여부
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -5729,6 +5733,108 @@
     a.click();
     setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
     log('吾詩 다운로드 — ' + title, 'success');
+  }
+
+  // === v191 練日 — 연속 플레이 일자 (지속성 reward) ===
+  const STREAK_MILESTONES = [
+    { n: 7,   kanji:'七', label:'7일 연속 — 한 주의 수행', reward:30 },
+    { n: 30,  kanji:'修', label:'30일 수행 — 검의 습관',   reward:120 },
+    { n: 100, kanji:'百', label:'백일 수행 — 의지의 검',  reward:400 },
+    { n: 365, kanji:'年', label:'1년 수행 — 길의 검사',   reward:1200 },
+  ];
+  function todayDateStr() { return new Date().toISOString().slice(0,10); }
+  function dateDiffDays(a, b) {
+    const da = new Date(a + 'T00:00:00');
+    const db = new Date(b + 'T00:00:00');
+    return Math.round((db - da) / (24 * 3600 * 1000));
+  }
+  function checkDailyStreak() {
+    if (!state.streakMilestonesShown) state.streakMilestonesShown = {};
+    const today = todayDateStr();
+    const last = state.lastPlayDate || '';
+    if (last === today) return;  // 이미 오늘 계산됨
+    let newStreak = 1;
+    if (last) {
+      const diff = dateDiffDays(last, today);
+      if (diff === 1) newStreak = (state.playStreak || 0) + 1;
+      else newStreak = 1;  // 끊김 → 리셋
+    }
+    state.playStreak = newStreak;
+    state.lastPlayDate = today;
+    if (newStreak > (state.bestStreak || 0)) state.bestStreak = newStreak;
+    save();
+    // 새 일자 진입 인사 (작은 페이드)
+    setTimeout(() => showStreakGreeting(newStreak), 2000);
+    // 마일스톤 체크
+    STREAK_MILESTONES.forEach(m => {
+      const key = 'streak_' + m.n;
+      if (newStreak === m.n && !state.streakMilestonesShown[key]) {
+        state.streakMilestonesShown[key] = true;
+        state.shards = (state.shards || 0) + m.reward;
+        setTimeout(() => showStreakMilestone(m), 3500);
+        save();
+      }
+    });
+    renderStreakMark();
+  }
+  function showStreakGreeting(n) {
+    const el = document.createElement('div');
+    const label = n === 1 ? '오늘부터 — 한 자루의 길' : (n + '일째 — 검을 단련한다');
+    el.innerHTML = '<div style="font-size:9px;color:rgba(168,168,168,0.55);letter-spacing:5px;margin-bottom:6px">練  日</div>' +
+                    '<div style="font-size:13px;color:rgba(212,175,55,0.85);letter-spacing:4px">' + label + '</div>';
+    el.style.cssText = 'position:fixed;top:18%;left:50%;transform:translateX(-50%);text-align:center;z-index:25;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:14px 28px;background:rgba(15,15,22,0.5);border-radius:2px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translateX(-50%) translateY(-10px)' },
+      { opacity: 1, transform: 'translateX(-50%) translateY(0)', offset: 0.2 },
+      { opacity: 1, transform: 'translateX(-50%) translateY(0)', offset: 0.78 },
+      { opacity: 0, transform: 'translateX(-50%) translateY(-10px)' }
+    ], { duration: 4500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 4600);
+  }
+  function showStreakMilestone(m) {
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.75);letter-spacing:8px;margin-bottom:16px">練  日  ─  圓  滿</div>' +
+                    '<div style="font-size:80px;color:#fff5c0;letter-spacing:14px;text-shadow:0 0 35px #fff5c0,0 0 70px rgba(212,175,55,0.5);font-weight:200">' + m.kanji + '</div>' +
+                    '<div style="font-size:13px;color:rgba(168,184,200,0.9);letter-spacing:4px;margin-top:20px;font-style:italic">' + m.label + '</div>' +
+                    '<div style="font-size:11px;color:#d4af37;letter-spacing:3px;margin-top:12px">조각 +' + m.reward + '</div>';
+    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5500;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:38px 56px;background:radial-gradient(ellipse,rgba(15,15,22,0.92) 0%,rgba(15,15,22,0.6) 60%,transparent 90%);';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.18 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.8 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.05)' }
+    ], { duration: 6500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 6600);
+    // 종 — 5음
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [220, 330, 440, 660, 880].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.32);
+          g.gain.exponentialRampToValueAtTime(0.13, ct + i*0.32 + 0.06);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.32 + 3.0);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.32); osc.stop(ct + i*0.32 + 3.1);
+        });
+      }
+    } catch(e) {}
+    log('練日 ' + m.label + ' — 조각 +' + m.reward, 'success');
+  }
+  function renderStreakMark() {
+    let el = document.getElementById('streak-mark');
+    const n = state.playStreak || 0;
+    if (n === 0) { if (el) el.remove(); return; }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'streak-mark';
+      el.style.cssText = 'position:fixed;top:14px;right:170px;font-size:10px;letter-spacing:3px;color:rgba(212,175,55,0.7);pointer-events:none;z-index:25;font-family:"Noto Serif KR",serif;cursor:help';
+      document.body.appendChild(el);
+    }
+    el.textContent = '練 ' + n;
+    el.title = '연속 ' + n + '일 (최고 ' + (state.bestStreak || n) + '일)';
   }
 
   // === v189 七寶 — 일곱 보물 수집 (봉인 시 확률 drop) ===
@@ -14850,6 +14956,8 @@
   setInterval(applySolarTerm, 60 * 60 * 1000);  // 매시간 절기 재확인 (자정 경계)
   startSeasonalParticles();  // v179 季韻 — 환경 입자 spawner
   startMeteorSchedule();     // v185 流星 — 무작위 유성 spawner
+  checkDailyStreak();        // v191 練日 — 연속 일자 체크
+  renderStreakMark();        // v191 練日 — 우상단 표식 초기 렌더
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
