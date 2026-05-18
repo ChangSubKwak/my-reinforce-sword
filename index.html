@@ -3887,6 +3887,7 @@
     lastSenDate: '',            // v211 籤 — 마지막 댓가지 추첨 날짜
     lastSenResult: null,        // v211 籤 — 마지막 결과 객체
     lastWeekendGreeting: '',    // v212 休 — 마지막 주말 인사 날짜
+    lastThreeRitualsDate: '',   // v214 三禮 — 일일 3 의식 완성 날짜
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -6514,6 +6515,54 @@
     $('codex-book-modal').classList.add('active');
   }
 
+  // === v214 三禮 — 占/籤/拈花 일일 3 의식 완성 보너스 ===
+  function todayStr3() { return new Date().toISOString().slice(0, 10); }
+  function didOracleToday() { return state.oracleResultDate === todayStr3(); }
+  function didSenToday() { return state.lastSenDate === todayStr3(); }
+  function didPluckToday() { return state.lastPluckedDate === todayStr3(); }
+  function checkThreeRituals() {
+    if (state.lastThreeRitualsDate === todayStr3()) return;  // 이미 오늘 보상
+    if (!didOracleToday() || !didSenToday() || !didPluckToday()) return;
+    state.lastThreeRitualsDate = todayStr3();
+    // 보상
+    pendingBreathBoost = true;
+    if (state.hasSword) addSoul(10);
+    else state.shards = (state.shards || 0) + 30;
+    save();
+    setTimeout(() => showThreeRitualsFade(), 800);
+  }
+  function showThreeRitualsFade() {
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.7);letter-spacing:10px;margin-bottom:18px">三  禮  ─  圓  滿</div>' +
+                    '<div style="font-size:84px;color:#fff5c0;letter-spacing:14px;text-shadow:0 0 36px #fff5c0,0 0 72px rgba(212,175,55,0.5);font-weight:200;line-height:1">三</div>' +
+                    '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:22px;font-style:italic">하루의 세 의식이 모였다 — 占·籤·拈花</div>' +
+                    '<div style="font-size:11px;color:#d4af37;letter-spacing:3px;margin-top:14px">호흡 ×2 + ' + (state.hasSword ? '영혼 +10' : '조각 +30') + '</div>';
+    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5900;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:40px 60px;background:radial-gradient(ellipse,rgba(15,15,22,0.94) 0%,rgba(15,15,22,0.6) 60%,transparent 90%);max-width:560px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.16 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.82 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.04)' }
+    ], { duration: 6500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 6600);
+    // 깊은 종 6음
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [220, 277, 330, 440, 554, 660].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.32);
+          g.gain.exponentialRampToValueAtTime(0.13, ct + i*0.32 + 0.06);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.32 + 3.0);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.32); osc.stop(ct + i*0.32 + 3.1);
+        });
+      }
+    } catch(e) {}
+    log('三禮 圓滿 — 占·籤·拈花 모두 완성 (호흡 ×2 + ' + (state.hasSword ? '영혼 +10' : '조각 +30') + ')', 'success');
+  }
+
   // === v213 比 — 봉인 검 2자루 비교 ===
   function buildSwordCompareColumn(s, idx) {
     if (!s) return '<div style="text-align:center;padding:40px 0;color:#888;font-style:italic;font-size:10px;letter-spacing:3px">선택 안 됨</div>';
@@ -6754,6 +6803,7 @@
       }
     } catch(e) {}
     log('籤 ' + picked.kanji + ' — ' + picked.verse + ' (' + picked.label + ')', 'success');
+    checkThreeRituals();  // v214 三禮
   }
 
   // === v210 自書 — 사용자 자유 일기 ===
@@ -6977,6 +7027,7 @@
       }
     } catch(e) {}
     log('拈花 — ' + verse, 'success');
+    checkThreeRituals();  // v214 三禮
   }
 
   // === v207 精進 — 한 세션 머무름 마일스톤 ===
@@ -7518,6 +7569,7 @@
       }
     } catch(e) {}
     log('占 ' + oracle.kanji + ' — ' + oracle.verse, 'info');
+    checkThreeRituals();  // v214 三禮
   }
 
   // === v193 日言 — 매일 변하는 격언 ===
