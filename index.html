@@ -64,6 +64,51 @@
   #season-mark.season-summer { color: #d4af37; opacity: 0.6; }
   #season-mark.season-autumn { color: #c0883a; opacity: 0.7; }
   #season-mark.season-winter { color: #6a8a9a; opacity: 0.75; }
+  /* v182 水鏡 — 검 아래 물의 거울 */
+  #water-mirror {
+    position: absolute;
+    left: 50%;
+    top: calc(50% + 100px);
+    transform: translateX(-50%);
+    width: 120px;
+    height: 100px;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 1.6s ease;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 80%, transparent 100%);
+    overflow: visible;
+  }
+  body.has-sword #water-mirror { opacity: 0.32; }
+  body.challenge-active #water-mirror,
+  body.rescue-active #water-mirror,
+  body.moon-gazing #water-mirror { opacity: 0 !important; }
+  #water-mirror-svg {
+    width: 100%;
+    height: 100%;
+    transform: scaleY(-1);
+    filter: blur(0.9px);
+    animation: water-wave 4.5s ease-in-out infinite alternate;
+  }
+  @keyframes water-wave {
+    from { transform: scaleY(-1) translateX(-1.5px) scaleX(1); }
+    to   { transform: scaleY(-1) translateX(1.5px) scaleX(0.98); }
+  }
+  #water-ripples {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+  }
+  .water-ripple {
+    position: absolute;
+    left: 50%;
+    top: 10%;
+    border: 1.2px solid rgba(168, 192, 232, 0.55);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
   /* v177 節氣 — 우측 상단 절기 한자 */
   #solar-term-mark {
     position: fixed;
@@ -2712,6 +2757,11 @@
       <div id="omen-indicator"></div>
       <div id="streak-counter"></div>
     </div>
+    <!-- v182 水鏡 — 검 아래 물의 거울 -->
+    <div id="water-mirror">
+      <svg id="water-mirror-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+      <div id="water-ripples"></div>
+    </div>
     <div id="void">
       <div id="void-msg">검 이 부 서 졌 다</div>
       <div id="rescue-circle">
@@ -4871,6 +4921,7 @@
     renderSoul();
     renderWayProgress();
     renderResonanceDisplay();  // v178 共鳴
+    syncWaterMirror();  // v182 水鏡
     renderSealButton();
     renderCurrentChart();
     applySeason();
@@ -5328,6 +5379,56 @@
         }
       });
     });
+  }
+
+  // === v182 水鏡 — 검 아래 물의 거울 (반사 + 물결 ripple) ===
+  function syncWaterMirror() {
+    const mirror = $('water-mirror-svg');
+    const src = $('sword-svg');
+    if (!mirror || !src) return;
+    // 매번 sword-svg의 innerHTML을 복제 — defs + body가 모두 포함됨
+    mirror.innerHTML = src.innerHTML;
+    // form 색조 tint
+    const f = state.hasSword && state.currentSword && state.currentSword.form;
+    const tint = {
+      '直': 'rgba(168, 192, 232, 0.6)',
+      '曲': 'rgba(232, 168, 192, 0.6)',
+      '重': 'rgba(212, 175, 55, 0.55)',
+      '速': 'rgba(136, 232, 192, 0.55)',
+    }[f] || 'rgba(168, 184, 200, 0.5)';
+    mirror.style.filter = 'blur(0.9px) drop-shadow(0 0 4px ' + tint + ')';
+    // body class for visibility gating
+    document.body.classList.toggle('has-sword', !!state.hasSword);
+  }
+  function spawnWaterRipple() {
+    if (!state.hasSword) return;
+    const container = $('water-ripples');
+    if (!container) return;
+    const f = state.hasSword && state.currentSword && state.currentSword.form;
+    const color = {
+      '直': 'rgba(168, 192, 232, 0.7)',
+      '曲': 'rgba(232, 168, 192, 0.7)',
+      '重': 'rgba(212, 175, 55, 0.7)',
+      '速': 'rgba(136, 232, 192, 0.7)',
+    }[f] || 'rgba(168, 184, 200, 0.65)';
+    // 3 동심원 with stagger
+    for (let i = 0; i < 3; i++) {
+      const ripple = document.createElement('div');
+      ripple.className = 'water-ripple';
+      ripple.style.borderColor = color;
+      container.appendChild(ripple);
+      ripple.animate([
+        { width: '4px', height: '4px', opacity: 0.9 },
+        { width: '110px', height: '60px', opacity: 0 }
+      ], { duration: 1800, easing: 'ease-out', delay: i * 250 });
+      setTimeout(() => ripple.remove(), 2100 + i * 250);
+    }
+  }
+  function setChallengeBodyClass(on) {
+    document.body.classList.toggle('challenge-active', !!on);
+  }
+  function setRescueBodyClass(on) {
+    document.body.classList.toggle('rescue-active', !!on);
   }
 
   // === v181 老師 — 큰 마일스톤에서 스승의 가르침 ===
@@ -7722,6 +7823,8 @@
       spawnMergeRays();
       // v178 共鳴 — 같은 형 봉인 검의 광선 (random ~ 1/4 빈도)
       if (Math.random() < 0.28) spawnResonanceRays();
+      // v182 水鏡 — 강화 성공 시 물결 ripple
+      spawnWaterRipple();
       // v60 강화도별 파티클 양 증가 — 道 도달 시 압도적
       let particleCount = 12 + lv * 2;
       if (state.level >= MAX_LEVEL) particleCount = 80;
@@ -7937,6 +8040,7 @@
     const shardReward = rescueShards(destroyedLevel);
     voidEl.classList.add('active');
     swordWrap.style.opacity = 0;
+    setRescueBodyClass(true);  // v182 水鏡 hide
     applyAmbientMode('void');
     const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec; // 速流 + 冬 + 수호자 速 보너스
     let timeLeft = totalSec;
@@ -8023,6 +8127,7 @@
   function endVoid(rescued) {
     voidEl.classList.remove('active');
     swordWrap.style.opacity = 1;
+    setRescueBodyClass(false);  // v182 水鏡 restore
     rescueWindow = null;
     applyAmbientMode('idle');
     if (!rescued) {
@@ -9119,6 +9224,7 @@
 
   function showChallenge() {
     const t = challenge.type;
+    setChallengeBodyClass(true);  // v182 水鏡 hide
     applyAmbientMode('crisis');
     // 검 종류별 시각 클래스
     shadowForm.className = '';
@@ -9214,6 +9320,7 @@
     challengeEl.classList.remove('active');
     swordWrap.style.opacity = 1;
     levelBadge.style.opacity = 1;
+    setChallengeBodyClass(false);  // v182 水鏡 restore
     challenge = null;
     // v115 流逝 — 타이머 정리
     if (challengeTimer) { clearTimeout(challengeTimer); challengeTimer = null; }
