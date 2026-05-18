@@ -5194,6 +5194,7 @@
     syncWaterMirror();  // v182 水鏡
     applyMutationVisualToSword();  // v199 稟賦 — 검 mutation 시각 glow
     applyEngravingToSword();  // v203 字 — 사용자 한자 새김 override
+    renderAdvice();  // v209 助言 — 상태 기반 미세 안내
     // v208 拈花 — 蘭 plucked 상태 토글 (오늘 이미 꺾었으면)
     const orchidEl = $('stage-orchid');
     if (orchidEl) orchidEl.classList.toggle('plucked', !canPluckToday());
@@ -6452,6 +6453,77 @@
     bookPageIdx = 0;
     renderBookPage(0);
     $('codex-book-modal').classList.add('active');
+  }
+
+  // === v209 助言 — 사용자 상태 기반 다음 행동 미세 안내 ===
+  function analyzeContext() {
+    if (challenge) return null;  // 도전 중 침묵
+    if (rescueWindow) return null;  // 회수 중 침묵
+    // 1) 위급 — 역경 임박
+    if (typeof failStreak !== 'undefined' && failStreak >= 4 && !adversityReady) {
+      return { text: '逆 — 역경 직전, 한 호흡 깊이', tone: 'warn' };
+    }
+    if (adversityReady) {
+      return { text: '逆 — 역경이 가까이, 다음 강화가 유리하다', tone: 'good' };
+    }
+    // 2) 위급 — 검 없을 때
+    if (!state.hasSword) {
+      const cost = (typeof FORGE_NEW_SWORD_COST !== 'undefined') ? FORGE_NEW_SWORD_COST : 50;
+      if (state.shards >= cost) return { text: '검을 빚어라 — 조각 충분', tone: 'good' };
+      return { text: '조각이 부족 — 부서진 검을 회수하라', tone: 'warn' };
+    }
+    // 3) 도(道) 도달
+    if (state.level >= (typeof MAX_LEVEL !== 'undefined' ? MAX_LEVEL : 15)) {
+      return { text: '도(道)에 닿았다 — 봉인의 의식을 생각하라', tone: 'best' };
+    }
+    // 4) 영혼 정점
+    if (state.currentSword && (state.currentSword.soul || 0) >= 100) {
+      return { text: '영혼 정점 — 검은 본질에 머무른다', tone: 'best' };
+    }
+    // 5) 7寶 임박 (6/7)
+    const treasuresCount = Object.keys(state.treasures || {}).length;
+    if (treasuresCount === 6) {
+      return { text: '七寶 한 개 남았다 — 봉인을 계속하라', tone: 'good' };
+    }
+    // 6) 호흡 깊은
+    if (typeof breathBonus === 'function' && breathBonus() >= 0.10) {
+      return { text: '깊은 호흡 — 다음 강화 +10%', tone: 'good' };
+    }
+    // 7) 강화 위험 (파괴 확률 높음)
+    if (state.level >= 10 && state.spiritstones === 0) {
+      return { text: '높은 단계 — 靈을 빚어 파괴를 막아라', tone: 'tip' };
+    }
+    // 8) 봉인 가능 + 보상 충분
+    if (state.hasSword && state.level >= 7 && (typeof sealReward === 'function')) {
+      const r = sealReward(state.level);
+      if (r >= 100) return { text: '봉인 보상 ' + r + ' 조각 — 거두기 좋은 때', tone: 'tip' };
+    }
+    // 9) 조각 충분 + 새 검 안 빚을 때 (skip — 검 보유)
+    if (state.shards >= 200 && !state.hasSword) {
+      return { text: '조각이 풍요 — 검을 여럿 빚을 수 있다', tone: 'tip' };
+    }
+    return null;
+  }
+  function renderAdvice() {
+    let el = document.getElementById('advice-line');
+    const ctx = analyzeContext();
+    if (!ctx) { if (el) el.textContent = ''; return; }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'advice-line';
+      el.style.cssText = 'position:absolute;top:55px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;font-family:"Noto Serif KR",serif;font-style:italic;pointer-events:none;z-index:9;max-width:80%;text-align:center;transition:color 0.6s';
+      const stage = $('stage');
+      if (stage) stage.appendChild(el);
+      else document.body.appendChild(el);
+    }
+    const toneColors = {
+      'warn': 'rgba(232,128,108,0.78)',
+      'good': 'rgba(168,232,168,0.78)',
+      'best': 'rgba(255,245,192,0.85)',
+      'tip':  'rgba(168,192,232,0.72)',
+    };
+    el.style.color = toneColors[ctx.tone] || 'rgba(168,168,168,0.62)';
+    el.textContent = ctx.text;
   }
 
   // === v208 拈花 — 蘭 꽃 일일 1회 클릭 ===
