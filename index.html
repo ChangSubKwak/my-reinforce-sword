@@ -3096,6 +3096,10 @@
     <button class="footer-btn" id="btn-legacy">지난 검들</button>
     <button class="footer-btn" id="btn-anthology">검의 노래</button>
   </div>
+  <!-- v205 心拍 — ECG-style 검의 살아있는 맥박 (stage 하단 우측) -->
+  <svg id="heartbeat-svg" viewBox="0 0 80 30" xmlns="http://www.w3.org/2000/svg" style="position:absolute;bottom:60px;right:14px;width:80px;height:30px;pointer-events:none;z-index:7;opacity:0.7" aria-hidden="true">
+    <path id="heartbeat-path" d="M 0 15 L 80 15" fill="none" stroke="rgba(212,175,55,0.55)" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
 </div>
 
 <!-- 조합소 모달 -->
@@ -6441,6 +6445,70 @@
     bookPageIdx = 0;
     renderBookPage(0);
     $('codex-book-modal').classList.add('active');
+  }
+
+  // === v205 心拍 — 검/사용자의 살아있는 맥박 ECG ===
+  let heartbeatPhase = 0;
+  let heartbeatActivity = 1;  // 1 = idle, spike up to 4
+  let heartbeatBuf = [];      // 최근 spike 위치 (x 좌표 기반)
+  let heartbeatTimer = null;
+  function pulseHeartbeat(intensity) {
+    heartbeatActivity = Math.min(4, heartbeatActivity + (intensity || 1.5));
+    // spike position 추가
+    heartbeatBuf.push({ x: 78, intensity: intensity || 1.5 });
+    if (heartbeatBuf.length > 8) heartbeatBuf.shift();
+  }
+  function tickHeartbeat() {
+    const path = document.getElementById('heartbeat-path');
+    if (!path) return;
+    // 검 없으면 flat
+    if (!state.hasSword) {
+      path.setAttribute('d', 'M 0 15 L 80 15');
+      path.setAttribute('stroke', 'rgba(120,120,128,0.3)');
+      heartbeatPhase = 0;
+      heartbeatBuf = [];
+      heartbeatActivity = 1;
+      return;
+    }
+    heartbeatPhase += 0.18;
+    // decay
+    heartbeatActivity = heartbeatActivity * 0.985 + 1 * 0.015;
+    // buffer 이동 (왼쪽으로 흐름)
+    heartbeatBuf.forEach(s => { s.x -= 0.6; });
+    heartbeatBuf = heartbeatBuf.filter(s => s.x > -5);
+    // form color
+    const f = state.currentSword && state.currentSword.form;
+    const color = {
+      '直': 'rgba(168,192,232,0.65)',
+      '曲': 'rgba(232,168,192,0.65)',
+      '重': 'rgba(212,175,55,0.65)',
+      '速': 'rgba(136,232,192,0.65)',
+    }[f] || 'rgba(212,175,55,0.55)';
+    path.setAttribute('stroke', color);
+    // 경로 생성
+    const w = 80, h = 30, cy = h / 2;
+    const baseAmp = 1.2;  // 평상시 미세
+    let d = 'M 0 ' + cy;
+    for (let x = 0; x <= w; x += 1.5) {
+      let y = cy + Math.sin(heartbeatPhase + x * 0.18) * baseAmp;
+      // spike from buffer
+      heartbeatBuf.forEach(s => {
+        const dx = x - s.x;
+        if (Math.abs(dx) < 6) {
+          // 심박 spike shape: up-down-up
+          const t = dx / 6;
+          if (t > -0.3 && t < -0.1) y -= 4 * s.intensity * (t + 0.3) * 5;
+          else if (t > -0.1 && t < 0.05) y += 9 * s.intensity * (1 - Math.abs(t)*5);
+          else if (t > 0.05 && t < 0.25) y -= 2 * s.intensity * (1 - (t - 0.05)*5);
+        }
+      });
+      d += ' L ' + x.toFixed(1) + ' ' + y.toFixed(2);
+    }
+    path.setAttribute('d', d);
+  }
+  function startHeartbeat() {
+    if (heartbeatTimer) clearInterval(heartbeatTimer);
+    heartbeatTimer = setInterval(tickHeartbeat, 80);
   }
 
   // === v204 起念 — 새 검의 탄생 한 줄 ===
@@ -9833,6 +9901,7 @@
     bumpStat('enhanceAttempts');
     bumpDaily('enhanceAttempt', 1);  // v94 天時 — 강화 시도 (성공/실패 무관)
     recordHourActivity();  // v195 時計
+    pulseHeartbeat(1.5);  // v205 心拍
     if (((state.stats && state.stats.enhanceAttempts) || 0) === 100) setTimeout(() => maybeMaster('hundredEnhance'), 1500);  // v181 老師
     consumeMatsu();  // v119 千年松 카운트 소모
     consumeDawnBonus();  // v126 黎明 — 보너스 카운트 소모
@@ -11519,6 +11588,7 @@
       if (!inscribeRunning) runInscribeQueue();
       // 통계: type별 격파 수
       recordHourActivity();  // v195 時計
+      pulseHeartbeat(2.0);  // v205 心拍 — 베기는 큰 spike
       if (c.type.key === 'normal') bumpStat('slainNormal');
       else if (c.type.key === 'flee') bumpStat('slainFlee');
       else if (c.type.key === 'steel') bumpStat('slainSteel');
@@ -13872,6 +13942,7 @@
     bumpStat('sealed');
     bumpDaily('seal', 1);  // v94 天時
     recordHourActivity();  // v195 時計
+    pulseHeartbeat(2.5);  // v205 心拍 — 봉인은 깊은 spike
     setTimeout(() => maybeDropTreasure(), 1400);  // v189 七寶 — 봉인 시 보물 drop 시도
     if (isWay) bumpStat('wayReached');
     recordEvent('판매 ' + swordName + ' +' + reward + ' 조각');
@@ -16233,6 +16304,7 @@
   setInterval(renderDailySaying, 60 * 60 * 1000);  // 자정 경계 자동 갱신
   checkWeeklyReport();       // v196 週報 — 주차 변경 시 자동 리포트
   setInterval(maybeTriggerEclipse, 60 * 1000);  // v197 月蝕 — 매분 0.5% 체크
+  startHeartbeat();  // v205 心拍 — ECG 맥박 시작
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
