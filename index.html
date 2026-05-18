@@ -17,6 +17,14 @@
     --safe: #6a9a6a;
     --line: #3a322a;
   }
+  /* v212 休 — 주말 (土/日) 미세 따뜻함 */
+  body.weekend #stage::after {
+    background: radial-gradient(ellipse at 50% 70%, rgba(232,184,120,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  body.weekend #log-wrap {
+    border-color: rgba(232,184,120,0.18);
+  }
   /* v201 配 — 4 시각 테마 */
   body.theme-tsuki {  /* 月 — 달빛 푸른 */
     --bg: #0a0e1a;
@@ -3857,6 +3865,7 @@
     userDiary: [],              // v210 自書 — 사용자 자유 일기 항목 배열
     lastSenDate: '',            // v211 籤 — 마지막 댓가지 추첨 날짜
     lastSenResult: null,        // v211 籤 — 마지막 결과 객체
+    lastWeekendGreeting: '',    // v212 休 — 마지막 주말 인사 날짜
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -5347,7 +5356,7 @@
     const matsuMulShow = blessingCostMul();  // v119
     const sanctumMulShow = sanctumCostMul();  // v121 結界
     const wishMulShow = wishCostMul();  // v155 寒梅
-    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow * wishMulShow * solarCostMul());
+    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow * wishMulShow * solarCostMul() * weekendCostMul());
     const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus() + resonanceBonus() + beastSuccessBonus() + treasureGlobalBonus() + mutationSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
@@ -6482,6 +6491,60 @@
     bookPageIdx = 0;
     renderBookPage(0);
     $('codex-book-modal').classList.add('active');
+  }
+
+  // === v212 休 — 주말(土/日) 시간 인식 ===
+  function isWeekend() {
+    const d = new Date().getDay();
+    return d === 0 || d === 6;
+  }
+  function weekendCostMul() { return isWeekend() ? 0.95 : 1; }
+  function weekendChallengeMul() { return isWeekend() ? 1.05 : 1; }
+  function checkWeekendGreeting() {
+    if (!isWeekend()) return;
+    const today = new Date().toISOString().slice(0, 10);
+    if (state.lastWeekendGreeting === today) return;
+    // 토요일 첫 진입만 인사 (일요일 다시 X)
+    const d = new Date().getDay();
+    if (d !== 6) {
+      // 일요일: lastWeekendGreeting 만 갱신, 인사 안 함
+      state.lastWeekendGreeting = today;
+      save();
+      return;
+    }
+    state.lastWeekendGreeting = today;
+    save();
+    setTimeout(() => showWeekendGreeting(), 4000);
+  }
+  function showWeekendGreeting() {
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:9px;color:rgba(232,184,120,0.7);letter-spacing:6px;margin-bottom:8px">休</div>' +
+                    '<div style="font-size:12px;color:rgba(232,184,120,0.9);letter-spacing:4px">평안한 주말의 시작</div>' +
+                    '<div style="font-size:9px;color:rgba(168,168,168,0.55);letter-spacing:3px;margin-top:5px">강화 비용 -5% · 도전 보상 +5%</div>';
+    el.style.cssText = 'position:fixed;top:18%;left:50%;transform:translateX(-50%);text-align:center;z-index:24;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:14px 30px;background:rgba(20,15,10,0.55);border-radius:2px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translateX(-50%) translateY(-10px)' },
+      { opacity: 1, transform: 'translateX(-50%) translateY(0)', offset: 0.2 },
+      { opacity: 1, transform: 'translateX(-50%) translateY(0)', offset: 0.78 },
+      { opacity: 0, transform: 'translateX(-50%) translateY(-10px)' }
+    ], { duration: 5000, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 5100);
+    log('休 — 평안한 주말의 시작', 'success');
+  }
+  function renderWeekendMark() {
+    const we = isWeekend();
+    document.body.classList.toggle('weekend', we);
+    let el = document.getElementById('weekend-mark');
+    if (!we) { if (el) el.remove(); return; }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'weekend-mark';
+      el.style.cssText = 'position:fixed;top:14px;right:265px;font-size:12px;letter-spacing:3px;color:rgba(232,184,120,0.8);font-family:"Noto Serif KR",serif;pointer-events:none;z-index:25;text-shadow:0 0 10px rgba(232,184,120,0.5)';
+      document.body.appendChild(el);
+    }
+    el.textContent = '休';
+    el.title = '休 — 주말 (강화 비용 -5%, 도전 보상 +5%)';
   }
 
   // === v211 籤 — 일일 댓가지 추첨 ===
@@ -10331,7 +10394,7 @@
     const matsuMul = blessingCostMul();  // v119 千年松
     const sanctumMul = sanctumCostMul();  // v121 結界
     const wishMul = wishCostMul();  // v155 寒梅 — 風影 유언
-    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMul * matsuMul * sanctumMul * wishMul * solarCostMul());
+    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMul * matsuMul * sanctumMul * wishMul * solarCostMul() * weekendCostMul());
     if (state.shards < actualCost) return;
 
     const useProtect = protectCheck.checked && !protectCheck.disabled;
@@ -10999,6 +11062,9 @@
     // v155 寒梅 — 雷神 유언 슬레이 보상 ×1.2 (5회)
     const wishSlayM = wishSlayRewardMul();
     if (wishSlayM !== 1) { reward = Math.floor(reward * wishSlayM); consumeWishSlay(); }
+    // v212 休 — 주말 도전 보상 ×1.05
+    const wmul = weekendChallengeMul();
+    if (wmul !== 1) reward = Math.floor(reward * wmul);
     const origin = rollShadowOrigin();
     challenge = { strength, reward, type, origin };
     bumpStat('challengesAppeared');
@@ -13347,7 +13413,7 @@
     // 비용 부족 시 자동 중지
     const f = getForm();
     const formCostMul = (f && f.costMul) || 1;
-    const actualCost = Math.ceil(t.cost * formCostMul * getSeason().costMul * getAgeEffect().costMul * solarCostMul());
+    const actualCost = Math.ceil(t.cost * formCostMul * getSeason().costMul * getAgeEffect().costMul * solarCostMul() * weekendCostMul());
     if (state.shards < actualCost) { stopAutoEnhance('修練 중지 — 조각 부족'); return; }
     // 강화 실행
     enhance();
@@ -16789,6 +16855,9 @@
   renderSidinMark();  // v206 時辰 — 12지간 초기 표시
   setInterval(renderSidinMark, 5 * 60 * 1000);  // 5분 간격 갱신
   setInterval(checkSessionMilestones, 60 * 1000);  // v207 精進 — 매분 세션 마일스톤 체크
+  renderWeekendMark();  // v212 休 — 주말 표식
+  checkWeekendGreeting();  // 주말 인사
+  setInterval(() => { renderWeekendMark(); checkWeekendGreeting(); }, 60 * 60 * 1000);  // 매시간 재확인
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
