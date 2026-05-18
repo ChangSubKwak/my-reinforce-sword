@@ -2595,6 +2595,7 @@
   <button id="btn-clock">時  計</button>
   <button id="btn-oracle">占</button>
   <button id="btn-theme">配</button>
+  <button id="btn-engrave">字</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -3181,6 +3182,19 @@
     <p>도(道)에 이른 검들의 일생을 시구로</p>
     <div id="anthology-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
     <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- v203 字 — 검 칼날 한자 새김 -->
+<div class="modal" id="engrave-modal">
+  <div class="modal-box" style="max-width: 440px;">
+    <h2>字 — 검 칼날 새김</h2>
+    <p>현재 검에 한자 1자를 새긴다 — 봉인까지 유지</p>
+    <div id="engrave-grid" style="margin:14px 0"></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:10px">
+      <button id="engrave-confirm">확 정</button>
+      <button class="modal-close" data-close>닫 기</button>
+    </div>
   </div>
 </div>
 
@@ -5171,6 +5185,7 @@
     renderResonanceDisplay();  // v178 共鳴
     syncWaterMirror();  // v182 水鏡
     applyMutationVisualToSword();  // v199 稟賦 — 검 mutation 시각 glow
+    applyEngravingToSword();  // v203 字 — 사용자 한자 새김 override
     checkBeasts();  // v188 四神 — 잠금 해제 검사 + 코너 표시
     renderSealButton();
     renderCurrentChart();
@@ -6426,6 +6441,71 @@
     bookPageIdx = 0;
     renderBookPage(0);
     $('codex-book-modal').classList.add('active');
+  }
+
+  // === v203 字 — 검 칼날 한자 새김 (사용자 선택) ===
+  const ENGRAVE_HANJI = {
+    '五常': ['義','仁','禮','智','信'],
+    '四靈': ['龍','虎','鳳','鶴'],
+    '元素': ['風','月','心'],
+  };
+  let engraveTempPick = '';
+  function getSwordEngraving() {
+    if (state.hasSword && state.currentSword && state.currentSword.engraving) return state.currentSword.engraving;
+    return '';
+  }
+  function setSwordEngraving(c) {
+    if (!state.hasSword || !state.currentSword) return;
+    state.currentSword.engraving = c || '';
+    save();
+    render();
+  }
+  function showEngraveModal() {
+    if (!state.hasSword) {
+      log('字 — 검이 없을 때는 새길 수 없다', 'warn');
+      return;
+    }
+    engraveTempPick = getSwordEngraving();
+    renderEngraveModal();
+    $('engrave-modal').classList.add('active');
+  }
+  function renderEngraveModal() {
+    const wrap = $('engrave-grid');
+    if (!wrap) return;
+    let html = '';
+    Object.keys(ENGRAVE_HANJI).forEach(cat => {
+      html += '<div style="margin:10px 0"><div style="font-size:9px;letter-spacing:6px;color:#888;margin-bottom:6px">' + cat + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">';
+      ENGRAVE_HANJI[cat].forEach(c => {
+        const isPicked = engraveTempPick === c;
+        html += '<button class="engrave-char-btn" data-char="' + c + '" style="width:42px;height:42px;font-size:22px;font-family:\'Noto Serif KR\',serif;background:' + (isPicked ? '#3a2a14' : '#1a1a22') + ';color:' + (isPicked ? '#fff5c0' : '#e8e6dd') + ';border:1px solid ' + (isPicked ? '#d4af37' : '#3a3a44') + ';cursor:pointer;padding:0;transition:all 0.2s' + (isPicked ? ';box-shadow:0 0 14px rgba(212,175,55,0.5)' : '') + '">' + c + '</button>';
+      });
+      html += '</div></div>';
+    });
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('.engrave-char-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const c = e.currentTarget.dataset.char;
+        engraveTempPick = (engraveTempPick === c) ? '' : c;
+        renderEngraveModal();
+      });
+    });
+  }
+  function confirmEngrave() {
+    setSwordEngraving(engraveTempPick);
+    log('字 — ' + (engraveTempPick ? '검에 「' + engraveTempPick + '」 새겨졌다' : '새김 지움'), 'success');
+    $('engrave-modal').classList.remove('active');
+  }
+  function applyEngravingToSword() {
+    // mark-kanji SVG element과 통합 — userEngraving이 있으면 override
+    const markEl = document.getElementById('mark-kanji');
+    if (!markEl) return;
+    const userE = getSwordEngraving();
+    if (userE) {
+      markEl.textContent = userE;
+      markEl.style.opacity = '0.85';
+      markEl.setAttribute('fill', '#fff5c0');
+    }
+    // else: 기존 mark-kanji 로직이 처리 (v69 getPrimaryKanji)
   }
 
   // === v202 念珠 — 검 1자루 강화 성공 누적 (36/72/108 마일스톤) ===
@@ -15063,6 +15143,12 @@
     renderThemeModal();
     $('theme-modal').classList.add('active');
   });
+  // v203 字
+  if ($('btn-engrave')) $('btn-engrave').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    showEngraveModal();
+  });
+  if ($('engrave-confirm')) $('engrave-confirm').addEventListener('click', confirmEngrave);
   if ($('gallery-pause')) $('gallery-pause').addEventListener('click', (e) => {
     galleryPaused = !galleryPaused;
     e.currentTarget.textContent = galleryPaused ? '▶' : '⏸';
