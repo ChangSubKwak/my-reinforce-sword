@@ -3669,6 +3669,7 @@
     playStreak: 0,    // v191 練日 — 현재 연속 일자
     bestStreak: 0,    // v191 練日 — 최고 연속 일자
     streakMilestonesShown: {},  // v191 練日 — 7/30/100/365 마일스톤 표시 여부
+    festivalsGreetedYear: {},   // v192 節 — 명절별 마지막 인사한 년 ('01-01': '2026')
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -5733,6 +5734,97 @@
     a.click();
     setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
     log('吾詩 다운로드 — ' + title, 'success');
+  }
+
+  // === v192 節 — 전통 명절 (元旦/端午/七夕/重陽) ===
+  const FESTIVALS = [
+    { date:'01-01', name:'元旦', kanji:'元', verse:'새해 첫날 — 검의 새 길이 열린다',
+      reward: { type:'shards', amount:50, label:'조각 +50' }, color:'#fff5c0' },
+    { date:'05-05', name:'端午', kanji:'節', verse:'단오의 깊은 의례 — 창포물로 검을 씻는다',
+      reward: { type:'whetstone', amount:1, label:'砥 +1' }, color:'#88c8a8' },
+    { date:'07-07', name:'七夕', kanji:'夕', verse:'직녀와 견우가 만나는 밤 — 강을 건너는 검',
+      reward: { type:'spiritstone', amount:1, label:'靈 +1' }, color:'#5878b8' },
+    { date:'09-09', name:'重陽', kanji:'陽', verse:'아홉이 두 번 겹친 날 — 양기가 정점에 이른다',
+      reward: { type:'soul', amount:30, label:'영혼 +30 (조각 +30 if 검 없음)' }, color:'#d4884a' },
+  ];
+  function getTodayFestival() {
+    const now = new Date();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const key = m + '-' + d;
+    return FESTIVALS.find(f => f.date === key);
+  }
+  function checkFestival() {
+    if (!state.festivalsGreetedYear) state.festivalsGreetedYear = {};
+    const f = getTodayFestival();
+    if (!f) { renderFestivalMark(null); return; }
+    renderFestivalMark(f);
+    const year = String(new Date().getFullYear());
+    const lastYearGreeted = state.festivalsGreetedYear[f.date];
+    if (lastYearGreeted === year) return;  // 이미 올해 인사
+    state.festivalsGreetedYear[f.date] = year;
+    // 보상
+    if (f.reward.type === 'shards') state.shards = (state.shards || 0) + f.reward.amount;
+    else if (f.reward.type === 'whetstone') state.whetstones = (state.whetstones || 0) + f.reward.amount;
+    else if (f.reward.type === 'spiritstone') state.spiritstones = (state.spiritstones || 0) + f.reward.amount;
+    else if (f.reward.type === 'soul') {
+      if (state.hasSword) addSoul(f.reward.amount);
+      else state.shards = (state.shards || 0) + f.reward.amount;  // fallback
+    }
+    // 명절 명문 (현재 검에)
+    if (state.hasSword && state.currentSword) {
+      if (!state.currentSword.inscriptions) state.currentSword.inscriptions = [];
+      if (state.currentSword.inscriptions.indexOf(f.name) < 0) {
+        state.currentSword.inscriptions.push(f.name);
+      }
+    }
+    save();
+    setTimeout(() => showFestivalCeremony(f), 2200);
+  }
+  function showFestivalCeremony(f) {
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.7);letter-spacing:9px;margin-bottom:18px">節  ─  ' + f.name + '</div>' +
+                    '<div style="font-size:96px;color:' + f.color + ';letter-spacing:16px;text-shadow:0 0 50px ' + f.color + ',0 0 100px ' + f.color + ';font-weight:200;line-height:1">' + f.kanji + '</div>' +
+                    '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:24px;font-style:italic">' + f.verse + '</div>' +
+                    '<div style="font-size:11px;color:#d4af37;letter-spacing:3px;margin-top:14px">' + f.reward.label + '</div>' +
+                    (state.hasSword ? '<div style="font-size:9px;color:rgba(168,184,200,0.6);letter-spacing:3px;margin-top:6px">검에 ' + f.name + ' 명문 새겨짐</div>' : '');
+    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6200;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:46px 60px;background:radial-gradient(ellipse,rgba(15,12,8,0.95) 0%,rgba(15,12,8,0.65) 60%,transparent 90%);max-width:600px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.16 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.82 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.04)' }
+    ], { duration: 7500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 7600);
+    // 7음 깊은 종
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [110, 165, 220, 330, 440, 660, 880].forEach((freq, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = freq;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.42);
+          g.gain.exponentialRampToValueAtTime(0.13, ct + i*0.42 + 0.06);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.42 + 3.5);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.42); osc.stop(ct + i*0.42 + 3.6);
+        });
+      }
+    } catch(e) {}
+    log('節 ' + f.name + ' — ' + f.verse + ' · ' + f.reward.label, 'success');
+  }
+  function renderFestivalMark(f) {
+    let el = document.getElementById('festival-mark');
+    if (!f) { if (el) el.remove(); return; }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'festival-mark';
+      el.style.cssText = 'position:fixed;top:14px;right:215px;font-size:13px;letter-spacing:3px;font-family:"Noto Serif KR",serif;pointer-events:none;z-index:25;text-shadow:0 0 12px currentColor';
+      document.body.appendChild(el);
+    }
+    el.style.color = f.color;
+    el.textContent = f.kanji;
+    el.title = f.name + ' — ' + f.verse;
   }
 
   // === v191 練日 — 연속 플레이 일자 (지속성 reward) ===
@@ -11955,6 +12047,10 @@
     { key: '道',   label: '최고 단계 +15 도달',            verse: '검과 사람이 하나의 길이 되었다',     trigger: () => state.level >= MAX_LEVEL },
     { key: '鬼斬', label: '검귀를 베어냈다',               verse: '검귀의 피가 칼끝에 묻었다',         trigger: () => false },
     { key: '夜叉斬', label: '밤의 야차를 베어냈다',          verse: '달빛 아래 검이 그림자를 갈랐다',     trigger: () => false },
+    { key: '元旦',  label: '새해 첫날 검을 단련한 날',        verse: '새해 첫 호흡이 검에 깃들었다',       trigger: () => false },
+    { key: '端午',  label: '단오에 검을 단련한 날',           verse: '창포 향이 검의 결에 스며들었다',     trigger: () => false },
+    { key: '七夕',  label: '칠석에 검을 단련한 날',           verse: '은하수의 다리가 검 위에 펼쳐졌다',   trigger: () => false },
+    { key: '重陽',  label: '중양에 검을 단련한 날',           verse: '두 번 겹친 양기가 검에 깃들었다',     trigger: () => false },
     { key: '覺',   label: '검이 깨어났다',                  verse: '검의 의식이 처음으로 열렸다',       trigger: () => false },
     { key: '本',   label: '본질에 이르렀다',               verse: '검의 본질이 검 안에 머물렀다',       trigger: () => false },
     { key: '始祖', label: '선조의 흔적이 깃들었다',         verse: '선조의 길이 새 검에 흐른다',         trigger: () => false },
@@ -14958,6 +15054,8 @@
   startMeteorSchedule();     // v185 流星 — 무작위 유성 spawner
   checkDailyStreak();        // v191 練日 — 연속 일자 체크
   renderStreakMark();        // v191 練日 — 우상단 표식 초기 렌더
+  checkFestival();           // v192 節 — 명절 체크
+  setInterval(checkFestival, 60 * 60 * 1000);  // 자정 경계 자동
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
