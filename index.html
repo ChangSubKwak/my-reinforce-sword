@@ -6447,6 +6447,68 @@
     $('codex-book-modal').classList.add('active');
   }
 
+  // === v207 精進 — 한 세션 머무름 마일스톤 ===
+  const SESSION_START = Date.now();
+  let sessionMilestonesHit = {};
+  const PRECISION_MILESTONES = [
+    { min: 30,  kanji:'守', label:'한 자리를 30분 지킴',
+      reward: () => { pendingBreathBoost = true; return '호흡 보너스 ×2 부여'; } },
+    { min: 60,  kanji:'居', label:'한 자리에 1시간 머무름',
+      reward: () => { if (state.hasSword) addSoul(5); return '영혼 +5'; } },
+    { min: 120, kanji:'住', label:'한 자리에 2시간 머무름',
+      reward: () => { state.spiritstones = (state.spiritstones || 0) + 1; return '靈 +1'; } },
+    { min: 180, kanji:'精進', label:'정진 — 3시간',
+      reward: () => {
+        if (state.hasSword && state.currentSword) {
+          if (!state.currentSword.inscriptions) state.currentSword.inscriptions = [];
+          if (state.currentSword.inscriptions.indexOf('精進') < 0) state.currentSword.inscriptions.push('精進');
+        }
+        return '精進 명문 (현재 검)';
+      } },
+  ];
+  function checkSessionMilestones() {
+    const elapsedMin = (Date.now() - SESSION_START) / 60000;
+    PRECISION_MILESTONES.forEach(m => {
+      if (elapsedMin >= m.min && !sessionMilestonesHit[m.min]) {
+        sessionMilestonesHit[m.min] = true;
+        const rewardLabel = m.reward();
+        showPrecisionFade(m, rewardLabel);
+        save();
+      }
+    });
+  }
+  function showPrecisionFade(m, rewardLabel) {
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:10px;color:rgba(168,200,168,0.7);letter-spacing:10px;margin-bottom:18px">精  進</div>' +
+                    '<div style="font-size:84px;color:#a8c8a8;letter-spacing:14px;text-shadow:0 0 36px #a8c8a8,0 0 72px rgba(168,200,168,0.5);font-weight:200;line-height:1">' + m.kanji + '</div>' +
+                    '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:22px;font-style:italic">' + m.label + '</div>' +
+                    '<div style="font-size:11px;color:#88c8a8;letter-spacing:3px;margin-top:14px">' + rewardLabel + '</div>';
+    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5800;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:38px 56px;background:radial-gradient(ellipse,rgba(15,22,15,0.92) 0%,rgba(15,22,15,0.55) 65%,transparent 92%);max-width:520px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.16 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.82 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.04)' }
+    ], { duration: 6500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 6600);
+    // 깊은 종 (3음 평화)
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [220, 293, 392].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.4);
+          g.gain.exponentialRampToValueAtTime(0.13, ct + i*0.4 + 0.06);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.4 + 3.0);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.4); osc.stop(ct + i*0.4 + 3.1);
+        });
+      }
+    } catch(e) {}
+    log('精進 ' + m.label + ' — ' + rewardLabel, 'success');
+  }
+
   // === v206 時辰 — 12지간 시진 (좌상단 항상 표시) ===
   const SIDIN_HOURS = [
     { kanji:'子', label:'쥐', hStart:23, hEnd:1,  color:'#5878a8', tone:'night'  },  // 23-01
@@ -13256,6 +13318,7 @@
     { key: '朔',   label: '연속 강화 성공 36회',              verse: '새 달이 시작된다',                  trigger: () => false },
     { key: '半',   label: '연속 강화 성공 72회',              verse: '달이 반쯤 차올랐다',                trigger: () => false },
     { key: '圓',   label: '연속 강화 성공 108회',             verse: '둥글게 닫힌 길',                    trigger: () => false },
+    { key: '精進', label: '한 세션 3시간 정진',                verse: '머무름이 길의 일부였다',             trigger: () => false },
     { key: '元旦',  label: '새해 첫날 검을 단련한 날',        verse: '새해 첫 호흡이 검에 깃들었다',       trigger: () => false },
     { key: '端午',  label: '단오에 검을 단련한 날',           verse: '창포 향이 검의 결에 스며들었다',     trigger: () => false },
     { key: '七夕',  label: '칠석에 검을 단련한 날',           verse: '은하수의 다리가 검 위에 펼쳐졌다',   trigger: () => false },
@@ -16346,6 +16409,7 @@
   startHeartbeat();  // v205 心拍 — ECG 맥박 시작
   renderSidinMark();  // v206 時辰 — 12지간 초기 표시
   setInterval(renderSidinMark, 5 * 60 * 1000);  // 5분 간격 갱신
+  setInterval(checkSessionMilestones, 60 * 1000);  // v207 精進 — 매분 세션 마일스톤 체크
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '劍', label: '검의 길이 열린다' });
