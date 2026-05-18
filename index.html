@@ -1909,6 +1909,28 @@
     height: 10px;
     box-shadow: 22px 0 0 var(--danger), 0 0 12px var(--danger), 22px 0 12px var(--danger);
   }
+  /* v184 夜叉 — 밤 그림자 (자주색) */
+  #shadow-form.yaksha-type {
+    height: 115%;
+    margin-top: -7%;
+    border-radius: 45% 45% 25% 25% / 55% 55% 35% 35%;
+    background: radial-gradient(ellipse at 50% 30%, #1a0830 0%, #0a0612 75%);
+    box-shadow: 0 0 50px rgba(168, 88, 232, 0.55), inset 0 0 28px rgba(168, 88, 232, 0.42);
+    animation: shadow-yaksha 1.8s infinite ease-in-out;
+  }
+  @keyframes shadow-yaksha {
+    0%, 100% { transform: scale(1) translateY(0); filter: hue-rotate(0deg); }
+    50% { transform: scale(1.05) translateY(-4px); filter: hue-rotate(15deg); }
+  }
+  #shadow-form.yaksha-type::before {
+    top: 28%;
+    left: 30%;
+    width: 8px;
+    height: 8px;
+    background: rgba(232, 168, 255, 0.95);
+    border-radius: 50%;
+    box-shadow: 26px 0 0 rgba(232, 168, 255, 0.95), 0 0 14px rgba(168, 88, 232, 0.9), 26px 0 14px rgba(168, 88, 232, 0.9);
+  }
   /* v41 검귀 SVG (얼굴/발톱) */
   #demon-detail {
     position: absolute;
@@ -3589,7 +3611,7 @@
       challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0,
       fled: 0, evaded: 0,
       rescued: 0, rescueFailed: 0,
-      sealed: 0, wayReached: 0,
+      sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0,
       downgraded: 0,  // v105 落 — 하락 누적
     },
     seenHelp: false,
@@ -8236,7 +8258,21 @@
     },
   ];
 
+  // v184 夜叉 — 밤 시간 한정 특수 그림자
+  const YAKSHA_TYPE = {
+    key: 'yaksha', name: '夜叉', weight: 0,  // 별도 룰
+    strengthMul: 1.0, rewardMul: 3.0, strengthAdd: 1,
+    desc: '밤의 그림자 — 보상 ×3, 첫 처치 시 夜叉斬 영구 명문',
+    isYaksha: true,
+  };
+  function isNightHour() {
+    const h = new Date().getHours();
+    return (h >= 22 || h < 5);
+  }
   function rollShadowType() {
+    // v184 夜叉 — 밤 12% / 낮 2% 추가 확률
+    const yakshaChance = isNightHour() ? 0.12 : 0.02;
+    if (Math.random() < yakshaChance) return YAKSHA_TYPE;
     const r = Math.random();
     let acc = 0;
     for (const t of SHADOW_TYPES) {
@@ -9258,6 +9294,7 @@
     if (t.key === 'flee') shadowForm.classList.add('flee-type');
     else if (t.key === 'steel') shadowForm.classList.add('steel-type');
     else if (t.key === 'demon') shadowForm.classList.add('demon-type');
+    else if (t.key === 'yaksha') shadowForm.classList.add('yaksha-type');  // v184
     // v41/v58 그림자 종류별 SVG 디테일 토글
     const demonDetail = $('demon-detail');
     if (demonDetail) demonDetail.classList.toggle('active', t.key === 'demon');
@@ -9456,6 +9493,11 @@
         state.shadowOriginsSlain[c.origin] = (state.shadowOriginsSlain[c.origin] || 0) + 1;
         const allFour = ORIGIN_KEYS.every(k => (state.shadowOriginsSlain[k] || 0) > 0);
         if (allFour) grantInscription('斷魔');
+      }
+      if (c.type.isYaksha) {
+        grantInscription('夜叉斬');
+        addSoul(15); // 夜叉 추가 +15
+        bumpStat('yakshaSlain');
       }
       if (c.type.isDemon) {
         grantInscription('鬼斬');
@@ -11037,6 +11079,7 @@
   const NAME_SUFFIX = [
     { key: '道',   word: '道' },
     { key: '鬼斬', word: '魔' },
+    { key: '夜叉斬', word: '夜' },
     { key: '本',   word: '本' },
     { key: '剛體', word: '剛' },
     { key: '覺',   word: '覺' },
@@ -11063,6 +11106,7 @@
     { key: '回魔', label: '그림자를 5번 베어냈다',         verse: '검이 어둠을 거듭 물리쳤다',         trigger: () => state.currentSword.slainCount >= 5 },
     { key: '道',   label: '최고 단계 +15 도달',            verse: '검과 사람이 하나의 길이 되었다',     trigger: () => state.level >= MAX_LEVEL },
     { key: '鬼斬', label: '검귀를 베어냈다',               verse: '검귀의 피가 칼끝에 묻었다',         trigger: () => false },
+    { key: '夜叉斬', label: '밤의 야차를 베어냈다',          verse: '달빛 아래 검이 그림자를 갈랐다',     trigger: () => false },
     { key: '覺',   label: '검이 깨어났다',                  verse: '검의 의식이 처음으로 열렸다',       trigger: () => false },
     { key: '本',   label: '본질에 이르렀다',               verse: '검의 본질이 검 안에 머물렀다',       trigger: () => false },
     { key: '始祖', label: '선조의 흔적이 깃들었다',         verse: '선조의 길이 새 검에 흐른다',         trigger: () => false },
