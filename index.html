@@ -2524,6 +2524,7 @@
   <button id="btn-meishi">劍 名 片</button>
   <button id="btn-constellation">星 圖</button>
   <button id="btn-seal-edit">印  章</button>
+  <button id="btn-beasts">四  神</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -3113,6 +3114,16 @@
   </div>
 </div>
 
+<!-- v188 四神 — 4신수 모달 -->
+<div class="modal" id="beast-modal">
+  <div class="modal-box" style="max-width: 440px;">
+    <h2>四 神</h2>
+    <p>네 방위 수호자가 다양한 길의 자에게 강림한다</p>
+    <div id="beast-list"></div>
+    <button class="modal-close" data-close style="margin-top:14px">닫 기</button>
+  </div>
+</div>
+
 <!-- v187 印 — 사용자 한자 인장 -->
 <div class="modal" id="seal-modal">
   <div class="modal-box" style="max-width: 460px;">
@@ -3628,6 +3639,7 @@
     lastSolarTerm: null,  // v177 節氣 — 마지막 발견된 절기 key
     stalematePending: false,  // v183 對峙 — 직전 對峙 후 다음 그림자 type 미리 보임 플래그
     userSeal: [],  // v187 印 — 사용자 한자 2자 인장 (e.g. ['天','心'])
+    beastsUnlocked: {},  // v188 四神 — 4신수 잠금 해제 상태 {genbu/suzaku/seiryu/byakko: true}
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -4575,7 +4587,7 @@
     const rsv = getResolve();
     const successAdd = ((form && form.successBonus) || 0) + soulEffects().successBonus
       + schoolSuccessBonus() + breathBonus() + guardianBonus().successBonus
-      + trialSuccessBonus() + rsv.successAdd + (adversityReady ? 0.40 : 0) + eraSuccessBonus() + enshrineSuccessBonus() + fourWaySuccessBonus() + resonanceBonus();
+      + trialSuccessBonus() + rsv.successAdd + (adversityReady ? 0.40 : 0) + eraSuccessBonus() + enshrineSuccessBonus() + fourWaySuccessBonus() + resonanceBonus() + beastSuccessBonus();
     const destroyReduce2 = (form && form.destroyReduce) || 0;
     const effectiveDestroy = Math.max(0, (t.destroy - destroyReduce2 - schoolDestroyReduce() - guardianBonus().destroyReduce - (adversityReady ? 0.12 : 0) - getScarDestroyReduce()) * rsv.destroyMul);
     const trueSuccess = Math.min(1, t.success + successAdd);
@@ -4992,6 +5004,7 @@
     renderWayProgress();
     renderResonanceDisplay();  // v178 共鳴
     syncWaterMirror();  // v182 水鏡
+    checkBeasts();  // v188 四神 — 잠금 해제 검사 + 코너 표시
     renderSealButton();
     renderCurrentChart();
     applySeason();
@@ -5112,7 +5125,7 @@
     const sanctumMulShow = sanctumCostMul();  // v121 結界
     const wishMulShow = wishCostMul();  // v155 寒梅
     const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow * wishMulShow * solarCostMul());
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus() + resonanceBonus();
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus() + resonanceBonus() + beastSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
 
@@ -5551,6 +5564,143 @@
       }
     } catch (e) {}
     log('老師 — ' + t.verse, 'success');
+  }
+
+  // === v188 四神 — 4신수 (다양한 플레이로 잠금 해제) ===
+  const SACRED_BEASTS = [
+    { key:'genbu',  name:'玄武', dir:'北', dirKr:'북', element:'水', color:'#4a7a9a',
+      condition: () => ((state.stats && state.stats.stalemate) || 0) >= 5,
+      conditionDesc: '對峙 5회',
+      bonusDesc: '도전 보상 +5%',
+      bonusKey: 'challengeRewardMul', bonusVal: 1.05,
+      verse: '북방의 수호자가 강림하였다 — 양보가 길임을 알렸다' },
+    { key:'suzaku', name:'朱雀', dir:'南', dirKr:'남', element:'火', color:'#c04040',
+      condition: () => ((state.stats && state.stats.slainDemon) || 0) >= 3,
+      conditionDesc: '검귀 3회 베기',
+      bonusDesc: '강화 성공 +1%',
+      bonusKey: 'successBonus', bonusVal: 0.01,
+      verse: '남방의 화염이 검의 길을 비춘다' },
+    { key:'seiryu', name:'青龍', dir:'東', dirKr:'동', element:'木', color:'#4a9a6a',
+      condition: () => ((state.sealedSwords || []).length) >= 10,
+      conditionDesc: '봉인 10자루',
+      bonusDesc: '봉인 보상 +3%',
+      bonusKey: 'sealRewardMul', bonusVal: 1.03,
+      verse: '동방의 용이 봉인의 길에 깃들었다' },
+    { key:'byakko', name:'白虎', dir:'西', dirKr:'서', element:'金', color:'#c8b8a8',
+      condition: () => ((state.stats && state.stats.wayReached) || 0) >= 3,
+      conditionDesc: '道 3회 도달',
+      bonusDesc: '회수 +0.5초',
+      bonusKey: 'rescueSec', bonusVal: 0.5,
+      verse: '서방의 호랑이가 길에 닿은 자를 알아본다' },
+  ];
+  function beastUnlocked(key) {
+    return !!(state.beastsUnlocked && state.beastsUnlocked[key]);
+  }
+  function beastSuccessBonus() {
+    return beastUnlocked('suzaku') ? 0.01 : 0;
+  }
+  function beastChallengeMul() {
+    return beastUnlocked('genbu') ? 1.05 : 1;
+  }
+  function beastSealMul() {
+    return beastUnlocked('seiryu') ? 1.03 : 1;
+  }
+  function beastRescueSec() {
+    return beastUnlocked('byakko') ? 0.5 : 0;
+  }
+  function checkBeasts() {
+    if (!state.beastsUnlocked) state.beastsUnlocked = {};
+    let unlocked = false;
+    SACRED_BEASTS.forEach(b => {
+      if (!state.beastsUnlocked[b.key] && b.condition()) {
+        state.beastsUnlocked[b.key] = true;
+        unlocked = true;
+        showBeastAscension(b);
+      }
+    });
+    if (unlocked) save();
+    renderBeastCorners();
+  }
+  function showBeastAscension(b) {
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.6);letter-spacing:8px;margin-bottom:18px">四  神  ─  ' + b.dir + '</div>' +
+                    '<div style="font-size:88px;color:' + b.color + ';letter-spacing:12px;text-shadow:0 0 40px ' + b.color + ',0 0 80px ' + b.color + ';font-weight:200;line-height:1">' + b.name + '</div>' +
+                    '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:24px;font-style:italic">' + b.verse + '</div>' +
+                    '<div style="font-size:11px;color:#d4af37;letter-spacing:3px;margin-top:14px">' + b.bonusDesc + ' (영구)</div>';
+    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5800;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:42px 56px;background:radial-gradient(ellipse,rgba(15,18,25,0.95) 0%,rgba(15,18,25,0.65) 60%,transparent 90%);max-width:560px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.15 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.8 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.05)' }
+    ], { duration: 7000, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 7100);
+    // 신수 강림 종 — 깊은 5음
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [165, 247, 330, 415, 494].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.35);
+          g.gain.exponentialRampToValueAtTime(0.13, ct + i*0.35 + 0.06);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.35 + 3.2);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.35); osc.stop(ct + i*0.35 + 3.3);
+        });
+      }
+    } catch(e) {}
+    log('四神 ' + b.name + ' 강림 — ' + b.bonusDesc + ' 영구 부여', 'success');
+  }
+  function renderBeastCorners() {
+    SACRED_BEASTS.forEach(b => {
+      let el = document.getElementById('beast-corner-' + b.key);
+      if (!beastUnlocked(b.key)) {
+        if (el) el.remove();
+        return;
+      }
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'beast-corner-' + b.key;
+        el.className = 'beast-corner';
+        const positions = {
+          'genbu':  { top:'14px', left:'50%', transform:'translateX(-50%)' },  // 북=상
+          'suzaku': { bottom:'68px', left:'50%', transform:'translateX(-50%)' }, // 남=하
+          'seiryu': { top:'50%', left:'14px',  transform:'translateY(-50%)' },  // 동=좌
+          'byakko': { top:'50%', right:'14px', transform:'translateY(-50%)' },  // 서=우
+        };
+        const pos = positions[b.key];
+        Object.assign(el.style, {
+          position:'absolute', fontSize:'14px', fontFamily:'"Noto Serif KR",serif',
+          letterSpacing:'4px', opacity:'0.65', pointerEvents:'none', zIndex:'12',
+          color: b.color, textShadow:'0 0 10px ' + b.color, ...pos,
+        });
+        el.textContent = b.name;
+        el.title = b.name + ' (' + b.dirKr + ') — ' + b.bonusDesc;
+        const stage = $('stage');
+        if (stage) stage.appendChild(el);
+      }
+    });
+  }
+  function renderBeastModal() {
+    const wrap = $('beast-list');
+    if (!wrap) return;
+    const unlockedCount = SACRED_BEASTS.filter(b => beastUnlocked(b.key)).length;
+    let html = '<div style="font-size:11px;letter-spacing:3px;color:#a8a098;margin-bottom:14px;text-align:center">' + unlockedCount + ' / 4 강림</div>';
+    SACRED_BEASTS.forEach(b => {
+      const u = beastUnlocked(b.key);
+      html += '<div style="margin:12px 0;padding:12px;border:1px solid ' + (u ? b.color : '#2a2a32') + ';border-radius:2px;background:' + (u ? 'rgba(20,25,35,0.5)' : 'rgba(15,15,20,0.4)') + ';opacity:' + (u ? '1' : '0.5') + '">';
+      html += '<div style="display:flex;align-items:center;gap:14px">';
+      html += '<div style="font-size:32px;color:' + (u ? b.color : '#555') + ';letter-spacing:3px;text-shadow:' + (u ? '0 0 14px ' + b.color : 'none') + '">' + b.name + '</div>';
+      html += '<div style="flex:1">';
+      html += '<div style="font-size:10px;letter-spacing:5px;color:' + (u ? b.color : '#888') + '">' + b.dirKr + ' · ' + b.element + '</div>';
+      html += '<div style="font-size:11px;letter-spacing:2px;color:#e8e6dd;margin-top:4px">' + b.bonusDesc + '</div>';
+      html += '<div style="font-size:9px;letter-spacing:2px;color:#888;margin-top:4px">조건: ' + b.conditionDesc + ' — ' + (u ? '<span style="color:#d4af37">강림</span>' : '대기') + '</div>';
+      html += '</div></div>';
+      if (u) html += '<div style="font-size:10px;font-style:italic;color:rgba(168,184,200,0.7);margin-top:8px;letter-spacing:1px">' + b.verse + '</div>';
+      html += '</div>';
+    });
+    wrap.innerHTML = html;
   }
 
   // === v187 印 — 사용자 인장 (한자 2자 서명) ===
@@ -13387,6 +13537,12 @@
     showSealEditor();
   });
   if ($('seal-confirm')) $('seal-confirm').addEventListener('click', confirmSeal);
+  // v188 四神
+  if ($('btn-beasts')) $('btn-beasts').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    renderBeastModal();
+    $('beast-modal').classList.add('active');
+  });
   if ($('seal-clear')) $('seal-clear').addEventListener('click', () => {
     sealEditing = [];
     renderSealPalette();
