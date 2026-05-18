@@ -17,6 +17,31 @@
     --safe: #6a9a6a;
     --line: #3a322a;
   }
+  /* v201 配 — 4 시각 테마 */
+  body.theme-tsuki {  /* 月 — 달빛 푸른 */
+    --bg: #0a0e1a;
+    --bg-2: #161e30;
+    --fg: #e4ecf4;
+    --dim: #8a98ac;
+    --accent: #c8d8e8;
+    --line: #2a3548;
+  }
+  body.theme-akatsuki {  /* 晨 — 새벽 따뜻한 */
+    --bg: #1c100a;
+    --bg-2: #281a10;
+    --fg: #f0e0d4;
+    --dim: #b09080;
+    --accent: #f8c890;
+    --line: #3c2818;
+  }
+  body.theme-yuki {  /* 雪 — 눈 차분한 은빛 */
+    --bg: #0d0e12;
+    --bg-2: #1a1d24;
+    --fg: #e8ecf0;
+    --dim: #909498;
+    --accent: #d8e0e8;
+    --line: #2c3038;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
     height: 100%;
@@ -2569,6 +2594,7 @@
   <button id="btn-gallery">殿  覽</button>
   <button id="btn-clock">時  計</button>
   <button id="btn-oracle">占</button>
+  <button id="btn-theme">配</button>
   <button id="btn-trial">시련의 혼</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-daily">오늘의 도전</button>
@@ -3155,6 +3181,16 @@
     <p>도(道)에 이른 검들의 일생을 시구로</p>
     <div id="anthology-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
     <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
+<!-- v201 配 — 시각 테마 선택 -->
+<div class="modal" id="theme-modal">
+  <div class="modal-box" style="max-width: 480px;">
+    <h2>配 — 시각 테마</h2>
+    <p>4 테마 중 선택 — 클릭 시 즉시 적용</p>
+    <div id="theme-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:18px 0"></div>
+    <button class="modal-close" data-close style="margin-top:14px">닫 기</button>
   </div>
 </div>
 
@@ -3769,6 +3805,7 @@
     eclipseSeenAt: 0,           // v197 月蝕 — 첫 영구 1회 발현 timestamp (0이면 미발현)
     oracleResultDate: '',       // v198 占 — 오늘 점 받은 날짜
     oracleResultIdx: null,      // v198 占 — 오늘 점 결과 인덱스
+    visualTheme: '',            // v201 配 — 시각 테마 ('' = 古 / 'tsuki' / 'akatsuki' / 'yuki')
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -6471,6 +6508,43 @@
     const glow = mutationVisualGlow();
     if (glow) wrap.style.filter = glow;
     else wrap.style.filter = '';
+  }
+
+  // === v201 配 — 4 시각 테마 (古/月/晨/雪) ===
+  const VISUAL_THEMES = [
+    { key:'',         name:'古', label:'고풍 — 황금 다크', bg:'#1f1a14', accent:'#e8c454' },
+    { key:'tsuki',    name:'月', label:'달빛 — 푸른 밤',   bg:'#0a0e1a', accent:'#c8d8e8' },
+    { key:'akatsuki', name:'晨', label:'새벽 — 따뜻한 빛', bg:'#1c100a', accent:'#f8c890' },
+    { key:'yuki',     name:'雪', label:'눈 — 은빛 차분',   bg:'#0d0e12', accent:'#d8e0e8' },
+  ];
+  function applyVisualTheme(themeKey) {
+    document.body.classList.remove('theme-tsuki', 'theme-akatsuki', 'theme-yuki');
+    if (themeKey) document.body.classList.add('theme-' + themeKey);
+    state.visualTheme = themeKey;
+    save();
+  }
+  function renderThemeModal() {
+    const wrap = $('theme-grid');
+    if (!wrap) return;
+    const current = state.visualTheme || '';
+    let html = '';
+    VISUAL_THEMES.forEach(t => {
+      const isActive = current === t.key;
+      html += '<button class="theme-card" data-theme="' + t.key + '" style="padding:16px 12px;border:1px solid ' + (isActive ? t.accent : '#3a3a44') + ';border-radius:2px;background:' + t.bg + ';cursor:pointer;text-align:center;transition:all 0.3s' + (isActive ? ';box-shadow:0 0 18px ' + t.accent + '66' : '') + '">';
+      html += '<div style="font-size:32px;color:' + t.accent + ';letter-spacing:4px;font-family:\'Noto Serif KR\',serif;font-weight:200">' + t.name + '</div>';
+      html += '<div style="font-size:10px;color:' + (isActive ? t.accent : '#888') + ';letter-spacing:3px;margin-top:8px">' + t.label + '</div>';
+      if (isActive) html += '<div style="font-size:8px;color:' + t.accent + ';letter-spacing:4px;margin-top:6px">● 활 성</div>';
+      html += '</button>';
+    });
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('.theme-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        const themeKey = e.currentTarget.dataset.theme;
+        applyVisualTheme(themeKey);
+        renderThemeModal();
+        log('配 — ' + (VISUAL_THEMES.find(t => t.key === themeKey) || {}).label, 'info');
+      });
+    });
   }
 
   // === v198 占 — 일일 점쾌 ===
@@ -14907,6 +14981,12 @@
     $('menu-drop').classList.remove('open');
     showOracle();
   });
+  // v201 配
+  if ($('btn-theme')) $('btn-theme').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    renderThemeModal();
+    $('theme-modal').classList.add('active');
+  });
   if ($('gallery-pause')) $('gallery-pause').addEventListener('click', (e) => {
     galleryPaused = !galleryPaused;
     e.currentTarget.textContent = galleryPaused ? '▶' : '⏸';
@@ -15921,6 +16001,7 @@
   // === 시작 ===
   load();
   ensureDailyTrial();  // v94 天時 — 오늘의 도전 초기화/갱신
+  applyVisualTheme(state.visualTheme || '');  // v201 配 — 저장된 테마 복원
   applySolarTerm();    // v177 節氣 — 현재 절기 적용 + 진입 시 페이드
   setInterval(applySolarTerm, 60 * 60 * 1000);  // 매시간 절기 재확인 (자정 경계)
   startSeasonalParticles();  // v179 季韻 — 환경 입자 spawner
