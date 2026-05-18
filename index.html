@@ -6428,6 +6428,78 @@
     $('codex-book-modal').classList.add('active');
   }
 
+  // === v202 念珠 — 검 1자루 강화 성공 누적 (36/72/108 마일스톤) ===
+  const BEAD_MILESTONES = [
+    { n: 36,  kanji:'朔', label:'초승의 결정 — 36 알', verse:'서른여섯 번의 성공 — 새 달이 시작된다',
+      reward: { type:'shards', amount: 30 } },
+    { n: 72,  kanji:'半', label:'반월의 결정 — 72 알', verse:'일흔둘 — 달이 반쯤 차올랐다',
+      reward: { type:'shards', amount: 80 } },
+    { n: 108, kanji:'圓', label:'원만의 결정 — 108 알', verse:'백여덟 — 검의 길이 둥글게 닫혔다',
+      reward: { type:'soul', amount: 50 } },
+  ];
+  function addBead() {
+    if (!state.hasSword || !state.currentSword) return;
+    state.currentSword.beads = (state.currentSword.beads || 0) + 1;
+    // 마일스톤 체크
+    BEAD_MILESTONES.forEach(m => {
+      if (state.currentSword.beads === m.n) {
+        // 명문 영구 추가
+        if (!state.currentSword.inscriptions) state.currentSword.inscriptions = [];
+        if (state.currentSword.inscriptions.indexOf(m.kanji) < 0) {
+          state.currentSword.inscriptions.push(m.kanji);
+        }
+        // 보상
+        if (m.reward.type === 'shards') state.shards = (state.shards || 0) + m.reward.amount;
+        else if (m.reward.type === 'soul') addSoul(m.reward.amount);
+        setTimeout(() => showBeadMilestone(m), 700);
+      }
+    });
+  }
+  function resetBeads() {
+    if (state.hasSword && state.currentSword) state.currentSword.beads = 0;
+  }
+  function showBeadMilestone(m) {
+    const el = document.createElement('div');
+    const rewardLabel = m.reward.type === 'shards' ? ('조각 +' + m.reward.amount) : ('영혼 +' + m.reward.amount);
+    el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.65);letter-spacing:10px;margin-bottom:18px">念  珠</div>' +
+                    '<div style="font-size:88px;color:#fff5c0;letter-spacing:14px;text-shadow:0 0 38px #fff5c0,0 0 76px rgba(212,175,55,0.5);font-weight:200;line-height:1">' + m.kanji + '</div>' +
+                    '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:24px;font-style:italic">' + m.verse + '</div>' +
+                    '<div style="font-size:11px;color:#d4af37;letter-spacing:3px;margin-top:14px">' + rewardLabel + '</div>';
+    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6300;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:40px 60px;background:radial-gradient(ellipse,rgba(15,15,22,0.94) 0%,rgba(15,15,22,0.6) 60%,transparent 90%);';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.16 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.82 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.04)' }
+    ], { duration: 6500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 6600);
+    // 종 — 펜타토닉 5음
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [262, 330, 392, 523, 660].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.32);
+          g.gain.exponentialRampToValueAtTime(0.13, ct + i*0.32 + 0.06);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.32 + 3.0);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.32); osc.stop(ct + i*0.32 + 3.1);
+        });
+      }
+    } catch(e) {}
+    log('念珠 ' + m.label + ' — ' + m.verse, 'success');
+  }
+  function getBeadStage() {
+    if (!state.hasSword || !state.currentSword) return null;
+    const b = state.currentSword.beads || 0;
+    if (b >= 108) return { kanji:'圓', count:b };
+    if (b >= 72) return { kanji:'半', count:b };
+    if (b >= 36) return { kanji:'朔', count:b };
+    if (b > 0) return { kanji:'念', count:b };
+    return null;
+  }
+
   // === v199 稟賦 — 새 검 생성 시 무작위 mutation (천부적 재능) ===
   const MUTATIONS = [
     { key:'tenshi',  name:'天賜', chance:0.005, verse:'천부의 검 — 시작부터 두 단계 높다',     color:'#fff5c0' },
@@ -9722,6 +9794,7 @@
       SFX.enhanceSuccessStreak(successStreak);
       setAmbientLevel(state.level);
       bumpStat('enhanceSuccess');
+      addBead();  // v202 念珠
       // v35 첫 강화 / 첫 +5(봉인 가능) 마일스톤
       if (state.level === 1) {
         maybeMilestone('first1', '一', '첫 강화 — 검의 이야기가 시작됩니다');
@@ -12943,6 +13016,9 @@
     { key: '鬼斬', label: '검귀를 베어냈다',               verse: '검귀의 피가 칼끝에 묻었다',         trigger: () => false },
     { key: '夜叉斬', label: '밤의 야차를 베어냈다',          verse: '달빛 아래 검이 그림자를 갈랐다',     trigger: () => false },
     { key: '月蝕',  label: '월식의 순간에 검을 쥐었다',       verse: '달이 가려진 30초의 천문이 검에 깃들었다', trigger: () => false },
+    { key: '朔',   label: '연속 강화 성공 36회',              verse: '새 달이 시작된다',                  trigger: () => false },
+    { key: '半',   label: '연속 강화 성공 72회',              verse: '달이 반쯤 차올랐다',                trigger: () => false },
+    { key: '圓',   label: '연속 강화 성공 108회',             verse: '둥글게 닫힌 길',                    trigger: () => false },
     { key: '元旦',  label: '새해 첫날 검을 단련한 날',        verse: '새해 첫 호흡이 검에 깃들었다',       trigger: () => false },
     { key: '端午',  label: '단오에 검을 단련한 날',           verse: '창포 향이 검의 결에 스며들었다',     trigger: () => false },
     { key: '七夕',  label: '칠석에 검을 단련한 날',           verse: '은하수의 다리가 검 위에 펼쳐졌다',   trigger: () => false },
