@@ -2640,6 +2640,7 @@
   <button id="btn-journey">紀  程</button>
   <button id="btn-daily">오늘의 도전</button>
   <button id="btn-mindchart">心  譜</button>
+  <button id="btn-records">劍 士 録</button>
   <div class="menu-grid">
     <button id="btn-clock">時計</button>
     <button id="btn-today-sheet">帖</button>
@@ -3402,6 +3403,16 @@
   </div>
 </div>
 
+<!-- v224 劍士録 — 개인 최고 기록 -->
+<div class="modal" id="records-modal">
+  <div class="modal-box" style="max-width: 440px;">
+    <h2>劍 士 録</h2>
+    <p>당신의 검의 길에서 가장 높았던 순간들</p>
+    <div id="records-list" style="margin:14px 0"></div>
+    <button class="modal-close" data-close style="margin-top:14px">닫 기</button>
+  </div>
+</div>
+
 <!-- v222 心譜 — 결정 성향 프로필 -->
 <div class="modal" id="mindchart-modal">
   <div class="modal-box" style="max-width: 440px;">
@@ -4011,6 +4022,8 @@
     discoveredEggs: {},         // v216 秘 — 발견된 이스터에그 {key: timestamp}
     activityByDate: {},         // v217 暦 — 일자별 활동 카운트 {YYYY-MM-DD: count}
     gambleStats: { win: 0, lose: 0 },  // v219 賭 — 회수 도박 성공/실패
+    recordMaxSealReward: 0,     // v224 劍士録 — 최대 봉인 보상
+    recordFirstWayGen: 0,       // v224 劍士録 — 첫 道 도달 대수
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -6532,6 +6545,55 @@
   }
   function stopMeditationMelody() {
     if (meditationMelodyTimer) { clearTimeout(meditationMelodyTimer); meditationMelodyTimer = null; }
+  }
+
+  // === v224 劍士録 — 개인 최고 기록 ===
+  function computeRecords() {
+    const allSwords = [].concat(state.sealedSwords || [], state.enshrined || []);
+    if (state.hasSword && state.currentSword) allSwords.push(state.currentSword);
+    let maxSlain = 0, maxEnhance = 0, maxBeads = 0, maxSoul = 0;
+    allSwords.forEach(s => {
+      if ((s.slainCount || 0) > maxSlain) maxSlain = s.slainCount;
+      if ((s.enhanceAttempts || 0) > maxEnhance) maxEnhance = s.enhanceAttempts;
+      if ((s.beads || 0) > maxBeads) maxBeads = s.beads;
+      if ((s.soul || 0) > maxSoul) maxSoul = s.soul;
+    });
+    // 최단 道 — 첫 道 도달 대수 (state.firstWayGen 추적 or 추정)
+    return {
+      bestLevel: state.bestLevel || 0,
+      maxSlain, maxEnhance, maxBeads, maxSoul,
+      maxSealReward: state.recordMaxSealReward || 0,
+      firstWayGen: state.recordFirstWayGen || 0,
+      totalGen: state.swordGeneration || 0,
+      bestStreak: state.bestStreak || 0,
+    };
+  }
+  function updateSealRecord(reward) {
+    if (reward > (state.recordMaxSealReward || 0)) state.recordMaxSealReward = reward;
+  }
+  function renderRecords() {
+    const r = computeRecords();
+    const wrap = $('records-list');
+    if (!wrap) return;
+    const rows = [
+      { label:'최고 강화도', val: '+' + r.bestLevel, color:'#fff5c0' },
+      { label:'단일 검 최다 베기', val: r.maxSlain, color:'#c04040' },
+      { label:'단일 검 최다 강화 시도', val: r.maxEnhance + '회', color:'#d4af37' },
+      { label:'단일 검 최다 念珠', val: r.maxBeads, color:'#a8c0d8' },
+      { label:'단일 검 최고 영혼', val: r.maxSoul, color:'#88c8a8' },
+      { label:'최대 봉인 보상', val: r.maxSealReward + ' 조각', color:'#d4af37' },
+      { label:'최고 연속 일자', val: r.bestStreak + '일', color:'#c8a0e8' },
+      { label:'누적 검 (代)', val: r.totalGen, color:'#a8a098' },
+    ];
+    if (r.firstWayGen > 0) rows.push({ label:'첫 道 도달 (代)', val: r.firstWayGen + '代', color:'#fff5c0' });
+    let html = '';
+    rows.forEach(row => {
+      html += '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:9px 4px;border-bottom:1px solid rgba(212,175,55,0.1)">';
+      html += '<span style="font-size:11px;letter-spacing:2px;color:#a8a098">' + row.label + '</span>';
+      html += '<span style="font-size:17px;font-weight:200;letter-spacing:1px;color:' + row.color + '">' + row.val + '</span>';
+      html += '</div>';
+    });
+    wrap.innerHTML = html;
   }
 
   // === v222 心譜 — 결정 성향 프로필 ===
@@ -14395,6 +14457,7 @@
     bumpStat('wayReached');
     if (!state.firstWayReached) {
       state.firstWayReached = true;
+      if (!state.recordFirstWayGen) state.recordFirstWayGen = state.swordGeneration || 1;  // v224 劍士録
       setTimeout(() => announceInscription('始祖', '첫 도(道) 달성 — 선조의 길이 열렸다'), 5800);
     }
     if (((state.stats && state.stats.wayReached) || 0) === 5) setTimeout(() => maybeMaster('fiveWays'), 6800);  // v181 老師
@@ -15246,6 +15309,7 @@
     setTimeout(() => maybeDropTreasure(), 1400);  // v189 七寶 — 봉인 시 보물 drop 시도
     if (isWay) bumpStat('wayReached');
     recordEvent('판매 ' + swordName + ' +' + reward + ' 조각');
+    updateSealRecord(reward);  // v224 劍士録
     log('판매 +' + lv + ' — 조각 ' + reward, 'success');
     // v78 봉인 직후 카드 (방금 봉인된 검 요약)
     showSealCard(swordName, lv, ins, reward);
@@ -16546,6 +16610,12 @@
     $('menu-drop').classList.remove('open');
     renderMindChart();
     $('mindchart-modal').classList.add('active');
+  });
+  // v224 劍士録
+  if ($('btn-records')) $('btn-records').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    renderRecords();
+    $('records-modal').classList.add('active');
   });
   if ($('book-prev')) $('book-prev').addEventListener('click', () => renderBookPage(bookPageIdx - 1));
   if ($('book-next')) $('book-next').addEventListener('click', () => renderBookPage(bookPageIdx + 1));
