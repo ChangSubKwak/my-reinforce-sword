@@ -6491,6 +6491,49 @@
     log('週報 — ' + prevWeek + ' · ' + summary, 'success');
   }
 
+  // === v223 韻致 — 명상 모드 펜타토닉 선율 ===
+  let meditationMelodyTimer = null;
+  let meditationMelodyStep = 0;
+  // 펜타토닉 (C-D-E-G-A) 2 옥타브
+  const PENTATONIC = [262, 294, 330, 392, 440, 523, 587, 659, 784, 880];
+  function playMeditationNote() {
+    try {
+      const a = getAudio && getAudio();
+      if (!a) return;
+      // 부드러운 선율 — 펜타토닉에서 부드럽게 이동 (±2 step)
+      const baseIdx = 2 + Math.floor(Math.abs(Math.sin(meditationMelodyStep * 0.5)) * 5);
+      const idx = Math.max(0, Math.min(PENTATONIC.length - 1, baseIdx + (Math.random() < 0.5 ? -1 : 1)));
+      const freq = PENTATONIC[idx];
+      meditationMelodyStep++;
+      const ct = a.currentTime;
+      // 메인 음 (sine, 긴 감쇠)
+      const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = freq;
+      const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct);
+      g.gain.exponentialRampToValueAtTime(0.06, ct + 0.3);
+      g.gain.exponentialRampToValueAtTime(0.0001, ct + 3.5);
+      osc.connect(g); g.connect(a.destination); osc.start(ct); osc.stop(ct + 3.6);
+      // 옥타브 위 미세 (배음)
+      const osc2 = a.createOscillator(); osc2.type = 'sine'; osc2.frequency.value = freq * 2;
+      const g2 = a.createGain(); g2.gain.setValueAtTime(0.0001, ct);
+      g2.gain.exponentialRampToValueAtTime(0.015, ct + 0.4);
+      g2.gain.exponentialRampToValueAtTime(0.0001, ct + 2.5);
+      osc2.connect(g2); g2.connect(a.destination); osc2.start(ct); osc2.stop(ct + 2.6);
+    } catch(e) {}
+  }
+  function startMeditationMelody() {
+    if (meditationMelodyTimer) return;  // 이미 재생 중
+    meditationMelodyStep = 0;
+    // 첫 음 2초 후, 이후 3.5~5초 간격 (느리게)
+    const tick = () => {
+      playMeditationNote();
+      meditationMelodyTimer = setTimeout(tick, 3500 + Math.random() * 1500);
+    };
+    meditationMelodyTimer = setTimeout(tick, 2000);
+  }
+  function stopMeditationMelody() {
+    if (meditationMelodyTimer) { clearTimeout(meditationMelodyTimer); meditationMelodyTimer = null; }
+  }
+
   // === v222 心譜 — 결정 성향 프로필 ===
   function computeMindChart() {
     const st = state.stats || {};
@@ -9122,6 +9165,7 @@
       }
     } catch (e) {}
     log('玩月 — 달을 본다 · 30초 후 자연히 끝난다', 'info');
+    startMeditationMelody();  // v223 韻致
     moonGazeTimer = setTimeout(exitMoonGaze, 30000);
     // ESC/click to exit early
     document.addEventListener('keydown', moonGazeKeyHandler);
@@ -9131,6 +9175,7 @@
     if (!moonGazing) return;
     moonGazing = false;
     document.body.classList.remove('moon-gazing');
+    stopMeditationMelody();  // v223 韻致
     if (moonGazeTimer) { clearTimeout(moonGazeTimer); moonGazeTimer = null; }
     document.removeEventListener('keydown', moonGazeKeyHandler);
     document.removeEventListener('click', moonGazeClickHandler, { capture: true });
@@ -12523,11 +12568,13 @@
     // 깊은 종 (4분마다)
     trueEmptyBellInterval = setInterval(playTrueEmptyBell, 4 * 60 * 1000);
     setTimeout(playTrueEmptyBell, 5000);  // 처음 5초 후 한 번
+    startMeditationMelody();  // v223 韻致
     log('真空 — 깊은 침묵에 들었다', 'info');
   }
   function exitTrueEmptiness() {
     inTrueEmptiness = false;
     document.body.classList.remove('true-emptiness');
+    stopMeditationMelody();  // v223 韻致
     if (trueEmptyStarInterval) { clearInterval(trueEmptyStarInterval); trueEmptyStarInterval = null; }
     if (trueEmptyBellInterval) { clearInterval(trueEmptyBellInterval); trueEmptyBellInterval = null; }
     // 별 모두 제거
