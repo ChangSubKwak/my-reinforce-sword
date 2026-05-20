@@ -3308,8 +3308,8 @@
 
 <!-- 조합소 모달 -->
 <div class="modal" id="forge-modal">
-  <div class="modal-box" role="dialog">
-    <h2>조 합 소</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-0">
+    <h2 id="mtitle-0">조 합 소</h2>
     <p>모은 조각으로 도구와 검을 만듭니다</p>
     <div class="recipe">
       <div class="recipe-text">보호권 1개<small>조각 15 · 실패해도 검 유지</small></div>
@@ -3341,8 +3341,8 @@
 
 <!-- 命名 / 봉인 미리 보기 모달 -->
 <div class="modal" id="name-modal">
-  <div class="modal-box" role="dialog">
-    <h2>검 이름 · 팔기</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-1">
+    <h2 id="mtitle-1">검 이름 · 팔기</h2>
     <div style="display:flex;align-items:center;justify-content:center;gap:14px;padding:8px 4px 14px;border-bottom:1px solid var(--line);margin-bottom:14px">
       <svg id="preview-sword-svg" viewBox="0 0 100 200" width="60" height="120" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
         <g id="preview-body"></g>
@@ -3376,8 +3376,8 @@
 
 <!-- v109 選形 모달 — 첫 강화 시 형 선택 -->
 <div class="modal" id="form-select-modal">
-  <div class="modal-box" role="dialog" style="max-width:460px">
-    <h2>검 의 천 성</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-2" style="max-width:460px">
+    <h2 id="mtitle-2">검 의 천 성</h2>
     <p id="form-select-hint" style="color:var(--dim);letter-spacing:2px;font-size:11px;margin-bottom:16px">이 검은 어떤 길을 걷겠습니까</p>
     <div id="form-card-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
   </div>
@@ -3385,8 +3385,8 @@
 
 <!-- 詩集 모달 — 道 검 일생시 모음 -->
 <div class="modal" id="anthology-modal">
-  <div class="modal-box" role="dialog" style="max-width: 420px;">
-    <h2>검의 노래</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-3" style="max-width: 420px;">
+    <h2 id="mtitle-3">검의 노래</h2>
     <p>도(道)에 이른 검들의 일생을 시구로</p>
     <div id="anthology-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
     <button class="modal-close" data-close>닫 기</button>
@@ -3395,8 +3395,8 @@
 
 <!-- v217 暦 — 월별 캘린더 -->
 <div class="modal" id="calendar-modal">
-  <div class="modal-box" role="dialog" style="max-width: 480px;">
-    <h2>暦 — 월별 활동</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-4" style="max-width: 480px;">
+    <h2 id="mtitle-4">暦 — 월별 활동</h2>
     <div id="calendar-header" style="text-align:center;margin:14px 0;font-size:12px;letter-spacing:4px;color:#a8a098"></div>
     <div id="calendar-grid"></div>
     <div id="calendar-detail" style="margin-top:14px;min-height:36px;text-align:center;font-size:10px;letter-spacing:3px;color:#888"></div>
@@ -3406,8 +3406,8 @@
 
 <!-- v215 帖 — 오늘의 24시간 활동 시트 -->
 <div class="modal" id="today-sheet-modal">
-  <div class="modal-box" role="dialog" style="max-width: 500px;">
-    <h2>帖 — 오늘의 시트</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-5" style="max-width: 500px;">
+    <h2 id="mtitle-5">帖 — 오늘의 시트</h2>
     <p>오늘 24시간 활동 — 자정에 새 한 장</p>
     <div id="today-sheet-content"></div>
     <button class="modal-close" data-close>닫 기</button>
@@ -3416,8 +3416,8 @@
 
 <!-- v230 劍響 — 검들의 합주 -->
 <div class="modal" id="concert-modal">
-  <div class="modal-box" role="dialog" style="max-width: 500px;">
-    <h2>劍 響</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-6" style="max-width: 500px;">
+    <h2 id="mtitle-6">劍 響</h2>
     <p>봉인된 검들이 각자의 울림으로 함께 노래한다</p>
     <div id="concert-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:18px 0;min-height:80px"></div>
     <div class="actions-center">
@@ -3429,8 +3429,8 @@
 
 <!-- v227 客劍 — 검 공유 코드 -->
 <div class="modal" id="guest-modal">
-  <div class="modal-box" role="dialog" style="max-width: 500px;">
-    <h2>客 劍 — 검 공유</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-7" style="max-width: 500px;">
+    <h2 id="mtitle-7">客 劍 — 검 공유</h2>
     <p>봉인 검을 코드로 내보내거나, 받은 코드로 손님 검을 맞이하라</p>
     <div style="margin:14px 0">
       <div style="font-size:10px;letter-spacing:3px;color:#888;margin-bottom:6px">내보내기 — 봉인 검 선택</div>
@@ -3450,8 +3450,8 @@
 
 <!-- v213 比 — 봉인 검 비교 -->
 <div class="modal" id="compare-modal">
-  <div class="modal-box" role="dialog" style="max-width: 600px;">
-    <h2>比 — 검의 비교</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-8" style="max-width: 600px;">
+    <h2 id="mtitle-8">比 — 검의 비교</h2>
     <p>봉인된 두 자루를 골라 비교하라</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0">
       <div>
@@ -3470,8 +3470,8 @@
 
 <!-- v211 籤 — 일일 댓가지 추첨 -->
 <div class="modal" id="sen-modal">
-  <div class="modal-box" role="dialog" style="max-width: 460px;">
-    <h2>籤 — 댓가지 추첨</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-9" style="max-width: 460px;">
+    <h2 id="mtitle-9">籤 — 댓가지 추첨</h2>
     <p id="sen-desc">하루 1회 — 세 댓가지 중 하나를 골라 운을 받는다</p>
     <div id="sen-area" style="margin:22px 0"></div>
     <button class="modal-close" data-close>닫 기</button>
@@ -3480,8 +3480,8 @@
 
 <!-- v210 自書 — 사용자 자유 일기 -->
 <div class="modal" id="diary-modal">
-  <div class="modal-box" role="dialog" style="max-width: 500px;">
-    <h2>自 書</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-10" style="max-width: 500px;">
+    <h2 id="mtitle-10">自 書</h2>
     <p>자유롭게 한 줄, 또는 여러 줄 — 검의 길에 새기는 당신의 글</p>
     <textarea id="diary-input" placeholder="검을 쥐고 무엇을 생각하나..." style="width:100%;min-height:80px;padding:10px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;border-radius:2px;color:#e8e6dd;font-family:'Noto Serif KR',serif;font-size:12px;letter-spacing:2px;resize:vertical;line-height:1.7"></textarea>
     <div class="actions-center">
@@ -3494,8 +3494,8 @@
 
 <!-- v203 字 — 검 칼날 한자 새김 -->
 <div class="modal" id="engrave-modal">
-  <div class="modal-box" role="dialog" style="max-width: 440px;">
-    <h2>字 — 검 칼날 새김</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-11" style="max-width: 440px;">
+    <h2 id="mtitle-11">字 — 검 칼날 새김</h2>
     <p>현재 검에 한자 1자를 새긴다 — 봉인까지 유지</p>
     <div id="engrave-grid" style="margin:14px 0"></div>
     <div class="actions-center">
@@ -3507,8 +3507,8 @@
 
 <!-- v228 設 — 접근성 설정 -->
 <div class="modal" id="settings-modal">
-  <div class="modal-box" role="dialog" style="max-width: 420px;">
-    <h2>設 — 환경 설정</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-12" style="max-width: 420px;">
+    <h2 id="mtitle-12">設 — 환경 설정</h2>
     <p>당신에게 맞는 검의 길</p>
     <div id="settings-list" style="margin:18px 0"></div>
     <button class="modal-close" data-close>닫 기</button>
@@ -3517,8 +3517,8 @@
 
 <!-- v201 配 — 시각 테마 선택 -->
 <div class="modal" id="theme-modal">
-  <div class="modal-box" role="dialog" style="max-width: 480px;">
-    <h2>配 — 시각 테마</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-13" style="max-width: 480px;">
+    <h2 id="mtitle-13">配 — 시각 테마</h2>
     <p>4 테마 중 선택 — 클릭 시 즉시 적용</p>
     <div id="theme-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:18px 0"></div>
     <button class="modal-close" data-close>닫 기</button>
@@ -3527,8 +3527,8 @@
 
 <!-- v195 時計 — 24시간 활동 분포 -->
 <div class="modal" id="clock-modal">
-  <div class="modal-box" role="dialog" style="max-width: 420px;">
-    <h2>時 計</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-14" style="max-width: 420px;">
+    <h2 id="mtitle-14">時 計</h2>
     <p>24시간 활동 분포 — 황금 호 길이가 그 시간의 활동량</p>
     <div id="clock-content"></div>
     <button class="modal-close" data-close>닫 기</button>
@@ -3562,8 +3562,8 @@
 
 <!-- v224 劍士録 — 개인 최고 기록 -->
 <div class="modal" id="records-modal">
-  <div class="modal-box" role="dialog" style="max-width: 440px;">
-    <h2>劍 士 録</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-15" style="max-width: 440px;">
+    <h2 id="mtitle-15">劍 士 録</h2>
     <p>당신의 검의 길에서 가장 높았던 순간들</p>
     <div id="records-list" style="margin:14px 0"></div>
     <button class="modal-close" data-close>닫 기</button>
@@ -3572,8 +3572,8 @@
 
 <!-- v222 心譜 — 결정 성향 프로필 -->
 <div class="modal" id="mindchart-modal">
-  <div class="modal-box" role="dialog" style="max-width: 440px;">
-    <h2>心 譜</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-16" style="max-width: 440px;">
+    <h2 id="mtitle-16">心 譜</h2>
     <p>당신의 결정이 그리는 마음의 악보</p>
     <div id="mindchart-bars" style="margin:18px 0"></div>
     <div id="mindchart-persona" style="text-align:center;margin-top:14px;padding:14px;background:rgba(212,175,55,0.06);border-left:2px solid rgba(212,175,55,0.5);font-size:13px;letter-spacing:3px;font-style:italic;color:#fff5c0;font-family:'Noto Serif KR',serif"></div>
@@ -3583,8 +3583,8 @@
 
 <!-- v220 大成 — 전체 게임 탐험률 dashboard -->
 <div class="modal" id="completion-modal">
-  <div class="modal-box" role="dialog" style="max-width: 480px;">
-    <h2>大 成</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-17" style="max-width: 480px;">
+    <h2 id="mtitle-17">大 成</h2>
     <p>당신이 걸어온 검의 길 — 전체 탐험률</p>
     <div id="completion-overall" style="text-align:center;margin:18px 0"></div>
     <div id="completion-bars"></div>
@@ -3622,8 +3622,8 @@
 
 <!-- v189 七寶 — 일곱 보물 모달 -->
 <div class="modal" id="treasure-modal">
-  <div class="modal-box" role="dialog" style="max-width: 460px;">
-    <h2>七 寶</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-18" style="max-width: 460px;">
+    <h2 id="mtitle-18">七 寶</h2>
     <p>봉인 시 8% 확률로 발견되는 일곱 보물 — 모두 모이면 圓滿</p>
     <div id="treasure-list"></div>
     <button class="modal-close" data-close>닫 기</button>
@@ -3632,8 +3632,8 @@
 
 <!-- v188 四神 — 4신수 모달 -->
 <div class="modal" id="beast-modal">
-  <div class="modal-box" role="dialog" style="max-width: 440px;">
-    <h2>四 神</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-19" style="max-width: 440px;">
+    <h2 id="mtitle-19">四 神</h2>
     <p>네 방위 수호자가 다양한 길의 자에게 강림한다</p>
     <div id="beast-list"></div>
     <button class="modal-close" data-close>닫 기</button>
@@ -3642,8 +3642,8 @@
 
 <!-- v187 印 — 사용자 한자 인장 -->
 <div class="modal" id="seal-modal">
-  <div class="modal-box" role="dialog" style="max-width: 460px;">
-    <h2>印 章 — 당신의 서명</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-20" style="max-width: 460px;">
+    <h2 id="mtitle-20">印 章 — 당신의 서명</h2>
     <p>2자의 한자를 선택하라 — 당신의 검에 새겨질 인장</p>
     <div id="seal-preview" style="display:flex;justify-content:center;align-items:center;margin:14px 0;height:90px"></div>
     <div id="seal-palette" style="margin:10px 0"></div>
@@ -3657,8 +3657,8 @@
 
 <!-- v186 星圖 — 봉인 검의 별자리 -->
 <div class="modal" id="constellation-modal">
-  <div class="modal-box" role="dialog" style="max-width: 720px; padding: 18px;">
-    <h2>星 圖 — 검의 우주</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-21" style="max-width: 720px; padding: 18px;">
+    <h2 id="mtitle-21">星 圖 — 검의 우주</h2>
     <p id="constellation-desc">봉인된 검들이 밤하늘에 별이 되었다 — 같은 형끼리 별자리를 이룬다</p>
     <div id="constellation-canvas" style="width:100%;background:radial-gradient(ellipse,#06070f 0%,#03030a 100%);border:1px solid #1a1f2e;border-radius:2px;position:relative;overflow:hidden"></div>
     <div style="margin-top:8px;font-size:9px;letter-spacing:3px;color:rgba(168,168,168,0.55);text-align:center">
@@ -3670,8 +3670,8 @@
 
 <!-- v180 劍名片 — 검명함 (identity card) -->
 <div class="modal" id="meishi-modal">
-  <div class="modal-box" role="dialog" style="max-width: 540px;">
-    <h2>劍 名 片</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-22" style="max-width: 540px;">
+    <h2 id="mtitle-22">劍 名 片</h2>
     <p>당신의 검의 길 — 한 장으로</p>
     <div id="meishi-preview" style="display:flex;justify-content:center;margin:18px 0"></div>
     <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
@@ -3683,8 +3683,8 @@
 
 <!-- 명문 사전 모달 (v55) -->
 <div class="modal" id="codex-modal">
-  <div class="modal-box" role="dialog" style="max-width: 420px;">
-    <h2>명 문 사 전</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-23" style="max-width: 420px;">
+    <h2 id="mtitle-23">명 문 사 전</h2>
     <p>모든 명문 · 획득 조건 · 시구</p>
     <div id="codex-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
     <button class="modal-close" data-close>닫 기</button>
@@ -3694,8 +3694,8 @@
 <!-- v90 처치 보고서 모달 (이름 있는 적 컬렉션) -->
 <!-- v164 現勢 모달 — 현재 활성 효과 dashboard -->
 <div class="modal" id="status-modal">
-  <div class="modal-box" role="dialog" style="max-width: 480px;">
-    <h2>現 勢</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-24" style="max-width: 480px;">
+    <h2 id="mtitle-24">現 勢</h2>
     <p class="modal-note">
       지금 이 검에 작용하는 모든 활성 효과.
     </p>
@@ -3706,8 +3706,8 @@
 
 <!-- v160 文集 모달 — 사용자 글 모음 viewer -->
 <div class="modal" id="bunshu-modal">
-  <div class="modal-box" role="dialog" style="max-width: 480px;">
-    <h2>文 集</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-25" style="max-width: 480px;">
+    <h2 id="mtitle-25">文 集</h2>
     <p id="bunshu-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px;text-align:center;margin-bottom:14px"></p>
     <div id="bunshu-page" style="min-height: 260px; display:flex; align-items:center; justify-content:center; padding:14px; border:1px solid var(--line); border-radius:2px; margin-bottom:14px"></div>
     <div style="display:flex;gap:8px;align-items:center">
@@ -3721,8 +3721,8 @@
 
 <!-- v159 對局 모달 — 봉인 검 2자루 대결 -->
 <div class="modal" id="duel-modal">
-  <div class="modal-box" role="dialog" style="max-width: 540px;">
-    <h2>對 局</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-26" style="max-width: 540px;">
+    <h2 id="mtitle-26">對 局</h2>
     <p id="duel-status" style="font-size:11px;color:var(--dim);letter-spacing:3px;text-align:center;margin-bottom:14px">두 검을 선택하시오</p>
     <div id="duel-arena">
       <div id="duel-flash"></div>
@@ -3739,8 +3739,8 @@
 
 <!-- v149 神祠 모달 — 영구 헌사 -->
 <div class="modal" id="shrine-modal">
-  <div class="modal-box" role="dialog" style="max-width: 480px;">
-    <h2>神 祠</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-27" style="max-width: 480px;">
+    <h2 id="mtitle-27">神 祠</h2>
     <p id="shrine-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
     <p class="modal-note">
       조각을 헌사하여 영구 보너스를 얻습니다.<br>
@@ -3753,8 +3753,8 @@
 
 <!-- v148 紀程 모달 — 여정 timeline -->
 <div class="modal" id="journey-modal">
-  <div class="modal-box" role="dialog" style="max-width: 500px;">
-    <h2>紀 程</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-28" style="max-width: 500px;">
+    <h2 id="mtitle-28">紀 程</h2>
     <p id="journey-title" style="font-size:11px;color:#fff5c0;letter-spacing:4px;text-align:center;margin:-8px 0 14px;padding:6px;border:1px solid rgba(212,175,55,0.25);background:rgba(212,175,55,0.04);text-shadow:0 0 6px rgba(212,175,55,0.4)"></p>
     <p class="modal-note">
       검사의 여정 — 큰 마일스톤이 시간순으로 정렬됩니다.
@@ -3766,8 +3766,8 @@
 
 <!-- v140 篆刻 모달 — 플레이어 인장 설정 -->
 <div class="modal" id="seal-craft-modal">
-  <div class="modal-box" role="dialog" style="max-width: 380px;">
-    <h2>印 章</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-29" style="max-width: 380px;">
+    <h2 id="mtitle-29">印 章</h2>
     <p class="modal-note">
       모든 새 검에 영구 새겨질 당신의 인장 (1자).<br>
       한자 / 한글 / 기호 모두 가능. 빈 칸 = 인장 없음.
@@ -3787,8 +3787,8 @@
 
 <!-- v136 拓本 모달 -->
 <div class="modal" id="rubbings-modal">
-  <div class="modal-box" role="dialog" style="max-width: 500px;">
-    <h2>拓 本</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-30" style="max-width: 500px;">
+    <h2 id="mtitle-30">拓 本</h2>
     <p id="rubbings-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
     <p class="modal-note">
       게임의 의미있는 순간을 영구 포착한 사진첩.<br>
@@ -3801,8 +3801,8 @@
 
 <!-- v124 古文書 모달 -->
 <div class="modal" id="scrolls-modal">
-  <div class="modal-box" role="dialog" style="max-width: 500px;">
-    <h2>古 文 書</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-31" style="max-width: 500px;">
+    <h2 id="mtitle-31">古 文 書</h2>
     <p id="scrolls-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
     <p class="modal-note">
       검의 길에 새겨진 8장의 두루마리.<br>
@@ -3815,8 +3815,8 @@
 
 <!-- v119 奇緣 발견 모달 -->
 <div class="modal" id="blessings-modal">
-  <div class="modal-box" role="dialog" style="max-width: 460px;">
-    <h2>奇 緣 · 희 귀 축 복</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-32" style="max-width: 460px;">
+    <h2 id="mtitle-32">奇 緣 · 희 귀 축 복</h2>
     <p id="blessings-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
     <p class="modal-note">
       게임 중 매우 낮은 확률로 발동되는 6종 축복.<br>
@@ -3829,8 +3829,8 @@
 
 <!-- v118 殿堂 모달 — 박물관 진열된 道 검 -->
 <div class="modal" id="enshrined-modal">
-  <div class="modal-box" role="dialog" style="max-width: 460px;">
-    <h2>殿 堂</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-33" style="max-width: 460px;">
+    <h2 id="mtitle-33">殿 堂</h2>
     <p id="enshrined-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
     <p class="modal-note">
       도(道)에 이른 검을 봉인 대신 영구 진열.<br>
@@ -3841,8 +3841,8 @@
   </div>
 </div>
 <div class="modal" id="foes-modal">
-  <div class="modal-box" role="dialog" style="max-width: 440px;">
-    <h2>처 치 보 고 서</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-34" style="max-width: 440px;">
+    <h2 id="mtitle-34">처 치 보 고 서</h2>
     <p id="foes-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
     <div id="foes-list" style="max-height: 400px; overflow-y: auto; padding: 4px 2px; margin-top:8px"></div>
     <p style="font-size:10px;color:var(--dim);margin-top:10px;line-height:1.7;letter-spacing:2px">
@@ -3855,8 +3855,8 @@
 
 <!-- v94 天時 일일 도전 모달 -->
 <div class="modal" id="daily-modal">
-  <div class="modal-box" role="dialog" style="max-width: 400px;">
-    <h2>天 時 — 오늘의 도전</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-35" style="max-width: 400px;">
+    <h2 id="mtitle-35">天 時 — 오늘의 도전</h2>
     <p><span id="daily-date" style="color:var(--dim);letter-spacing:2px"></span> · <span id="daily-count" style="color:var(--accent);letter-spacing:2px"></span></p>
     <div id="daily-body" style="padding:14px 6px;margin-top:6px"></div>
     <p style="font-size:10px;color:var(--dim);margin-top:8px;line-height:1.7;letter-spacing:2px">
@@ -3869,8 +3869,8 @@
 
 <!-- v92 融劍 모달 (검 합성) -->
 <div class="modal" id="fusion-modal">
-  <div class="modal-box" role="dialog" style="max-width: 440px;">
-    <h2>融 劍</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-36" style="max-width: 440px;">
+    <h2 id="mtitle-36">融 劍</h2>
     <p>봉인된 검 둘을 골라 형 · 명문 · 혼을 잇는다</p>
     <div id="fusion-preview" style="padding:10px;border:1px dashed var(--line);border-radius:2px;margin-bottom:10px;min-height:40px"></div>
     <div id="fusion-list" style="max-height: 280px; overflow-y: auto; padding: 2px;"></div>
@@ -3887,8 +3887,8 @@
 
 <!-- v89 시련의 혼 모달 (영구 메타 진행) -->
 <div class="modal" id="trial-modal">
-  <div class="modal-box" role="dialog" style="max-width: 440px;">
-    <h2>시 련 의 혼</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-37" style="max-width: 440px;">
+    <h2 id="mtitle-37">시 련 의 혼</h2>
     <p id="trial-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
     <div id="trial-list" style="max-height: 400px; overflow-y: auto; padding: 4px 2px; margin-top:8px"></div>
     <p style="font-size:10px;color:var(--dim);margin-top:10px;line-height:1.7;letter-spacing:2px">
@@ -3901,8 +3901,8 @@
 
 <!-- v83 로그인 모달 (이메일 6자리 OTP 코드) -->
 <div class="modal" id="login-modal">
-  <div class="modal-box" role="dialog">
-    <h2>☁ 로 그 인</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-38">
+    <h2 id="mtitle-38">☁ 로 그 인</h2>
     <div id="login-step1">
       <p>이메일로 코드를 받아 로그인합니다.<br>비밀번호 없음 · 진행도 클라우드 저장 가능.</p>
       <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"
@@ -3935,8 +3935,8 @@
 
 <!-- v83 리더보드 모달 -->
 <div class="modal" id="leaderboard-modal">
-  <div class="modal-box" role="dialog" style="max-width:460px">
-    <h2>🏆 리 더 보 드</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-39" style="max-width:460px">
+    <h2 id="mtitle-39">🏆 리 더 보 드</h2>
     <p id="lb-info">전 세계 검사들의 기록</p>
     <div id="lb-my-rank" style="display:none;padding:10px;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.5);text-align:center;margin-bottom:12px;font-size:13px;letter-spacing:3px"></div>
     <div id="lb-list" style="max-height:380px;overflow-y:auto;font-size:12px;letter-spacing:1px">불러오는 중...</div>
@@ -3958,8 +3958,8 @@
 
 <!-- 통계 모달 -->
 <div class="modal" id="stats-modal">
-  <div class="modal-box" role="dialog">
-    <h2>기 록</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-40">
+    <h2 id="mtitle-40">기 록</h2>
     <div id="stats-title" style="font-size:11px;color:#fff5c0;letter-spacing:4px;text-align:center;margin:-8px 0 14px;padding:6px;border:1px solid rgba(212,175,55,0.25);background:rgba(212,175,55,0.04);text-shadow:0 0 6px rgba(212,175,55,0.4)"></div>
     <div id="stats-list" style="font-size:12px;color:var(--fg);line-height:2"></div>
     <button class="modal-close" data-close>닫 기</button>
@@ -3968,8 +3968,8 @@
 
 <!-- 계보 모달 -->
 <div class="modal" id="legacy-modal">
-  <div class="modal-box" role="dialog">
-    <h2>지나간 검들</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-41">
+    <h2 id="mtitle-41">지나간 검들</h2>
     <p id="legacy-summary">선대의 강기 0 · 시작 보너스 +0</p>
     <div id="legacy-filter" style="display:flex;gap:6px;justify-content:center;padding:4px 0 10px;flex-wrap:wrap"></div>
     <div id="legacy-list" style="max-height: 300px; overflow-y: auto;"></div>
@@ -3979,7 +3979,7 @@
 
 <!-- 검 회고 모달 -->
 <div class="modal" id="sword-detail-modal">
-  <div class="modal-box" role="dialog" style="max-width: 420px;">
+  <div class="modal-box" role="dialog" aria-labelledby="detail-name" style="max-width: 420px;">
     <h2 id="detail-name">劍</h2>
     <div id="detail-body" style="font-size:12px;line-height:1.9;letter-spacing:2px;color:var(--fg)"></div>
     <button class="modal-close" data-close>닫 기</button>
@@ -4046,8 +4046,8 @@
 
 <!-- 도움말 모달 (최초 1회) -->
 <div class="modal" id="help-modal">
-  <div class="modal-box" role="dialog">
-    <h2>검 강화</h2>
+  <div class="modal-box" role="dialog" aria-labelledby="mtitle-42">
+    <h2 id="mtitle-42">검 강화</h2>
     <p>
       <span style="color:var(--accent)">처음 조각 50개로 시작합니다.<br>
       첫 강화 (+0 → +1) 는 무료입니다.</span><br><br>
