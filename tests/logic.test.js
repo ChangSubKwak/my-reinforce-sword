@@ -31,6 +31,37 @@ test('sealReward: lv=0 은 0', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v242 봉인 보상 단일 진원 — sealRewardBase 결정적 배수
+// ─────────────────────────────────────────────────────────────
+const neutralSealDeps = {
+  schoolSealMul: () => 1, getSeason: () => ({ sealMul: 1 }), generationSealMul: () => 1,
+};
+const sealBaseFns = loadFunctions(['sealRewardBase', 'sealReward'], neutralSealDeps);
+
+test('sealRewardBase: 중립 배수·명문 없음이면 base sealReward와 동일', () => {
+  for (let lv = 0; lv <= 15; lv++) {
+    assert.strictEqual(sealBaseFns.sealRewardBase(lv, [], false), sealBaseFns.sealReward(lv), 'lv=' + lv);
+  }
+});
+
+test('sealRewardBase: 道 ×1.5 적용', () => {
+  assert.strictEqual(sealBaseFns.sealRewardBase(15, ['道'], true), Math.floor(sealBaseFns.sealReward(15) * 1.5));
+  // isWay 인자 없이 ins로만 道 감지도 동작
+  assert.strictEqual(sealBaseFns.sealRewardBase(15, ['道'], false), Math.floor(sealBaseFns.sealReward(15) * 1.5));
+});
+
+test('sealRewardBase: 古(×1.10)와 久(×1.05)는 배타적, 古 우선', () => {
+  const base = sealBaseFns.sealReward(10);
+  assert.strictEqual(sealBaseFns.sealRewardBase(10, ['古', '久'], false), Math.floor(base * 1.10));
+  assert.strictEqual(sealBaseFns.sealRewardBase(10, ['久'], false), Math.floor(base * 1.05));
+});
+
+test('sealRewardBase: 七星 ×1.5 중첩', () => {
+  const base = sealBaseFns.sealReward(12);
+  assert.strictEqual(sealBaseFns.sealRewardBase(12, ['七星'], false), Math.floor(base * 1.5));
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];

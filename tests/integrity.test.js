@@ -144,6 +144,33 @@ test('enhanceCost 헬퍼는 모든 비용 배수 포함 (보신·잔향·결계�
     .forEach(fn => assert.match(body, new RegExp(fn), fn + ' 배수 포함되어야 함'));
 });
 
+test('봉인 보상 — sealRewardBase/Display 단일 진원 (버튼·미리보기·실제 grant 동일)', () => {
+  // v242: 봉인 버튼 라벨이 generationSealMul/雙銘 배수를 누락해 실제 grant보다 낮게 표시.
+  // 결정적 배수를 sealRewardBase()로 일원화, doSeal·표시 모두 공유.
+  assert.match(js, /function sealRewardBase\(/, 'sealRewardBase 헬퍼 존재');
+  assert.match(js, /function sealRewardDisplay\(/, 'sealRewardDisplay 헬퍼 존재');
+  // 인라인 봉인 배수 복붙 잔존 없음 — base 헬퍼 본문 1곳만 schoolSealMul()*... 패턴 허용
+  const inlineSeal = (js.match(/sealReward\([^)]*\)[\s\S]{0,40}?schoolSealMul/g) || []).length;
+  assert.ok(inlineSeal <= 1, '봉인 배수 인라인 복붙은 base 헬퍼 1회만 (현재 ' + inlineSeal + ')');
+  // doSeal은 base 헬퍼 사용
+  assert.match(js, /let reward = sealRewardBase\(lv, ins, isWay\)/, 'doSeal이 sealRewardBase 사용');
+});
+
+test('sealRewardBase는 모든 결정적 봉인 배수 포함 (道·school·season·久古·七星·系譜)', () => {
+  const m = js.match(/function sealRewardBase\([^)]*\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(m, 'sealRewardBase 본문');
+  const body = m[1];
+  ['schoolSealMul', 'getSeason', "includes('古')", "includes('久')", "includes('七星')", 'generationSealMul', '1.5']
+    .forEach(tok => assert.ok(body.includes(tok), tok + ' 포함되어야 함'));
+});
+
+test('previewResonanceReward는 부작용(onSealPersistent) 호출 안 함 — 미리보기 안전', () => {
+  const m = js.match(/function previewResonanceReward\([^)]*\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(m, 'previewResonanceReward 본문');
+  assert.ok(!m[1].includes('onSealPersistent'), '미리보기는 지속효과 호출 금지');
+  assert.match(m[1], /onSeal\b/, 'onSeal 보상 배수만 적용');
+});
+
 test('모든 modal은 modal-close 또는 data-close 버튼 보유', () => {
   // 각 class="modal" 블록에 data-close 가 최소 1개 (대략적 검증)
   const modalCount = (html.match(/class="modal"/g) || []).length;
