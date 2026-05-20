@@ -2648,6 +2648,7 @@
   <div class="menu-section">觀 覽</div>
   <button id="btn-meishi">劍 名 片</button>
   <button id="btn-codex-book" style="background:rgba(192,128,40,0.15);color:#d4af37">完  一  書</button>
+  <button id="btn-completion" style="background:rgba(192,128,40,0.1);color:#d4af37">大  成</button>
   <div class="menu-grid">
     <button id="btn-constellation">星圖</button>
     <button id="btn-gallery">殿覽</button>
@@ -3397,6 +3398,17 @@
       <button id="gallery-next" style="min-width:46px">▷</button>
       <button class="modal-close" data-close>닫 기</button>
     </div>
+  </div>
+</div>
+
+<!-- v220 大成 — 전체 게임 탐험률 dashboard -->
+<div class="modal" id="completion-modal">
+  <div class="modal-box" style="max-width: 480px;">
+    <h2>大 成</h2>
+    <p>당신이 걸어온 검의 길 — 전체 탐험률</p>
+    <div id="completion-overall" style="text-align:center;margin:18px 0"></div>
+    <div id="completion-bars"></div>
+    <button class="modal-close" data-close style="margin-top:14px">닫 기</button>
   </div>
 </div>
 
@@ -6465,6 +6477,75 @@
     $('weekly-report-content').innerHTML = html;
     $('weekly-report-modal').classList.add('active');
     log('週報 — ' + prevWeek + ' · ' + summary, 'success');
+  }
+
+  // === v220 大成 — 전체 게임 탐험률 dashboard ===
+  function discoveredInscriptionCount() {
+    const seen = new Set();
+    (state.sealedSwords || []).forEach(s => (s.inscriptions || []).forEach(k => seen.add(k)));
+    (state.enshrined || []).forEach(s => (s.inscriptions || []).forEach(k => seen.add(k)));
+    if (state.hasSword && state.currentSword) (state.currentSword.inscriptions || []).forEach(k => seen.add(k));
+    return seen.size;
+  }
+  function computeCompletion() {
+    const cats = [];
+    // 명문
+    const insTotal = (typeof INSCRIPTIONS !== 'undefined') ? INSCRIPTIONS.length : 30;
+    cats.push({ name:'명문', cur: Math.min(discoveredInscriptionCount(), insTotal), max: insTotal, color:'#d4af37' });
+    // 七寶
+    cats.push({ name:'七寶', cur: Object.keys(state.treasures || {}).length, max: 7, color:'#c8a0e8' });
+    // 四神
+    const beastsN = (typeof SACRED_BEASTS !== 'undefined') ? SACRED_BEASTS.filter(b => beastUnlocked(b.key)).length : 0;
+    cats.push({ name:'四神', cur: beastsN, max: 4, color:'#4a9a6a' });
+    // 시련의 혼
+    const trialsN = (typeof TRIALS !== 'undefined') ? TRIALS.filter(t => trialUnlocked(t.key)).length : 0;
+    const trialsT = (typeof TRIALS !== 'undefined') ? TRIALS.length : 5;
+    cats.push({ name:'시련의 혼', cur: trialsN, max: trialsT, color:'#88c8a8' });
+    // 이름 있는 적
+    const foesN = state.foesSlain ? Object.keys(state.foesSlain).length : 0;
+    const foesT = (typeof NAMED_FOES !== 'undefined') ? NAMED_FOES.length : 5;
+    cats.push({ name:'이름 있는 적', cur: foesN, max: foesT, color:'#c04040' });
+    // 古文書
+    const scrollsN = state.scrollsUnlocked ? Object.keys(state.scrollsUnlocked).filter(k => state.scrollsUnlocked[k]).length : 0;
+    const scrollsT = (typeof SCROLLS !== 'undefined') ? SCROLLS.length : 8;
+    cats.push({ name:'古文書', cur: scrollsN, max: scrollsT, color:'#a89060' });
+    // 秘 이스터에그
+    const eggsN = state.discoveredEggs ? Object.keys(state.discoveredEggs).length : 0;
+    cats.push({ name:'秘', cur: eggsN, max: 3, color:'#c8a0e8' });
+    // 道 도달
+    const ways = (state.stats && state.stats.wayReached) || 0;
+    cats.push({ name:'道 (10회 목표)', cur: Math.min(ways, 10), max: 10, color:'#fff5c0' });
+    // 千秋萬代
+    cats.push({ name:'千秋萬代', cur: state.ultimateAchieved ? 1 : 0, max: 1, color:'#fff5c0' });
+    // 月蝕
+    cats.push({ name:'月蝕', cur: state.eclipseSeenAt ? 1 : 0, max: 1, color:'#c04030' });
+    const overall = cats.reduce((a, c) => a + Math.min(1, c.cur / c.max), 0) / cats.length;
+    return { cats, overall: Math.round(overall * 1000) / 10 };
+  }
+  function renderCompletion() {
+    const data = computeCompletion();
+    const ov = $('completion-overall');
+    if (ov) {
+      const pct = data.overall;
+      const color = pct >= 100 ? '#fff5c0' : (pct >= 70 ? '#d4af37' : (pct >= 40 ? '#a8c0d8' : '#888'));
+      ov.innerHTML = '<div style="font-size:48px;color:' + color + ';font-weight:200;letter-spacing:2px;text-shadow:0 0 24px ' + color + '66">' + pct + '<span style="font-size:20px">%</span></div>' +
+                     '<div style="font-size:10px;letter-spacing:4px;color:#888;margin-top:4px">전체 탐험률</div>' +
+                     (pct >= 100 ? '<div style="font-size:11px;letter-spacing:4px;color:#fff5c0;margin-top:8px">大成 — 모든 길을 걸었다</div>' : '');
+    }
+    const wrap = $('completion-bars');
+    if (!wrap) return;
+    let html = '';
+    data.cats.forEach(c => {
+      const pct = Math.min(100, Math.round(c.cur / c.max * 100));
+      const done = c.cur >= c.max;
+      html += '<div style="margin:8px 0">';
+      html += '<div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:2px;color:' + (done ? c.color : '#a8a098') + ';margin-bottom:3px">';
+      html += '<span>' + c.name + (done ? ' ✓' : '') + '</span><span>' + c.cur + ' / ' + c.max + '</span>';
+      html += '</div>';
+      html += '<div style="height:5px;background:#1a1a22;border-radius:2px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + c.color + ';opacity:' + (done ? '1' : '0.65') + ';transition:width 0.6s"></div></div>';
+      html += '</div>';
+    });
+    wrap.innerHTML = html;
   }
 
   // === v200 完一書 — 사용자 전체 여정 6권 책 ===
@@ -16272,6 +16353,12 @@
   if ($('btn-codex-book')) $('btn-codex-book').addEventListener('click', () => {
     $('menu-drop').classList.remove('open');
     openBook();
+  });
+  // v220 大成
+  if ($('btn-completion')) $('btn-completion').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    renderCompletion();
+    $('completion-modal').classList.add('active');
   });
   if ($('book-prev')) $('book-prev').addEventListener('click', () => renderBookPage(bookPageIdx - 1));
   if ($('book-next')) $('book-next').addEventListener('click', () => renderBookPage(bookPageIdx + 1));
