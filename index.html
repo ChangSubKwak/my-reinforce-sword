@@ -39,6 +39,11 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+  /* OS 수준 동작 최소화 설정 존중 (게임 내 토글과 별개로 시스템 환경설정 따름) */
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+    #stage.danger-pulse::before { animation: none !important; opacity: 0.5; }
+  }
   /* v212 休 — 주말 (土/日) 미세 따뜻함 */
   body.weekend #stage::after {
     background: radial-gradient(ellipse at 50% 70%, rgba(232,184,120,0.06) 0%, transparent 60%);
