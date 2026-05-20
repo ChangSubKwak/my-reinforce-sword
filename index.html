@@ -2278,7 +2278,13 @@
     z-index: 100;
     padding: 20px;
   }
-  .modal.active { display: flex; }
+  .modal.active { display: flex; animation: modal-fade-in 0.18s ease; }
+  .modal.active .modal-box { animation: modal-box-in 0.22s ease; }
+  @keyframes modal-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes modal-box-in { from { opacity: 0; transform: translateY(8px) scale(0.985); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .modal.active, .modal.active .modal-box { animation: none; }
+  }
   .modal-box {
     background: var(--bg);
     border: 1px solid var(--accent);
