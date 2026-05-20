@@ -17,6 +17,21 @@
     --safe: #6a9a6a;
     --line: #3a322a;
   }
+  /* v232 危 — 높은 파괴 위험 경고 맥동 */
+  #stage.danger-pulse::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    background: radial-gradient(ellipse at 50% 55%, rgba(192,57,43,0.14) 0%, transparent 65%);
+    animation: danger-breathe 1.6s ease-in-out infinite;
+  }
+  @keyframes danger-breathe {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.9; }
+  }
+  body.reduce-motion #stage.danger-pulse::before { animation: none; opacity: 0.5; }
   /* v228 設 — 접근성 */
   body.large-text { font-size: 115%; }
   body.large-text #log-wrap { font-size: 13px; }
@@ -5590,6 +5605,12 @@
     const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + rsv.successAdd + echoSuccessShow + persistentSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
+    // v232 危 — 파괴 위험 ≥15% 시 stage 경고 맥동 (영석/결계로 0이면 해제)
+    const stageEl = $('stage');
+    if (stageEl) {
+      const danger = showDestroy >= 0.15 && state.hasSword && !challenge && !rescueWindow;
+      stageEl.classList.toggle('danger-pulse', danger);
+    }
 
     const canAfford = state.shards >= actualCost;
     btnEnhance.disabled = !canAfford;
