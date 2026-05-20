@@ -11691,6 +11691,78 @@
     if (swordSvg) swordSvg.style.transform = 'rotate(0deg)';
   });
 
+  // === v221 撫劍 — 검을 쓰다듬다 (클릭 교감) ===
+  const STROKE_WHISPERS_SOUL = {
+    high: ['이 검은 깊다', '본질에 닿은 검', '영혼이 가득 찼다'],
+    mid:  ['검이 깨어나는 중', '점점 살아난다', '의식이 열린다'],
+    low:  ['아직 잠들어 있다', '검은 침묵한다', '깨어남을 기다린다'],
+  };
+  const STROKE_WHISPERS_LEVEL = {
+    high: ['도(道)가 가깝다', '거의 정점이다', '한 걸음 남았다'],
+    mid:  ['검이 단단해진다', '강철이 깊어진다', '형태를 갖춰간다'],
+    low:  ['아직 시작이다', '먼 길이 남았다', '첫 호흡의 검'],
+  };
+  let lastStrokeWhisper = 0;
+  function strokeSword() {
+    if (challenge || rescueWindow || moonGazing || !state.hasSword) return;
+    // 미세 흔들 (좌우 빠르게)
+    if (swordSvg) {
+      swordSvg.animate([
+        { transform: 'rotate(0deg)' },
+        { transform: 'rotate(-3deg)', offset: 0.25 },
+        { transform: 'rotate(2.5deg)', offset: 0.6 },
+        { transform: 'rotate(0deg)' }
+      ], { duration: 500, easing: 'ease-out' });
+    }
+    // 청아한 chime (검 형/강화도 기반 음)
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        const baseFreq = 660 + (state.level || 0) * 40;
+        const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = baseFreq;
+        const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct);
+        g.gain.exponentialRampToValueAtTime(0.08, ct + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ct + 0.8);
+        osc.connect(g); g.connect(a.destination); osc.start(ct); osc.stop(ct + 0.85);
+      }
+    } catch(e) {}
+    // 20% 속삭임 (10s throttle)
+    const now = Date.now();
+    if (now - lastStrokeWhisper > 10000 && Math.random() < 0.20) {
+      lastStrokeWhisper = now;
+      showStrokeWhisper();
+    }
+  }
+  function showStrokeWhisper() {
+    const soul = (state.currentSword && state.currentSword.soul) || 0;
+    const lv = state.level || 0;
+    let pool;
+    // 영혼 또는 강화도 중 더 두드러진 것 기반
+    if (lv >= MAX_LEVEL) pool = ['검과 사람이 하나가 되었다', '도(道)에 닿은 검'];
+    else if (soul >= 67) pool = STROKE_WHISPERS_SOUL.high;
+    else if (lv >= 11) pool = STROKE_WHISPERS_LEVEL.high;
+    else if (soul >= 34) pool = STROKE_WHISPERS_SOUL.mid;
+    else if (lv >= 6) pool = STROKE_WHISPERS_LEVEL.mid;
+    else if (soul > 0) pool = STROKE_WHISPERS_SOUL.low;
+    else pool = STROKE_WHISPERS_LEVEL.low;
+    const verse = pool[Math.floor(Math.random() * pool.length)];
+    const el = document.createElement('div');
+    el.textContent = verse;
+    el.style.cssText = 'position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);font-size:11px;letter-spacing:3px;color:rgba(212,175,55,0.85);font-family:"Noto Serif KR",serif;font-style:italic;pointer-events:none;z-index:20;text-shadow:0 0 10px rgba(0,0,0,0.6);white-space:nowrap';
+    const stage = $('stage');
+    if (stage) stage.appendChild(el);
+    else { document.body.appendChild(el); }
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) translateY(6px)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) translateY(0)', offset: 0.25 },
+      { opacity: 1, transform: 'translate(-50%,-50%) translateY(0)', offset: 0.7 },
+      { opacity: 0, transform: 'translate(-50%,-50%) translateY(-8px)' }
+    ], { duration: 3500, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 3600);
+  }
+  swordWrap.addEventListener('click', strokeSword);
+
   // === 화면 흔들림 (v54) ===
   function screenShake(heavy) {
     const g = $('game');
