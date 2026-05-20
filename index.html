@@ -12133,6 +12133,44 @@
     if (swordSvg) swordSvg.style.transform = 'rotate(0deg)';
   });
 
+  // === v229 劍鳴 — 검 1자루 고유 소리 시그니처 ===
+  // 펜타토닉 음계 (불협 회피)
+  const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
+  function swordSignatureFreqs(sword) {
+    if (!sword) return [392, 523, 659];
+    // 검 속성으로 결정적 hash
+    let h = (sword.level || 0) * 31;
+    h += { '直':1, '曲':2, '重':3, '速':4 }[sword.form] || 0;
+    h *= 17;
+    (sword.inscriptions || []).forEach((k, i) => {
+      for (let c = 0; c < k.length; c++) h += k.charCodeAt(c) * (i + 2);
+    });
+    h += (sword.soul || 0) * 7;
+    h = Math.abs(h) >>> 0;
+    // 3음 — 스케일에서 hash로 선택 (상승 경향)
+    const i1 = h % 5;
+    const i2 = (Math.floor(h / 5) % 4) + 2;
+    const i3 = (Math.floor(h / 20) % 3) + 5;
+    return [SIGNATURE_SCALE[i1], SIGNATURE_SCALE[i2], SIGNATURE_SCALE[i3]];
+  }
+  function playSwordSignature(sword, volMul, pitchMul) {
+    try {
+      const a = getAudio && getAudio();
+      if (!a) return;
+      const freqs = swordSignatureFreqs(sword);
+      const vol = (volMul || 1) * 0.08;
+      const pm = pitchMul || 1;
+      const ct = a.currentTime;
+      freqs.forEach((f, i) => {
+        const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f * pm;
+        const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.1);
+        g.gain.exponentialRampToValueAtTime(vol, ct + i*0.1 + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.1 + 1.0);
+        osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.1); osc.stop(ct + i*0.1 + 1.05);
+      });
+    } catch(e) {}
+  }
+
   // === v221 撫劍 — 검을 쓰다듬다 (클릭 교감) ===
   const STROKE_WHISPERS_SOUL = {
     high: ['이 검은 깊다', '본질에 닿은 검', '영혼이 가득 찼다'],
@@ -12156,19 +12194,8 @@
         { transform: 'rotate(0deg)' }
       ], { duration: 500, easing: 'ease-out' });
     }
-    // 청아한 chime (검 형/강화도 기반 음)
-    try {
-      const a = getAudio && getAudio();
-      if (a) {
-        const ct = a.currentTime;
-        const baseFreq = 660 + (state.level || 0) * 40;
-        const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = baseFreq;
-        const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct);
-        g.gain.exponentialRampToValueAtTime(0.08, ct + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, ct + 0.8);
-        osc.connect(g); g.connect(a.destination); osc.start(ct); osc.stop(ct + 0.85);
-      }
-    } catch(e) {}
+    // v229 劍鳴 — 검 고유 시그니처 (형/강화도/명문/영혼 기반)
+    playSwordSignature(state.currentSword, 1.0, 1.0);
     // 20% 속삭임 (10s throttle)
     const now = Date.now();
     if (now - lastStrokeWhisper > 10000 && Math.random() < 0.20) {
@@ -15228,6 +15255,8 @@
       save();
       setTimeout(() => showBirthStatement(stmt), 2700);
     }
+    // v229 劍鳴 — 탄생 시 검 고유 시그니처 울림
+    setTimeout(() => playSwordSignature(state.currentSword, 1.2, 1.0), 600);
   }
   function maybeShowKigen() {
     if (Math.random() > 0.25) return;
@@ -15474,6 +15503,8 @@
   }
 
   function doSeal(form, ins, lv, isWay, swordName, userMemo, userKigen) {
+    // v229 劍鳴 — 봉인 시 검 작별 음 (낮게)
+    playSwordSignature({ form: form, level: lv, inscriptions: ins, soul: (state.currentSword && state.currentSword.soul) || 0 }, 1.0, 0.75);
     // v119 奇緣 — 銀河 시도 (보상 계산 전)
     tryBlessing('sealBefore');
     let reward = sealReward(lv);
