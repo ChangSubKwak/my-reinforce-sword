@@ -2287,6 +2287,9 @@
     margin-bottom: 18px;
     line-height: 1.6;
   }
+  /* 입력 포커스 가시화 — 인라인 outline:none으로 사라진 포커스를 accent 링으로 복원(키보드 접근성) */
+  .modal-box input:focus,
+  .modal-box textarea:focus { box-shadow: 0 0 0 1px var(--accent); }
   .recipe {
     display: flex;
     justify-content: space-between;
@@ -2691,7 +2694,7 @@
 <div id="gen-mark"></div>
 <div id="path-progress" title="行 — 검의 길 진행도"></div>
 <div id="way-counter"></div>
-<button id="menu-toggle">≡</button>
+<button id="menu-toggle" title="메뉴" aria-label="메뉴">≡</button>
 <div id="menu-drop">
   <div class="menu-section">記 錄</div>
   <button id="btn-status">現  勢</button>
@@ -3501,9 +3504,9 @@
     </div>
     <div id="gallery-content" style="min-height: 380px; padding: 30px 24px; text-align:center; position:relative"></div>
     <div style="padding:12px 18px;display:flex;justify-content:center;gap:10px;border-top:1px solid #1a1a22">
-      <button id="gallery-prev" style="min-width:46px">◁</button>
-      <button id="gallery-pause">⏸</button>
-      <button id="gallery-next" style="min-width:46px">▷</button>
+      <button id="gallery-prev" style="min-width:46px" title="이전" aria-label="이전">◁</button>
+      <button id="gallery-pause" title="일시정지 / 재생" aria-label="일시정지 / 재생">⏸</button>
+      <button id="gallery-next" style="min-width:46px" title="다음" aria-label="다음">▷</button>
       <button class="modal-close" data-close>닫 기</button>
     </div>
   </div>
