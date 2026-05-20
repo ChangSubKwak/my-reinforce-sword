@@ -5065,12 +5065,8 @@
     // 현재 강화 단계의 주사위 방향을 ~80% 정확도로 예측 (v122 占卜 사용 시 100%)
     const lv = state.level;
     if (lv >= MAX_LEVEL || !state.hasSword) return 'none';
-    const t = TABLE[lv];
-    const form = getForm();
-    const rsv = getResolve();
-    const destroyReduce2 = (form && form.destroyReduce) || 0;
-    const effectiveDestroy = Math.max(0, (t.destroy - destroyReduce2 - schoolDestroyReduce() - guardianBonus().destroyReduce - (adversityReady ? 0.12 : 0) - getScarDestroyReduce()) * rsv.destroyMul);
-    const trueSuccess = successChanceNow();  // v240 단일 진원 — omen이 실제 굴림과 동일
+    const effectiveDestroy = effectiveDestroyChance(lv);  // v241 단일 진원 — omen 파괴 = 실제 굴림
+    const trueSuccess = successChanceNow();  // v240 단일 진원 — omen 성공 = 실제 굴림
     // v122 占卜 — 체크박스 활성 시 실제 enhance에서 사용할 롤을 commit
     const divCheck = $('divination-check');
     const useDivination = divCheck && divCheck.checked && !divCheck.disabled && (state.divinationStones || 0) > 0;
@@ -5637,7 +5633,7 @@
       (breathStr ? '  <span style="color:#6a8a9a;font-size:10px">· ' + breathStr + '</span>' : '');
     // v121 結界: 파괴가 차단되면 그 확률이 하락으로 흡수되어 표시
     const sanctumAbsorbedShow = sanctumActive
-      ? Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul)
+      ? Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - (adversityReady ? 0.12 : 0) - getScarDestroyReduce()) * rsv.destroyMul)
       : 0;
     const showDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul) + sanctumAbsorbedShow;
     let failMsg = '';
@@ -15207,14 +15203,20 @@
   }
 
   // 현재 검 기준 lv→lv+1 강화의 유효 파괴 확률 (form/유파/흉터/마음가짐/結界/echo 반영)
+  // v240/v241 — 실제 파괴 확률 단일 진원. 표시 odds·危 경고·欲 봉인힌트·前兆 omen이
+  // 실제 굴림(enhance의 effectiveDestroy)과 동일한 감소항·차단조건을 공유해야 함.
+  // 누락 시 危/omen이 파괴 위험을 과대 표시 → 사용자 오인. 砥/靈 체크박스 상태 반영.
   function effectiveDestroyChance(lv) {
     const t = TABLE[lv];
     if (!t || t.destroy === 0) return 0;
-    if ((enhanceEcho && enhanceEcho.destroyBlock) || sanctumActive) return 0;
+    const spiritCheck = $('spirit-check');
+    const useSpirit = spiritCheck && spiritCheck.checked && !spiritCheck.disabled && (state.spiritstones || 0) > 0;
+    if (useSpirit || (enhanceEcho && enhanceEcho.destroyBlock) || sanctumBlocksDestroy()) return 0;
     const f = getForm();
     const dr = (f && f.destroyReduce) || 0;
     const rsv = getResolve();
-    return Math.max(0, (t.destroy - dr - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
+    return Math.max(0, (t.destroy - dr - schoolDestroyReduce() - guardianBonus().destroyReduce
+      - (adversityReady ? 0.12 : 0) - getScarDestroyReduce() - weatherDestroyReduce() - wishDestroyReduce()) * rsv.destroyMul);
   }
   // v238 — 강화 비용 단일 진원. 표시·실제 차감·修練 자동·게임오버 판정이 동일 공식 공유.
   // floor=true: 保身(자유 토글) 비용 가산을 무시한 최저 비용 — 게임오버 판정(빠져나갈 길 있나)용.

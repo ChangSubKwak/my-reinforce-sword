@@ -92,6 +92,29 @@ test('파괴 확률 — effectiveDestroyChance() 헬퍼로 일원화 (危·欲·
   assert.strictEqual((js.match(/echoDestroyBlockShow/g) || []).length, 0, 'dead 변수 제거됨');
 });
 
+test('파괴 확률 — effectiveDestroyChance()가 실제 굴림과 동일 감소항·차단조건 (危·omen 과대표시 방지)', () => {
+  // v241: 危 경고·omen이 guardian/adversity/weather/wish 감소와 靈石 차단을 누락해 파괴 위험 과대표시.
+  // 표시 헬퍼가 실제 enhance 파괴식(11782)과 동일 항을 가져야 함.
+  const m = js.match(/function effectiveDestroyChance\(lv\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(m, 'effectiveDestroyChance 본문');
+  const body = m[1];
+  ['schoolDestroyReduce', 'guardianBonus', 'adversityReady', 'getScarDestroyReduce', 'weatherDestroyReduce', 'wishDestroyReduce', 'destroyMul']
+    .forEach(fn => assert.match(body, new RegExp(fn), fn + ' 감소항 포함'));
+  // 차단 조건: 靈石 체크박스 + 잔향 + 結界
+  assert.match(body, /spirit-check/, '靈石 체크박스 차단 반영');
+  assert.match(body, /enhanceEcho/, '잔향 차단 반영');
+  assert.match(body, /sanctumBlocksDestroy/, '結界 차단 반영');
+});
+
+test('前兆 omen은 파괴를 effectiveDestroyChance()로 예측 (인라인 파괴식 잔존 없음)', () => {
+  const m = js.match(/function rollOmen\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(m, 'rollOmen 본문');
+  const body = m[1];
+  assert.match(body, /effectiveDestroyChance\(lv\)/, 'omen이 헬퍼 사용');
+  // omen 본문에 t.destroy 직접 산식이 없어야 함 (헬퍼로 위임)
+  assert.strictEqual((body.match(/t\.destroy/g) || []).length, 0, 'omen에 인라인 파괴식 없음');
+});
+
 test('persistentSuccessBonus는 후기 보너스 시스템 모두 포함', () => {
   // 헬퍼 본문 추출
   const m = js.match(/function persistentSuccessBonus\(\)\s*\{([\s\S]*?)\}/);
