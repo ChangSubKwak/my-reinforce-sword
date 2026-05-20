@@ -2318,6 +2318,8 @@
   .modal-empty { color: var(--dim); text-align: center; font-size: 11px; padding: 24px 0; letter-spacing: 2px; }
   /* 키 힌트 칩 (␣ Esc P M) — 단일 규격 */
   .key-chip { background: var(--bg-2); padding: 1px 5px; border: 1px solid var(--line); border-radius: 2px; }
+  /* 그림자 종류별 SVG 디테일 오버레이 — 동일 기반 (JS가 display 토글) */
+  .shadow-detail { position: absolute; inset: 0; display: none; pointer-events: none; }
   /* 컷씬/오버레이 보상 라벨 (accent 강조) — 단일 규격 */
   .reward-label { font-size: 11px; color: var(--accent); letter-spacing: 3px; margin-top: 14px; }
   /* 가운데 정렬 버튼 행 — 단일 규격 */
@@ -3128,7 +3130,7 @@
             <polygon points="74,48 78,45 74,46" fill="#1a0408"/>
           </svg>
           <!-- v131 影體革命 — 逃影: 작고 재빠른, 다중 눈, 화살표 같은 다리 -->
-          <svg id="flee-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;display:none;pointer-events:none">
+          <svg id="flee-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" class="shadow-detail">
             <!-- 작은 머리 (가운데 작은 형체) -->
             <ellipse cx="50" cy="55" rx="14" ry="11" fill="#1a1a25" stroke="#3a3a48" stroke-width="0.5"/>
             <!-- 다중 눈 (좌우 + 가운데 큰) — 사방을 보는 -->
@@ -3152,7 +3154,7 @@
             <path d="M 68 80 L 78 82" stroke="#5a6a78" stroke-width="0.5" opacity="0.4"/>
           </svg>
           <!-- v131 影體革命 — 鋼影: 중장갑 무장 (헬멧, 어깨 보호대, 흉갑) -->
-          <svg id="steel-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;display:none;pointer-events:none">
+          <svg id="steel-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" class="shadow-detail">
             <!-- 헬멧 (양각 형태) -->
             <path d="M 35 35 L 35 50 L 38 55 L 50 58 L 62 55 L 65 50 L 65 35 Q 50 22 35 35 Z" fill="#2a3340" stroke="#5a6a78" stroke-width="0.7"/>
             <!-- 헬멧 가운데 척추 (등판) -->
@@ -3178,7 +3180,7 @@
             <circle cx="60" cy="98" r="0.8" fill="#7a8898"/>
           </svg>
           <!-- v131 影體革命 — 影: 후드 망령 (떠다니는 잘린 형체) -->
-          <svg id="normal-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;display:none;pointer-events:none">
+          <svg id="normal-detail" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" class="shadow-detail">
             <!-- 후드 (위에서 내려오는 망토) -->
             <path d="M 30 25 Q 30 45 35 60 L 40 80 Q 50 88 60 80 L 65 60 Q 70 45 70 25 Q 50 18 30 25 Z" fill="#1a1a22" stroke="#3a3a45" stroke-width="0.5" opacity="0.92"/>
             <!-- 후드 내부 그림자 (얼굴 부분) -->
