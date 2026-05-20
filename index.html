@@ -2639,6 +2639,7 @@
   <button id="btn-stats">기 록</button>
   <button id="btn-journey">紀  程</button>
   <button id="btn-daily">오늘의 도전</button>
+  <button id="btn-mindchart">心  譜</button>
   <div class="menu-grid">
     <button id="btn-clock">時計</button>
     <button id="btn-today-sheet">帖</button>
@@ -3398,6 +3399,17 @@
       <button id="gallery-next" style="min-width:46px">▷</button>
       <button class="modal-close" data-close>닫 기</button>
     </div>
+  </div>
+</div>
+
+<!-- v222 心譜 — 결정 성향 프로필 -->
+<div class="modal" id="mindchart-modal">
+  <div class="modal-box" style="max-width: 440px;">
+    <h2>心 譜</h2>
+    <p>당신의 결정이 그리는 마음의 악보</p>
+    <div id="mindchart-bars" style="margin:18px 0"></div>
+    <div id="mindchart-persona" style="text-align:center;margin-top:14px;padding:14px;background:rgba(212,175,55,0.06);border-left:2px solid rgba(212,175,55,0.5);font-size:13px;letter-spacing:3px;font-style:italic;color:#fff5c0;font-family:'Noto Serif KR',serif"></div>
+    <button class="modal-close" data-close style="margin-top:14px">닫 기</button>
   </div>
 </div>
 
@@ -6477,6 +6489,56 @@
     $('weekly-report-content').innerHTML = html;
     $('weekly-report-modal').classList.add('active');
     log('週報 — ' + prevWeek + ' · ' + summary, 'success');
+  }
+
+  // === v222 心譜 — 결정 성향 프로필 ===
+  function computeMindChart() {
+    const st = state.stats || {};
+    const slain = (st.slainNormal||0)+(st.slainFlee||0)+(st.slainSteel||0)+(st.slainDemon||0)+(st.yakshaSlain||0);
+    const fled = (st.fled||0)+(st.evaded||0);
+    const peace = (st.stalemate||0);
+    const gamble = ((state.gambleStats&&state.gambleStats.win)||0)+((state.gambleStats&&state.gambleStats.lose)||0);
+    const total = slain + fled + peace + gamble || 1;
+    return [
+      { name:'戰 — 전투 (베기)', val: slain, pct: Math.round(slain/total*100), color:'#c04040' },
+      { name:'避 — 회피 (도망)', val: fled,  pct: Math.round(fled/total*100), color:'#88a8c8' },
+      { name:'和 — 평화 (對峙)', val: peace, pct: Math.round(peace/total*100), color:'#88c8a8' },
+      { name:'賭 — 도박 (회수)', val: gamble, pct: Math.round(gamble/total*100), color:'#d4af37' },
+    ];
+  }
+  function mindPersona(bars) {
+    const total = bars.reduce((a, b) => a + b.val, 0);
+    if (total === 0) return '아직 결정의 길을 걷지 않았다';
+    const top = bars.slice().sort((a, b) => b.val - a.val)[0];
+    const map = {
+      '戰 — 전투 (베기)': '당신은 전투의 검사 — 그림자를 두려워하지 않는다',
+      '避 — 회피 (도망)': '당신은 바람의 검사 — 싸움보다 흐름을 택한다',
+      '和 — 평화 (對峙)': '당신은 道의 검사 — 무력 없이 길을 연다',
+      '賭 — 도박 (회수)': '당신은 도박의 검사 — 운명에 모든 것을 건다',
+    };
+    // 균형 체크
+    const sorted = bars.slice().sort((a, b) => b.val - a.val);
+    if (sorted[0].val > 0 && sorted[1].val > 0 && (sorted[0].val - sorted[1].val) / total < 0.15) {
+      return '당신은 균형의 검사 — 모든 길을 안다';
+    }
+    return map[top.name] || '검의 길을 걷는 자';
+  }
+  function renderMindChart() {
+    const bars = computeMindChart();
+    const wrap = $('mindchart-bars');
+    if (wrap) {
+      const maxPct = Math.max(...bars.map(b => b.pct), 1);
+      let html = '';
+      bars.forEach(b => {
+        html += '<div style="margin:10px 0">';
+        html += '<div style="display:flex;justify-content:space-between;font-size:11px;letter-spacing:2px;color:' + b.color + ';margin-bottom:4px"><span>' + b.name + '</span><span>' + b.val + ' · ' + b.pct + '%</span></div>';
+        html += '<div style="height:8px;background:#1a1a22;border-radius:2px;overflow:hidden"><div style="height:100%;width:' + (b.pct / maxPct * 100) + '%;background:' + b.color + ';opacity:0.75;transition:width 0.6s"></div></div>';
+        html += '</div>';
+      });
+      wrap.innerHTML = html;
+    }
+    const persona = $('mindchart-persona');
+    if (persona) persona.textContent = mindPersona(bars);
   }
 
   // === v220 大成 — 전체 게임 탐험률 dashboard ===
@@ -16431,6 +16493,12 @@
     $('menu-drop').classList.remove('open');
     renderCompletion();
     $('completion-modal').classList.add('active');
+  });
+  // v222 心譜
+  if ($('btn-mindchart')) $('btn-mindchart').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    renderMindChart();
+    $('mindchart-modal').classList.add('active');
   });
   if ($('book-prev')) $('book-prev').addEventListener('click', () => renderBookPage(bookPageIdx - 1));
   if ($('book-next')) $('book-next').addEventListener('click', () => renderBookPage(bookPageIdx + 1));
