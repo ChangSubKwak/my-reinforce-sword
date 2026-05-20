@@ -2322,6 +2322,10 @@
     font-size: 11px;
   }
   .modal-close:hover { color: var(--fg); border-color: var(--dim); }
+  /* 주요 동작 버튼 변형 (확정·저장·시작) — accent 강조, hover 시에도 accent 유지 */
+  .modal-close.primary { border-color: var(--accent); color: var(--accent); }
+  .modal-close.primary:hover { color: var(--accent); border-color: var(--accent); background: rgba(212,175,55,0.06); }
+  .modal-close:disabled { opacity: 0.4; cursor: not-allowed; }
 
   /* 殿 — 검의 전당 갤러리 */
   #legacy-list.gallery-mode {
@@ -3295,7 +3299,7 @@
       style="display:none;width:100%;padding:8px;background:transparent;border:1px solid rgba(212,175,55,0.3);color:var(--accent);font-family:inherit;font-size:11px;letter-spacing:2px;text-align:center;margin-bottom:14px;outline:none;opacity:0.8;resize:none;height:60px;"></textarea>
     <div style="display:flex;gap:8px">
       <button class="modal-close" id="name-cancel" style="flex:1;margin:0">자 동 이 름</button>
-      <button class="modal-close" id="name-confirm" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)">이 름 새 김 · 팔 기</button>
+      <button class="modal-close primary" id="name-confirm" style="flex:1;margin:0">이 름 새 김 · 팔 기</button>
     </div>
     <!-- v118 殿堂 — 道 검 한정 박물관 진열 (조각 보상 없이 영구 진열 + +1.5% 성공) -->
     <button class="modal-close" id="name-enshrine" style="display:none;width:100%;margin:10px 0 0;border:1px solid #fff5c0;color:#fff5c0;background:transparent;font-family:inherit;font-size:12px;letter-spacing:5px;padding:12px 0;cursor:pointer;text-shadow:0 0 6px rgba(255,245,192,0.4)">🏛 殿 堂  에  영 구  진 열</button>
@@ -3642,7 +3646,7 @@
     <div style="display:flex;gap:8px;align-items:center">
       <button id="bunshu-prev" class="modal-close" style="flex:1;margin:0">◀  이 전</button>
       <span id="bunshu-counter" style="font-size:10px;color:var(--dim);letter-spacing:3px;min-width:60px;text-align:center"></span>
-      <button id="bunshu-next" class="modal-close" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)">다 음  ▶</button>
+      <button id="bunshu-next" class="modal-close primary" style="flex:1;margin:0">다 음  ▶</button>
     </div>
     <button class="modal-close" data-close>닫 기</button>
   </div>
@@ -3657,7 +3661,7 @@
       <div id="duel-flash"></div>
     </div>
     <div style="display:flex;gap:8px;margin:10px 0">
-      <button id="duel-start" class="modal-close" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)" disabled>대  국  시  작</button>
+      <button id="duel-start" class="modal-close primary" style="flex:1;margin:0" disabled>대  국  시  작</button>
       <button id="duel-clear" class="modal-close" style="flex:1;margin:0">선  택  해  제</button>
     </div>
     <p style="font-size:9px;color:var(--dim);text-align:center;margin:6px 0 10px;letter-spacing:1px;opacity:0.7">갤러리 검 클릭 시 선택 / 최대 2자루</p>
@@ -3709,7 +3713,7 @@
       autocomplete="off">
     <div style="display:flex;gap:8px">
       <button class="modal-close" id="seal-craft-clear" style="flex:1;margin:0">제 거</button>
-      <button class="modal-close" id="seal-craft-save" style="flex:1;margin:0;border-color:var(--accent);color:var(--accent)">새 김</button>
+      <button class="modal-close primary" id="seal-craft-save" style="flex:1;margin:0">새 김</button>
     </div>
   </div>
 </div>
@@ -3872,7 +3876,7 @@
     <div id="lb-submit-wrap" style="display:none;padding:10px 0;border-top:1px solid var(--line);margin-top:10px">
       <input id="lb-nickname" type="text" placeholder="닉네임 (16자)" maxlength="16"
         style="width:100%;padding:10px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:14px;text-align:center;margin-bottom:8px;outline:none;">
-      <button class="modal-close" id="lb-submit" style="width:100%;border-color:var(--accent);color:var(--accent);margin:0">내 점수 등록 / 갱신</button>
+      <button class="modal-close primary" id="lb-submit" style="width:100%;margin:0">내 점수 등록 / 갱신</button>
     </div>
     <div id="lb-login-prompt" style="display:none;padding:14px 0;border-top:1px solid var(--line);margin-top:10px;text-align:center">
       <p style="color:var(--dim);font-size:11px;letter-spacing:2px;margin-bottom:10px;line-height:1.7">
