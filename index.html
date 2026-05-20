@@ -4300,9 +4300,21 @@
       if (state.dailyTrial !== null && (typeof state.dailyTrial !== 'object')) state.dailyTrial = null;
       if (!Array.isArray(state.recentLog)) state.recentLog = [];
       if (!state.milestonesShown || typeof state.milestonesShown !== 'object') state.milestonesShown = {};
-      if (!state.stats || typeof state.stats !== 'object') {
-        state.stats = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0 };
-      }
+      // v178~v228 신규 컬렉션/사용자 데이터 — 외부 import(백업/클라우드) 대비 타입 방어
+      if (!state.treasures || typeof state.treasures !== 'object') state.treasures = {};  // v189
+      if (!state.beastsUnlocked || typeof state.beastsUnlocked !== 'object') state.beastsUnlocked = {};  // v188
+      if (!Array.isArray(state.guestSwords)) state.guestSwords = [];  // v227
+      if (!Array.isArray(state.userDiary)) state.userDiary = [];  // v210
+      if (!Array.isArray(state.userSeal)) state.userSeal = [];  // v187
+      if (!Array.isArray(state.hourActivity) || state.hourActivity.length !== 24) state.hourActivity = new Array(24).fill(0);  // v195
+      if (!state.activityByDate || typeof state.activityByDate !== 'object') state.activityByDate = {};  // v217
+      if (!state.discoveredEggs || typeof state.discoveredEggs !== 'object') state.discoveredEggs = {};  // v216
+      if (!state.settings || typeof state.settings !== 'object') state.settings = {};  // v228
+      if (!state.gambleStats || typeof state.gambleStats !== 'object') state.gambleStats = { win: 0, lose: 0 };  // v219
+      if (typeof state.eternityPoints !== 'number') state.eternityPoints = 0;  // v225
+      // stats — 기본 sub-key 병합 (구 저장본에 신규 key 누락 시 baseline 보정)
+      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0 };
+      state.stats = Object.assign({}, DEFAULT_STATS, (state.stats && typeof state.stats === 'object') ? state.stats : {});
     } catch (e) {}
   }
 
