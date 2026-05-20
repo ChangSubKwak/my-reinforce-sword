@@ -2293,6 +2293,8 @@
   /* 입력 포커스 가시화 — 인라인 outline:none으로 사라진 포커스를 accent 링으로 복원(키보드 접근성) */
   .modal-box input:focus,
   .modal-box textarea:focus { box-shadow: 0 0 0 1px var(--accent); }
+  /* 모달 부가 설명(fine-print) — h2 부제 아래 작은 안내문 단일 규격 */
+  .modal-note { font-size: 10px; color: var(--dim); margin: 4px 0 14px; line-height: 1.8; letter-spacing: 2px; }
   .recipe {
     display: flex;
     justify-content: space-between;
@@ -3651,7 +3653,7 @@
 <div class="modal" id="status-modal">
   <div class="modal-box" style="max-width: 480px;">
     <h2>現 勢</h2>
-    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+    <p class="modal-note">
       지금 이 검에 작용하는 모든 활성 효과.
     </p>
     <div id="status-list" style="max-height: 440px; overflow-y: auto; padding: 0 4px;font-size:11px;line-height:1.9"></div>
@@ -3697,7 +3699,7 @@
   <div class="modal-box" style="max-width: 480px;">
     <h2>神 祠</h2>
     <p id="shrine-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
-    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+    <p class="modal-note">
       조각을 헌사하여 영구 보너스를 얻습니다.<br>
       각 헌사는 1회만 가능 (영구).
     </p>
@@ -3711,7 +3713,7 @@
   <div class="modal-box" style="max-width: 500px;">
     <h2>紀 程</h2>
     <p id="journey-title" style="font-size:11px;color:#fff5c0;letter-spacing:4px;text-align:center;margin:-8px 0 14px;padding:6px;border:1px solid rgba(212,175,55,0.25);background:rgba(212,175,55,0.04);text-shadow:0 0 6px rgba(212,175,55,0.4)"></p>
-    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+    <p class="modal-note">
       검사의 여정 — 큰 마일스톤이 시간순으로 정렬됩니다.
     </p>
     <div id="journey-list" style="max-height: 420px; overflow-y: auto; padding: 0 4px"></div>
@@ -3723,7 +3725,7 @@
 <div class="modal" id="seal-craft-modal">
   <div class="modal-box" style="max-width: 380px;">
     <h2>印 章</h2>
-    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+    <p class="modal-note">
       모든 새 검에 영구 새겨질 당신의 인장 (1자).<br>
       한자 / 한글 / 기호 모두 가능. 빈 칸 = 인장 없음.
     </p>
@@ -3745,7 +3747,7 @@
   <div class="modal-box" style="max-width: 500px;">
     <h2>拓 本</h2>
     <p id="rubbings-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
-    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+    <p class="modal-note">
       게임의 의미있는 순간을 영구 포착한 사진첩.<br>
       마일스톤 자동 캡처 (최대 20개).
     </p>
@@ -3759,7 +3761,7 @@
   <div class="modal-box" style="max-width: 500px;">
     <h2>古 文 書</h2>
     <p id="scrolls-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
-    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+    <p class="modal-note">
       검의 길에 새겨진 8장의 두루마리.<br>
       게임의 마일스톤 달성 시 열립니다.
     </p>
@@ -3773,7 +3775,7 @@
   <div class="modal-box" style="max-width: 460px;">
     <h2>奇 緣 · 희 귀 축 복</h2>
     <p id="blessings-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
-    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+    <p class="modal-note">
       게임 중 매우 낮은 확률로 발동되는 6종 축복.<br>
       한 번 발견된 축복은 영구 기록됩니다.
     </p>
@@ -3787,7 +3789,7 @@
   <div class="modal-box" style="max-width: 460px;">
     <h2>殿 堂</h2>
     <p id="enshrined-progress" style="font-size:11px;color:var(--dim);letter-spacing:3px"></p>
-    <p style="font-size:10px;color:var(--dim);margin:4px 0 14px;line-height:1.8;letter-spacing:2px">
+    <p class="modal-note">
       도(道)에 이른 검을 봉인 대신 영구 진열.<br>
       각 진열 검: 모든 미래 검에 강화 성공 +1.5% (최대 3자루).
     </p>
