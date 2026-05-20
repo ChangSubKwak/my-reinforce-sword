@@ -73,6 +73,12 @@
     --line: #2c3038;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* 스크롤바 — 흑금 테마에 맞춰 얇고 어둡게 (긴 목록 모달의 밝은 시스템 스크롤바 제거) */
+  * { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--dim); }
   html, body {
     height: 100%;
     background: radial-gradient(ellipse at 50% 30%, var(--bg-2) 0%, var(--bg) 80%);
