@@ -5468,6 +5468,11 @@
   const challengeSword = $('challenge-sword');
   const challengeStakes = $('challenge-stakes');
   const swordInscriptions = $('sword-inscriptions');
+  // v237 銘心 — 명문 tag 클릭 시 의미 페이드 (이벤트 위임, 1회 등록)
+  if (swordInscriptions) swordInscriptions.addEventListener('click', (e) => {
+    const tag = e.target.closest('.ins-tag');
+    if (tag && tag.dataset.ins) showInscriptionMeaning(tag.dataset.ins);
+  });
   const inscribeOverlay = $('inscribe-overlay');
   const inscribeKanji = $('inscribe-kanji');
   const inscribeLabel = $('inscribe-label');
@@ -15337,12 +15342,42 @@
     }
   }
 
+  // v237 銘心 — 명문/형의 의미 조회 (label, verse)
+  function inscriptionMeaning(key) {
+    if (SWORD_FORMS[key]) return { label: SWORD_FORMS[key].label, verse: '' };
+    const def = (typeof INSCRIPTIONS !== 'undefined') ? INSCRIPTIONS.find(d => d.key === key) : null;
+    if (def) return { label: def.label || '', verse: def.verse || '' };
+    return { label: '', verse: '' };
+  }
   function renderInscriptions() {
-    if (!state.hasSword) { swordInscriptions.textContent = ''; return; }
+    if (!state.hasSword) { swordInscriptions.innerHTML = ''; return; }
     const parts = [];
     if (state.currentSword.form) parts.push(state.currentSword.form);
     parts.push(...state.currentSword.inscriptions);
-    swordInscriptions.textContent = parts.join(' · ');
+    // v237 銘心 — 각 명문을 클릭 가능한 span으로 (의미 툴팁 + tap 페이드)
+    swordInscriptions.innerHTML = parts.map((k, i) => {
+      const m = inscriptionMeaning(k);
+      const title = m.label + (m.verse ? ' — ' + m.verse : '');
+      const sep = i > 0 ? '<span style="opacity:0.4"> · </span>' : '';
+      return sep + '<span class="ins-tag" data-ins="' + k + '" title="' + title.replace(/"/g, '') + '" style="cursor:pointer">' + k + '</span>';
+    }).join('');
+  }
+  function showInscriptionMeaning(key) {
+    const m = inscriptionMeaning(key);
+    if (!m.label && !m.verse) return;
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:36px;color:#fff5c0;letter-spacing:4px;text-shadow:0 0 18px rgba(212,175,55,0.6);font-weight:200">' + key + '</div>' +
+                    (m.label ? '<div style="font-size:12px;color:#e8e6dd;letter-spacing:3px;margin-top:10px">' + m.label + '</div>' : '') +
+                    (m.verse ? '<div style="font-size:10px;color:rgba(168,184,200,0.8);letter-spacing:2px;margin-top:6px;font-style:italic">' + m.verse + '</div>' : '');
+    el.style.cssText = 'position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:1700;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:22px 38px;background:radial-gradient(ellipse,rgba(15,15,22,0.92) 0%,rgba(15,15,22,0.5) 70%,transparent 95%);max-width:420px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.9)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.2 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.72 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.03)' }
+    ], { duration: 2600, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 2700);
   }
 
   // === v89 시련의 혼 — 영구 메타 진행 ===
