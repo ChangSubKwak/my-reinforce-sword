@@ -69,6 +69,16 @@ test('강화 성공 보너스 — 표시 odds와 실제 굴림이 persistentSucc
   assert.ok(callCount >= 3, 'persistentSuccessBonus()가 표시·실제 양쪽에서 호출 (현재 ' + callCount + ')');
 });
 
+test('파괴 확률 — effectiveDestroyChance() 헬퍼로 일원화 (危·欲·표시 동기)', () => {
+  // v235 헬퍼가 render 표시·危 맥동·欲 봉인 힌트에서 공유되어야 함
+  assert.match(js, /function effectiveDestroyChance\(/, 'effectiveDestroyChance 헬퍼 존재');
+  const n = (js.match(/effectiveDestroyChance\(/g) || []).length;
+  // 정의 1 + render(showDestroy) 1 + 봉인 힌트 1 = 최소 3
+  assert.ok(n >= 3, 'effectiveDestroyChance가 여러 곳에서 공유 (현재 ' + n + ')');
+  // dead 변수 echoDestroyBlockShow 제거 확인
+  assert.strictEqual((js.match(/echoDestroyBlockShow/g) || []).length, 0, 'dead 변수 제거됨');
+});
+
 test('persistentSuccessBonus는 후기 보너스 시스템 모두 포함', () => {
   // 헬퍼 본문 추출
   const m = js.match(/function persistentSuccessBonus\(\)\s*\{([\s\S]*?)\}/);

@@ -5609,14 +5609,13 @@
     // v114 餘香 — 다음 강화에 잔향 반영
     const echoCostMulShow = (enhanceEcho && enhanceEcho.costMul) || 1;
     const echoSuccessShow = (enhanceEcho && enhanceEcho.successBonus) || 0;
-    const echoDestroyBlockShow = !!(enhanceEcho && enhanceEcho.destroyBlock);
     const matsuMulShow = blessingCostMul();  // v119
     const sanctumMulShow = sanctumCostMul();  // v121 結界
     const wishMulShow = wishCostMul();  // v155 寒梅
     const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow * wishMulShow * solarCostMul() * weekendCostMul());
     const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + rsv.successAdd + echoSuccessShow + persistentSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
-    const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
+    const showDestroy = effectiveDestroyChance(lv);  // v235 헬퍼로 일원화 (危·欲·표시 동기)
     // v232 危 — 파괴 위험 ≥15% 시 stage 경고 맥동 (영석/결계로 0이면 해제)
     const stageEl = $('stage');
     if (stageEl) {
