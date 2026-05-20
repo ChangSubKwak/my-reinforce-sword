@@ -80,6 +80,8 @@
     --line: #2c3038;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* 모든 체크박스 accent 통일 (sanctum 등 클래스 없는 체크박스 포함 — 기본 파란 체크 제거) */
+  input[type="checkbox"] { accent-color: var(--accent); }
   /* 스크롤바 — 흑금 테마에 맞춰 얇고 어둡게 (긴 목록 모달의 밝은 시스템 스크롤바 제거) */
   * { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
