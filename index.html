@@ -6576,6 +6576,69 @@
     log('週報 — ' + prevWeek + ' · ' + summary, 'success');
   }
 
+  // === v231 劍夢 — 명상 중 검의 꿈 ===
+  let dreamTimer = null;
+  function composeSwordDream() {
+    if (!state.hasSword || !state.currentSword) return null;
+    const cs = state.currentSword;
+    const slain = cs.slainCount || 0;
+    const lv = state.level || 0;
+    const sealed = state.sealedSwords || [];
+    const pool = [];
+    // 베어낸 그림자
+    if (slain >= 1) pool.push('검은 베어낸 ' + slain + '의 그림자를 꿈꾼다');
+    if (slain >= 5) pool.push('어둠들이 환영처럼 스쳐 지나간다');
+    // 봉인 형제
+    if (sealed.length >= 1) {
+      const bro = sealed[Math.floor(Math.random() * sealed.length)];
+      pool.push('봉인된 형제 「' + (bro.name || '無名') + '」이 꿈에 나타난다');
+    }
+    // 道
+    if (lv >= MAX_LEVEL) pool.push('도(道)에 닿은 꿈 — 이미 그곳에 있다');
+    else if (lv >= 11) pool.push('도(道)에 닿는 꿈 — 손끝에 닿을 듯하다');
+    else if (lv >= 5) pool.push('더 높은 곳을 향한 꿈을 꾼다');
+    else pool.push('첫 강화의 기억이 흐릿하게 떠오른다');
+    // 영혼
+    const soul = cs.soul || 0;
+    if (soul >= 67) pool.push('검은 자신의 본질을 들여다본다');
+    else if (soul >= 34) pool.push('검의 의식이 꿈 속에서 깨어난다');
+    // 명문
+    if ((cs.inscriptions || []).indexOf('鬼斬') >= 0) pool.push('검귀의 핏빛 기억이 어른거린다');
+    if ((cs.inscriptions || []).indexOf('夜叉斬') >= 0) pool.push('달빛 아래 야차의 환영');
+    if (pool.length === 0) pool.push('검은 고요히 잠들어 있다');
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  function showSwordDream() {
+    const dream = composeSwordDream();
+    if (!dream) return;
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:8px;color:rgba(168,160,200,0.5);letter-spacing:8px;margin-bottom:8px">劍  夢</div>' +
+                    '<div style="font-size:11px;color:rgba(200,192,224,0.75);letter-spacing:3px;line-height:1.7;font-style:italic">' + dream + '</div>';
+    el.style.cssText = 'position:fixed;top:30%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:1600;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;max-width:440px;text-shadow:0 0 12px rgba(0,0,0,0.6)';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, filter: 'blur(4px)' },
+      { opacity: 0.9, filter: 'blur(0px)', offset: 0.25 },
+      { opacity: 0.9, filter: 'blur(0px)', offset: 0.7 },
+      { opacity: 0, filter: 'blur(4px)' }
+    ], { duration: 6000, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 6100);
+  }
+  function startSwordDreams() {
+    if (dreamTimer) return;
+    const tick = () => {
+      // 명상 중에만 (玩月 또는 真空)
+      if (moonGazing || inTrueEmptiness) {
+        if (Math.random() < 0.5) showSwordDream();
+      }
+      dreamTimer = setTimeout(tick, 14000 + Math.random() * 7000);
+    };
+    dreamTimer = setTimeout(tick, 9000);
+  }
+  function stopSwordDreams() {
+    if (dreamTimer) { clearTimeout(dreamTimer); dreamTimer = null; }
+  }
+
   // === v223 韻致 — 명상 모드 펜타토닉 선율 ===
   let meditationMelodyTimer = null;
   let meditationMelodyStep = 0;
@@ -9589,6 +9652,7 @@
     } catch (e) {}
     log('玩月 — 달을 본다 · 30초 후 자연히 끝난다', 'info');
     startMeditationMelody();  // v223 韻致
+    startSwordDreams();  // v231 劍夢
     moonGazeTimer = setTimeout(exitMoonGaze, 30000);
     // ESC/click to exit early
     document.addEventListener('keydown', moonGazeKeyHandler);
@@ -9599,6 +9663,7 @@
     moonGazing = false;
     document.body.classList.remove('moon-gazing');
     stopMeditationMelody();  // v223 韻致
+    stopSwordDreams();  // v231 劍夢
     if (moonGazeTimer) { clearTimeout(moonGazeTimer); moonGazeTimer = null; }
     document.removeEventListener('keydown', moonGazeKeyHandler);
     document.removeEventListener('click', moonGazeClickHandler, { capture: true });
@@ -13021,12 +13086,14 @@
     trueEmptyBellInterval = setInterval(playTrueEmptyBell, 4 * 60 * 1000);
     setTimeout(playTrueEmptyBell, 5000);  // 처음 5초 후 한 번
     startMeditationMelody();  // v223 韻致
+    startSwordDreams();  // v231 劍夢
     log('真空 — 깊은 침묵에 들었다', 'info');
   }
   function exitTrueEmptiness() {
     inTrueEmptiness = false;
     document.body.classList.remove('true-emptiness');
     stopMeditationMelody();  // v223 韻致
+    stopSwordDreams();  // v231 劍夢
     if (trueEmptyStarInterval) { clearInterval(trueEmptyStarInterval); trueEmptyStarInterval = null; }
     if (trueEmptyBellInterval) { clearInterval(trueEmptyBellInterval); trueEmptyBellInterval = null; }
     // 별 모두 제거
