@@ -2671,6 +2671,7 @@
     <button id="btn-gallery">殿覽</button>
     <button id="btn-compare">比</button>
   </div>
+  <button id="btn-guest-swords">客 劍 (공유)</button>
 
   <div class="menu-section">文 章</div>
   <button id="btn-userpoem">吾  詩</button>
@@ -3312,6 +3313,27 @@
     <h2>帖 — 오늘의 시트</h2>
     <p>오늘 24시간 활동 — 자정에 새 한 장</p>
     <div id="today-sheet-content"></div>
+    <button class="modal-close" data-close style="margin-top:14px">닫 기</button>
+  </div>
+</div>
+
+<!-- v227 客劍 — 검 공유 코드 -->
+<div class="modal" id="guest-modal">
+  <div class="modal-box" style="max-width: 500px;">
+    <h2>客 劍 — 검 공유</h2>
+    <p>봉인 검을 코드로 내보내거나, 받은 코드로 손님 검을 맞이하라</p>
+    <div style="margin:14px 0">
+      <div style="font-size:10px;letter-spacing:3px;color:#888;margin-bottom:6px">내보내기 — 봉인 검 선택</div>
+      <select id="guest-export-select" style="width:100%;padding:8px;background:#1a1a22;color:#e8e6dd;border:1px solid #3a3a44;font-family:inherit;font-size:11px;letter-spacing:2px;margin-bottom:6px"></select>
+      <textarea id="guest-export-code" readonly style="width:100%;height:48px;padding:8px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;color:#88c8a8;font-family:monospace;font-size:9px;resize:none;word-break:break-all"></textarea>
+      <button id="guest-copy" style="margin-top:6px;width:100%">코드 복사</button>
+    </div>
+    <div style="margin:16px 0;border-top:1px solid #2a2a32;padding-top:14px">
+      <div style="font-size:10px;letter-spacing:3px;color:#888;margin-bottom:6px">받기 — 코드 붙여넣기</div>
+      <textarea id="guest-import-code" placeholder="공유받은 코드를 여기에..." style="width:100%;height:48px;padding:8px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;color:#e8e6dd;font-family:monospace;font-size:9px;resize:none;word-break:break-all"></textarea>
+      <button id="guest-import-btn" style="margin-top:6px;width:100%">손님 검 맞이</button>
+    </div>
+    <div id="guest-gallery" style="margin-top:16px;max-height:200px;overflow-y:auto"></div>
     <button class="modal-close" data-close style="margin-top:14px">닫 기</button>
   </div>
 </div>
@@ -4040,6 +4062,7 @@
     recordMaxSealReward: 0,     // v224 劍士録 — 최대 봉인 보상
     recordFirstWayGen: 0,       // v224 劍士録 — 첫 道 도달 대수
     eternityPoints: 0,          // v225 無極 — 道 봉인마다 누적 永劫
+    guestSwords: [],            // v227 客劍 — import한 손님 검 (감상용, 최대 30)
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -7173,6 +7196,110 @@
       }
     } catch(e) {}
     log('三禮 圓滿 — 占·籤·拈花 모두 완성 (호흡 ×2 + ' + (state.hasSword ? '영혼 +10' : '조각 +30') + ')', 'success');
+  }
+
+  // === v227 客劍 — 검 공유 코드 ===
+  function encodeSwordCode(s) {
+    const compact = {
+      n: s.name || '無名',
+      f: s.form || '',
+      l: s.level || 0,
+      i: (s.inscriptions || []).slice(0, 12),
+      s: s.soul || 0,
+      v: s.verse ? (Array.isArray(s.verse) ? s.verse.join('/') : s.verse) : '',
+      b: s.beads || 0,
+    };
+    try {
+      return 'CK1' + btoa(encodeURIComponent(JSON.stringify(compact)));
+    } catch (e) { return ''; }
+  }
+  function decodeSwordCode(code) {
+    if (!code || code.indexOf('CK1') !== 0) return null;
+    try {
+      const json = decodeURIComponent(atob(code.slice(3)));
+      const c = JSON.parse(json);
+      if (typeof c.l !== 'number' || !Array.isArray(c.i)) return null;
+      return {
+        name: String(c.n || '無名').slice(0, 24),
+        form: ['直','曲','重','速'].indexOf(c.f) >= 0 ? c.f : '',
+        level: Math.max(0, Math.min(15, c.l | 0)),
+        inscriptions: c.i.slice(0, 12).map(String),
+        soul: Math.max(0, Math.min(100, c.s | 0)),
+        verse: c.v ? String(c.v).slice(0, 200).split('/') : null,
+        beads: Math.max(0, c.b | 0),
+        isGuest: true,
+      };
+    } catch (e) { return null; }
+  }
+  function renderGuestModal() {
+    // export select
+    const sealed = state.sealedSwords || [];
+    const sel = $('guest-export-select');
+    if (sel) {
+      if (sealed.length === 0) {
+        sel.innerHTML = '<option value="-1">봉인된 검 없음</option>';
+        $('guest-export-code').value = '';
+      } else {
+        sel.innerHTML = sealed.map((s, i) => '<option value="' + i + '">' + (s.name || '無名') + ' (+' + (s.level||0) + ')</option>').join('');
+        sel.value = '0';
+        updateExportCode();
+      }
+      sel.onchange = updateExportCode;
+    }
+    renderGuestGallery();
+  }
+  function updateExportCode() {
+    const sel = $('guest-export-select');
+    const idx = parseInt(sel.value, 10);
+    const s = (state.sealedSwords || [])[idx];
+    $('guest-export-code').value = s ? encodeSwordCode(s) : '';
+  }
+  function importGuestSword() {
+    const ta = $('guest-import-code');
+    const code = (ta.value || '').trim();
+    const sword = decodeSwordCode(code);
+    if (!sword) { log('客劍 — 잘못된 코드', 'warn'); return; }
+    if (!state.guestSwords) state.guestSwords = [];
+    // 중복 방지 (같은 코드)
+    sword.importedAt = Date.now();
+    state.guestSwords.unshift(sword);
+    if (state.guestSwords.length > 30) state.guestSwords = state.guestSwords.slice(0, 30);
+    save();
+    ta.value = '';
+    renderGuestGallery();
+    log('客劍 — 손님 검 「' + sword.name + '」을 맞이했다', 'success');
+  }
+  function renderGuestGallery() {
+    const wrap = $('guest-gallery');
+    if (!wrap) return;
+    const guests = state.guestSwords || [];
+    if (guests.length === 0) {
+      wrap.innerHTML = '<div style="text-align:center;padding:16px;color:#666;font-size:10px;letter-spacing:3px;font-style:italic">아직 손님 검이 없다</div>';
+      return;
+    }
+    let html = '<div style="font-size:9px;letter-spacing:3px;color:#888;margin-bottom:8px">손님 검 ' + guests.length + '</div>';
+    guests.forEach((s, idx) => {
+      const isWay = (s.inscriptions || []).indexOf('道') >= 0;
+      const svg = '<svg viewBox="0 0 100 200" width="30" height="60" style="flex-shrink:0"><g>' + buildSwordBody(s.level || 0, s.form, '') + '</g></svg>';
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid rgba(212,175,55,0.1)">';
+      html += svg;
+      html += '<div style="flex:1">';
+      html += '<div style="font-size:12px;color:' + (isWay ? '#fff5c0' : '#e8e6dd') + ';letter-spacing:3px">' + (s.name || '無名') + '</div>';
+      html += '<div style="font-size:9px;color:#888;letter-spacing:2px;margin-top:2px">+' + (s.level||0) + ' · ' + (s.form||'無') + ' · 魂 ' + (s.soul||0) + '</div>';
+      if ((s.inscriptions||[]).length) html += '<div style="font-size:9px;color:#d4af37;letter-spacing:1px;margin-top:2px">' + s.inscriptions.join(' · ') + '</div>';
+      html += '</div>';
+      html += '<button data-guest-del="' + idx + '" style="background:transparent;color:#666;border:none;font-family:inherit;font-size:11px;cursor:pointer">×</button>';
+      html += '</div>';
+    });
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('[data-guest-del]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const i = parseInt(e.currentTarget.dataset.guestDel, 10);
+        state.guestSwords.splice(i, 1);
+        save();
+        renderGuestGallery();
+      });
+    });
   }
 
   // === v213 比 — 봉인 검 2자루 비교 ===
@@ -16763,6 +16890,19 @@
     $('menu-drop').classList.remove('open');
     openCompare();
   });
+  // v227 客劍
+  if ($('btn-guest-swords')) $('btn-guest-swords').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    renderGuestModal();
+    $('guest-modal').classList.add('active');
+  });
+  if ($('guest-copy')) $('guest-copy').addEventListener('click', () => {
+    const code = $('guest-export-code').value;
+    if (!code) return;
+    if (navigator.clipboard) navigator.clipboard.writeText(code).then(() => log('客劍 — 코드 복사됨', 'success')).catch(() => {});
+    else { $('guest-export-code').select(); document.execCommand('copy'); log('客劍 — 코드 복사됨', 'success'); }
+  });
+  if ($('guest-import-btn')) $('guest-import-btn').addEventListener('click', importGuestSword);
   // v215 帖
   if ($('btn-today-sheet')) $('btn-today-sheet').addEventListener('click', () => {
     $('menu-drop').classList.remove('open');
