@@ -142,6 +142,21 @@
     transform: translate(-50%, -50%);
     pointer-events: none;
   }
+  /* v226 魂光 — 영혼 단계 검 발산 (sword-svg, v39 transcendent와 레이어 분리) */
+  #sword-svg.soul-wake {
+    animation: soul-wake-glow 3.6s ease-in-out infinite alternate;
+  }
+  #sword-svg.soul-true {
+    animation: soul-true-glow 3.2s ease-in-out infinite alternate;
+  }
+  @keyframes soul-wake-glow {
+    from { filter: drop-shadow(0 0 2px rgba(168,192,232,0.3)); }
+    to   { filter: drop-shadow(0 0 7px rgba(168,192,232,0.65)); }
+  }
+  @keyframes soul-true-glow {
+    from { filter: drop-shadow(0 0 4px rgba(200,160,232,0.4)); }
+    to   { filter: drop-shadow(0 0 11px rgba(200,160,232,0.8)) drop-shadow(0 0 18px rgba(168,144,216,0.4)); }
+  }
   /* v197 月蝕 — 30초 한정 천문 사건 */
   body.lunar-eclipse #stage,
   body.lunar-eclipse #game {
@@ -14845,6 +14860,12 @@
     if (stage === 'true') label.textContent = '本 · ' + soul;
     else if (stage === 'wake') label.textContent = '覺 · ' + soul;
     else label.textContent = soul > 0 ? ('魂 ' + soul) : '';
+    // v226 魂光 — 영혼 단계에 따른 검 발산
+    if (swordSvg) {
+      swordSvg.classList.remove('soul-wake', 'soul-true');
+      if (stage === 'true') swordSvg.classList.add('soul-true');
+      else if (stage === 'wake') swordSvg.classList.add('soul-wake');
+    }
   }
 
   function renderInscriptions() {
