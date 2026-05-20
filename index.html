@@ -5068,12 +5068,9 @@
     const t = TABLE[lv];
     const form = getForm();
     const rsv = getResolve();
-    const successAdd = ((form && form.successBonus) || 0) + soulEffects().successBonus
-      + schoolSuccessBonus() + breathBonus() + guardianBonus().successBonus
-      + trialSuccessBonus() + rsv.successAdd + (adversityReady ? 0.40 : 0) + eraSuccessBonus() + enshrineSuccessBonus() + fourWaySuccessBonus() + resonanceBonus() + beastSuccessBonus() + treasureGlobalBonus() + mutationSuccessBonus() + eternityBonus();
     const destroyReduce2 = (form && form.destroyReduce) || 0;
     const effectiveDestroy = Math.max(0, (t.destroy - destroyReduce2 - schoolDestroyReduce() - guardianBonus().destroyReduce - (adversityReady ? 0.12 : 0) - getScarDestroyReduce()) * rsv.destroyMul);
-    const trueSuccess = Math.min(1, t.success + successAdd);
+    const trueSuccess = successChanceNow();  // v240 단일 진원 — omen이 실제 굴림과 동일
     // v122 占卜 — 체크박스 활성 시 실제 enhance에서 사용할 롤을 commit
     const divCheck = $('divination-check');
     const useDivination = divCheck && divCheck.checked && !divCheck.disabled && (state.divinationStones || 0) > 0;
@@ -5613,13 +5610,10 @@
 
     const t = TABLE[lv];
     const f = getForm();
-    const successBonus = (f && f.successBonus) || 0;
     const destroyReduce = (f && f.destroyReduce) || 0;
     const rsv = getResolve();  // v91 覺悟
-    const echoSuccessShow = (enhanceEcho && enhanceEcho.successBonus) || 0;  // v114 餘香
     const actualCost = enhanceCost(lv);  // v238 단일 진원
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + rsv.successAdd + echoSuccessShow + persistentSuccessBonus();
-    const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
+    const showSuccess = successChanceNow();  // v240 단일 진원 — 표시가 실제 굴림과 일치 (砥·수호자·역경 포함)
     const showDestroy = effectiveDestroyChance(lv);  // v235 헬퍼로 일원화 (危·欲·표시 동기)
     // v232 危 — 파괴 위험 ≥15% 시 stage 경고 맥동 (영석/결계로 0이면 해제)
     const stageEl = $('stage');
@@ -6778,6 +6772,25 @@
       + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus()
       + resonanceBonus() + beastSuccessBonus() + treasureGlobalBonus()
       + mutationSuccessBonus() + eternityBonus();
+  }
+  // v240 — 강화 성공 확률 단일 진원. "지금 강화하면" 확률 [0,1].
+  // 표시 odds·前兆 omen·占卜 divination·실제 굴림이 동일 공식을 공유 → 거짓 예측 차단.
+  // 강화 직전 상태 기준(체크박스 砥·잔향·眞空 호흡부스트 포함, consume 전에 호출).
+  function successChanceNow() {
+    const t = TABLE[state.level];
+    if (!t) return 0;
+    const form = getForm();
+    const whetCheck = $('whet-check');
+    const useWhet = whetCheck && whetCheck.checked && !whetCheck.disabled && (state.whetstones || 0) > 0;
+    const whetBonus = useWhet ? 0.25 : 0;
+    const echoSuccessBonus = (enhanceEcho && enhanceEcho.successBonus) || 0;
+    let breath = breathBonus();
+    if (pendingBreathBoost) breath *= 2;
+    const total = t.success + ((form && form.successBonus) || 0) + whetBonus
+      + soulEffects().successBonus + schoolSuccessBonus() + breath
+      + guardianBonus().successBonus + getResolve().successAdd
+      + (adversityReady ? 0.40 : 0) + echoSuccessBonus + persistentSuccessBonus();
+    return Math.max(0, Math.min(1, total));
   }
   function eternityTitle() {
     const p = state.eternityPoints || 0;
@@ -11584,7 +11597,6 @@
     const lv = state.level;
     const t = TABLE[lv];
     const form = getForm();
-    const successBonus = (form && form.successBonus) || 0;
     const destroyReduce = (form && form.destroyReduce) || 0;
     const rsv = getResolve();  // v91 覺悟
     const actualCost = enhanceCost(lv);  // v238 단일 진원
@@ -11602,8 +11614,8 @@
     const useDivination = divCheck && divCheck.checked && !divCheck.disabled && (state.divinationStones || 0) > 0;
     // 餘香 destroyBlock은 spirit과 동일 효과 — OR 처리 (영석/잔향 둘 다 차단)
     const echoDestroyBlock = !!(enhanceEcho && enhanceEcho.destroyBlock);
-    const echoSuccessBonus = (enhanceEcho && enhanceEcho.successBonus) || 0;
     const echoSoulBonus = (enhanceEcho && enhanceEcho.soulBonus) || 0;
+    const successChance = successChanceNow();  // v240 단일 진원 — 잔향/砥/호흡부스트 consume 전 포착
     // 잔향 소비 (이 강화 시점에 사라짐)
     consumeEnhanceEcho();
 
@@ -11635,23 +11647,17 @@
     // 첫 강화 시 검의 형 결정
     if (!state.currentSword.form) decideForm();
 
-    // 주사위 (형 + 숫돌 + 魂 + 유파 + 호흡 + 수호자 보너스 반영)
-    const whetBonus = useWhet ? 0.25 : 0;
-    const soulBonus = soulEffects().successBonus;
-    const schoolBonus = schoolSuccessBonus();
-    let breath = breathBonus();
-    if (pendingBreathBoost) { breath *= 2; pendingBreathBoost = false; log('眞空 보너스 — 호흡 ×2 적용', 'success'); }
-    const guardBonus = guardianBonus().successBonus;
+    // 주사위 — 성공 임계는 successChance(consume 전 포착) 단일 진원 사용 (v240)
+    if (pendingBreathBoost) { pendingBreathBoost = false; log('眞空 보너스 — 호흡 ×2 적용', 'success'); }  // 호흡 ×2는 successChance에 이미 반영
     addSoul(1); // 강화 시도 자체로 혼 +1
     if (echoSoulBonus > 0) addSoul(echoSoulBonus); // v114 餘香 靈魂 보너스
     lastEnhanceTime = Date.now(); // 호흡 리셋
-    const adversityAdd = adversityReady ? 0.40 : 0;
     const adversityDestroyReduce = adversityReady ? 0.12 : 0;
     // v122 占卜: 잠긴 롤이 있으면 그것을 사용 (omen이 100% 정확)
     const roll = (useDivination && divinationLockedSuccessRoll !== null)
       ? divinationLockedSuccessRoll
       : Math.random();
-    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + rsv.successAdd + adversityAdd + echoSuccessBonus + persistentSuccessBonus()) {
+    if (roll < successChance) {
       // 성공 (v107 連)
       if (adversityReady) { adversityReady = false; announceInscription('逆轉', '역경을 넘어 강화에 성공했다'); }
       failStreak = 0;

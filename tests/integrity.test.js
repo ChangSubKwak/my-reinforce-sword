@@ -60,13 +60,26 @@ test('localStorage 저장은 try/catch 또는 save() 통해서만', () => {
   assert.ok(n <= 6, 'localStorage.setItem 직접 호출은 제한적이어야 함 (현재 ' + n + ')');
 });
 
-test('강화 성공 보너스 — 표시 odds와 실제 굴림이 persistentSuccessBonus() 공유', () => {
-  // v178~v225 보너스가 한쪽에만 추가되어 표시≠실제로 어긋난 버그(코드리뷰) 회귀 방지.
-  // 표시(totalBonus)와 실제 굴림 둘 다 persistentSuccessBonus() 를 호출해야 함.
+test('강화 성공 확률 — successChanceNow() 단일 진원 (표시·前兆·占卜·실제 굴림 동일)', () => {
+  // v178~v225 보너스가 한쪽에만 추가되어 표시≠실제로 어긋난 버그(코드리뷰) +
+  // v240: rollOmen(占卜 100% 예측)이 砥·잔향·8개 persistent 보너스를 누락해 거짓 예측.
+  // 모든 성공 임계를 successChanceNow()로 일원화 → 회귀 방지.
+  assert.match(js, /function successChanceNow\(\)/, 'successChanceNow 헬퍼 존재');
+  const callCount = (js.match(/successChanceNow\(\)/g) || []).length;
+  // 정의 1 + 표시(render) 1 + 前兆(rollOmen) 1 + 실제 굴림 포착 1 = 최소 4회
+  assert.ok(callCount >= 4, 'successChanceNow()가 표시·omen·실제 모두에서 호출 (현재 ' + callCount + ')');
+  // persistentSuccessBonus는 이제 successChanceNow 내부 1곳에서만 (중복 제거)
   assert.match(js, /function persistentSuccessBonus\(\)/, 'persistentSuccessBonus 헬퍼 존재');
-  const callCount = (js.match(/persistentSuccessBonus\(\)/g) || []).length;
-  // 정의 1 + 표시 1 + 실제 굴림 1 = 최소 3회
-  assert.ok(callCount >= 3, 'persistentSuccessBonus()가 표시·실제 양쪽에서 호출 (현재 ' + callCount + ')');
+  // 실제 굴림은 인라인 성공 보너스 합산이 아니라 포착된 successChance 사용
+  assert.match(js, /if \(roll < successChance\)/, '실제 굴림이 successChance 단일값 사용');
+});
+
+test('successChanceNow 본문은 모든 성공 보너스원 포함 (砥·수호자·역경·잔향·persistent)', () => {
+  const m = js.match(/function successChanceNow\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(m, 'successChanceNow 본문');
+  const body = m[1];
+  ['whetBonus', 'soulEffects', 'schoolSuccessBonus', 'breath', 'guardianBonus', 'getResolve', 'adversityReady', 'echoSuccessBonus', 'persistentSuccessBonus', 'pendingBreathBoost']
+    .forEach(fn => assert.match(body, new RegExp(fn), fn + ' 포함되어야 함'));
 });
 
 test('파괴 확률 — effectiveDestroyChance() 헬퍼로 일원화 (危·欲·표시 동기)', () => {
