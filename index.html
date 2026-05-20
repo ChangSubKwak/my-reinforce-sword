@@ -79,6 +79,10 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--dim); }
+  /* 텍스트 선택 — 흑금 accent 틴트 (기본 파란 하이라이트 제거) */
+  ::selection { background: rgba(212, 175, 55, 0.3); color: var(--fg); }
+  /* 컷씬·오버레이 시구 한 줄 — 단일 규격 (italic 청회색) */
+  .verse-line { font-size: 13px; color: rgba(168, 184, 200, 0.85); letter-spacing: 5px; margin-top: 22px; font-style: italic; }
   html, body {
     height: 100%;
     background: radial-gradient(ellipse at 50% 30%, var(--bg-2) 0%, var(--bg) 80%);
@@ -6852,7 +6856,7 @@
     const el = document.createElement('div');
     el.innerHTML = '<div style="font-size:10px;color:rgba(180,160,232,0.7);letter-spacing:12px;margin-bottom:18px">無  極</div>' +
                     '<div style="font-size:88px;color:#c8b8f0;letter-spacing:14px;text-shadow:0 0 40px #c8b8f0,0 0 80px rgba(180,160,232,0.5);font-weight:200;line-height:1">' + title + '</div>' +
-                    '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:22px;font-style:italic">永劫 ' + points + ' — 도(道)를 거듭 넘었다</div>' +
+                    '<div class="verse-line">永劫 ' + points + ' — 도(道)를 거듭 넘었다</div>' +
                     '<div style="font-size:11px;color:#c8b8f0;letter-spacing:3px;margin-top:12px">글로벌 강화 +' + (eternityBonus()*100).toFixed(1) + '%</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6300;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:42px 60px;background:radial-gradient(ellipse,rgba(18,15,28,0.95) 0%,rgba(18,15,28,0.6) 60%,transparent 90%);max-width:560px';
     document.body.appendChild(el);
@@ -7348,7 +7352,7 @@
     const el = document.createElement('div');
     el.innerHTML = '<div style="font-size:9px;color:rgba(200,160,232,0.7);letter-spacing:12px;margin-bottom:18px">秘 — ' + egg.label + '</div>' +
                     '<div style="font-size:80px;color:#c8a0e8;letter-spacing:14px;text-shadow:0 0 36px #c8a0e8,0 0 72px rgba(200,160,232,0.4);font-weight:200;line-height:1">' + egg.kanji + '</div>' +
-                    '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:22px;font-style:italic">' + egg.verse + '</div>' +
+                    '<div class="verse-line">' + egg.verse + '</div>' +
                     '<div style="font-size:9px;color:#888;letter-spacing:3px;margin-top:12px">우연의 발견 — 영구 1회</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6100;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:42px 60px;background:radial-gradient(ellipse,rgba(20,15,28,0.94) 0%,rgba(20,15,28,0.6) 60%,transparent 90%);max-width:540px';
     document.body.appendChild(el);
@@ -7410,7 +7414,7 @@
     const el = document.createElement('div');
     el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.7);letter-spacing:10px;margin-bottom:18px">三  禮  ─  圓  滿</div>' +
                     '<div style="font-size:84px;color:#fff5c0;letter-spacing:14px;text-shadow:0 0 36px #fff5c0,0 0 72px rgba(212,175,55,0.5);font-weight:200;line-height:1">三</div>' +
-                    '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:22px;font-style:italic">하루의 세 의식이 모였다 — 占·籤·拈花</div>' +
+                    '<div class="verse-line">하루의 세 의식이 모였다 — 占·籤·拈花</div>' +
                     '<div style="font-size:11px;color:#d4af37;letter-spacing:3px;margin-top:14px">호흡 ×2 + ' + (state.hasSword ? '영혼 +10' : '조각 +30') + '</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5900;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:40px 60px;background:radial-gradient(ellipse,rgba(15,15,22,0.94) 0%,rgba(15,15,22,0.6) 60%,transparent 90%);max-width:560px';
     document.body.appendChild(el);
@@ -8108,7 +8112,7 @@
     const el = document.createElement('div');
     el.innerHTML = '<div style="font-size:10px;color:rgba(168,200,168,0.7);letter-spacing:10px;margin-bottom:18px">精  進</div>' +
                     '<div style="font-size:84px;color:#a8c8a8;letter-spacing:14px;text-shadow:0 0 36px #a8c8a8,0 0 72px rgba(168,200,168,0.5);font-weight:200;line-height:1">' + m.kanji + '</div>' +
-                    '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:22px;font-style:italic">' + m.label + '</div>' +
+                    '<div class="verse-line">' + m.label + '</div>' +
                     '<div style="font-size:11px;color:#88c8a8;letter-spacing:3px;margin-top:14px">' + rewardLabel + '</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5800;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:38px 56px;background:radial-gradient(ellipse,rgba(15,22,15,0.92) 0%,rgba(15,22,15,0.55) 65%,transparent 92%);max-width:520px';
     document.body.appendChild(el);
