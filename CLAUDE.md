@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 원작: **검 강화하기 (NBS, vidkidz.tistory.com/5291)** — 클리커/강화 시뮬레이션의 *클로닝 + 증류 (distillation)* 버전.
 
-증류 방향: 광고/꾸미기/펫 등 곁가지 제거, **"다음 한 번만 더" 도박 충동 + 파괴 후 5초 회수 윈도우의 침묵**이라는 본질적 드라마만 응축. 시각은 미니멀 흑금(`#0b0b0d` 배경, `#d4af37` 강조), 한국어 인터페이스.
+증류 방향: 광고/꾸미기/펫 등 곁가지 제거, **"다음 한 번만 더" 도박 충동 + 파괴 후 5초 회수 윈도우의 침묵**이라는 본질적 드라마만 응축. 시각은 미니멀 흑금(따뜻한 다크 `--bg #1f1a14` 배경, `--accent #e8c454` 강조), 한국어 인터페이스.
 
 ## 빠른 오리엔테이션
 
@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **상태 진입점**: `let state = {...}` 한 객체. `localStorage['reinforce_sword_v1']`. 음소거는 별도 키 `reinforce_sword_muted`.
 - **휘발성 상태**: 모듈 스코프 변수 — `challenge`, `rescueWindow`, `inscribeQueue`, `audioCtx`, `muted`. 새로고침 시 사라짐 (의도) / muted는 별도 보존.
 - **렌더 모델**: 매 액션 후 `save()` → `render()` 풀 리렌더. 부분 업데이트 없음.
-- **시각 톤**: `--bg #0b0b0d` / `--fg #e8e6dd` / `--accent #d4af37` / `--danger #c0392b` / `--safe #4a7a4a`. 한국어 + 한자 미니멀, 자간으로 호흡.
+- **시각 톤** (`:root` 라이브 값): `--bg #1f1a14` / `--bg-2 #2a221b` / `--fg #f0ece0` / `--dim #968d80` / `--accent #e8c454` / `--danger #d04830` / `--safe #6a9a6a` / `--line #3a322a`. 한국어 + 한자 미니멀, 자간으로 호흡. 색은 항상 CSS 변수(var(--accent) 등) 사용 — 하드코딩 hex(#d4af37 등 레거시)는 테마 전환을 안 따르므로 금지. theme-* 변형이 --accent 등을 재정의.
 - **소리**: Web Audio API 톤 합성, 외부 파일 0. 첫 사용자 인터랙션 후 `audioCtx` lazy 시작. M키 음소거.
 
 ## 개발 / 실행
