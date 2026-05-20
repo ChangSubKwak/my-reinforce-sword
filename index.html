@@ -2679,6 +2679,7 @@
     <button id="btn-compare">比</button>
   </div>
   <button id="btn-guest-swords">客 劍 (공유)</button>
+  <button id="btn-concert">劍 響 (합주)</button>
 
   <div class="menu-section">文 章</div>
   <button id="btn-userpoem">吾  詩</button>
@@ -3322,6 +3323,19 @@
     <p>오늘 24시간 활동 — 자정에 새 한 장</p>
     <div id="today-sheet-content"></div>
     <button class="modal-close" data-close style="margin-top:14px">닫 기</button>
+  </div>
+</div>
+
+<!-- v230 劍響 — 검들의 합주 -->
+<div class="modal" id="concert-modal">
+  <div class="modal-box" style="max-width: 500px;">
+    <h2>劍 響</h2>
+    <p>봉인된 검들이 각자의 울림으로 함께 노래한다</p>
+    <div id="concert-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:18px 0;min-height:80px"></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:10px">
+      <button id="concert-play">연주 시작</button>
+      <button class="modal-close" data-close>닫 기</button>
+    </div>
   </div>
 </div>
 
@@ -7215,6 +7229,70 @@
       }
     } catch(e) {}
     log('三禮 圓滿 — 占·籤·拈花 모두 완성 (호흡 ×2 + ' + (state.hasSword ? '영혼 +10' : '조각 +30') + ')', 'success');
+  }
+
+  // === v230 劍響 — 봉인 검 전체 합주 ===
+  let concertPlaying = false;
+  function renderConcert() {
+    const wrap = $('concert-grid');
+    if (!wrap) return;
+    const sealed = (state.sealedSwords || []).slice(0, 12);
+    if (sealed.length === 0) {
+      wrap.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#666;font-size:10px;letter-spacing:3px;font-style:italic">아직 합주할 검이 없다 — 검을 봉인하라</div>';
+      return;
+    }
+    let html = '';
+    sealed.forEach((s, i) => {
+      const isWay = (s.inscriptions || []).indexOf('道') >= 0;
+      const svg = '<svg viewBox="0 0 100 200" width="28" height="56"><g>' + buildSwordBody(s.level || 0, s.form, '') + '</g></svg>';
+      html += '<div id="concert-sword-' + i + '" style="text-align:center;padding:6px 2px;border:1px solid ' + (isWay ? 'rgba(212,175,55,0.3)' : '#2a2a32') + ';border-radius:2px;transition:all 0.3s;background:rgba(15,15,22,0.4)">';
+      html += svg;
+      html += '<div style="font-size:8px;color:' + (isWay ? '#fff5c0' : '#888') + ';letter-spacing:1px;margin-top:2px">' + (s.name || '無名').slice(0, 4) + '</div>';
+      html += '</div>';
+    });
+    wrap.innerHTML = html;
+  }
+  function playConcert() {
+    if (concertPlaying) return;
+    const sealed = (state.sealedSwords || []).slice(0, 12);
+    if (sealed.length === 0) return;
+    concertPlaying = true;
+    const btn = $('concert-play');
+    if (btn) { btn.textContent = '연주 중...'; btn.disabled = true; }
+    sealed.forEach((s, i) => {
+      setTimeout(() => {
+        playSwordSignature(s, 0.9, 1.0);
+        const cell = $('concert-sword-' + i);
+        if (cell) {
+          cell.style.boxShadow = '0 0 16px rgba(212,175,55,0.7)';
+          cell.style.borderColor = '#d4af37';
+          cell.style.transform = 'scale(1.12)';
+          setTimeout(() => {
+            cell.style.boxShadow = '';
+            cell.style.transform = 'scale(1)';
+          }, 600);
+        }
+      }, i * 700);
+    });
+    // 대미 — 최근 3 검 화음
+    const finaleAt = sealed.length * 700 + 400;
+    setTimeout(() => {
+      const recent = sealed.slice(-3);
+      recent.forEach((s, i) => setTimeout(() => playSwordSignature(s, 0.7, 1.0), i * 60));
+      // 모든 셀 발광
+      sealed.forEach((s, i) => {
+        const cell = $('concert-sword-' + i);
+        if (cell) {
+          cell.style.boxShadow = '0 0 12px rgba(255,245,192,0.6)';
+          setTimeout(() => { if (cell) cell.style.boxShadow = ''; }, 1200);
+        }
+      });
+    }, finaleAt);
+    setTimeout(() => {
+      concertPlaying = false;
+      if (btn) { btn.textContent = '다시 연주'; btn.disabled = false; }
+    }, finaleAt + 1500);
+    log('劍響 — ' + sealed.length + '자루 검의 합주', 'success');
   }
 
   // === v227 客劍 — 검 공유 코드 ===
@@ -16999,6 +17077,13 @@
     renderGuestModal();
     $('guest-modal').classList.add('active');
   });
+  // v230 劍響
+  if ($('btn-concert')) $('btn-concert').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    renderConcert();
+    $('concert-modal').classList.add('active');
+  });
+  if ($('concert-play')) $('concert-play').addEventListener('click', playConcert);
   if ($('guest-copy')) $('guest-copy').addEventListener('click', () => {
     const code = $('guest-export-code').value;
     if (!code) return;
