@@ -6597,6 +6597,50 @@
     log('週報 — ' + prevWeek + ' · ' + summary, 'success');
   }
 
+  // === v233 至高 — 역대 최고 강화도 갱신 축하 ===
+  function showZenith(lv) {
+    // 영혼 보상
+    if (typeof addSoul === 'function') addSoul(3);
+    // 검 순간 황금 발광
+    const sw = $('sword-wrap');
+    if (sw) {
+      sw.animate([
+        { filter: 'drop-shadow(0 0 0 rgba(255,245,192,0))' },
+        { filter: 'drop-shadow(0 0 22px rgba(255,245,192,0.9))', offset: 0.3 },
+        { filter: 'drop-shadow(0 0 0 rgba(255,245,192,0))' }
+      ], { duration: 1400, easing: 'ease-out' });
+    }
+    // 페이드
+    const el = document.createElement('div');
+    el.innerHTML = '<div style="font-size:9px;color:rgba(212,175,55,0.7);letter-spacing:8px;margin-bottom:10px">至  高</div>' +
+                    '<div style="font-size:54px;color:#fff5c0;letter-spacing:6px;text-shadow:0 0 28px #fff5c0,0 0 56px rgba(212,175,55,0.5);font-weight:200;line-height:1">+' + lv + '</div>' +
+                    '<div style="font-size:11px;color:rgba(168,184,200,0.85);letter-spacing:4px;margin-top:14px;font-style:italic">새로운 정점 — 이전보다 높이</div>';
+    el.style.cssText = 'position:fixed;top:34%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:1700;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:24px 44px';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.85)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.22 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.72 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.05) translateY(-12px)' }
+    ], { duration: 2800, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 2900);
+    // 상승 차임
+    try {
+      const a = getAudio && getAudio();
+      if (a) {
+        const ct = a.currentTime;
+        [523, 659, 784, 1047].forEach((f, i) => {
+          const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = a.createGain(); g.gain.setValueAtTime(0.0001, ct + i*0.08);
+          g.gain.exponentialRampToValueAtTime(0.10, ct + i*0.08 + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, ct + i*0.08 + 0.9);
+          osc.connect(g); g.connect(a.destination); osc.start(ct + i*0.08); osc.stop(ct + i*0.08 + 0.95);
+        });
+      }
+    } catch(e) {}
+    log('至高 +' + lv + ' — 새로운 정점 (영혼 +3)', 'success');
+  }
+
   // === v231 劍夢 — 명상 중 검의 꿈 ===
   let dreamTimer = null;
   function composeSwordDream() {
@@ -11606,7 +11650,10 @@
       applyStreak();
       updateRecord('maxSuccessStreak', successStreak);  // v156
       state.level++;
-      if (state.level > state.bestLevel) state.bestLevel = state.level;
+      if (state.level > state.bestLevel) {
+        state.bestLevel = state.level;
+        if (state.level >= 4) showZenith(state.level);  // v233 至高 — +4 이상부터 신기록 축하
+      }
       // v135 鍛 — 티어 전환 의식 (1→2, 2→3, 3→4, 4→5)
       const tierBefore = getTier(state.level - 1);
       const tierAfter = getTier(state.level);
