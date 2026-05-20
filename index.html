@@ -15205,6 +15205,16 @@
     $('guardian-bonus').textContent = bonusMap[g.form] || '강화 +1%';
   }
 
+  // 현재 검 기준 lv→lv+1 강화의 유효 파괴 확률 (form/유파/흉터/마음가짐/結界/echo 반영)
+  function effectiveDestroyChance(lv) {
+    const t = TABLE[lv];
+    if (!t || t.destroy === 0) return 0;
+    if ((enhanceEcho && enhanceEcho.destroyBlock) || sanctumActive) return 0;
+    const f = getForm();
+    const dr = (f && f.destroyReduce) || 0;
+    const rsv = getResolve();
+    return Math.max(0, (t.destroy - dr - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
+  }
   function renderSealButton() {
     const btn = $('btn-seal-direct');
     const lbl = $('seal-reward-label');
@@ -15252,7 +15262,14 @@
       nextReward = Math.floor(nextReward * schoolSealMul() * getSeason().sealMul);
       if (nextIns.includes('七星')) nextReward = Math.floor(nextReward * 1.5);  // v116
       const diff = nextReward - reward;
-      if (diff > 0) extraHint = '  <span style="font-size:9px;opacity:0.6;letter-spacing:1px">(+1 성공 시 +' + diff + '↑)</span>';
+      // v235 欲 — 더 키울 보상 Δ + 파괴 위험을 함께 (욕심 vs 위험)
+      const risk = Math.round(effectiveDestroyChance(state.level) * 100);
+      if (diff > 0) {
+        const riskStr = risk > 0
+          ? ' <span style="color:var(--danger)">파괴 ' + risk + '%</span>'
+          : ' 안전';
+        extraHint = '  <span style="font-size:9px;opacity:0.7;letter-spacing:1px">(+1 시 +' + diff + '↑ ·' + riskStr + ')</span>';
+      }
     }
     lbl.innerHTML = '+' + reward + ' 조각' + extraHint;
   }
