@@ -1065,7 +1065,8 @@
   #odds .destroy { color: var(--danger); }
   #odds .cost { color: var(--accent); }
 
-  .protect-row {
+  /* 단일 토글 행 공통 (보호권·修練) — 강화 컨트롤 토글 단일 규격 */
+  .opt-row {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1075,7 +1076,7 @@
     color: var(--dim);
     cursor: pointer;
   }
-  .protect-row input { accent-color: var(--accent); cursor: pointer; }
+  .opt-row input { accent-color: var(--accent); cursor: pointer; }
   .protect-row.disabled { opacity: 0.4; cursor: not-allowed; }
 
   /* v91 覺悟 — 강화 마음가짐 선택 */
@@ -3183,11 +3184,11 @@
     </div>
     <div id="adversity-banner" class="status-banner"></div>
     <div id="destiny-banner" class="status-banner" style="display:none"></div>
-    <label class="protect-row" id="protect-row">
+    <label class="opt-row protect-row" id="protect-row">
       <input type="checkbox" id="protect-check">
       <span id="protect-label">보호권 사용 (실패해도 검 유지)</span>
     </label>
-    <label id="auto-row" style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;color:var(--dim);margin-bottom:8px;cursor:pointer">
+    <label class="opt-row" id="auto-row">
       <input type="checkbox" id="auto-check">
       <span id="auto-label">修練 (안전한 단계까지 자동 강화)</span>
     </label>
