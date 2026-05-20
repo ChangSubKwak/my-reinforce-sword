@@ -2631,8 +2631,8 @@
     pointer-events: none;
   }
   /* 厄運轉機 — 연속 실패 역전 */
-  #adversity-banner {
-    display: none;
+  /* 상태 배너 공통 (역경/天命) — 강화 컨트롤 상단 상태 스트립 단일 규격 */
+  .status-banner {
     text-align: center;
     font-size: 11px;
     letter-spacing: 2px;
@@ -2641,6 +2641,7 @@
     padding: 5px 10px;
     line-height: 1.5;
   }
+  #adversity-banner { display: none; }
   #adversity-banner.adv-active { display: block; }
   #adversity-banner.adv-ready {
     color: var(--accent);
@@ -3180,8 +3181,8 @@
       <br>
       <span class="cost" id="odds-cost">조각 0 소모</span>
     </div>
-    <div id="adversity-banner"></div>
-    <div id="destiny-banner" style="display:none;text-align:center;font-size:11px;letter-spacing:1px;padding:6px 8px;margin-bottom:8px;border:1px solid var(--line);border-radius:2px;line-height:1.6"></div>
+    <div id="adversity-banner" class="status-banner"></div>
+    <div id="destiny-banner" class="status-banner" style="display:none"></div>
     <label class="protect-row" id="protect-row">
       <input type="checkbox" id="protect-check">
       <span id="protect-label">보호권 사용 (실패해도 검 유지)</span>
