@@ -5330,6 +5330,14 @@
     const sc = $('streak-counter');
     if (sc) { sc.classList.remove('visible'); }
   }
+  // v239 連氣 — 흐름의 기운. 연속 성공이 강화 비용을 점진 절감(자기제한·휘발성).
+  // 厄運轉機(실패연쇄→성공보너스)의 거울: 한 번의 파괴/하락이 흐름을 razes(clearStreak).
+  // 파괴 확률은 손대지 않음 — 도박의 드라마 보존. 효과는 비용 효율에 한정.
+  const FLOW_STEP = 0.02, FLOW_CAP = 0.10;  // 단계당 -2%, 최대 -10% (連5)
+  function flowCostReduce() {
+    if (typeof successStreak !== 'number' || successStreak < 3) return 0;
+    return Math.min(FLOW_CAP, (successStreak - 2) * FLOW_STEP);  // 連3=2% … 連7+=10%
+  }
 
   // === 生氣 — 살아있는 배경 드론 ===
   let ambientNodes = null;
@@ -5647,7 +5655,8 @@
       failMsg = '실패 시 유지';
     }
     oddsFail.innerHTML = failMsg.replace('파괴', '<span class="destroy">파괴</span>');
-    oddsCost.textContent = '조각 ' + actualCost + ' 소모';
+    const flowR = flowCostReduce();
+    oddsCost.textContent = '조각 ' + actualCost + ' 소모' + (flowR > 0 ? '  · 連氣 -' + Math.round(flowR * 100) + '%' : '');
 
     // v91 覺悟 — 마음가짐 UI 갱신
     const rrow = $('resolve-row'), resolveDesc = $('resolve-desc');
@@ -15212,7 +15221,7 @@
     const resolveCostMul = (opts && opts.floor) ? 1 : getResolve().costMul;
     return Math.ceil(t.cost * formCostMul * getSeason().costMul * getAgeEffect().costMul
       * resolveCostMul * echoCostMul * blessingCostMul() * sanctumCostMul()
-      * wishCostMul() * solarCostMul() * weekendCostMul());
+      * wishCostMul() * solarCostMul() * weekendCostMul() * (1 - flowCostReduce()));
   }
   function renderSealButton() {
     const btn = $('btn-seal-direct');

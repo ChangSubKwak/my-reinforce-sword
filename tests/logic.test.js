@@ -69,6 +69,35 @@ test('swordSignatureFreqs: null sword 안전 처리', () => {
 // ─────────────────────────────────────────────────────────────
 // v225 無極 — 永劫 보너스 cap
 // ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// v239 連氣 — 흐름 비용 절감 (자기제한 + 휘발성, 厄運轉機의 거울)
+// ─────────────────────────────────────────────────────────────
+test('flowCostReduce: 連3 미만은 0 (효과 없음)', () => {
+  [0, 1, 2].forEach(s => {
+    const fns = loadFunctions(['flowCostReduce'], { successStreak: s, FLOW_STEP: 0.02, FLOW_CAP: 0.10 });
+    assert.strictEqual(fns.flowCostReduce(), 0, '連' + s + '은 0이어야 함');
+  });
+});
+
+test('flowCostReduce: 連3=2%, 連5=6%, 단조 증가', () => {
+  const r = s => loadFunctions(['flowCostReduce'], { successStreak: s, FLOW_STEP: 0.02, FLOW_CAP: 0.10 }).flowCostReduce();
+  assert.ok(Math.abs(r(3) - 0.02) < 1e-9, '連3 → 2%');
+  assert.ok(Math.abs(r(5) - 0.06) < 1e-9, '連5 → 6%');
+  assert.ok(r(5) > r(3), '단조 증가');
+});
+
+test('flowCostReduce: 연속 성공이 커도 cap 10% (인플레이션 차단)', () => {
+  [7, 12, 50].forEach(s => {
+    const v = loadFunctions(['flowCostReduce'], { successStreak: s, FLOW_STEP: 0.02, FLOW_CAP: 0.10 }).flowCostReduce();
+    assert.ok(Math.abs(v - 0.10) < 1e-9, '連' + s + ' → cap 10%');
+  });
+});
+
+test('flowCostReduce: successStreak 비정상값 안전 (NaN/undefined → 0)', () => {
+  const a = loadFunctions(['flowCostReduce'], { successStreak: undefined, FLOW_STEP: 0.02, FLOW_CAP: 0.10 }).flowCostReduce();
+  assert.strictEqual(a, 0, 'undefined → 0');
+});
+
 test('eternityBonus: cap 5% (25 道)', () => {
   // state 의존 — 주입
   const states = [

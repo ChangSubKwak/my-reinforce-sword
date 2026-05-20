@@ -104,7 +104,7 @@ test('enhanceCost 헬퍼는 모든 비용 배수 포함 (보신·잔향·결계�
   const m = js.match(/function enhanceCost\([^)]*\)\s*\{([\s\S]*?)\n  \}/);
   assert.ok(m, 'enhanceCost 본문');
   const body = m[1];
-  ['getResolve', 'enhanceEcho', 'blessingCostMul', 'sanctumCostMul', 'wishCostMul', 'solarCostMul', 'weekendCostMul', 'getSeason', 'getAgeEffect']
+  ['getResolve', 'enhanceEcho', 'blessingCostMul', 'sanctumCostMul', 'wishCostMul', 'solarCostMul', 'weekendCostMul', 'getSeason', 'getAgeEffect', 'flowCostReduce']
     .forEach(fn => assert.match(body, new RegExp(fn), fn + ' 배수 포함되어야 함'));
 });
 
