@@ -2318,6 +2318,10 @@
   .modal-empty { color: var(--dim); text-align: center; font-size: 11px; padding: 24px 0; letter-spacing: 2px; }
   /* 키 힌트 칩 (␣ Esc P M) — 단일 규격 */
   .key-chip { background: var(--bg-2); padding: 1px 5px; border: 1px solid var(--line); border-radius: 2px; }
+  /* 컷씬/오버레이 보상 라벨 (accent 강조) — 단일 규격 */
+  .reward-label { font-size: 11px; color: var(--accent); letter-spacing: 3px; margin-top: 14px; }
+  /* 가운데 정렬 버튼 행 — 단일 규격 */
+  .actions-center { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
   .recipe {
     display: flex;
     justify-content: space-between;
@@ -3402,7 +3406,7 @@
     <h2>劍 響</h2>
     <p>봉인된 검들이 각자의 울림으로 함께 노래한다</p>
     <div id="concert-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:18px 0;min-height:80px"></div>
-    <div style="display:flex;gap:10px;justify-content:center;margin-top:10px">
+    <div class="actions-center">
       <button id="concert-play">연주 시작</button>
       <button class="modal-close" data-close>닫 기</button>
     </div>
@@ -3466,7 +3470,7 @@
     <h2>自 書</h2>
     <p>자유롭게 한 줄, 또는 여러 줄 — 검의 길에 새기는 당신의 글</p>
     <textarea id="diary-input" placeholder="검을 쥐고 무엇을 생각하나..." style="width:100%;min-height:80px;padding:10px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;border-radius:2px;color:#e8e6dd;font-family:'Noto Serif KR',serif;font-size:12px;letter-spacing:2px;resize:vertical;line-height:1.7"></textarea>
-    <div style="display:flex;gap:10px;justify-content:center;margin-top:10px">
+    <div class="actions-center">
       <button id="diary-save">기록</button>
       <button class="modal-close" data-close>닫 기</button>
     </div>
@@ -3480,7 +3484,7 @@
     <h2>字 — 검 칼날 새김</h2>
     <p>현재 검에 한자 1자를 새긴다 — 봉인까지 유지</p>
     <div id="engrave-grid" style="margin:14px 0"></div>
-    <div style="display:flex;gap:10px;justify-content:center;margin-top:10px">
+    <div class="actions-center">
       <button id="engrave-confirm">확 정</button>
       <button class="modal-close" data-close>닫 기</button>
     </div>
@@ -3629,7 +3633,7 @@
     <p>2자의 한자를 선택하라 — 당신의 검에 새겨질 인장</p>
     <div id="seal-preview" style="display:flex;justify-content:center;align-items:center;margin:14px 0;height:90px"></div>
     <div id="seal-palette" style="margin:10px 0"></div>
-    <div style="display:flex;gap:10px;justify-content:center;margin-top:10px">
+    <div class="actions-center">
       <button id="seal-clear" style="background:transparent;color:#a8a098">초 기 화</button>
       <button id="seal-confirm">확 정</button>
       <button class="modal-close" data-close>닫 기</button>
@@ -6459,7 +6463,7 @@
     el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.7);letter-spacing:9px;margin-bottom:18px">節  ─  ' + f.name + '</div>' +
                     '<div style="font-size:96px;color:' + f.color + ';letter-spacing:16px;text-shadow:0 0 50px ' + f.color + ',0 0 100px ' + f.color + ';font-weight:200;line-height:1">' + f.kanji + '</div>' +
                     '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:24px;font-style:italic">' + f.verse + '</div>' +
-                    '<div style="font-size:11px;color:#d4af37;letter-spacing:3px;margin-top:14px">' + f.reward.label + '</div>' +
+                    '<div class="reward-label">' + f.reward.label + '</div>' +
                     (state.hasSword ? '<div style="font-size:9px;color:rgba(168,184,200,0.6);letter-spacing:3px;margin-top:6px">검에 ' + f.name + ' 명문 새겨짐</div>' : '');
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6200;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:46px 60px;background:radial-gradient(ellipse,rgba(15,12,8,0.95) 0%,rgba(15,12,8,0.65) 60%,transparent 90%);max-width:600px';
     document.body.appendChild(el);
@@ -7423,7 +7427,7 @@
     el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.7);letter-spacing:10px;margin-bottom:18px">三  禮  ─  圓  滿</div>' +
                     '<div style="font-size:84px;color:#fff5c0;letter-spacing:14px;text-shadow:0 0 36px #fff5c0,0 0 72px rgba(212,175,55,0.5);font-weight:200;line-height:1">三</div>' +
                     '<div class="verse-line">하루의 세 의식이 모였다 — 占·籤·拈花</div>' +
-                    '<div style="font-size:11px;color:#d4af37;letter-spacing:3px;margin-top:14px">호흡 ×2 + ' + (state.hasSword ? '영혼 +10' : '조각 +30') + '</div>';
+                    '<div class="reward-label">호흡 ×2 + ' + (state.hasSword ? '영혼 +10' : '조각 +30') + '</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5900;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:40px 60px;background:radial-gradient(ellipse,rgba(15,15,22,0.94) 0%,rgba(15,15,22,0.6) 60%,transparent 90%);max-width:560px';
     document.body.appendChild(el);
     el.animate([
@@ -8400,7 +8404,7 @@
     el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.65);letter-spacing:10px;margin-bottom:18px">念  珠</div>' +
                     '<div style="font-size:88px;color:#fff5c0;letter-spacing:14px;text-shadow:0 0 38px #fff5c0,0 0 76px rgba(212,175,55,0.5);font-weight:200;line-height:1">' + m.kanji + '</div>' +
                     '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:24px;font-style:italic">' + m.verse + '</div>' +
-                    '<div style="font-size:11px;color:#d4af37;letter-spacing:3px;margin-top:14px">' + rewardLabel + '</div>';
+                    '<div class="reward-label">' + rewardLabel + '</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6300;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:40px 60px;background:radial-gradient(ellipse,rgba(15,15,22,0.94) 0%,rgba(15,15,22,0.6) 60%,transparent 90%);';
     document.body.appendChild(el);
     el.animate([
@@ -8943,7 +8947,7 @@
     el.innerHTML = '<div style="font-size:10px;color:rgba(255,245,192,0.65);letter-spacing:12px;margin-bottom:24px">七  寶  圓  滿</div>' +
                     '<div style="font-size:84px;color:#fff5c0;letter-spacing:18px;text-shadow:0 0 50px #fff5c0,0 0 100px rgba(212,175,55,0.7);font-weight:200;line-height:1.1">七 寶</div>' +
                     '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:24px;font-style:italic;line-height:1.7">일곱 보물이 모였다 — 검의 길에 영원의 빛이 깃들었다</div>' +
-                    '<div style="font-size:11px;color:#d4af37;letter-spacing:3px;margin-top:14px">영구 — 모든 강화 +1.5%</div>';
+                    '<div class="reward-label">영구 — 모든 강화 +1.5%</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6000;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:50px 70px;background:radial-gradient(ellipse,rgba(15,12,5,0.96) 0%,rgba(15,12,5,0.7) 60%,transparent 90%);max-width:600px';
     document.body.appendChild(el);
     el.animate([
@@ -9051,7 +9055,7 @@
     el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.6);letter-spacing:8px;margin-bottom:18px">四  神  ─  ' + b.dir + '</div>' +
                     '<div style="font-size:88px;color:' + b.color + ';letter-spacing:12px;text-shadow:0 0 40px ' + b.color + ',0 0 80px ' + b.color + ';font-weight:200;line-height:1">' + b.name + '</div>' +
                     '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:24px;font-style:italic">' + b.verse + '</div>' +
-                    '<div style="font-size:11px;color:#d4af37;letter-spacing:3px;margin-top:14px">' + b.bonusDesc + ' (영구)</div>';
+                    '<div class="reward-label">' + b.bonusDesc + ' (영구)</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5800;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:42px 56px;background:radial-gradient(ellipse,rgba(15,18,25,0.95) 0%,rgba(15,18,25,0.65) 60%,transparent 90%);max-width:560px';
     document.body.appendChild(el);
     el.animate([
