@@ -1157,11 +1157,32 @@
     padding: 8px;
     display: none;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
     z-index: 31;
-    min-width: 140px;
+    min-width: 150px;
+    max-height: 84vh;
+    overflow-y: auto;
+    box-shadow: 0 6px 28px rgba(0,0,0,0.5);
   }
   #menu-drop.open { display: flex; }
+  /* v218 菜單整 — 카테고리 섹션 헤더 */
+  #menu-drop .menu-section {
+    font-size: 9px;
+    letter-spacing: 6px;
+    color: var(--accent);
+    opacity: 0.6;
+    padding: 8px 4px 3px;
+    margin-top: 2px;
+    border-bottom: 1px solid var(--line);
+    pointer-events: none;
+  }
+  #menu-drop .menu-section:first-child { margin-top: 0; }
+  /* 짧은 한자 버튼들을 그리드로 — 공간 절약 */
+  #menu-drop .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+  }
   #menu-drop button {
     padding: 8px 12px;
     background: transparent;
@@ -1172,6 +1193,11 @@
     letter-spacing: 3px;
     cursor: pointer;
     text-align: left;
+  }
+  #menu-drop .menu-grid button {
+    text-align: center;
+    padding: 8px 4px;
+    letter-spacing: 1px;
   }
   #menu-drop button:hover { border-color: var(--dim); color: var(--fg); }
   .footer-btn {
@@ -2584,39 +2610,60 @@
 <div id="way-counter"></div>
 <button id="menu-toggle">≡</button>
 <div id="menu-drop">
+  <div class="menu-section">記 錄</div>
+  <button id="btn-status">現  勢</button>
   <button id="btn-stats">기 록</button>
-  <button id="btn-codex">명문 사전</button>
-  <button id="btn-scrolls">古 文 書</button>
-  <button id="btn-rubbings">拓 本</button>
-  <button id="btn-seal-craft">印  章</button>
   <button id="btn-journey">紀  程</button>
+  <button id="btn-daily">오늘의 도전</button>
+  <div class="menu-grid">
+    <button id="btn-clock">時計</button>
+    <button id="btn-today-sheet">帖</button>
+    <button id="btn-calendar">暦</button>
+  </div>
+
+  <div class="menu-section">觀 覽</div>
+  <button id="btn-meishi">劍 名 片</button>
+  <button id="btn-codex-book" style="background:rgba(192,128,40,0.15);color:#d4af37">完  一  書</button>
+  <div class="menu-grid">
+    <button id="btn-constellation">星圖</button>
+    <button id="btn-gallery">殿覽</button>
+    <button id="btn-compare">比</button>
+  </div>
+
+  <div class="menu-section">文 章</div>
+  <button id="btn-userpoem">吾  詩</button>
+  <button id="btn-diary">自  書</button>
+  <div class="menu-grid">
+    <button id="btn-codex">명문</button>
+    <button id="btn-scrolls">古文書</button>
+    <button id="btn-bunshu">文集</button>
+    <button id="btn-rubbings">拓本</button>
+  </div>
+
+  <div class="menu-section">禮 ・ 修</div>
+  <div class="menu-grid">
+    <button id="btn-oracle">占</button>
+    <button id="btn-sen">籤</button>
+    <button id="btn-moongaze">玩月</button>
+    <button id="btn-beasts">四神</button>
+    <button id="btn-treasures">七寶</button>
+    <button id="btn-trial">시련</button>
+  </div>
+  <button id="btn-enshrined">🏛 殿 堂</button>
+  <button id="btn-foes">처치 보고서</button>
+  <button id="btn-blessings">奇 緣 발견</button>
   <button id="btn-shrine">神  祠</button>
   <button id="btn-duel">對  局</button>
-  <button id="btn-bunshu">文  集</button>
-  <button id="btn-status">現  勢</button>
-  <button id="btn-moongaze">玩  月</button>
-  <button id="btn-meishi">劍 名 片</button>
-  <button id="btn-constellation">星 圖</button>
-  <button id="btn-seal-edit">印  章</button>
-  <button id="btn-beasts">四  神</button>
-  <button id="btn-treasures">七  寶</button>
-  <button id="btn-userpoem">吾  詩</button>
-  <button id="btn-codex-book" style="background:rgba(192,128,40,0.15);color:#d4af37">完  一  書</button>
-  <button id="btn-gallery">殿  覽</button>
-  <button id="btn-clock">時  計</button>
-  <button id="btn-oracle">占</button>
-  <button id="btn-theme">配</button>
-  <button id="btn-engrave">字</button>
-  <button id="btn-diary">自  書</button>
-  <button id="btn-sen">籤</button>
-  <button id="btn-compare">比</button>
-  <button id="btn-today-sheet">帖</button>
-  <button id="btn-calendar">暦</button>
-  <button id="btn-trial">시련의 혼</button>
-  <button id="btn-foes">처치 보고서</button>
-  <button id="btn-daily">오늘의 도전</button>
-  <button id="btn-enshrined">🏛 殿 堂</button>
-  <button id="btn-blessings">奇 緣 발견</button>
+
+  <div class="menu-section">表 現</div>
+  <div class="menu-grid">
+    <button id="btn-seal-edit">印章</button>
+    <button id="btn-seal-craft">刻印</button>
+    <button id="btn-engrave">字</button>
+    <button id="btn-theme">配</button>
+  </div>
+
+  <div class="menu-section">設 定</div>
   <button id="btn-help">안 내</button>
   <button id="btn-mute">소 리  끄 기</button>
   <div style="height:1px;background:var(--line);margin:4px 0"></div>
