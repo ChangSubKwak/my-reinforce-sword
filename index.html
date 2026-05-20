@@ -1078,6 +1078,9 @@
   }
   .opt-row input { accent-color: var(--accent); cursor: pointer; }
   .protect-row.disabled { opacity: 0.4; cursor: not-allowed; }
+  /* 砥/靈/占 개별 토글 — 동일 규격 */
+  .stone-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .stone-toggle input { accent-color: var(--accent); cursor: pointer; }
 
   /* v91 覺悟 — 강화 마음가짐 선택 */
   #resolve-row {
@@ -3225,13 +3228,13 @@
       <label><input type="checkbox" id="sanctum-check"><span id="sanctum-label">結界  ·  비용 ×3, 파괴 차단</span></label>
     </div>
     <div id="stone-row" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-bottom:8px">
-      <label id="whet-row" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <label id="whet-row" class="stone-toggle">
         <input type="checkbox" id="whet-check"><span id="whet-label">砥 (성공 +25%)</span>
       </label>
-      <label id="spirit-row" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <label id="spirit-row" class="stone-toggle">
         <input type="checkbox" id="spirit-check"><span id="spirit-label">靈 (파괴 차단)</span>
       </label>
-      <label id="divination-row" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <label id="divination-row" class="stone-toggle">
         <input type="checkbox" id="divination-check"><span id="divination-label">占 (전조 정확)</span>
       </label>
     </div>
