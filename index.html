@@ -975,6 +975,30 @@
     letter-spacing: 2px;
     white-space: nowrap;
   }
+  /* v219 賭 — 회수 도박 버튼 */
+  #rescue-gamble {
+    position: absolute;
+    bottom: -78px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 18px;
+    background: rgba(40, 12, 12, 0.85);
+    border: 1px solid var(--danger);
+    border-radius: 2px;
+    color: #e8a8a0;
+    font-family: inherit;
+    font-size: 16px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    z-index: 5;
+  }
+  #rescue-gamble:hover {
+    background: rgba(60, 18, 18, 0.95);
+    color: #ffd0c8;
+    box-shadow: 0 0 14px rgba(192,57,43,0.5);
+  }
 
   /* 통계 바 */
   #stats {
@@ -2948,6 +2972,7 @@
         조각<br>줍기
         <div id="rescue-timer">5.0</div>
       </div>
+      <button id="rescue-gamble" style="display:none">賭<span style="font-size:9px;display:block;letter-spacing:2px;margin-top:3px;opacity:0.8">2배 or 0</span></button>
     </div>
     <div id="challenge">
       <div id="slay-streak"></div>
@@ -3961,6 +3986,7 @@
     todaySheet: null,           // v215 帖 — 오늘 24시간 시트 {date, hours[24]}
     discoveredEggs: {},         // v216 秘 — 발견된 이스터에그 {key: timestamp}
     activityByDate: {},         // v217 暦 — 일자별 활동 카운트 {YYYY-MM-DD: count}
+    gambleStats: { win: 0, lose: 0 },  // v219 賭 — 회수 도박 성공/실패
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -11130,6 +11156,9 @@
     swordWrap.style.opacity = 0;
     setRescueBodyClass(true);  // v182 水鏡 hide
     applyAmbientMode('void');
+    // v219 賭 — 회수 도박 버튼 노출
+    const gambleBtn = $('rescue-gamble');
+    if (gambleBtn) gambleBtn.style.display = 'block';
     const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec; // 速流 + 冬 + 수호자 速 보너스
     let timeLeft = totalSec;
     rescueTimer.textContent = timeLeft.toFixed(1) + '초 안에  ·  +' + shardReward + ' 조각';
@@ -11175,8 +11204,49 @@
         SFX.rescueSave();
         log('조각 +' + shardReward + ' 주웠다', 'success');
         endVoid(true);
+      },
+      // v219 賭 — 도박 회수 (50% 2배 / 50% 0)
+      gamble: () => {
+        if (rescued) return;
+        rescued = true;
+        clearInterval(tickInterval);
+        clearTimeout(failTimeout);
+        const win = Math.random() < 0.5;
+        if (!state.gambleStats) state.gambleStats = { win: 0, lose: 0 };
+        if (win) {
+          const doubled = shardReward * 2;
+          state.shards += doubled;
+          state.gambleStats.win++;
+          SFX.rescueSave();
+          showGambleResult(true, doubled);
+          log('賭 — 성공! 조각 +' + doubled + ' (2배)', 'success');
+        } else {
+          state.gambleStats.lose++;
+          bumpStat('rescueFailed');
+          if (typeof SFX.destroy === 'function') SFX.destroy();
+          showGambleResult(false, 0);
+          log('賭 — 실패. 조각 모두 잃었다', 'destroy');
+        }
+        endVoid(win);
       }
     };
+  }
+  function showGambleResult(win, amount) {
+    const el = document.createElement('div');
+    const color = win ? '#d4af37' : '#c0392b';
+    const kanji = win ? '賭 ◯' : '賭 ✕';
+    const msg = win ? ('조각 +' + amount + ' — 두 배') : '모두 잃었다';
+    el.innerHTML = '<div style="font-size:64px;color:' + color + ';letter-spacing:10px;text-shadow:0 0 30px ' + color + ';font-weight:200;line-height:1">' + kanji + '</div>' +
+                    '<div style="font-size:13px;color:rgba(232,224,221,0.85);letter-spacing:4px;margin-top:18px">' + msg + '</div>';
+    el.style.cssText = 'position:fixed;top:42%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6000;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:30px 50px;background:radial-gradient(ellipse,rgba(15,15,22,0.9) 0%,rgba(15,15,22,0.4) 70%,transparent 92%)';
+    document.body.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(0.8) rotate(' + (win?-8:8) + 'deg)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1.05) rotate(0deg)', offset: 0.2 },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(1) rotate(0deg)', offset: 0.75 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.02)' }
+    ], { duration: 3000, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 3100);
   }
 
   // === v111 刻痕 — 흉터 시스템 ===
@@ -11216,6 +11286,8 @@
     voidEl.classList.remove('active');
     swordWrap.style.opacity = 1;
     setRescueBodyClass(false);  // v182 水鏡 restore
+    const gambleBtn = $('rescue-gamble');
+    if (gambleBtn) gambleBtn.style.display = 'none';  // v219 賭
     rescueWindow = null;
     applyAmbientMode('idle');
     if (!rescued) {
@@ -11232,6 +11304,11 @@
 
   rescueCircle.addEventListener('click', () => {
     if (rescueWindow) rescueWindow.rescue();
+  });
+  // v219 賭 — 도박 회수
+  if ($('rescue-gamble')) $('rescue-gamble').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (rescueWindow && rescueWindow.gamble) rescueWindow.gamble();
   });
 
   // === 道魂 — 봉인된 道 검이 후세에 시구를 전한다 ===
