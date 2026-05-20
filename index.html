@@ -7574,7 +7574,7 @@
       html += '<div style="font-size:9px;color:#888;letter-spacing:2px;margin-top:2px">+' + (s.level||0) + ' · ' + (s.form||'無') + ' · 魂 ' + (s.soul||0) + '</div>';
       if ((s.inscriptions||[]).length) html += '<div style="font-size:9px;color:#d4af37;letter-spacing:1px;margin-top:2px">' + s.inscriptions.join(' · ') + '</div>';
       html += '</div>';
-      html += '<button data-guest-del="' + idx + '" style="background:transparent;color:#666;border:none;font-family:inherit;font-size:11px;cursor:pointer">×</button>';
+      html += '<button data-guest-del="' + idx + '" style="background:transparent;color:#666;border:none;font-family:inherit;font-size:11px;cursor:pointer;padding:0;letter-spacing:0">×</button>';
       html += '</div>';
     });
     wrap.innerHTML = html;
