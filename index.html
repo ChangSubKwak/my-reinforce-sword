@@ -2735,7 +2735,7 @@
 <div id="gen-mark"></div>
 <div id="path-progress" title="行 — 검의 길 진행도"></div>
 <div id="way-counter"></div>
-<button id="menu-toggle" title="메뉴" aria-label="메뉴">≡</button>
+<button id="menu-toggle" title="메뉴" aria-label="메뉴" aria-haspopup="true" aria-expanded="false">≡</button>
 <div id="menu-drop">
   <div class="menu-section">記 錄</div>
   <button id="btn-status">現  勢</button>
@@ -16622,7 +16622,7 @@
     renderLegacy();
     $('legacy-modal').classList.add('active');
   });
-  $('btn-mute').addEventListener('click', () => { toggleMute(); $('menu-drop').classList.remove('open'); });
+  $('btn-mute').addEventListener('click', () => { toggleMute(); $('menu-drop').classList.remove('open'); syncMenuAria(); });
   $('gameover-restart').addEventListener('click', restartFromGameOver);
   $('gameover-fullreset').addEventListener('click', () => {
     if (!confirm('계보·통계 포함 모든 진행을 지웁니다. 진행할까요?')) return;
@@ -16634,22 +16634,28 @@
     if (e.key === 'Enter' && gameOverShown) { e.preventDefault(); restartFromGameOver(); }
   });
   // v38 햄버거 메뉴
+  function syncMenuAria() {
+    const t = $('menu-toggle');
+    if (t) t.setAttribute('aria-expanded', $('menu-drop').classList.contains('open') ? 'true' : 'false');
+  }
   $('menu-toggle').addEventListener('click', (e) => {
     e.stopPropagation();
     $('menu-drop').classList.toggle('open');
+    syncMenuAria();
     // 메뉴 열릴 때 클라우드 메뉴 최신화
     if ($('menu-drop').classList.contains('open') && sbClient) updateCloudMenu();
   });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#menu-drop') && !e.target.closest('#menu-toggle')) {
       $('menu-drop').classList.remove('open');
+      syncMenuAria();
     }
   });
   // 메뉴 내 버튼은 클릭 후 자동 닫힘
   ['btn-stats', 'btn-help', 'btn-reset', 'btn-backup', 'btn-restore', 'btn-export-sword', 'btn-codex', 'btn-trial', 'btn-foes', 'btn-daily',
    'btn-cloud-login', 'btn-cloud-push', 'btn-cloud-pull', 'btn-cloud-logout', 'btn-leaderboard'].forEach(id => {
     const b = $(id);
-    if (b) b.addEventListener('click', () => $('menu-drop').classList.remove('open'));
+    if (b) b.addEventListener('click', () => { $('menu-drop').classList.remove('open'); syncMenuAria(); });
   });
 
   // === v87 자동 클라우드 동기화 (debounced push) ===
