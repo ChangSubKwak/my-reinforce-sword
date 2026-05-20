@@ -3685,7 +3685,7 @@
       한자 / 한글 / 기호 모두 가능. 빈 칸 = 인장 없음.
     </p>
     <div style="text-align:center;margin:14px 0">
-      <div id="seal-preview" style="display:inline-block;width:60px;height:60px;background:#c0392b;border:1px solid #3a0a08;border-radius:2px;line-height:60px;font-size:36px;color:#fff5c0;font-family:'Noto Serif KR', serif;font-weight:700;letter-spacing:0;text-shadow:0 0 4px rgba(255,245,192,0.3)"></div>
+      <div id="seal-craft-preview" style="display:inline-block;width:60px;height:60px;background:#c0392b;border:1px solid #3a0a08;border-radius:2px;line-height:60px;font-size:36px;color:#fff5c0;font-family:'Noto Serif KR', serif;font-weight:700;letter-spacing:0;text-shadow:0 0 4px rgba(255,245,192,0.3)"></div>
     </div>
     <input id="seal-craft-input" type="text" maxlength="1" placeholder=""
       style="width:100%;padding:14px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:'Noto Serif KR',serif;font-size:28px;letter-spacing:0;text-align:center;margin-bottom:14px;outline:none;"
@@ -5587,7 +5587,7 @@
     const sanctumMulShow = sanctumCostMul();  // v121 結界
     const wishMulShow = wishCostMul();  // v155 寒梅
     const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow * wishMulShow * solarCostMul() * weekendCostMul());
-    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + trialSuccessBonus() + rsv.successAdd + echoSuccessShow + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus() + resonanceBonus() + beastSuccessBonus() + treasureGlobalBonus() + mutationSuccessBonus() + eternityBonus();
+    const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + rsv.successAdd + echoSuccessShow + persistentSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = (echoDestroyBlockShow || sanctumActive) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
 
@@ -6623,6 +6623,16 @@
   const ETERNITY_CAP = 25;
   function eternityBonus() {
     return Math.min(0.05, (state.eternityPoints || 0) * 0.002);
+  }
+  // 강화 성공률에 항상 적용되는 영구/전역 보너스 합산 (함수 호출만, 휘발성 로컬 제외).
+  // 표시 odds와 실제 굴림이 절대 어긋나지 않도록 단일 진원지로 유지 — 새 보너스는 여기에만 추가.
+  function persistentSuccessBonus() {
+    return trialSuccessBonus() + fourWaySuccessBonus() + enshrineSuccessBonus()
+      + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess()
+      + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus()
+      + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus()
+      + resonanceBonus() + beastSuccessBonus() + treasureGlobalBonus()
+      + mutationSuccessBonus() + eternityBonus();
   }
   function eternityTitle() {
     const p = state.eternityPoints || 0;
@@ -11502,7 +11512,7 @@
     const roll = (useDivination && divinationLockedSuccessRoll !== null)
       ? divinationLockedSuccessRoll
       : Math.random();
-    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + trialSuccessBonus() + rsv.successAdd + adversityAdd + echoSuccessBonus + fourWaySuccessBonus() + enshrineSuccessBonus() + eraSuccessBonus() + generationSuccessBonus() + dawnBonusSuccess() + moodSuccessBonus() + weatherSuccessBonus() + shrineSuccessBonus() + todSuccessBonus() + wishSuccessBonus() + ultimateSuccessBonus()) {
+    if (roll < t.success + successBonus + whetBonus + soulBonus + schoolBonus + breath + guardBonus + rsv.successAdd + adversityAdd + echoSuccessBonus + persistentSuccessBonus()) {
       // 성공 (v107 連)
       if (adversityReady) { adversityReady = false; announceInscription('逆轉', '역경을 넘어 강화에 성공했다'); }
       failStreak = 0;
@@ -13467,9 +13477,7 @@
     const soulGain = c.namedFoeKey ? 12 : (c.type.isDemon ? 10 : 5);
     if (typeof addSoul === 'function') addSoul(soulGain);
     bumpStat('stalemate');
-    // 다음 그림자 type 힌트
-    state.nextShadowHint = null;  // 새로 결정될 때 다음번에 보일
-    state.stalematePending = true;  // 다음 challenge spawn 시 hint 표시
+    state.stalematePending = true;  // 다음 challenge spawn 시 그림자 type 미리 보임
     log('對峙 — 그림자에게 양보 (조각 -' + cost + ', 영혼 +' + soulGain + ', 다음 影을 미리 본다)', 'success');
     // 시각: 그림자가 깊이 절하며 사라짐
     const shadowForm = $('shadow-form');
@@ -17272,7 +17280,7 @@
   // v140 篆刻 모달
   $('btn-seal-craft').addEventListener('click', () => {
     const inp = $('seal-craft-input');
-    const prv = $('seal-preview');
+    const prv = $('seal-craft-preview');
     inp.value = state.playerSeal || '';
     prv.textContent = state.playerSeal || '';
     $('seal-craft-modal').classList.add('active');
@@ -17283,7 +17291,7 @@
     $('seal-craft-input').addEventListener('input', (e) => {
       const v = e.target.value.substring(0, 1);
       e.target.value = v;
-      $('seal-preview').textContent = v;
+      $('seal-craft-preview').textContent = v;
     });
   }
   if ($('seal-craft-save')) {

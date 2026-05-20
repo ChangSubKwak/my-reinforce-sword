@@ -1,0 +1,86 @@
+'use strict';
+const { test } = require('node:test');
+const assert = require('node:assert');
+const fs = require('node:fs');
+const { HTML_PATH, readScript } = require('./harness');
+
+const html = fs.readFileSync(HTML_PATH, 'utf8');
+const js = readScript();
+
+// ─────────────────────────────────────────────────────────────
+// 게임 파일 무결성 (회귀 방지)
+// ─────────────────────────────────────────────────────────────
+
+test('인라인 스크립트가 유효한 JS로 파싱됨', () => {
+  assert.doesNotThrow(() => new Function(js), 'script가 파싱되어야 함');
+});
+
+test('중복 HTML id 없음', () => {
+  const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(x => x[1]);
+  const seen = {}, dups = [];
+  ids.forEach(id => { if (seen[id]) dups.push(id); seen[id] = 1; });
+  assert.deepStrictEqual([...new Set(dups)], [], '중복 id: ' + [...new Set(dups)].join(', '));
+});
+
+test('단일 IIFE 구조 — 전역 오염 없음 (var/function 전역 노출 최소)', () => {
+  // 스크립트가 IIFE로 감싸져 있는지
+  assert.ok(/\(function\s*\(\)\s*\{/.test(js) || /^\s*\(\(\)\s*=>/.test(js), 'IIFE로 감싸야 함');
+});
+
+test('SAVE_KEY 상수 존재 (localStorage 키)', () => {
+  assert.match(js, /SAVE_KEY\s*=\s*['"]reinforce_sword/, 'SAVE_KEY 정의 필요');
+});
+
+test('TABLE 강화 테이블 — +0→+1은 cost 0, success 1.0 (튜토리얼 불변식)', () => {
+  // TABLE 정의에서 첫 항목 확인
+  const m = js.match(/TABLE\s*=\s*\[([\s\S]{0,200})/);
+  assert.ok(m, 'TABLE 정의 존재');
+  // 첫 줄에 cost: 0 과 success: 1 류가 있어야 함
+  assert.match(m[1], /success:\s*1(\.0+)?/, '첫 강화 success 1.0');
+  assert.match(m[1], /cost:\s*0/, '첫 강화 cost 0');
+});
+
+test('MAX_LEVEL 또는 TABLE 길이로 道 위치 정의', () => {
+  assert.ok(/MAX_LEVEL/.test(js), 'MAX_LEVEL 참조 존재');
+});
+
+test('setInterval 호출이 과도하지 않음 (메모리 누수 감시 — 50개 이하)', () => {
+  const n = (js.match(/setInterval\(/g) || []).length;
+  assert.ok(n <= 50, 'setInterval 수가 50 이하여야 함 (현재 ' + n + ')');
+});
+
+test('디버그 console.log 잔존 없음', () => {
+  const n = (js.match(/console\.(log|debug)\(/g) || []).length;
+  assert.strictEqual(n, 0, 'console.log/debug 잔존: ' + n);
+});
+
+test('localStorage 저장은 try/catch 또는 save() 통해서만', () => {
+  // setItem 직접 호출 위치가 save 함수 내에 있는지 (대략적: setItem 호출 수가 적어야)
+  const n = (js.match(/localStorage\.setItem/g) || []).length;
+  assert.ok(n <= 6, 'localStorage.setItem 직접 호출은 제한적이어야 함 (현재 ' + n + ')');
+});
+
+test('강화 성공 보너스 — 표시 odds와 실제 굴림이 persistentSuccessBonus() 공유', () => {
+  // v178~v225 보너스가 한쪽에만 추가되어 표시≠실제로 어긋난 버그(코드리뷰) 회귀 방지.
+  // 표시(totalBonus)와 실제 굴림 둘 다 persistentSuccessBonus() 를 호출해야 함.
+  assert.match(js, /function persistentSuccessBonus\(\)/, 'persistentSuccessBonus 헬퍼 존재');
+  const callCount = (js.match(/persistentSuccessBonus\(\)/g) || []).length;
+  // 정의 1 + 표시 1 + 실제 굴림 1 = 최소 3회
+  assert.ok(callCount >= 3, 'persistentSuccessBonus()가 표시·실제 양쪽에서 호출 (현재 ' + callCount + ')');
+});
+
+test('persistentSuccessBonus는 후기 보너스 시스템 모두 포함', () => {
+  // 헬퍼 본문 추출
+  const m = js.match(/function persistentSuccessBonus\(\)\s*\{([\s\S]*?)\}/);
+  assert.ok(m, '헬퍼 본문');
+  const body = m[1];
+  ['resonanceBonus', 'beastSuccessBonus', 'treasureGlobalBonus', 'mutationSuccessBonus', 'eternityBonus']
+    .forEach(fn => assert.match(body, new RegExp(fn + '\\(\\)'), fn + ' 포함되어야 함'));
+});
+
+test('모든 modal은 modal-close 또는 data-close 버튼 보유', () => {
+  // 각 class="modal" 블록에 data-close 가 최소 1개 (대략적 검증)
+  const modalCount = (html.match(/class="modal"/g) || []).length;
+  const closeCount = (html.match(/data-close/g) || []).length;
+  assert.ok(closeCount >= modalCount * 0.8, '대부분 모달에 닫기 버튼 (' + closeCount + '/' + modalCount + ')');
+});
