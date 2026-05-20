@@ -2329,6 +2329,19 @@
   /* 두 버튼 나란히 행 (취소/확정 등) — 동일 폭 분할 */
   .modal-actions { display: flex; gap: 8px; }
   .modal-actions > .modal-close { flex: 1; margin: 0; }
+  /* 클래스 없는 모달 버튼이 OS 기본 버튼으로 보이지 않도록 흑금 테마 기본값 부여.
+     레이아웃(width/margin)은 강제하지 않아 flex 행/페이지네이션 사이징 보존. */
+  .modal-box button:not([class]) {
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--dim);
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 3px;
+    cursor: pointer;
+  }
+  .modal-box button:not([class]):hover { border-color: var(--dim); color: var(--fg); }
 
   /* 殿 — 검의 전당 갤러리 */
   #legacy-list.gallery-mode {
