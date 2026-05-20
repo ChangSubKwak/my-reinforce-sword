@@ -2295,6 +2295,8 @@
   .modal-box textarea:focus { box-shadow: 0 0 0 1px var(--accent); }
   /* 모달 부가 설명(fine-print) — h2 부제 아래 작은 안내문 단일 규격 */
   .modal-note { font-size: 10px; color: var(--dim); margin: 4px 0 14px; line-height: 1.8; letter-spacing: 2px; }
+  /* 비어있는 목록 안내 — 단일 규격 */
+  .modal-empty { color: var(--dim); text-align: center; font-size: 11px; padding: 24px 0; letter-spacing: 2px; }
   .recipe {
     display: flex;
     justify-content: space-between;
@@ -10570,7 +10572,7 @@
     if (!list) return;
     const all = [].concat(state.sealedSwords || [], state.enshrined || []);
     if (all.length === 0) {
-      list.innerHTML = '<div style="grid-column:span 3;color:var(--dim);text-align:center;font-size:11px;padding:24px 0;letter-spacing:2px">— 봉인 검 없음 —</div>';
+      list.innerHTML = '<div class="modal-empty" style="grid-column:span 3">— 봉인 검 없음 —</div>';
       return;
     }
     list.innerHTML = all.map((s, i) => {
@@ -11164,7 +11166,7 @@
         '<div style="opacity:0.7">拓本  ' + rubbings.length + ' / ' + RUBBING_MAX + '</div>';
     }
     if (rubbings.length === 0) {
-      list.innerHTML = '<p style="color:var(--dim);text-align:center;font-size:11px;padding:24px 0;letter-spacing:2px">— 拓本 없음 —<br><br><span style="font-size:10px;opacity:0.7">게임 마일스톤 자동 포착</span></p>';
+      list.innerHTML = '<p class="modal-empty">— 拓本 없음 —<br><br><span style="font-size:10px;opacity:0.7">게임 마일스톤 자동 포착</span></p>';
       return;
     }
     // 최신순 정렬
@@ -17495,7 +17497,7 @@
     // 시간순 정렬 (오래된 것부터)
     events.sort((a, b) => a.time - b.time);
     if (events.length === 0) {
-      list.innerHTML = '<p style="color:var(--dim);text-align:center;font-size:11px;padding:24px 0;letter-spacing:2px">— 아직 마일스톤 없음 —<br><br><span style="font-size:10px;opacity:0.7">큰 성취 시 자동 기록</span></p>';
+      list.innerHTML = '<p class="modal-empty">— 아직 마일스톤 없음 —<br><br><span style="font-size:10px;opacity:0.7">큰 성취 시 자동 기록</span></p>';
       return;
     }
     list.innerHTML = '<div style="position:relative;padding-left:24px">' +
@@ -17596,7 +17598,7 @@
     const list = $('enshrined-list');
     if (!list) return;
     if (enshrined.length === 0) {
-      list.innerHTML = '<p style="color:var(--dim);text-align:center;font-size:11px;padding:24px 0;letter-spacing:2px">— 진열된 검 없음 —<br><br><span style="font-size:10px;opacity:0.7">道(+15)에 이른 검을 봉인 대신 진열하세요</span></p>';
+      list.innerHTML = '<p class="modal-empty">— 진열된 검 없음 —<br><br><span style="font-size:10px;opacity:0.7">道(+15)에 이른 검을 봉인 대신 진열하세요</span></p>';
       return;
     }
     list.innerHTML = enshrined.map((s, i) => {
