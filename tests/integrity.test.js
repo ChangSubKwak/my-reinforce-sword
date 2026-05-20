@@ -88,6 +88,26 @@ test('persistentSuccessBonus는 후기 보너스 시스템 모두 포함', () =>
     .forEach(fn => assert.match(body, new RegExp(fn + '\\(\\)'), fn + ' 포함되어야 함'));
 });
 
+test('강화 비용 — enhanceCost() 헬퍼로 일원화 (표시·실제·修練자동·게임오버 동기)', () => {
+  // v238: 비용 공식이 4곳에 복붙되어 autoStep/게임오버가 보신·잔향·결계 배수를 누락 →
+  //   修練 무한 스핀 / 게임오버 소프트락 버그. 단일 진원으로 회귀 방지.
+  assert.match(js, /function enhanceCost\(/, 'enhanceCost 헬퍼 존재');
+  const callCount = (js.match(/enhanceCost\(/g) || []).length;
+  // 정의 1 + 표시 1 + 실제 1 + 修練자동 1 + 게임오버 1 = 최소 5
+  assert.ok(callCount >= 5, 'enhanceCost가 모든 비용 지점에서 공유 (현재 ' + callCount + ')');
+  // 인라인 복붙 비용 공식은 헬퍼 본문 1회만 허용 (다른 곳 복붙 = 회귀)
+  const inlinePattern = (js.match(/t\.cost\s*\*\s*formCostMul\s*\*\s*getSeason\(\)\.costMul/g) || []).length;
+  assert.ok(inlinePattern <= 1, '비용 공식은 enhanceCost 본문 1회만 (현재 ' + inlinePattern + ')');
+});
+
+test('enhanceCost 헬퍼는 모든 비용 배수 포함 (보신·잔향·결계·소망·절기·주말)', () => {
+  const m = js.match(/function enhanceCost\([^)]*\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(m, 'enhanceCost 본문');
+  const body = m[1];
+  ['getResolve', 'enhanceEcho', 'blessingCostMul', 'sanctumCostMul', 'wishCostMul', 'solarCostMul', 'weekendCostMul', 'getSeason', 'getAgeEffect']
+    .forEach(fn => assert.match(body, new RegExp(fn), fn + ' 배수 포함되어야 함'));
+});
+
 test('모든 modal은 modal-close 또는 data-close 버튼 보유', () => {
   // 각 class="modal" 블록에 data-close 가 최소 1개 (대략적 검증)
   const modalCount = (html.match(/class="modal"/g) || []).length;

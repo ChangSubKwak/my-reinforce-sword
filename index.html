@@ -5605,19 +5605,11 @@
 
     const t = TABLE[lv];
     const f = getForm();
-    const formCostMul = (f && f.costMul) || 1;
-    const seasonCostMul = getSeason().costMul;
-    const ageCostMul = getAgeEffect().costMul;
     const successBonus = (f && f.successBonus) || 0;
     const destroyReduce = (f && f.destroyReduce) || 0;
     const rsv = getResolve();  // v91 覺悟
-    // v114 餘香 — 다음 강화에 잔향 반영
-    const echoCostMulShow = (enhanceEcho && enhanceEcho.costMul) || 1;
-    const echoSuccessShow = (enhanceEcho && enhanceEcho.successBonus) || 0;
-    const matsuMulShow = blessingCostMul();  // v119
-    const sanctumMulShow = sanctumCostMul();  // v121 結界
-    const wishMulShow = wishCostMul();  // v155 寒梅
-    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMulShow * matsuMulShow * sanctumMulShow * wishMulShow * solarCostMul() * weekendCostMul());
+    const echoSuccessShow = (enhanceEcho && enhanceEcho.successBonus) || 0;  // v114 餘香
+    const actualCost = enhanceCost(lv);  // v238 단일 진원
     const totalBonus = successBonus + soulEffects().successBonus + schoolSuccessBonus() + breathBonus() + rsv.successAdd + echoSuccessShow + persistentSuccessBonus();
     const showSuccess = Math.max(0, Math.min(1, t.success + totalBonus));
     const showDestroy = effectiveDestroyChance(lv);  // v235 헬퍼로 일원화 (危·欲·표시 동기)
@@ -11583,18 +11575,10 @@
     const lv = state.level;
     const t = TABLE[lv];
     const form = getForm();
-    const formCostMul = (form && form.costMul) || 1;
-    const seasonCostMul = getSeason().costMul;
-    const ageCostMul = getAgeEffect().costMul;
     const successBonus = (form && form.successBonus) || 0;
     const destroyReduce = (form && form.destroyReduce) || 0;
     const rsv = getResolve();  // v91 覺悟
-    // v114 餘香 — 잔향을 미리 잠가두고(consume은 비용 차감 후) 효과 적용
-    const echoCostMul = (enhanceEcho && enhanceEcho.costMul) || 1;
-    const matsuMul = blessingCostMul();  // v119 千年松
-    const sanctumMul = sanctumCostMul();  // v121 結界
-    const wishMul = wishCostMul();  // v155 寒梅 — 風影 유언
-    const actualCost = Math.ceil(t.cost * formCostMul * seasonCostMul * ageCostMul * rsv.costMul * echoCostMul * matsuMul * sanctumMul * wishMul * solarCostMul() * weekendCostMul());
+    const actualCost = enhanceCost(lv);  // v238 단일 진원
     if (state.shards < actualCost) return;
 
     const useProtect = protectCheck.checked && !protectCheck.disabled;
@@ -14776,9 +14760,7 @@
     // 핵심 안전 조건: 파괴 위험이 있는 단계는 자동 금지
     if (t.destroy > 0) { stopAutoEnhance('修練 중지 — 위험 단계'); return; }
     // 비용 부족 시 자동 중지
-    const f = getForm();
-    const formCostMul = (f && f.costMul) || 1;
-    const actualCost = Math.ceil(t.cost * formCostMul * getSeason().costMul * getAgeEffect().costMul * solarCostMul() * weekendCostMul());
+    const actualCost = enhanceCost(lv);  // v238 단일 진원 — 보신/잔향/결계 등 모든 배수 반영
     if (state.shards < actualCost) { stopAutoEnhance('修練 중지 — 조각 부족'); return; }
     // 강화 실행
     enhance();
@@ -15218,6 +15200,19 @@
     const dr = (f && f.destroyReduce) || 0;
     const rsv = getResolve();
     return Math.max(0, (t.destroy - dr - schoolDestroyReduce() - getScarDestroyReduce()) * rsv.destroyMul);
+  }
+  // v238 — 강화 비용 단일 진원. 표시·실제 차감·修練 자동·게임오버 판정이 동일 공식 공유.
+  // floor=true: 保身(자유 토글) 비용 가산을 무시한 최저 비용 — 게임오버 판정(빠져나갈 길 있나)용.
+  function enhanceCost(lv, opts) {
+    const t = TABLE[lv];
+    if (!t) return 0;
+    const f = getForm();
+    const formCostMul = (f && f.costMul) || 1;
+    const echoCostMul = (enhanceEcho && enhanceEcho.costMul) || 1;
+    const resolveCostMul = (opts && opts.floor) ? 1 : getResolve().costMul;
+    return Math.ceil(t.cost * formCostMul * getSeason().costMul * getAgeEffect().costMul
+      * resolveCostMul * echoCostMul * blessingCostMul() * sanctumCostMul()
+      * wishCostMul() * solarCostMul() * weekendCostMul());
   }
   function renderSealButton() {
     const btn = $('btn-seal-direct');
@@ -15687,12 +15682,9 @@
     if (!hasSwordBool) return true;
     // 케이스 2: 검 보유 +1~+2 (판매 불가) + 다음 강화 비용 부족
     if (state.level >= 1 && state.level < SEAL_MIN_LEVEL) {
-      const f = getForm();
-      const formCostMul = (f && f.costMul) || 1;
       const t = TABLE[state.level];
       if (!t) return false;
-      const cost = Math.ceil(t.cost * formCostMul * getSeason().costMul * getAgeEffect().costMul);
-      return shardsNum < cost;
+      return shardsNum < enhanceCost(state.level, { floor: true });  // v238 단일 진원 (최저 비용 floor)
     }
     return false;
   }
