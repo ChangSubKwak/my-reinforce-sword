@@ -17,6 +17,13 @@
     --safe: #6a9a6a;
     --line: #3a322a;
   }
+  /* v228 設 — 접근성 */
+  body.large-text { font-size: 115%; }
+  body.large-text #log-wrap { font-size: 13px; }
+  body.reduce-motion * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
   /* v212 休 — 주말 (土/日) 미세 따뜻함 */
   body.weekend #stage::after {
     background: radial-gradient(ellipse at 50% 70%, rgba(232,184,120,0.06) 0%, transparent 60%);
@@ -2707,6 +2714,7 @@
   </div>
 
   <div class="menu-section">設 定</div>
+  <button id="btn-settings">設 — 환경 설정</button>
   <button id="btn-help">안 내</button>
   <button id="btn-mute">소 리  끄 기</button>
   <div style="height:1px;background:var(--line);margin:4px 0"></div>
@@ -3395,6 +3403,16 @@
   </div>
 </div>
 
+<!-- v228 設 — 접근성 설정 -->
+<div class="modal" id="settings-modal">
+  <div class="modal-box" style="max-width: 420px;">
+    <h2>設 — 환경 설정</h2>
+    <p>당신에게 맞는 검의 길</p>
+    <div id="settings-list" style="margin:18px 0"></div>
+    <button class="modal-close" data-close style="margin-top:14px">닫 기</button>
+  </div>
+</div>
+
 <!-- v201 配 — 시각 테마 선택 -->
 <div class="modal" id="theme-modal">
   <div class="modal-box" style="max-width: 480px;">
@@ -4063,6 +4081,7 @@
     recordFirstWayGen: 0,       // v224 劍士録 — 첫 道 도달 대수
     eternityPoints: 0,          // v225 無極 — 道 봉인마다 누적 永劫
     guestSwords: [],            // v227 客劍 — import한 손님 검 (감상용, 최대 30)
+    settings: {},               // v228 設 — 접근성 설정 {particles, screenShake, reduceMotion, largeText}
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
@@ -8201,6 +8220,49 @@
     else wrap.style.filter = '';
   }
 
+  // === v228 設 — 접근성 설정 ===
+  const SETTINGS_DEFS = [
+    { key:'particles',   label:'환경 입자', desc:'季韻·流星·먼지 입자', def:true },
+    { key:'screenShake', label:'화면 흔들림', desc:'베기·파괴 시 흔들림', def:true },
+    { key:'reduceMotion',label:'모션 감소', desc:'애니메이션 최소화 (저사양)', def:false },
+    { key:'largeText',   label:'큰 글씨', desc:'전체 글자 크기 +15%', def:false },
+  ];
+  function getSetting(key) {
+    if (!state.settings) state.settings = {};
+    if (state.settings[key] === undefined) {
+      const def = SETTINGS_DEFS.find(s => s.key === key);
+      return def ? def.def : true;
+    }
+    return state.settings[key];
+  }
+  function applySettings() {
+    document.body.classList.toggle('large-text', getSetting('largeText'));
+    document.body.classList.toggle('reduce-motion', getSetting('reduceMotion'));
+  }
+  function renderSettings() {
+    const wrap = $('settings-list');
+    if (!wrap) return;
+    let html = '';
+    SETTINGS_DEFS.forEach(s => {
+      const on = getSetting(s.key);
+      html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:11px 12px;margin:6px 0;border:1px solid ' + (on ? 'rgba(212,175,55,0.4)' : '#2a2a32') + ';border-radius:2px;cursor:pointer;background:rgba(20,20,28,0.4)">';
+      html += '<div><div style="font-size:12px;letter-spacing:2px;color:#e8e6dd">' + s.label + '</div><div style="font-size:9px;letter-spacing:1px;color:#888;margin-top:3px">' + s.desc + '</div></div>';
+      html += '<span data-setting="' + s.key + '" style="font-size:11px;letter-spacing:2px;color:' + (on ? '#d4af37' : '#666') + ';padding:4px 10px;border:1px solid ' + (on ? '#d4af37' : '#444') + ';border-radius:2px">' + (on ? 'ON' : 'OFF') + '</span>';
+      html += '</label>';
+    });
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('[data-setting]').forEach(toggle => {
+      toggle.parentElement.addEventListener('click', (e) => {
+        const key = toggle.dataset.setting;
+        if (!state.settings) state.settings = {};
+        state.settings[key] = !getSetting(key);
+        save();
+        applySettings();
+        renderSettings();
+      });
+    });
+  }
+
   // === v201 配 — 4 시각 테마 (古/月/晨/雪) ===
   const VISUAL_THEMES = [
     { key:'',         name:'古', label:'고풍 — 황금 다크', bg:'#1f1a14', accent:'#e8c454' },
@@ -9067,6 +9129,7 @@
   function spawnMeteor() {
     if (meteorSessionCount >= METEOR_SESSION_CAP) return;
     if (challenge || rescueWindow || moonGazing) return;
+    if (!getSetting('particles')) return;  // v228 設
     const stage = $('stage');
     if (!stage) return;
     const sr = stage.getBoundingClientRect();
@@ -9177,6 +9240,7 @@
   let seasonalParticleTimer = null;
   function spawnSeasonalParticle() {
     if (challenge || rescueWindow || moonGazing) return;
+    if (!getSetting('particles')) return;  // v228 設
     const stage = $('stage');
     if (!stage) return;
     const existing = stage.querySelectorAll('.seasonal-particle').length;
@@ -12143,6 +12207,7 @@
 
   // === 화면 흔들림 (v54) ===
   function screenShake(heavy) {
+    if (!getSetting('screenShake')) return;  // v228 設
     const g = $('game');
     if (!g) return;
     g.classList.remove('screen-shake-light', 'screen-shake-heavy');
@@ -12244,6 +12309,7 @@
   // === 황금 입자 떠다님 (강화도 ≥ 8) ===
   function spawnDust() {
     if (!state.hasSword || state.level < 8) return;
+    if (!getSetting('particles')) return;  // v228 設
     const stage = $('stage');
     const rect = stage.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
@@ -16869,6 +16935,12 @@
     renderThemeModal();
     $('theme-modal').classList.add('active');
   });
+  // v228 設
+  if ($('btn-settings')) $('btn-settings').addEventListener('click', () => {
+    $('menu-drop').classList.remove('open');
+    renderSettings();
+    $('settings-modal').classList.add('active');
+  });
   // v203 字
   if ($('btn-engrave')) $('btn-engrave').addEventListener('click', () => {
     $('menu-drop').classList.remove('open');
@@ -17934,6 +18006,7 @@
   load();
   ensureDailyTrial();  // v94 天時 — 오늘의 도전 초기화/갱신
   applyVisualTheme(state.visualTheme || '');  // v201 配 — 저장된 테마 복원
+  applySettings();  // v228 設 — 접근성 설정 복원
   applySolarTerm();    // v177 節氣 — 현재 절기 적용 + 진입 시 페이드
   setInterval(applySolarTerm, 60 * 60 * 1000);  // 매시간 절기 재확인 (자정 경계)
   startSeasonalParticles();  // v179 季韻 — 환경 입자 spawner
