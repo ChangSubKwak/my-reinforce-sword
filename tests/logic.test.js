@@ -655,6 +655,29 @@ test('generatePlayerTitle: 무성취도 항상 칭호 반환 (빈 문자열 아�
 });
 
 // ─────────────────────────────────────────────────────────────
+// v138 雙銘 — detectResonances (명문 쌍 공명 감지)
+// ─────────────────────────────────────────────────────────────
+(function () {
+  const PAIRED_RESONANCES = extractConst('PAIRED_RESONANCES');
+  const detect = loadFunctions(['detectResonances'], { PAIRED_RESONANCES }).detectResonances;
+  const keys = ins => detect(ins).map(r => r.key);
+  test('detectResonances: 쌍이 모두 있을 때만 공명', () => {
+    assert.deepStrictEqual(keys(['道', '七星']), ['tianming'], '天命 쌍');
+    assert.deepStrictEqual(keys(['鬼斬', '斷魔']), ['metsumao'], '滅魔 쌍');
+    assert.deepStrictEqual(keys(['道']), [], '쌍 미완성 → 공명 없음');
+    assert.deepStrictEqual(keys([]), [], '명문 없음');
+  });
+  test('detectResonances: 여러 쌍 동시 감지', () => {
+    const k = keys(['道', '七星', '鬼斬', '斷魔']);
+    assert.ok(k.includes('tianming') && k.includes('metsumao'), '두 공명 모두');
+  });
+  test('detectResonances: onSeal 보상 배수 순수성 (天命 ×2)', () => {
+    const tian = PAIRED_RESONANCES.find(r => r.key === 'tianming');
+    assert.strictEqual(tian.onSeal({}, 100), 200, '天命 onSeal = ×2');
+  });
+})();
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
