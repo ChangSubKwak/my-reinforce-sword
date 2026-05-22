@@ -10452,6 +10452,7 @@
         if (typeof getScarDestroyReduce === 'function') { const v = getScarDestroyReduce(); if (v) destroyLines.push(line('흉터 (傷)', reduce(v), 'var(--safe)')); }
         if (typeof weatherDestroyReduce === 'function') { const v = weatherDestroyReduce(); if (v) destroyLines.push(line('天候', reduce(v), 'var(--safe)')); }
         if (typeof wishDestroyReduce === 'function') { const v = wishDestroyReduce(); if (v) destroyLines.push(line('유언 (願)', reduce(v), 'var(--safe)')); }
+        if (typeof solarDestroyReduce === 'function') { const v = solarDestroyReduce(); if (v) destroyLines.push(line('節氣 (冬至)', reduce(v), 'var(--safe)')); }
         const rsv = getResolve();
         if (rsv.destroyMul !== 1) destroyLines.push(line('覺悟 ' + rsv.label + ' 배수', '×' + rsv.destroyMul, rsv.destroyMul > 1 ? 'var(--danger)' : 'var(--safe)'));
       }
@@ -12092,7 +12093,7 @@
     // v219 賭 — 회수 도박 버튼 노출
     const gambleBtn = $('rescue-gamble');
     if (gambleBtn) gambleBtn.style.display = 'block';
-    const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec + beastRescueSec(); // 速流 + 冬 + 수호자 + 四神 白虎
+    const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec + beastRescueSec() + solarRescueSec(); // 速流 + 冬 + 수호자 + 四神 白虎 + 節氣 立冬
     let timeLeft = totalSec;
     rescueTimer.textContent = timeLeft.toFixed(1) + '초 안에  ·  +' + shardReward + ' 조각';
     // v65 progress ring 5초 (또는 totalSec) 진행
@@ -12389,6 +12390,9 @@
     // v261 四神 玄武 — 도전 보상 +5% (이름 있는 적도 도전)
     const beastChMul = beastChallengeMul();
     if (beastChMul !== 1) reward = Math.floor(reward * beastChMul);
+    // v263 節氣 夏至 — 도전 보상 +10%
+    const solarRMul = solarRewardMul();
+    if (solarRMul !== 1) reward = Math.floor(reward * solarRMul);
     challenge = {
       strength: foe.strength,
       reward,
@@ -12454,7 +12458,7 @@
     const foe = pendingNamedFoe();
     if (foe) { triggerNamedFoe(foe); return; }
     const seasonMul = getSeason().challengeMul;
-    const chance = Math.min(CHALLENGE_MAX_CHANCE, (CHALLENGE_BASE_CHANCE + state.level * CHALLENGE_LEVEL_BONUS) * seasonMul);
+    const chance = Math.min(CHALLENGE_MAX_CHANCE, (CHALLENGE_BASE_CHANCE + state.level * CHALLENGE_LEVEL_BONUS) * seasonMul * solarChallengeMul());
     if (Math.random() >= chance) return;
     const type = rollShadowType();
     // v183 對峙 — 직전 對峙로 이번 그림자 type 미리 보임
@@ -12484,6 +12488,9 @@
     // v261 四神 玄武 — 도전 보상 +5%
     const beastChMul = beastChallengeMul();
     if (beastChMul !== 1) reward = Math.floor(reward * beastChMul);
+    // v263 節氣 夏至 — 도전 보상 +10%
+    const solarRMul = solarRewardMul();
+    if (solarRMul !== 1) reward = Math.floor(reward * solarRMul);
     // v123 系譜 — 100代+ 슬레이 보상 보너스
     const slayMul = generationSlayMul();
     if (slayMul !== 1) reward = Math.floor(reward * slayMul);
@@ -13880,6 +13887,7 @@
   function addSoul(amount) {
     if (!state.hasSword) return;
     if (eclipseActive) amount = Math.floor(amount * eclipseSoulMul());  // v197 月蝕 — 영혼 ×2
+    { const sm = solarSoulMul(); if (sm !== 1) amount = Math.floor(amount * sm); }  // v263 節氣 春分 — 영혼 ×1.05
     const before = state.currentSword.soul || 0;
     const after = Math.min(SOUL_MAX, before + amount);
     state.currentSword.soul = after;
@@ -15468,7 +15476,7 @@
     const dr = (f && f.destroyReduce) || 0;
     const rsv = getResolve();
     return Math.max(0, (t.destroy - dr - schoolDestroyReduce() - guardianBonus().destroyReduce
-      - (adversityReady ? 0.12 : 0) - getScarDestroyReduce() - weatherDestroyReduce() - wishDestroyReduce()) * rsv.destroyMul);
+      - (adversityReady ? 0.12 : 0) - getScarDestroyReduce() - weatherDestroyReduce() - wishDestroyReduce() - solarDestroyReduce()) * rsv.destroyMul);
   }
   // v238 — 강화 비용 단일 진원. 표시·실제 차감·修練 자동·게임오버 판정이 동일 공식 공유.
   // floor=true: 保身(자유 토글) 비용 가산을 무시한 최저 비용 — 게임오버 판정(빠져나갈 길 있나)용.
@@ -15693,6 +15701,7 @@
     reward = Math.floor(reward * schoolSealMul());
     reward = Math.floor(reward * getSeason().sealMul);
     reward = Math.floor(reward * beastSealMul());  // v261 四神 青龍 — 봉인 보상 +3%
+    reward = Math.floor(reward * solarSealMul());  // v263 節氣 — 立秋/秋分 봉인 보너스
     if (ins.includes('古')) reward = Math.floor(reward * 1.10);
     else if (ins.includes('久')) reward = Math.floor(reward * 1.05);
     if (ins.includes('七星')) reward = Math.floor(reward * 1.5);  // v116 七星

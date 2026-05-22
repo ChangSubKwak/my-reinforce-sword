@@ -35,7 +35,7 @@ test('sealReward: lv=0 은 0', () => {
 // ─────────────────────────────────────────────────────────────
 const neutralSealDeps = {
   schoolSealMul: () => 1, getSeason: () => ({ sealMul: 1 }), generationSealMul: () => 1,
-  beastSealMul: () => 1,
+  beastSealMul: () => 1, solarSealMul: () => 1,
 };
 const sealBaseFns = loadFunctions(['sealRewardBase', 'sealReward'], neutralSealDeps);
 
@@ -336,7 +336,7 @@ function makeDestroyChance(deps) {
     getForm: () => ({}), getResolve: () => ({ destroyMul: 1 }),
     schoolDestroyReduce: () => 0, guardianBonus: () => ({ destroyReduce: 0 }),
     adversityReady: false, getScarDestroyReduce: () => 0,
-    weatherDestroyReduce: () => 0, wishDestroyReduce: () => 0,
+    weatherDestroyReduce: () => 0, wishDestroyReduce: () => 0, solarDestroyReduce: () => 0,
   };
   return loadFunctions(['effectiveDestroyChance'], Object.assign(base, deps || {})).effectiveDestroyChance;
 }

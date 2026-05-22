@@ -49,6 +49,16 @@ test('四神 보너스 접근자가 실제로 소비됨 (정의만 있고 미사
   });
 });
 
+test('節氣(solar-term) 보너스 접근자가 실제로 소비됨 (v263 — 6종 죽은 보너스 연결)', () => {
+  // v177 節氣 시스템: solarCostMul만 연결되고 나머지 6종은 정의만 있던 죽은 보너스였음.
+  // v263에서 reward/seal/rescue/challenge/destroy/soul 전부 연결 → 회귀 방지.
+  ['solarCostMul', 'solarChallengeMul', 'solarRewardMul', 'solarSealMul',
+   'solarRescueSec', 'solarDestroyReduce', 'solarSoulMul'].forEach(fn => {
+    const calls = (js.match(new RegExp(fn + '\\(\\)', 'g')) || []).length;
+    assert.ok(calls >= 2, fn + '은 정의 외 호출처가 있어야 함 (현재 ' + calls + ')');
+  });
+});
+
 test('중복 HTML id 없음', () => {
   const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(x => x[1]);
   const seen = {}, dups = [];
