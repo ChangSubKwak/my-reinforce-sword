@@ -549,6 +549,15 @@ test('merged-collection: 검 중의 검(컬렉션 하이라이트)이 殿堂 검
     '검 중의 검은 sealedSwords+enshrined 합산이어야 함 (殿堂 검 누락 회귀)');
 });
 
+test('merged-collection: 詩集(renderAnthology) 一生詩·遺言이 殿堂 검도 포함 (v370e — verse shape 회귀 방지)', () => {
+  // verse(一生詩/遺言) 컬렉션은 .filter(s=>s.verse)·slice 형태라 form/道 meta-test에 안 잡힘.
+  // whisper(v369)는 enshrined verse 합산하는데 詩集이 sealed-only면 — 속삭인 시가 詩集에 없는 모순.
+  const body = js.match(/function renderAnthology\(\)\s*\{[\s\S]{0,260}?const sealed =[^\n]*/);
+  assert.ok(body, 'renderAnthology 본문');
+  assert.match(body[0], /const sealed = \(state\.sealedSwords \|\| \[\]\)\.concat\(state\.enshrined \|\| \[\]\)/,
+    '詩集은 sealedSwords+enshrined 합산이어야 함 (殿堂 道 검 一生詩 누락 회귀)');
+});
+
 test('v368: isStuck가 voidPending도 가드 — 파괴~회수창(350ms) 사이 game-over가 회수창을 덮지 않음', () => {
   // 파괴 시 hasSword=false 즉시, showVoid(rescueWindow 설정)는 +350ms. 그 갭의 동기 render()가
   // game-over를 띄우면 #gameover-overlay(z-index:500)가 회수창(#void, z-index auto)을 덮음.
