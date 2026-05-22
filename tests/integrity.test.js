@@ -70,6 +70,13 @@ test('節氣(solar-term) 보너스 접근자가 실제로 소비됨 (v263 — 6�
   });
 });
 
+test('localStorage.removeItem(SAVE_KEY) 호출은 모두 try-guarded (v267b — private mode 안전)', () => {
+  // 초기화 경로(btn-reset / restartFromGameOver)에서 storage 예외가 in-memory 리셋을 막지 않도록.
+  const all = [...js.matchAll(/(try\s*\{\s*)?localStorage\.removeItem\(SAVE_KEY\)/g)];
+  assert.ok(all.length >= 2, 'removeItem(SAVE_KEY) 호출 ≥2 (현재 ' + all.length + ')');
+  all.forEach((m, i) => assert.ok(m[1], 'removeItem #' + i + ' try 가드 누락'));
+});
+
 test('배경 클릭으로 모달 닫기 (v267 — 박스 클릭은 무시, name/form-select 제외)', () => {
   assert.match(js, /modal\.addEventListener\('click', \(e\) => \{\s*if \(e\.target === modal\) modal\.classList\.remove\('active'\);/,
     '백드롭(e.target===modal) 클릭만 닫기');

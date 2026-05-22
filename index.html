@@ -18302,7 +18302,7 @@
   // === 초기화 ===
   $('btn-reset').addEventListener('click', () => {
     if (!confirm('모든 진행도를 지운다. 정말로?')) return;
-    localStorage.removeItem(SAVE_KEY);
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
     state = {
       level: 0, shards: 50, protections: 0, hasSword: true,
       bestLevel: 0, totalDestroyed: 0, totalSlain: 0,
