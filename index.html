@@ -15507,12 +15507,19 @@
     if (state.currentSword.form) parts.push(state.currentSword.form);
     parts.push(...state.currentSword.inscriptions);
     // v237 銘心 — 각 명문을 클릭 가능한 span으로 (의미 툴팁 + tap 페이드)
-    swordInscriptions.innerHTML = parts.map((k, i) => {
+    let html = parts.map((k, i) => {
       const m = inscriptionMeaning(k);
       const title = m.label + (m.verse ? ' — ' + m.verse : '');
       const sep = i > 0 ? '<span style="opacity:0.4"> · </span>' : '';
       return sep + '<span class="ins-tag" data-ins="' + k + '" title="' + title.replace(/"/g, '') + '" style="cursor:pointer">' + k + '</span>';
     }).join('');
+    // v247d 性情 — 현재 검의 형성 중인 기질 (살아있는 정체성, 봉인 시 회고/계보에 고정)
+    const t = deriveTemperament(state.currentSword);
+    if (t.key !== 'wa') {  // 뚜렷한 기질이 형성됐을 때만 (초기 균형은 비표시)
+      html += (parts.length ? '<span style="opacity:0.4"> · </span>' : '') +
+        '<span title="性情 — 이 검이 살아온 방식" style="color:#a8c0d8;opacity:0.85">性情 ' + t.name + '</span>';
+    }
+    swordInscriptions.innerHTML = html;
   }
   function showInscriptionMeaning(key) {
     const m = inscriptionMeaning(key);
