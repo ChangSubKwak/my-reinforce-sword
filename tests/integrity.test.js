@@ -187,6 +187,13 @@ test('물러남 비용 — fleeCost()로 표시·실제 일치 (速 무료 반�
   assert.match(js, /fleeCost\(\) === 0 \? '도망 — 무료/, '표시도 fleeCost 사용(무료 분기)');
 });
 
+test('흔들림 차단 보호권 — shakeGuardCost()로 표시·실제 일원화', () => {
+  // v245: 도전 stakes에 실패 시 필요 보호권 수 노출 + 실제 차감과 동일 공식 공유.
+  assert.match(js, /function shakeGuardCost\(/, 'shakeGuardCost 헬퍼 존재');
+  assert.match(js, /const guardCost = shakeGuardCost\(c\.strength\)/, '실제 차감이 헬퍼 사용');
+  assert.match(js, /shakeGuardCost\(challenge\.strength\)/, '도전 표시가 헬퍼 사용');
+});
+
 test('모든 modal은 modal-close 또는 data-close 버튼 보유', () => {
   // 각 class="modal" 블록에 data-close 가 최소 1개 (대략적 검증)
   const modalCount = (html.match(/class="modal"/g) || []).length;

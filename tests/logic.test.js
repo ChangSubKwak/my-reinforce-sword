@@ -90,6 +90,17 @@ test('fleeCost: 速(fleeFree) 형은 0, 그 외 FLEE_COST', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v245 흔들림 차단 보호권 수 shakeGuardCost (표시=실제)
+// ─────────────────────────────────────────────────────────────
+test('shakeGuardCost: ceil((강도-레벨)/2), 최소 1', () => {
+  const f = s => loadFunctions(['shakeGuardCost'], { state: { level: s } });
+  assert.strictEqual(f(5).shakeGuardCost(10), 3, '(10-5)/2=2.5→3');
+  assert.strictEqual(f(5).shakeGuardCost(11), 3, '(11-5)/2=3→3');
+  assert.strictEqual(f(5).shakeGuardCost(5), 1, '동급 → 최소 1');
+  assert.strictEqual(f(8).shakeGuardCost(6), 1, '레벨 우위여도 최소 1');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];

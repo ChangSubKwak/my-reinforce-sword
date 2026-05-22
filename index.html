@@ -12188,6 +12188,8 @@
   const FLEE_COST = 3;
   // v244 — 물러남 비용 단일 진원. 速(風) 형은 무료(fleeFree) — 표시와 실제가 동일해야 함.
   function fleeCost() { const f = getForm(); return (f && f.fleeFree) ? 0 : FLEE_COST; }
+  // v245 — 베기 실패 시 흔들림 차단에 드는 보호권 수. 표시(도전 stakes)와 실제 차감이 공유.
+  function shakeGuardCost(strength) { return Math.max(1, Math.ceil((strength - state.level) / 2)); }
   let challenge = null;
   // v115 流逝 — 도전 그림자 자동 후퇴 (인내심 한계)
   let challengeTimer = null;
@@ -13380,7 +13382,8 @@
     if (slayRewardLabel) slayRewardLabel.textContent = '+' + slayGrantAmount(challenge.reward) + ' 조각';  // v244 連斬 반영
     const verdict = state.level >= challenge.strength
       ? '<span style="color:var(--safe)">충분히 강하다 — 한 번에 베어진다</span>'
-      : '<span style="color:var(--danger)">검이 약하다 — 흔들릴 수 있다</span>';
+      : '<span style="color:var(--danger)">검이 약하다 — 흔들릴 수 있다</span>'
+        + '<br><span style="font-size:10px;color:var(--dim);letter-spacing:1px">실패 시 보호권 ' + shakeGuardCost(challenge.strength) + '개로 차단 (보유 ' + state.protections + ')</span>';
     const typeNote = t.desc
       ? '<span style="color:var(--accent);font-size:11px">' + t.desc + '</span><br>'
       : '';
@@ -13644,7 +13647,7 @@
     } else {
       // 베기 실패 — 검 흔들림
       clearSlayStreak();  // v125 連斬 — 실패도 streak 리셋
-      const guardCost = Math.max(1, Math.ceil((c.strength - state.level) / 2));
+      const guardCost = shakeGuardCost(c.strength);  // v245 단일 진원
       const hasGuard = state.protections >= guardCost;
       challengeEl.classList.remove('active');
       swordWrap.style.opacity = 1;
