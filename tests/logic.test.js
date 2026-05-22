@@ -555,6 +555,21 @@ test('deriveJourney: 데이터 부족(<2) 또는 없음 → 빈 문자열', () =
 });
 
 // ─────────────────────────────────────────────────────────────
+// v251 影格 — 그림자 강도 등급 형용
+// ─────────────────────────────────────────────────────────────
+test('shadowTier: 강도 구간별 형용 (여린/굳센/강대한/흉험한)', () => {
+  const st = loadFunctions(['shadowTier']).shadowTier;
+  assert.strictEqual(st(1), '여린');
+  assert.strictEqual(st(3), '여린');
+  assert.strictEqual(st(4), '굳센');
+  assert.strictEqual(st(7), '굳센');
+  assert.strictEqual(st(8), '강대한');
+  assert.strictEqual(st(11), '강대한');
+  assert.strictEqual(st(12), '흉험한');
+  assert.strictEqual(st(20), '흉험한');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];

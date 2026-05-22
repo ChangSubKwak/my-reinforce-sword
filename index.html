@@ -12202,6 +12202,13 @@
   function rollShadowOrigin() {
     return ORIGIN_KEYS[Math.floor(Math.random() * ORIGIN_KEYS.length)];
   }
+  // v251 影格 — 그림자 강도 등급 형용 (도전에 적의 위세를 부여, 결정적)
+  function shadowTier(strength) {
+    if (strength <= 3) return '여린';
+    if (strength <= 7) return '굳센';
+    if (strength <= 11) return '강대한';
+    return '흉험한';
+  }
 
   // === 一閃 — 도전 (휘발성, 저장 안 함) ===
   const CHALLENGE_BASE_CHANCE = 0.13;
@@ -13399,7 +13406,7 @@
     if (steelDetail) steelDetail.style.display = t.key === 'steel' ? 'block' : 'none';
     const normalDetail = $('normal-detail');
     if (normalDetail) normalDetail.style.display = t.key === 'normal' ? 'block' : 'none';
-    shadowStrength.textContent = (challenge.origin ? challenge.origin + ' · ' : '') + t.name + ' · 강도 +' + challenge.strength;
+    shadowStrength.textContent = shadowTier(challenge.strength) + ' ' + (challenge.origin ? challenge.origin + ' ' : '') + t.name + ' · 강도 +' + challenge.strength;  // v251 影格
     // 베기 버튼에 보상 표시
     const slayRewardLabel = $('slay-reward-label');
     if (slayRewardLabel) slayRewardLabel.textContent = '+' + fmtNum(slayGrantAmount(challenge.reward)) + ' 조각';  // v244 連斬 반영
