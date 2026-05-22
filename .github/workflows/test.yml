@@ -1,0 +1,16 @@
+# v366 — 자동 회귀 테스트 (분기점 net·merged-collection cluster·dial 잠금 등 207 테스트)
+name: tests
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'   # render.yaml NODE_VERSION 20과 일치
+      - run: npm ci             # 커밋된 package-lock.json 결정적 설치 (lockfile 검증 겸)
+      - run: npm run lint:parse # 인라인 <script> JS 파싱 검증
+      - run: npm test           # node --test (의존성 0, ~0.8s)
