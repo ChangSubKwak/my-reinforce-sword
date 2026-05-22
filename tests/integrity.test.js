@@ -39,6 +39,12 @@ test('성공률 분해가 successChanceNow의 즉시/검별 성공원도 표시 
     assert.ok(body.includes(src), '성공 분해에 ' + src + ' 출처 누락'));
 });
 
+test('주요 입력 필드에 aria-label (v299 — placeholder만으로는 라벨 불충분)', () => {
+  ['name-input', 'memo-input', 'kigen-input', 'seal-craft-input', 'guest-import-code',
+   'diary-input', 'login-email', 'login-otp-code', 'lb-nickname'].forEach(id =>
+    assert.match(html, new RegExp('id="' + id + '" aria-label="[^"]+"'), id + ' aria-label 누락'));
+});
+
 test('모든 role="dialog"에 aria-modal="true" (v298 — 모달 시맨틱)', () => {
   const dialogs = (html.match(/role="dialog"/g) || []).length;
   const modal = (html.match(/role="dialog" aria-modal="true"/g) || []).length;

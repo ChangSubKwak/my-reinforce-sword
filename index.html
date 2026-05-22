@@ -3369,15 +3369,15 @@
       <div id="name-preview" style="font-size:11px;color:var(--dim);line-height:1.9;letter-spacing:2px;text-align:left;flex:1"></div>
     </div>
     <p id="name-prompt-text">이 검에 직접 이름을 지어주시겠습니까?</p>
-    <input id="name-input" type="text" maxlength="16" placeholder=""
+    <input id="name-input" aria-label="검명 입력 (최대 16자)" type="text" maxlength="16" placeholder=""
       style="width:100%;padding:12px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:16px;letter-spacing:6px;text-align:center;margin-bottom:14px;outline:none;"
       autocomplete="off">
     <!-- v104 刻 — 검에 새기는 한 마디 -->
-    <input id="memo-input" type="text" maxlength="24" placeholder="한 마디를 새기다 (선택 · 24자)"
+    <input id="memo-input" aria-label="한 마디 메모 (선택)" type="text" maxlength="24" placeholder="한 마디를 새기다 (선택 · 24자)"
       style="width:100%;padding:8px;background:transparent;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:2px;text-align:center;margin-bottom:14px;outline:none;opacity:0.7;"
       autocomplete="off">
     <!-- v158 寄言 — 道 검에만 보이는 후일 편지 (textarea) -->
-    <textarea id="kigen-input" maxlength="80" placeholder="후일의 검사에게 한 줄 (선택 · 道 검만 · 80자)"
+    <textarea id="kigen-input" aria-label="후일의 검사에게 남길 말 (寄言, 선택)" maxlength="80" placeholder="후일의 검사에게 한 줄 (선택 · 道 검만 · 80자)"
       style="display:none;width:100%;padding:8px;background:transparent;border:1px solid rgba(212,175,55,0.3);color:var(--accent);font-family:inherit;font-size:11px;letter-spacing:2px;text-align:center;margin-bottom:14px;outline:none;opacity:0.8;resize:none;height:60px;"></textarea>
     <div class="modal-actions">
       <button class="modal-close" id="name-cancel">자 동 이 름</button>
@@ -3455,7 +3455,7 @@
     </div>
     <div style="margin:16px 0;border-top:1px solid #2a2a32;padding-top:14px">
       <div style="font-size:10px;letter-spacing:3px;color:#888;margin-bottom:6px">받기 — 코드 붙여넣기</div>
-      <textarea id="guest-import-code" placeholder="공유받은 코드를 여기에..." style="width:100%;height:48px;padding:8px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;color:#e8e6dd;font-family:monospace;font-size:9px;resize:none;word-break:break-all"></textarea>
+      <textarea id="guest-import-code" aria-label="손님 검 공유 코드 입력" placeholder="공유받은 코드를 여기에..." style="width:100%;height:48px;padding:8px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;color:#e8e6dd;font-family:monospace;font-size:9px;resize:none;word-break:break-all"></textarea>
       <button id="guest-import-btn" style="margin-top:6px;width:100%">손님 검 맞이</button>
     </div>
     <div id="guest-gallery" style="margin-top:16px;max-height:200px;overflow-y:auto"></div>
@@ -3498,7 +3498,7 @@
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mtitle-10" style="max-width: 500px;">
     <h2 id="mtitle-10">自 書</h2>
     <p>자유롭게 한 줄, 또는 여러 줄 — 검의 길에 새기는 당신의 글</p>
-    <textarea id="diary-input" placeholder="검을 쥐고 무엇을 생각하나..." style="width:100%;min-height:80px;padding:10px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;border-radius:2px;color:#e8e6dd;font-family:'Noto Serif KR',serif;font-size:12px;letter-spacing:2px;resize:vertical;line-height:1.7"></textarea>
+    <textarea id="diary-input" aria-label="자유 일기" placeholder="검을 쥐고 무엇을 생각하나..." style="width:100%;min-height:80px;padding:10px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;border-radius:2px;color:#e8e6dd;font-family:'Noto Serif KR',serif;font-size:12px;letter-spacing:2px;resize:vertical;line-height:1.7"></textarea>
     <div class="actions-center">
       <button id="diary-save">기록</button>
       <button class="modal-close" data-close>닫 기</button>
@@ -3790,7 +3790,7 @@
     <div style="text-align:center;margin:14px 0">
       <div id="seal-craft-preview" style="display:inline-block;width:60px;height:60px;background:#c0392b;border:1px solid #3a0a08;border-radius:2px;line-height:60px;font-size:36px;color:#fff5c0;font-family:'Noto Serif KR', serif;font-weight:700;letter-spacing:0;text-shadow:0 0 4px rgba(255,245,192,0.3)"></div>
     </div>
-    <input id="seal-craft-input" type="text" maxlength="1" placeholder=""
+    <input id="seal-craft-input" aria-label="인장 한 글자 (篆刻)" type="text" maxlength="1" placeholder=""
       style="width:100%;padding:14px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:'Noto Serif KR',serif;font-size:28px;letter-spacing:0;text-align:center;margin-bottom:14px;outline:none;"
       autocomplete="off">
     <div class="modal-actions">
@@ -3920,7 +3920,7 @@
     <h2 id="mtitle-38">☁ 로 그 인</h2>
     <div id="login-step1">
       <p>이메일로 코드를 받아 로그인합니다.<br>비밀번호 없음 · 진행도 클라우드 저장 가능.</p>
-      <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"
+      <input id="login-email" aria-label="이메일 주소" type="email" placeholder="you@example.com" autocomplete="email"
         style="width:100%;padding:12px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:14px;text-align:center;margin-bottom:12px;outline:none;">
       <div class="modal-actions">
         <button class="modal-close" data-close>취 소</button>
@@ -3936,7 +3936,7 @@
     </div>
     <div id="login-step2" style="display:none">
       <p>이메일에 도착한 <strong style="color:var(--accent)">코드</strong>를 입력하세요.<br><span style="font-size:11px;color:var(--dim)">디바이스 간 이동도 안전 (PC/모바일 어디서나)</span></p>
-      <input id="login-otp-code" type="text" placeholder="00000000" maxlength="8" inputmode="numeric" autocomplete="one-time-code"
+      <input id="login-otp-code" aria-label="인증 코드 8자리" type="text" placeholder="00000000" maxlength="8" inputmode="numeric" autocomplete="one-time-code"
         style="width:100%;padding:14px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:22px;text-align:center;letter-spacing:8px;margin-bottom:12px;outline:none;">
       <div class="modal-actions">
         <button id="login-back" class="modal-close">이전</button>
@@ -3956,7 +3956,7 @@
     <div id="lb-my-rank" style="display:none;padding:10px;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.5);text-align:center;margin-bottom:12px;font-size:13px;letter-spacing:3px"></div>
     <div id="lb-list" style="max-height:380px;overflow-y:auto;font-size:12px;letter-spacing:1px">불러오는 중...</div>
     <div id="lb-submit-wrap" style="display:none;padding:10px 0;border-top:1px solid var(--line);margin-top:10px">
-      <input id="lb-nickname" type="text" placeholder="닉네임 (16자)" maxlength="16"
+      <input id="lb-nickname" aria-label="리더보드 닉네임 (최대 16자)" type="text" placeholder="닉네임 (16자)" maxlength="16"
         style="width:100%;padding:10px;background:transparent;border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:14px;text-align:center;margin-bottom:8px;outline:none;">
       <button class="modal-close primary" id="lb-submit" style="width:100%;margin:0">내 점수 등록 / 갱신</button>
     </div>
