@@ -12,6 +12,9 @@ app.disable('x-powered-by');
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // v334 — 클릭재킹 방지(게임은 iframe 임베드 불필요) + 미사용 강력 API 비활성
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=(), payment=()');
   // Web Audio + localStorage 사용 — same-origin 정책 충분
   next();
 });
