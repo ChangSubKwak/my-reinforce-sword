@@ -14965,6 +14965,19 @@
     if (jeong === max) return { key: 'jeong', name: '靜', line: '부서짐을 견디며 지키는 정(靜)의 기질을 품었다.' };
     return { key: 'do', name: '賭', line: '위험을 무릅쓰고 높이 오르는 도(賭)의 기질을 품었다.' };
   }
+  // v370 率性 — 形(타고난 천성, v6)과 性情(살며 얻은 기질, v247)의 합치/배반을 읽는다.
+  // 率性之謂道(中庸) — 제 천성을 따랐는가 거슬렀는가는 道 주제의 핵심. 메커니즘 효과 0,
+  // 두 기존 정체성 축의 synthesis(섬이 아닌 순수 융합) + 기존 데이터 파생(무상태·하위호환).
+  // 形별 천성 친화: 直→剛(나아감) / 曲·重→靜(견딤) / 速→賭(무릅씀).
+  function deriveNaturePath(sword) {
+    if (!sword) return { key: 'none', name: '', line: '' };
+    const temp = deriveTemperament(sword).key;  // gang/jeong/do/wa
+    if (temp === 'wa') return { key: 'wuwei', name: '無爲', line: '천성을 다투지 않고 무위(無爲)로 살았다.' };
+    const affinity = { '直': 'gang', '曲': 'jeong', '重': 'jeong', '速': 'do' }[sword.form];
+    if (!affinity) return { key: 'none', name: '', line: '' };  // 形 미정 → 판정 보류
+    if (temp === affinity) return { key: 'follow', name: '率性', line: '타고난 形 그대로 나아간, 천성을 따른(率性) 검이었다.' };
+    return { key: 'defy', name: '逆性', line: '타고난 形을 거슬러 제 길을 연, 천성을 거스른(逆性) 검이었다.' };
+  }
   // v248 遺言 — 봉인되는 검의 1인칭 마지막 말. 一代記(3인칭 서술)·一生詩(道 한정 시)와 달리
   // 검 자신의 목소리. 性情(v247) + 정점 성취에서 결정적 파생 (메커니즘 효과 0, 순수 narrative).
   function generateLastWords(sword) {
@@ -15065,7 +15078,8 @@
       ending = '봉인되어 후일의 검사에게 강기를 남겼다.';
     }
     const tempLine = deriveTemperament(sword).line;  // v247 性情
-    return formOpening + ' ' + peak + ' ' + (tempLine ? tempLine + ' ' : '') + notable + ' ' + ending;
+    const natureLine = deriveNaturePath(sword).line;  // v370 率性 — 形×性情 합치/배반
+    return formOpening + ' ' + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + ending;
   }
 
   // === 一生詩 — 道 검 봉인 시 일생을 4행 시구로 응축 ===

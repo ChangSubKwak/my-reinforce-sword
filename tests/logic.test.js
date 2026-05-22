@@ -520,6 +520,32 @@ test('deriveTemperament: null/무행동 안전 → 和', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v370 率性 — 形(천성) × 性情(기질)의 합치/배반 (synthesis, 결정적, 효과 0)
+// ─────────────────────────────────────────────────────────────
+const npFns = loadFunctions(['deriveNaturePath', 'deriveTemperament']);
+const np = s => npFns.deriveNaturePath(s).name;
+test('deriveNaturePath: 形 친화 기질과 합치 → 率性', () => {
+  assert.strictEqual(np({ form: '直', slainCount: 5 }), '率性', '直(剛친화) + 剛 → 率性');
+  assert.strictEqual(np({ form: '曲', scars: 3 }), '率性', '曲(靜친화) + 靜 → 率性');
+  assert.strictEqual(np({ form: '重', scars: 3 }), '率性', '重(靜친화) + 靜 → 率性');
+  assert.strictEqual(np({ form: '速', level: 12 }), '率性', '速(賭친화) + 賭 → 率性');
+});
+test('deriveNaturePath: 形 친화와 배반 → 逆性', () => {
+  assert.strictEqual(np({ form: '直', scars: 3 }), '逆性', '直(剛친화) + 靜 → 逆性');
+  assert.strictEqual(np({ form: '速', slainCount: 5 }), '逆性', '速(賭친화) + 剛 → 逆性');
+  assert.strictEqual(np({ form: '曲', level: 12 }), '逆性', '曲(靜친화) + 賭 → 逆性');
+});
+test('deriveNaturePath: 和(뚜렷한 기질 없음) → 無爲 (形 무관)', () => {
+  assert.strictEqual(np({ form: '直' }), '無爲', '무행동 直 → 無爲');
+  assert.strictEqual(np({ form: '速', level: 7 }), '無爲', '+7 직전 → 和 → 無爲');
+});
+test('deriveNaturePath: 形 미정·null은 판정 보류 (빈 name·라인, 하위호환)', () => {
+  assert.strictEqual(npFns.deriveNaturePath(null).key, 'none', 'null → none');
+  assert.strictEqual(npFns.deriveNaturePath({ slainCount: 5 }).name, '', '形 없는 검 → 보류(빈 name)');
+  assert.strictEqual(npFns.deriveNaturePath({ form: '直', slainCount: 5 }).line.length > 0, true, '판정 시 line 존재');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v248 遺言 — 검의 1인칭 마지막 말 (性情 파생, 결정적)
 // ─────────────────────────────────────────────────────────────
 const lwFns = loadFunctions(['generateLastWords', 'deriveTemperament']);
@@ -588,7 +614,7 @@ test('shadowTier: 강도 구간별 형용 (여린/굳센/강대한/흉험한)', 
 // 통합: generateBiography — 파생 요소(時生·形·정점·性情)가 한 서사로 결합
 // ─────────────────────────────────────────────────────────────
 test('generateBiography 통합: 時生·형·정점·性情이 일대기에 결합', () => {
-  const bio = loadFunctions(['generateBiography', 'deriveTemperament']).generateBiography;
+  const bio = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath']).generateBiography;
   const sword = {
     form: '直', name: '직검', level: 15, inscriptions: ['道'],
     slainCount: 8, soul: 80, scars: 1, stars: {}, bornTod: '夜',
@@ -602,7 +628,7 @@ test('generateBiography 통합: 時生·형·정점·性情이 일대기에 결�
   assert.match(text, /강\(剛\)/, '性情(베기 지배 → 剛) 결합');
 });
 test('generateBiography 통합: bornTod 없는 구 검도 안전 (접두 생략)', () => {
-  const bio = loadFunctions(['generateBiography', 'deriveTemperament']).generateBiography;
+  const bio = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath']).generateBiography;
   const text = bio({ form: '曲', name: '구검', level: 4, inscriptions: [], levelHistory: [0, 1] });
   assert.ok(text.length > 0 && !text.startsWith(','), '접두 없이 정상 서사');
 });
