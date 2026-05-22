@@ -16595,6 +16595,9 @@
     if (filterEl && sealed.length > 0) {
       const counts = getFormCounts();
       const wayCount = sealed.filter(s => (s.inscriptions || []).includes('道')).length;
+      // v254 性情 필터 — 봉인 검을 기질로도 분류
+      const tc = { '剛': 0, '靜': 0, '賭': 0, '和': 0 };
+      sealed.forEach(s => { tc[deriveTemperament(s).name]++; });
       const filters = [
         { key: 'all', label: '전체', count: sealed.length },
         { key: '直', label: '直', count: counts['直'] || 0 },
@@ -16602,6 +16605,10 @@
         { key: '重', label: '重', count: counts['重'] || 0 },
         { key: '速', label: '速', count: counts['速'] || 0 },
         { key: '道', label: '道', count: wayCount },
+        { key: '剛', label: '剛', count: tc['剛'] },
+        { key: '靜', label: '靜', count: tc['靜'] },
+        { key: '賭', label: '賭', count: tc['賭'] },
+        { key: '和', label: '和', count: tc['和'] },
       ].filter(f => f.count > 0 || f.key === 'all');
       filterEl.innerHTML = filters.map(f => {
         const active = legacyFilter === f.key;
@@ -16645,6 +16652,7 @@
         .filter(({s}) => {
           if (legacyFilter === 'all') return true;
           if (legacyFilter === '道') return (s.inscriptions || []).includes('道');
+          if (legacyFilter === '剛' || legacyFilter === '靜' || legacyFilter === '賭' || legacyFilter === '和') return deriveTemperament(s).name === legacyFilter;  // v254 性情 필터
           return s.form === legacyFilter;
         });
       if (filtered.length === 0) {
