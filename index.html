@@ -17980,19 +17980,19 @@
           100, 'var(--safe)').replace(/>(\d+)% \(/, '><span style="font-size:10px">$1% (') +
       row('강화 시도', fmtNum(s.enhanceAttempts || 0) + ' 회') +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">그 림 자</div>' +
-      bar('그림자', (s.slainNormal || 0) + ' 회', slainMax) +
-      bar('도망 그림자', (s.slainFlee || 0) + ' 회', slainMax, '#aac0c8') +
-      bar('강철 그림자', (s.slainSteel || 0) + ' 회', slainMax, '#888aa8') +
-      bar('검귀', (s.slainDemon || 0) + ' 회', slainMax, '#fff5c0') +
-      row('도망 그림자에게 놓침', (s.evaded || 0) + ' 회', 'var(--dim)') +
-      row('도전에서 도망', (s.fled || 0) + ' 회', 'var(--dim)') +
+      bar('그림자', fmtNum(s.slainNormal || 0) + ' 회', slainMax) +
+      bar('도망 그림자', fmtNum(s.slainFlee || 0) + ' 회', slainMax, '#aac0c8') +
+      bar('강철 그림자', fmtNum(s.slainSteel || 0) + ' 회', slainMax, '#888aa8') +
+      bar('검귀', fmtNum(s.slainDemon || 0) + ' 회', slainMax, '#fff5c0') +
+      row('도망 그림자에게 놓침', fmtNum(s.evaded || 0) + ' 회', 'var(--dim)') +
+      row('도전에서 도망', fmtNum(s.fled || 0) + ' 회', 'var(--dim)') +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">생 사</div>' +
-      row('조각 줍기 성공', (s.rescued || 0) + ' 회') +
-      row('조각 줍기 실패', (s.rescueFailed || 0) + ' 회', 'var(--danger)') +
-      row('검 파괴', (state.totalDestroyed || 0) + ' 회', 'var(--danger)') +
+      row('조각 줍기 성공', fmtNum(s.rescued || 0) + ' 회') +
+      row('조각 줍기 실패', fmtNum(s.rescueFailed || 0) + ' 회', 'var(--danger)') +
+      row('검 파괴', fmtNum(state.totalDestroyed || 0) + ' 회', 'var(--danger)') +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">정 점</div>' +
-      row('검 판매', (s.sealed || 0) + ' 회') +
-      row('도(道) 달성', (s.wayReached || 0) + ' 회', '#fff5c0') +
+      row('검 판매', fmtNum(s.sealed || 0) + ' 회') +
+      row('도(道) 달성', fmtNum(s.wayReached || 0) + ' 회', '#fff5c0') +
       row('歲月 (누적)', formatPlayTime(state.totalPlayTimeMs || 0), '#a8c0d8') +  // v174
       (function() {
         // v163 鬪將 — 챔피언 표시
