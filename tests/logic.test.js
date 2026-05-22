@@ -1105,3 +1105,17 @@ test('enshrineSuccessBonus: 殿堂 검당 +1.5%, 최대 3진열 +4.5% (v118 dial
   assert.ok(Math.abs(at(1) - 0.015) < 1e-9, '1진열 → +1.5%');
   assert.ok(Math.abs(at(3) - 0.045) < 1e-9, '3진열 → +4.5%');
 });
+
+test('getCurrentEra / eraSuccessBonus: 紀元 임계(300/1000/3000/8000) + 성공 보너스 dial', () => {
+  const ERAS = extractConst('ERAS');
+  assert.deepStrictEqual(ERAS.map(e => [e.threshold, e.successBonus]),
+    [[0, 0], [300, 0.01], [1000, 0.02], [3000, 0.03], [8000, 0.05]], 'ERAS 임계·보너스');
+  const at = (n) => loadFunctions(['getCurrentEra', 'eraSuccessBonus'],
+    { state: { stats: { enhanceAttempts: n } }, ERAS }).eraSuccessBonus();
+  assert.strictEqual(at(0), 0, '萌芽');
+  assert.strictEqual(at(299), 0, '<300 아직 萌芽');
+  assert.ok(Math.abs(at(300) - 0.01) < 1e-9, '300 → 修練');
+  assert.ok(Math.abs(at(1000) - 0.02) < 1e-9, '1000 → 開眼');
+  assert.ok(Math.abs(at(8000) - 0.05) < 1e-9, '8000 → 神域');
+  assert.ok(Math.abs(at(99999) - 0.05) < 1e-9, '최고 era 유지');
+});
