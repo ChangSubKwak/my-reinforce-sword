@@ -16623,6 +16623,7 @@
         { key: 'level-desc', label: '강화도↓' },
         { key: 'level-asc', label: '강화도↑' },
         { key: 'inscriptions', label: '명문수↓' },
+        { key: 'turbulence', label: '波瀾↓' },
       ];
       const sortHTML = '<div style="width:100%;display:flex;gap:6px;justify-content:center;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)">' +
         sorts.map(srt => {
@@ -16669,6 +16670,8 @@
         filtered.sort((a, b) => (a.s.level || 0) - (b.s.level || 0));
       } else if (legacySort === 'inscriptions') {
         filtered.sort((a, b) => (b.s.inscriptions || []).length - (a.s.inscriptions || []).length);
+      } else if (legacySort === 'turbulence') {  // v254b 波瀾순 — 기복이 심한 검 먼저
+        filtered.sort((a, b) => levelDropCount(b.s) - levelDropCount(a.s));
       }
       // 殿 — 갤러리 카드 렌더
       list.classList.add('gallery-mode');
