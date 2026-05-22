@@ -431,6 +431,32 @@ test('successChanceNow: [0,1] 클램프', () => {
 })();
 
 // ─────────────────────────────────────────────────────────────
+// protectCost / rescueShards — 경제 계단/회수 곡선
+// ─────────────────────────────────────────────────────────────
+const econFns = loadFunctions(['protectCost', 'rescueShards']);
+test('protectCost: 강화도별 계단 (≤5→1, 6~8→2, 9~11→3, 12+→5)', () => {
+  [0, 3, 5].forEach(l => assert.strictEqual(econFns.protectCost(l), 1, 'lv' + l + '→1'));
+  [6, 8].forEach(l => assert.strictEqual(econFns.protectCost(l), 2, 'lv' + l + '→2'));
+  [9, 11].forEach(l => assert.strictEqual(econFns.protectCost(l), 3, 'lv' + l + '→3'));
+  [12, 14, 15].forEach(l => assert.strictEqual(econFns.protectCost(l), 5, 'lv' + l + '→5'));
+});
+test('protectCost: 단조 비감소 (높은 단계가 더 비싸거나 같음)', () => {
+  let prev = 0;
+  for (let l = 0; l <= 15; l++) { const c = econFns.protectCost(l); assert.ok(c >= prev, 'lv' + l); prev = c; }
+});
+test('rescueShards: floor(lv² × 0.7), 최소 3', () => {
+  assert.strictEqual(econFns.rescueShards(0), 3, '최소 3');
+  assert.strictEqual(econFns.rescueShards(1), 3, 'floor(0.7)=0 → 최소 3');
+  assert.strictEqual(econFns.rescueShards(5), 17, 'floor(17.5)');
+  assert.strictEqual(econFns.rescueShards(10), 70);
+  assert.strictEqual(econFns.rescueShards(15), 157, 'floor(157.5)');
+});
+test('rescueShards: 단조 증가 (강화도 높을수록 회수 많음)', () => {
+  let prev = -1;
+  for (let l = 0; l <= 15; l++) { const r = econFns.rescueShards(l); assert.ok(r >= prev, 'lv' + l); prev = r; }
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
