@@ -1040,7 +1040,10 @@
     color: var(--dim);
     letter-spacing: 2px;
     white-space: nowrap;
+    transition: color 0.3s, font-size 0.3s;
   }
+  /* v284 — 회수 윈도우 막바지(2초 미만) 긴박감: 모션 없는 색/굵기 변화 */
+  #rescue-timer.urgent { color: var(--danger); font-weight: 700; font-size: 12px; }
   /* v219 賭 — 회수 도박 버튼 */
   #rescue-gamble {
     position: absolute;
@@ -12176,6 +12179,7 @@
     if (gambleBtn) gambleBtn.style.display = 'block';
     const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec + beastRescueSec() + solarRescueSec(); // 速流 + 冬 + 수호자 + 四神 白虎 + 節氣 立冬
     let timeLeft = totalSec;
+    rescueTimer.classList.remove('urgent');  // v284 — 새 윈도우는 평상 색으로 시작
     rescueTimer.textContent = timeLeft.toFixed(1) + '초 안에  ·  +' + shardReward + ' 조각';
     // v65 progress ring 5초 (또는 totalSec) 진행
     const ringCircle = $('rescue-ring-circle');
@@ -12200,6 +12204,7 @@
         if (!rescued) endVoid(false);
       } else {
         rescueTimer.textContent = timeLeft.toFixed(1) + '초 안에  ·  +' + shardReward + ' 조각';
+        if (timeLeft <= 2 && !rescueTimer.classList.contains('urgent')) rescueTimer.classList.add('urgent');  // v284 긴박감
         const sec = Math.ceil(timeLeft);  // v282 — 매 초 경계마다 rescueTick (정의됐으나 미연결이던 SFX)
         if (sec !== lastTickSec) { lastTickSec = sec; SFX.rescueTick(); }
       }
