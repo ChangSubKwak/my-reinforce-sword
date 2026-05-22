@@ -180,6 +180,13 @@ test('베기 보상 표시 — slayGrantAmount/finalReward로 連斬 반영 (표
   assert.strictEqual((js.match(/조각 \+' \+ c\.reward/g) || []).length, 0, '컷씬에 raw c.reward 표시 없음');
 });
 
+test('물러남 비용 — fleeCost()로 표시·실제 일치 (速 무료 반영)', () => {
+  // v244: 速(風) 형은 무료지만 도전 표시는 항상 FLEE_COST를 보여주던 발산 수정.
+  assert.match(js, /function fleeCost\(\)/, 'fleeCost 헬퍼 존재');
+  assert.match(js, /const cost = fleeCost\(\)/, 'flee()가 fleeCost 사용');
+  assert.match(js, /fleeCost\(\) === 0 \? '도망 — 무료/, '표시도 fleeCost 사용(무료 분기)');
+});
+
 test('모든 modal은 modal-close 또는 data-close 버튼 보유', () => {
   // 각 class="modal" 블록에 data-close 가 최소 1개 (대략적 검증)
   const modalCount = (html.match(/class="modal"/g) || []).length;

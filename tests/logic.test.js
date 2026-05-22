@@ -78,6 +78,18 @@ test('slayGrantAmount: floor 적용 (정수 조각)', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v244 물러남 비용 단일 진원 fleeCost (速 형 무료)
+// ─────────────────────────────────────────────────────────────
+test('fleeCost: 速(fleeFree) 형은 0, 그 외 FLEE_COST', () => {
+  const free = loadFunctions(['fleeCost'], { getForm: () => ({ fleeFree: true }), FLEE_COST: 3 });
+  assert.strictEqual(free.fleeCost(), 0, '風 형 무료');
+  const paid = loadFunctions(['fleeCost'], { getForm: () => ({}), FLEE_COST: 3 });
+  assert.strictEqual(paid.fleeCost(), 3, '일반 형 FLEE_COST');
+  const noForm = loadFunctions(['fleeCost'], { getForm: () => null, FLEE_COST: 3 });
+  assert.strictEqual(noForm.fleeCost(), 3, 'form 없음 안전 → FLEE_COST');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];

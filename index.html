@@ -12186,6 +12186,8 @@
   const CHALLENGE_MAX_CHANCE = 0.45;
   const CHALLENGE_MIN_LEVEL = 1;
   const FLEE_COST = 3;
+  // v244 — 물러남 비용 단일 진원. 速(風) 형은 무료(fleeFree) — 표시와 실제가 동일해야 함.
+  function fleeCost() { const f = getForm(); return (f && f.fleeFree) ? 0 : FLEE_COST; }
   let challenge = null;
   // v115 流逝 — 도전 그림자 자동 후퇴 (인내심 한계)
   let challengeTimer = null;
@@ -13411,7 +13413,7 @@
       compareBar +
       affBlock +
       verdict + '<br>' +
-      '<span style="opacity:0.6">도망 — 조각 ' + FLEE_COST + ' 잃음</span>';
+      '<span style="opacity:0.6">' + (fleeCost() === 0 ? '도망 — 무료 (風)' : '도망 — 조각 ' + fleeCost() + ' 잃음') + '</span>';
     shadowForm.classList.remove('cleaved', 'cleaved-split', 'cleaved-demon');  // v133
     slashLine.classList.remove('active');
     challengeSword.classList.remove('strike');
@@ -13668,8 +13670,7 @@
 
   function flee() {
     if (!challenge) return;
-    const f = getForm();
-    const cost = (f && f.fleeFree) ? 0 : FLEE_COST;
+    const cost = fleeCost();  // v244 단일 진원
     if (state.shards < cost) {
       log('조각 부족 — 물러날 수 없다', 'destroy');
       return;
