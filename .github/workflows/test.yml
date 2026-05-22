@@ -1,4 +1,4 @@
-# v366 — 자동 회귀 테스트 (분기점 net·merged-collection cluster·dial 잠금 등 207 테스트)
+# v366 — 자동 회귀 테스트 (분기점 net·merged-collection cluster·dial 잠금 등 218 테스트)
 name: tests
 on:
   push:
