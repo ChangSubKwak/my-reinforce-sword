@@ -13584,7 +13584,7 @@
       showSwordVoice('slay', state.level, slayShadowType);
       captureRubbing('firstSlay');  // v136 拓本 — 첫 슬레이
       // v34 一閃 결과 페이드 (의식) — v125 streak bonus 반영
-      inscribeQueue.push({ key: '斬', label: c.type.name + ' · 조각 +' + fmtNum(finalReward) + (slayBonusMul > 1 ? ' (連斬 ×' + slayBonusMul.toFixed(2) + ')' : '') });
+      inscribeQueue.push({ key: '斬', label: shadowTier(c.strength) + ' ' + c.type.name + ' · 조각 +' + fmtNum(finalReward) + (slayBonusMul > 1 ? ' (連斬 ×' + slayBonusMul.toFixed(2) + ')' : '') });  // v251b 影格 — 적의 위세 반영
       if (!inscribeRunning) runInscribeQueue();
       // 통계: type별 격파 수
       recordHourActivity();  // v195 時計
