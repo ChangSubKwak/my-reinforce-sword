@@ -16691,6 +16691,14 @@
     }).filter(Boolean).join('  ·  ');
     const allProgress = [progress, masteryProgress].filter(Boolean).join('  ·  ');
     if (allProgress) summary += '<br><span style="font-size:10px">' + allProgress + '</span>';
+    // v247c 性情 분포 — 컬렉션의 기질 구성 (개별 검 性情(v247)의 집계 차원)
+    const sealedAll = state.sealedSwords || [];
+    if (sealedAll.length >= 2) {
+      const dist = { '剛': 0, '靜': 0, '賭': 0, '和': 0 };
+      sealedAll.forEach(s => { dist[deriveTemperament(s).name]++; });
+      const tempStr = Object.keys(dist).filter(k => dist[k] > 0).map(k => k + ' ' + dist[k]).join('  ·  ');
+      summary += '<br><span style="font-size:10px;color:#a8c0d8;letter-spacing:2px">性情  ' + tempStr + '</span>';
+    }
     $('legacy-summary').innerHTML = summary;
   }
 
