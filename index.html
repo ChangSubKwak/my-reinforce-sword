@@ -18679,6 +18679,10 @@
 
   // 키보드 단축키
   document.addEventListener('keydown', (e) => {
+    // v370s — 텍스트 입력(검명/메모/일기/로그인/印/손님코드) 중에는 전역 단축키 비활성.
+    // 입력 핸들러가 stopPropagation을 안 해 'm'/'p' 타이핑이 음소거/방지권을 토글하던 버그.
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     if (e.key === ' ' || e.key === 'Enter') {
       // v370r — 모달(계보/회고/조합소/詩集/記錄/이름 등) 열림 중 Space/Enter가 enhance()를
       // 백그라운드로 발동해 의도치 않게 조각 소모·검 파괴되던 버그 차단. 도전(slay)/회수(rescue)는

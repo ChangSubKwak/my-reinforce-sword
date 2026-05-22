@@ -453,6 +453,15 @@ test('Space/Enter enhance는 모달 열림 중 차단됨 (v370r — 모달 중 �
   assert.match(body, /!modalOpen[\s\S]*enhance\(\)|modal\.active[\s\S]*enhance\(\)/, 'enhance()가 모달 가드로 보호됨');
 });
 
+test('전역 키보드 단축키가 텍스트 입력 중 비활성 (v370s — m/p 타이핑이 음소거/방지권 토글 방지)', () => {
+  // 입력 핸들러가 stopPropagation 안 해 document keydown으로 버블 → 'm'/'p' 타이핑이 toggleMute/
+  // 방지권 토글. document keydown 핸들러 진입부에서 INPUT/TEXTAREA 포커스 시 early return해야 함.
+  const m = js.match(/키보드 단축키\s*\n\s*document\.addEventListener\('keydown',\s*\(e\)\s*=>\s*\{([\s\S]{0,500})/);
+  assert.ok(m, '메인 단축키 keydown 핸들러');
+  assert.match(m[1], /tagName === 'INPUT'[\s\S]*tagName === 'TEXTAREA'/, '입력 포커스 시 전역 단축키 early return');
+  assert.match(m[1], /return;/, 'early return 존재');
+});
+
 test('UI 용어 일관성: 道를 로마자 "Dao"로 표기하지 않음 (한글/한자 톤, CLAUDE.md 영어 자제)', () => {
   // v370q — 게임오버 여정 텍스트가 한 화면에서 道(≥10/≥1 분기)와 'Dao'(≥5 분기)를 혼용하던
   // 불일치 수정. 한국어-조사 맥락의 로마자 道(Dao에/Dao를/Dao의)는 명백한 UI 문자열 → 재유입 차단.
