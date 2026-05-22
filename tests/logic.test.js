@@ -134,6 +134,17 @@ test('TABLE: 15단계(道까지) — MAX_LEVEL과 일치', () => {
   assert.strictEqual(T.length, 15, 'TABLE 길이 15 (현재 ' + T.length + ')');
 });
 
+// SHADOW_TYPES 가중치 합 = 1.0 (rollShadowType 확률 분포 보장 — CLAUDE.md 불변식)
+test('SHADOW_TYPES: 가중치 합 = 1.0', () => {
+  const js = readScript();
+  const m = js.match(/const SHADOW_TYPES = (\[[\s\S]*?\n  \]);/);
+  assert.ok(m, 'SHADOW_TYPES 정의');
+  const types = eval(m[1].replace(/\/\/[^\n]*/g, ''));
+  const sum = types.reduce((a, t) => a + (t.weight || 0), 0);
+  assert.ok(Math.abs(sum - 1.0) < 1e-9, '가중치 합 1.0이어야 함 (현재 ' + sum + ')');
+  assert.ok(types.length >= 4, '최소 4종 (normal/flee/steel/demon)');
+});
+
 // ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
