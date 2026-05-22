@@ -194,6 +194,11 @@ test('흔들림 차단 보호권 — shakeGuardCost()로 표시·실제 일원�
   assert.match(js, /shakeGuardCost\(challenge\.strength\)/, '도전 표시가 헬퍼 사용');
 });
 
+test('結界 하락 흡수 표시 — 靈石/餘香 동시 차단 시 흡수 0 (실제와 동일 조건)', () => {
+  // v245b: 結界+靈石/餘香 동시 활성 시 표시 하락%가 실제보다 부풀던 발산 수정.
+  assert.match(js, /sanctumActive && !useSpiritR && !echoBlockR/, '표시 흡수 조건이 spirit/echo 차단 반영');
+});
+
 test('모든 modal은 modal-close 또는 data-close 버튼 보유', () => {
   // 각 class="modal" 블록에 data-close 가 최소 1개 (대략적 검증)
   const modalCount = (html.match(/class="modal"/g) || []).length;

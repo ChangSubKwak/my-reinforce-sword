@@ -5709,8 +5709,12 @@
       : '';
     oddsSuccess.innerHTML = '성공률 ' + Math.round(showSuccess * 100) + '%' + freeNote +
       (breathStr ? '  <span style="color:#6a8a9a;font-size:10px">· ' + breathStr + '</span>' : '');
-    // v121 結界: 파괴가 차단되면 그 확률이 하락으로 흡수되어 표시
-    const sanctumAbsorbedShow = sanctumActive
+    // v121 結界: 파괴가 차단되면 그 확률이 하락으로 흡수되어 표시.
+    // v245b: 靈石/餘香影盾이 이미 파괴를 막으면 結界가 흡수할 파괴가 없음 — 실제 굴림과 동일 조건.
+    const spiritCkR = $('spirit-check');
+    const useSpiritR = spiritCkR && spiritCkR.checked && !spiritCkR.disabled && (state.spiritstones || 0) > 0;
+    const echoBlockR = !!(enhanceEcho && enhanceEcho.destroyBlock);
+    const sanctumAbsorbedShow = (sanctumActive && !useSpiritR && !echoBlockR)
       ? Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - (adversityReady ? 0.12 : 0) - getScarDestroyReduce()) * rsv.destroyMul)
       : 0;
     const showDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul) + sanctumAbsorbedShow;
