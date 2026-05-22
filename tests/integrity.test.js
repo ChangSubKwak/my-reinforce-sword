@@ -39,6 +39,15 @@ test('성공률 분해가 successChanceNow의 즉시/검별 성공원도 표시 
     assert.ok(body.includes(src), '성공 분해에 ' + src + ' 출처 누락'));
 });
 
+test('砥 라벨 +N% == successChanceNow whetBonus (3중 하드코딩 drift 방지)', () => {
+  // "+25%"가 정적 HTML·render JS·successChanceNow(0.25) 세 곳에 하드코딩 → 한쪽 변경 시 표시≠실제.
+  const m = js.match(/whetBonus\s*=\s*useWhet\s*\?\s*(0?\.\d+)/);
+  assert.ok(m, 'successChanceNow의 whetBonus 정의');
+  const pct = Math.round(parseFloat(m[1]) * 100);
+  assert.ok(html.includes('성공 +' + pct + '%'), '정적 HTML 砥 라벨이 +' + pct + '% 와 일치');
+  assert.ok(js.includes('(성공 +' + pct + '%)'), 'render JS 砥 라벨이 +' + pct + '% 와 일치');
+});
+
 test('조합소 레시피 표시 비용 == recipes 객체 cost (하드코딩 drift 방지)', () => {
   // HTML 레시피 라벨의 "조각 N"이 recipes[key].cost와 일치해야 함 — 둘 다 하드코딩이라 drift 위험.
   const pairs = [...html.matchAll(/<small>조각 (\d+)[^<]*<\/small><\/div>\s*<button class="recipe-btn" data-recipe="(\w+)"/g)]
