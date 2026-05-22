@@ -414,3 +414,16 @@ test('SVG url(#id) 참조가 정의된 id를 가리킴 (그라데이션/필터 �
   for (const m of html.matchAll(/url\(#([^)\s"']+)\)/g)) if (!ids.has(m[1])) broken.push(m[1]);
   assert.deepStrictEqual([...new Set(broken)], [], '정의 안 된 SVG id 참조(그라데이션/필터 미적용): ' + [...new Set(broken)].join(', '));
 });
+
+test('봉인 push가 로직 의존 sword 필드를 모두 보존 (v313-315 류 field-drop 방지)', () => {
+  // records(computeRecords)·achievements(HIDDEN_ACHIEVEMENTS)·duel(duelPower)이 읽는 검 필드는
+  // 봉인 시 반드시 보존돼야 함 — 누락 시 기록 미집계/성취 획득불가·오발동 발생.
+  const i = js.indexOf('state.sealedSwords.push({');
+  assert.ok(i >= 0, 'doSeal push 존재');
+  let s = js.indexOf('{', i), d = 0, end = -1;
+  for (let j = s; j < js.length; j++) { const c = js[j]; if (c === '{') d++; else if (c === '}') { d--; if (d === 0) { end = j; break; } } }
+  const body = js.slice(s, end + 1);
+  const reads = ['inscriptions', 'level', 'protectsUsed', 'scars', 'slainCount', 'soul', 'stars', 'enhanceAttempts', 'beads'];
+  const missing = reads.filter(f => !new RegExp('\\b' + f + '\\s*[:,]').test(body));
+  assert.deepStrictEqual(missing, [], '봉인 검에 미보존된 로직 의존 필드: ' + missing.join(', '));
+});
