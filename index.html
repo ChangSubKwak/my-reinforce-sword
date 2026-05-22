@@ -16955,7 +16955,11 @@
     if (sealedCount > 0 && typeof generatePlayerTitle === 'function') {
       summary += '<div style="color:var(--accent);letter-spacing:3px;font-size:11px;margin-bottom:6px;opacity:0.9">' + generatePlayerTitle() + ' · ' + sealedCount + '자루의 검을 남기다</div>';
     }
-    summary += '선대의 강기 ' + legacyStrength() + ' · 시작 +' + startBonus();
+    // v348 — '시작 +M'은 다음 검의 실제 시작 강화도. newSword와 동일 공식(startBonus + 시련
+    // 시작보너스, MAX_LEVEL-1 clamp)이어야 함. 기존엔 startBonus()만 보여 검선의 길(시련) 해금 시
+    // 실제(+1)보다 낮게 예고했다.
+    const nextStartLv = Math.min(MAX_LEVEL - 1, startBonus() + trialStartLevelBonus());
+    summary += '선대의 강기 ' + legacyStrength() + ' · 시작 +' + nextStartLv;
     if (active.length) {
       // v106 合: 활성 유파에 마스터리 단계 표시
       const schoolDisplay = active.map(f => {
