@@ -18146,7 +18146,7 @@
     // 검사: 현재 검 / 봉인 검 중 어디에 새겨졌는지
     const currentIns = (state.hasSword && state.currentSword.inscriptions) || [];
     const allEverEarned = new Set(currentIns);
-    state.sealedSwords.forEach(s => (s.inscriptions || []).forEach(k => allEverEarned.add(k)));
+    (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => (s.inscriptions || []).forEach(k => allEverEarned.add(k)));  // v351 — 殿堂 검 명문도 '획득'에 집계 (v350 merged-collection류)
 
     const list = INSCRIPTIONS.map(ins => {
       const earned = allEverEarned.has(ins.key);
@@ -18305,7 +18305,7 @@
     // v76 형 분포 차트
     const formCounts = { '直': 0, '曲': 0, '重': 0, '速': 0 };
     const formNames = { '直': '곧은', '曲': '굽은', '重': '무거운', '速': '빠른' };
-    state.sealedSwords.forEach(sw => {
+    (state.sealedSwords || []).concat(state.enshrined || []).forEach(sw => {  // v351 — 殿堂 검도 형 분포에 집계
       if (sw.form && formCounts[sw.form] !== undefined) formCounts[sw.form]++;
     });
     const totalForms = Object.values(formCounts).reduce((a, b) => a + b, 0);
@@ -18331,7 +18331,7 @@
     const forms = ['直', '曲', '重', '速'];
     const suffixes = NAME_SUFFIX.map(s => s.word); // 道/魔/本/剛/覺/古/久
     const collectedNames = new Set();
-    state.sealedSwords.forEach(s => {
+    (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => {  // v351 — 殿堂 검명도 컬렉션 집계
       // 자동 검명 재계산 (form + 정점 명문)
       if (s.form && s.inscriptions) {
         for (const def of NAME_SUFFIX) {
