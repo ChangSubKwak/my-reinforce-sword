@@ -397,6 +397,40 @@ test('successChanceNow: [0,1] 클램프', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v92 融劍 — fusionPreview 계승 규칙 (강한 형·최우선 명문·혼 평균·시작 강화)
+// ─────────────────────────────────────────────────────────────
+(function () {
+  const FUSION_PRIORITY = extractConst('FUSION_PRIORITY');
+  function preview(swords, selected, legacyTotal) {
+    return loadFunctions(['fusionPreview'], {
+      fusionSelected: selected, state: { sealedSwords: swords },
+      FUSION_PRIORITY, legacyStrength: () => legacyTotal,
+      START_BONUS_CAP: 6, START_BONUS_DIVISOR: 25, trialStartLevelBonus: () => 0, MAX_LEVEL: 15,
+    }).fusionPreview();
+  }
+  const A = { level: 5, form: '直', soul: 10, inscriptions: ['本'] };
+  const B = { level: 10, form: '曲', soul: 15, inscriptions: ['道'] };
+
+  test('fusionPreview: 강한 검(높은 강화도)의 형 계승', () => {
+    assert.strictEqual(preview([A, B], [0, 1], 100).form, '曲', 'B(+10)가 A(+5)보다 강함');
+  });
+  test('fusionPreview: 최우선 명문 계승 (道 > 本)', () => {
+    assert.strictEqual(preview([A, B], [0, 1], 100).inscription, '道', 'FUSION_PRIORITY 순서');
+  });
+  test('fusionPreview: 혼 평균 floor', () => {
+    assert.strictEqual(preview([A, B], [0, 1], 100).soul, 12, 'floor((10+15)/2)');
+  });
+  test('fusionPreview: 시작 강화 = 두 검 제거 후 강기로 재계산', () => {
+    // legacyStrength 100, 잃는 강기 5+10=15 → 잔여 85 → floor(85/25)=3
+    assert.strictEqual(preview([A, B], [0, 1], 100).startLevel, 3);
+  });
+  test('fusionPreview: 2검 선택 아니면 null', () => {
+    assert.strictEqual(preview([A, B], [0], 100), null);
+    assert.strictEqual(preview([A, B], [], 100), null);
+  });
+})();
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
