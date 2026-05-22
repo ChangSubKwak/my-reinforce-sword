@@ -62,6 +62,17 @@ test('sealRewardBase: 七星 ×1.5 중첩', () => {
   assert.strictEqual(sealBaseFns.sealRewardBase(12, ['七星'], false), Math.floor(base * 1.5));
 });
 
+test('sealRewardBase: opts.steps 방출 — 분해 표시 단일 진원 (v274)', () => {
+  // 분해 표시가 별도 하드코딩 없이 sealRewardBase 자체 단계를 쓰도록 보장.
+  const steps = [];
+  const r = sealBaseFns.sealRewardBase(15, ['道', '七星'], true, { steps });
+  assert.ok(steps.length >= 3, '단계 ≥3 (기본+道+七星)');
+  assert.strictEqual(steps[0].base, sealBaseFns.sealReward(15), 'steps[0]은 기본 sealReward');
+  assert.ok(steps.some(s => s.mul === 1.5), '道/七星 ×1.5 단계 존재');
+  // steps 없이 호출하면 동일 결과 (방출이 계산을 바꾸지 않음)
+  assert.strictEqual(r, sealBaseFns.sealRewardBase(15, ['道', '七星'], true), 'steps 유무가 결과 불변');
+});
+
 // ─────────────────────────────────────────────────────────────
 // v244 連斬 — 베기 보상 단일 진원 slayGrantAmount (streak 배수)
 // ─────────────────────────────────────────────────────────────

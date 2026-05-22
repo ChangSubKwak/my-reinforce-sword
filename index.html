@@ -10502,6 +10502,22 @@
     }
     sections.push(section('강화 비용 요인', costLines));
 
+    // 1d. 봉인 보상 요인 (sealRewardBase가 직접 단계 방출 — 단일 진원, drift 없음)
+    const sealLines = [];
+    if (state.hasSword && typeof sealRewardBase === 'function' && state.level >= (typeof SEAL_MIN_LEVEL !== 'undefined' ? SEAL_MIN_LEVEL : 3)) {
+      const ins = (state.currentSword && state.currentSword.inscriptions) || [];
+      const steps = [];
+      const base = sealRewardBase(state.level, ins, ins.includes('道'), { steps });
+      steps.forEach((st, i) => {
+        if (i === 0) sealLines.push(line(st.label, fmtNum(st.base) + ' 조각', 'var(--dim)'));
+        else sealLines.push(line(st.label, mul(st.mul), 'var(--accent)'));
+      });
+      const finalReward = (typeof sealRewardDisplay === 'function') ? sealRewardDisplay(state.level, ins, ins.includes('道')) : base;
+      if (finalReward !== base) sealLines.push(line('共鳴/잔향', '→ ' + fmtNum(finalReward) + ' 조각', 'var(--accent)'));
+      sealLines.push(line('실제 봉인 보상', fmtNum(finalReward) + ' 조각', 'var(--accent)'));
+    }
+    sections.push(section('봉인 보상 요인', sealLines));
+
     // 2. 활성 charges (1회용)
     const chargeLines = [];
     if (state.metsumaoCharges > 0) chargeLines.push(line('滅魔 (다음 슬레이 ×1.5)', '×' + state.metsumaoCharges));
@@ -15735,18 +15751,25 @@
   // v242 — 봉인 보상 단일 진원. 표시 버튼·다음보상·명명 미리보기·실제 grant(doSeal)가
   // 동일 결정적 배수를 공유 → 라벨이 실제 금액과 일치. 銀河(ginha ×2, 휘발성 소비) +
   // 雙銘 지속효과는 doSeal에서만 적용 (휘발성/부작용이라 미리보기에서 제외).
-  function sealRewardBase(lv, ins, isWay) {
+  function sealRewardBase(lv, ins, isWay, opts) {
     ins = ins || [];
+    const steps = opts && opts.steps;  // v274 — 분해 표시용 단계 수집 (단일 진원)
     let reward = sealReward(lv);
-    if (isWay || ins.includes('道')) reward = Math.floor(reward * 1.5);
-    reward = Math.floor(reward * schoolSealMul());
-    reward = Math.floor(reward * getSeason().sealMul);
-    reward = Math.floor(reward * beastSealMul());  // v261 四神 青龍 — 봉인 보상 +3%
-    reward = Math.floor(reward * solarSealMul());  // v263 節氣 — 立秋/秋分 봉인 보너스
-    if (ins.includes('古')) reward = Math.floor(reward * 1.10);
-    else if (ins.includes('久')) reward = Math.floor(reward * 1.05);
-    if (ins.includes('七星')) reward = Math.floor(reward * 1.5);  // v116 七星
-    reward = Math.floor(reward * generationSealMul());  // v123 系譜
+    if (steps) steps.push({ label: '기본 (+' + lv + ')', base: reward });
+    const step = (label, mul, cond) => {
+      if (cond === false) return;
+      reward = Math.floor(reward * mul);  // mul===1이어도 floor 유지(기존 동작)
+      if (steps && mul !== 1) steps.push({ label: label, mul: mul });
+    };
+    step('道 (정점)', 1.5, (isWay || ins.includes('道')));
+    step('유파 重流', schoolSealMul());
+    step('季節', getSeason().sealMul);
+    step('四神 青龍', beastSealMul());  // v261
+    step('節氣', solarSealMul());       // v263
+    if (ins.includes('古')) step('노쇠 古', 1.10);
+    else if (ins.includes('久')) step('노쇠 久', 1.05);
+    if (ins.includes('七星')) step('七星', 1.5);  // v116
+    step('系譜', generationSealMul());  // v123
     return reward;
   }
   // 雙銘 공명의 보상 배수만(지속효과·발견기록·announce 제외) — 미리보기 전용.
