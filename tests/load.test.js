@@ -36,6 +36,25 @@ test('load(): 신규 컬렉션 배열/객체 타입 방어 존재', () => {
   guards.forEach((re, i) => assert.match(js, re, '가드 #' + i + ' 누락'));
 });
 
+test('load(): 배열로 순회되는 모든 state 필드는 normalizeState 가드 보유 (손상 import 크래시 방지, 구조적)', () => {
+  // 고정 리스트(위 테스트) 대신 소스에서 배열 순회 필드를 추출해 가드 존재를 강제 —
+  // 새 배열 state 필드를 render에서 .forEach하면서 가드를 빠뜨리면 손상된 클라우드/백업
+  // import가 문자열을 넣었을 때 render가 throw. 자동 차단(리스트 갱신 불필요).
+  const nm = js.match(/function normalizeState\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(nm, 'normalizeState 본문');
+  const body = nm[1];
+  // state.X.(forEach|map|slice|filter|reduce|some|every|join) — 최상위 배열 필드만 (nested 제외)
+  const iterated = new Set();
+  let m; const re = /\bstate\.([a-zA-Z]+)\.(?:forEach|map|slice|filter|reduce|some|every|join)\b/g;
+  while ((m = re.exec(js))) iterated.add(m[1]);
+  const unguarded = [...iterated].filter(f => {
+    // Array.isArray(state.f) 또는 state.f...length 가드가 normalizeState에 있어야 함
+    return !new RegExp('Array\\.isArray\\(state\\.' + f + '\\)').test(body)
+        && !new RegExp('state\\.' + f + '\\b[\\s\\S]{0,30}?length').test(body);
+  });
+  assert.deepStrictEqual(unguarded, [], '배열 순회되나 normalizeState 가드 없는 필드(손상 import 크래시 위험): ' + unguarded.join(', '));
+});
+
 test('load(): 핵심 배열 (sealedSwords/enshrined/recentLog) 타입 보정', () => {
   assert.match(js, /Array\.isArray\(state\.sealedSwords\)/);
   assert.match(js, /Array\.isArray\(state\.enshrined\)/);
