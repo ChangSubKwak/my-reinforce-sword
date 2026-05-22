@@ -13923,7 +13923,7 @@
     state.dailyCompletedCount = (state.dailyCompletedCount || 0) + 1;
     const reward = 40 + ch.target * 8;
     state.shards += reward;
-    log('天時 — 「' + ch.label + '」 달성! 조각 +' + reward, 'success');
+    log('天時 — 「' + ch.label + '」 달성! 조각 +' + fmtNum(reward), 'success');
     if (typeof announceInscription === 'function') {
       announceInscription('天時', ch.label + ' 달성 — 누적 ' + state.dailyCompletedCount + '회');
     }
@@ -13955,7 +13955,7 @@
       +   '<span style="color:var(--dim);font-size:11px;min-width:48px;text-align:right">' + prog + ' / ' + ch.target + '</span>'
       + '</div>'
       + '<div style="text-align:center;font-size:10px;color:var(--dim);letter-spacing:2px;margin-top:8px">'
-      +   (done ? '<span style="color:var(--safe)">완료 — 조각 +' + reward + ' 획득</span>' : '보상: 조각 +' + reward)
+      +   (done ? '<span style="color:var(--safe)">완료 — 조각 +' + fmtNum(reward) + ' 획득</span>' : '보상: 조각 +' + fmtNum(reward))
       + '</div>';
   }
 
