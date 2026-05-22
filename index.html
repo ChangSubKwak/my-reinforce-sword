@@ -7626,7 +7626,13 @@
     const sword = decodeSwordCode(code);
     if (!sword) { log('客劍 — 잘못된 코드', 'warn'); return; }
     if (!state.guestSwords) state.guestSwords = [];
-    // 중복 방지 (같은 코드)
+    // 중복 방지 (같은 코드) — 이미 맞이한 검이면 무시
+    if (state.guestSwords.some(g => g.code === code)) {
+      log('客劍 — 이미 맞이한 검', 'warn');
+      ta.value = '';
+      return;
+    }
+    sword.code = code;
     sword.importedAt = Date.now();
     state.guestSwords.unshift(sword);
     if (state.guestSwords.length > 30) state.guestSwords = state.guestSwords.slice(0, 30);
