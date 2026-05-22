@@ -908,3 +908,14 @@ test('decodeSwordCode: 잘못된 입력은 null (prefix/base64/JSON/필수필드
   assert.strictEqual(decodeFns.decodeSwordCode(mkCode({ n: 'x', f: '直' })), null, 'l/i 누락 (l 숫자 아님)');
   assert.strictEqual(decodeFns.decodeSwordCode(mkCode({ l: 5, i: 'notarray' })), null, 'i가 배열 아님');
 });
+
+test('breathBonus: 呼吸 임계 잠금 (첫/60s+/20s+/8s+/그외 — v17 dial)', () => {
+  const at = (lastEnhanceTime) => loadFunctions(['breathBonus'], { lastEnhanceTime }).breathBonus();
+  assert.strictEqual(at(0), 0.10, '첫 강화(falsy) = 최대 0.10');
+  assert.strictEqual(at(null), 0.10, 'null = 최대 0.10');
+  const now = Date.now();
+  assert.strictEqual(at(now - 65000), 0.10, '60s+ = 0.10 (깊은 호흡)');
+  assert.strictEqual(at(now - 25000), 0.05, '20~60s = 0.05 (호흡)');
+  assert.strictEqual(at(now - 10000), 0.02, '8~20s = 0.02 (얕은 호흡)');
+  assert.strictEqual(at(now - 3000), 0, '<8s = 0');
+});
