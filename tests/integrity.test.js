@@ -484,3 +484,22 @@ test('v347: rollOmen(占卜 예측)이 실제 굴림과 동일 파괴 임계 사
   assert.match(body, /failRoll < effectiveDestroy\)/, 'rollOmen 파괴 임계는 실제 굴림과 동일한 plain effectiveDestroy');
   assert.doesNotMatch(body, /effectiveDestroy\s*\//, 'effectiveDestroy를 나누면 안 됨(이중변환 — 占卜 거짓양성)');
 });
+
+test('v349b: 覺悟(RESOLVE) 라벨·desc가 상수와 일치 (하드코딩 drift 방지 — 砥 라벨/레시피 비용류)', () => {
+  // aria-label(정적 HTML)과 desc(객체, #resolve-desc에 표시)가 successAdd/destroyMul/costMul을
+  // 하드코딩 → 상수 변경 시 표시≠실제. 정적 HTML은 보간 불가하므로 테스트로 잠근다.
+  const val = (key, field) => {
+    const m = js.match(new RegExp(key + ':\\s*\\{[^}]*\\b' + field + ':\\s*(-?[0-9.]+)'));
+    assert.ok(m, 'RESOLVE.' + key + '.' + field + ' 추출');
+    return parseFloat(m[1]);
+  };
+  const fSucc = val('focus', 'successAdd'), fDes = val('focus', 'destroyMul');
+  const gSucc = val('guard', 'successAdd'), gCost = val('guard', 'costMul');
+  // 一心 (focus): 성공 +8%, 파괴 1.5배 — aria + desc 모두
+  assert.ok(html.includes('성공 +' + Math.round(fSucc * 100) + '%'), '一心 성공 라벨 == successAdd(' + fSucc + ')');
+  assert.ok(html.includes('파괴 ' + fDes + '배'), '一心 파괴 라벨 == destroyMul(' + fDes + ')');
+  assert.ok(js.includes('성공 +' + Math.round(fSucc * 100) + '%'), '一心 desc 성공 == successAdd');
+  // 保身 (guard): 성공 -10%, 비용 1.5배
+  assert.ok(html.includes('성공 ' + Math.round(gSucc * 100) + '%'), '保身 성공 라벨 == successAdd(' + gSucc + ')');
+  assert.ok(html.includes('비용 ' + gCost + '배'), '保身 비용 라벨 == costMul(' + gCost + ')');
+});
