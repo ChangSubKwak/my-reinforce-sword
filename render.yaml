@@ -5,7 +5,7 @@ services:
     name: my-reinforce-sword
     runtime: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm ci   # v333 lockfile 커밋 후 — 결정적 설치(lockfile 정확 재현, range 재해석 안 함)
     startCommand: npm start
     healthCheckPath: /
     envVars:
