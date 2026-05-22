@@ -10575,6 +10575,7 @@
     if (state.hasSword && state.currentSword) {
       const cs = state.currentSword;
       swordLines.push(line('형', cs.form || '無'));
+      if (typeof deriveTemperament === 'function') { const tmp = deriveTemperament(cs); if (tmp.key !== 'wa') swordLines.push(line('性情 (기질)', tmp.name)); }
       swordLines.push(line('강화도', '+' + state.level));
       swordLines.push(line('영혼', (cs.soul || 0) + ' / 100'));
       if (cs.scars) swordLines.push(line('흉터', cs.scars + ' / 3'));
