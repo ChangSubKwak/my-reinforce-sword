@@ -19,7 +19,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .npm/
-package-lock.json
+# package-lock.json — v333: 앱은 lockfile을 커밋(재현 가능·공급망 고정 배포). 무시하지 않음.
 
 # Env
 .env
