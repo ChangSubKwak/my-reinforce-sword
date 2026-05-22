@@ -236,6 +236,23 @@ test('getAgeEffect: 古(×1.10)·久(×1.05)·무명(×1), 古 우선', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v245k activityByDate 무한 성장 방지 (최근 120일 cap)
+// ─────────────────────────────────────────────────────────────
+test('recordActivityDate: 120일 초과 시 가장 오래된 항목 정리', () => {
+  const activityByDate = {};
+  for (let i = 0; i < 130; i++) {
+    const d = '2020-' + String((i % 12) + 1).padStart(2, '0') + '-' + String((i % 28) + 1).padStart(2, '0') + '#' + i;
+    activityByDate[d] = 1;
+  }
+  const st = { activityByDate };
+  const fns = loadFunctions(['recordActivityDate'], { state: st, todayStr: () => '2099-12-31' });
+  fns.recordActivityDate();
+  const keys = Object.keys(st.activityByDate);
+  assert.ok(keys.length <= 120, '120 이하로 정리 (현재 ' + keys.length + ')');
+  assert.strictEqual(st.activityByDate['2099-12-31'], 1, '오늘 항목은 유지');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];

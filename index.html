@@ -7258,6 +7258,12 @@
     if (!state.activityByDate) state.activityByDate = {};
     const today = todayStr();  // v245h 로컬 날짜 (캘린더 키 = 로컬 일자)
     state.activityByDate[today] = (state.activityByDate[today] || 0) + 1;
+    // v245k — 무한 성장 방지 (캘린더는 당월만 표시 · 클라우드 동기화 대상): 최근 120일만 유지
+    const keys = Object.keys(state.activityByDate);
+    if (keys.length > 120) {
+      keys.sort();  // 'YYYY-MM-DD' 사전순 = 시간순
+      for (let i = 0; i < keys.length - 120; i++) delete state.activityByDate[keys[i]];
+    }
   }
   function renderCalendar() {
     const now = new Date();
