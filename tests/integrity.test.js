@@ -429,6 +429,19 @@ test('SVG url(#id) 참조가 정의된 id를 가리킴 (그라데이션/필터 �
   assert.deepStrictEqual([...new Set(broken)], [], '정의 안 된 SVG id 참조(그라데이션/필터 미적용): ' + [...new Set(broken)].join(', '));
 });
 
+test('모든 $("id") DOM 참조가 존재하는 id를 가리킴 (오타→null-deref render 깨짐 방지)', () => {
+  // ref-integrity 가족(var(--x)/aria/url(#id))의 DOM-요소 짝. $("foo").textContent에서 foo가
+  // 없으면 null-deref로 render throw. 정적/innerHTML-문자열/동적(.id=, setAttribute) id 모두 수집.
+  const ids = new Set();
+  for (const m of html.matchAll(/id="([^"]+)"/g)) ids.add(m[1]);       // 정적 + innerHTML 문자열 내 id="..."
+  for (const m of js.matchAll(/id="([^"]+)"/g)) ids.add(m[1]);          // js 문자열 내 id="..."
+  for (const m of js.matchAll(/\.id\s*=\s*["']([^"']+)["']/g)) ids.add(m[1]);  // el.id = 'x'
+  for (const m of js.matchAll(/setAttribute\(["']id["'],\s*["']([^"']+)["']\)/g)) ids.add(m[1]);
+  const missing = new Set();
+  for (const m of js.matchAll(/\$\(["']([a-zA-Z][\w-]*)["']\)/g)) if (!ids.has(m[1])) missing.add(m[1]);
+  assert.deepStrictEqual([...missing], [], '존재하지 않는 id를 $()로 참조(null-deref 위험): ' + [...missing].join(', '));
+});
+
 test('봉인·殿堂 push가 로직/표시 의존 sword 필드를 모두 보존 (v313-315/v344 류 field-drop 방지)', () => {
   // records(computeRecords)·achievements(HIDDEN_ACHIEVEMENTS)·duel(duelPower)이 읽는 로직 필드 +
   // SVG/회고/血統/時生이 읽는 표시 필드는 봉인 시 반드시 보존돼야 함. 누락 시 기록 미집계·성취
