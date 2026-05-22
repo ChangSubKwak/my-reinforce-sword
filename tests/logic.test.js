@@ -324,6 +324,44 @@ test('enhanceCost: floor 옵션은 保身(resolve costMul) 가산 무시', () =>
 });
 
 // ─────────────────────────────────────────────────────────────
+// v241 effectiveDestroyChance — 파괴 확률 단일 진원 행동 테스트
+// ─────────────────────────────────────────────────────────────
+function makeDestroyChance(deps) {
+  const base = {
+    TABLE: [{ destroy: 0.20 }],
+    $: () => null,  // 靈石 체크박스 없음
+    state: { spiritstones: 0 },
+    enhanceEcho: null, sanctumBlocksDestroy: () => false,
+    getForm: () => ({}), getResolve: () => ({ destroyMul: 1 }),
+    schoolDestroyReduce: () => 0, guardianBonus: () => ({ destroyReduce: 0 }),
+    adversityReady: false, getScarDestroyReduce: () => 0,
+    weatherDestroyReduce: () => 0, wishDestroyReduce: () => 0,
+  };
+  return loadFunctions(['effectiveDestroyChance'], Object.assign(base, deps || {})).effectiveDestroyChance;
+}
+test('effectiveDestroyChance: destroy 0인 단계는 0', () => {
+  assert.strictEqual(makeDestroyChance({ TABLE: [{ destroy: 0 }] })(0), 0);
+  assert.strictEqual(makeDestroyChance()(9), 0, 'TABLE[9] 없음 → 0');
+});
+test('effectiveDestroyChance: 차단(靈石/잔향影盾/結界) 시 0', () => {
+  const spiritOn = { $: () => ({ checked: true, disabled: false }), state: { spiritstones: 1 } };
+  assert.strictEqual(makeDestroyChance(spiritOn)(0), 0, '靈石 차단');
+  assert.strictEqual(makeDestroyChance({ enhanceEcho: { destroyBlock: true } })(0), 0, '잔향 影盾');
+  assert.strictEqual(makeDestroyChance({ sanctumBlocksDestroy: () => true })(0), 0, '結界');
+});
+test('effectiveDestroyChance: 감소항 합산 + 형 + 역경 + Math.max(0)', () => {
+  assert.ok(Math.abs(makeDestroyChance()(0) - 0.20) < 1e-9, '기본 0.20');
+  assert.ok(Math.abs(makeDestroyChance({ getForm: () => ({ destroyReduce: 0.03 }) })(0) - 0.17) < 1e-9, '曲 -3%');
+  assert.ok(Math.abs(makeDestroyChance({ adversityReady: true })(0) - 0.08) < 1e-9, '역경 -12%');
+  // 감소항이 destroy를 초과해도 음수 안 됨
+  assert.strictEqual(makeDestroyChance({ schoolDestroyReduce: () => 0.5 })(0), 0, 'Math.max(0)');
+});
+test('effectiveDestroyChance: 覺悟 destroyMul (一心 1.5배 / 保身 0)', () => {
+  assert.ok(Math.abs(makeDestroyChance({ getResolve: () => ({ destroyMul: 1.5 }) })(0) - 0.30) < 1e-9, '一心 1.5배');
+  assert.strictEqual(makeDestroyChance({ getResolve: () => ({ destroyMul: 0 }) })(0), 0, '保身 0배');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
