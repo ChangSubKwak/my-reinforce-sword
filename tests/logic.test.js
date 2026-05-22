@@ -569,6 +569,10 @@ const lw = s => lwFns.generateLastWords(s);
 test('generateLastWords: 道 검은 전용 유언', () => {
   assert.strictEqual(lw({ inscriptions: ['道'], slainCount: 5, level: 15 }), '나는 도(道)를 보았다. 그것으로 족하다.');
 });
+test('generateLastWords: 龍斬(용 격파) 전용 1인칭 유언, 단 道가 우선 (v370j)', () => {
+  assert.strictEqual(lw({ inscriptions: ['龍斬'], slainCount: 5, level: 15 }), '용(龍)을 베었으니, 여한이 없다.');
+  assert.strictEqual(lw({ inscriptions: ['道', '龍斬'], level: 15 }), '나는 도(道)를 보았다. 그것으로 족하다.', '道가 龍斬보다 우선');
+});
 test('generateLastWords: 性情별 유언 (剛/靜/賭/和)', () => {
   assert.ok(lw({ slainCount: 5, level: 5 }).length > 0, '剛 유언');
   assert.ok(lw({ scars: 2, level: 4 }).includes('부서지지') || lw({ scars: 2, level: 4 }).includes('지켜냈다'), '靜 유언');

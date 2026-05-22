@@ -14985,6 +14985,7 @@
     if (!sword) return '';
     const ins = sword.inscriptions || [];
     if (ins.includes('道')) return '나는 도(道)를 보았다. 그것으로 족하다.';
+    if (ins.includes('龍斬')) return '용(龍)을 베었으니, 여한이 없다.';  // v370j 名 정점 무훈 — 검의 1인칭 회한
     const byTemp = {
       gang: ['더 벨 그림자가 남았으나, 이제 칼을 거둔다.', '나아감을 멈추지 않았다 — 그것이 나의 길이었다.'],
       jeong: ['부서지지 않았으니, 그것으로 충분하다.', '지켜냈다. 흉터는 자랑이 아니라 증거다.'],
