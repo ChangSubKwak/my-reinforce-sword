@@ -387,3 +387,13 @@ test('초기화(btn-reset)는 reload 사용 — in-place state 리터럴 drift �
   assert.match(m[0], /location\.reload\(\)/, 'reset은 location.reload() 사용');
   assert.ok(!/state = \{[\s\S]*?shards: 50/.test(m[0]), 'in-place 대형 state 리터럴 없어야 (drift 원인)');
 });
+
+test('정의되지 않은 CSS 변수 참조 없음 (var(--x) 오타/누락 방지, v305)', () => {
+  const css = (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+  const defined = new Set();
+  for (const m of css.matchAll(/(--[\w-]+)\s*:/g)) defined.add(m[1]);
+  for (const m of html.matchAll(/(--[\w-]+)\s*:/g)) defined.add(m[1]); // 인라인 style 정의 포함
+  const missing = new Set();
+  for (const m of html.matchAll(/var\((--[\w-]+)/g)) if (!defined.has(m[1])) missing.add(m[1]);
+  assert.deepStrictEqual([...missing], [], '정의 안 된 CSS 변수 참조(폴백되어 의도색 미적용): ' + [...missing].join(', '));
+});
