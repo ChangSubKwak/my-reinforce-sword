@@ -1343,6 +1343,53 @@ test('단일 게이트 dial 잠금 (蝕/주말/사방신/변이/七寶/雷 — �
   assert.strictEqual(weather(false), 0, '평시 → +0');
 });
 
+test('世代(generation) 보너스 합성 잠금 (누적 임계 필터 + 가산 successBonus / 곱셈 slay·seal)', () => {
+  const GENERATIONS = extractConst('GENERATIONS');
+  const at = (gen) => loadFunctions(
+    ['generationSuccessBonus', 'generationSlayMul', 'generationSealMul', 'getGenerationMilestones'],
+    { GENERATIONS, state: { swordGeneration: gen } }
+  );
+  let f = at(0);
+  assert.strictEqual(f.generationSuccessBonus(), 0, 'gen0 → 성공 +0');
+  assert.strictEqual(f.generationSlayMul(), 1, 'gen0 → slay ×1');
+  assert.strictEqual(f.generationSealMul(), 1, 'gen0 → seal ×1');
+  f = at(10);
+  assert.strictEqual(f.generationSuccessBonus(), 0.01, 'gen10 百鍊宗 → +1%');
+  f = at(25);
+  assert.strictEqual(f.generationSealMul(), 1.05, 'gen25 千鍛士 → seal ×1.05');
+  assert.strictEqual(f.generationSuccessBonus(), 0.01, 'gen25 → 누적 성공 여전히 +1% (g25엔 successBonus 없음)');
+  f = at(50);
+  assert.strictEqual(Math.round(f.generationSuccessBonus() * 100) / 100, 0.02, 'gen50 → g10+g50 가산 +2%');
+  assert.strictEqual(f.generationSealMul(), 1.05, 'gen50 → seal 여전히 ×1.05');
+  f = at(100);
+  assert.strictEqual(f.generationSlayMul(), 1.10, 'gen100 百代仙 → slay ×1.10');
+  assert.strictEqual(Math.round(f.generationSuccessBonus() * 100) / 100, 0.02, 'gen100 → 가산 성공 +2%');
+  assert.strictEqual(f.generationSealMul(), 1.05, 'gen100 → seal ×1.05');
+});
+
+test('四方神(beast) 보너스 키-라우팅 잠금 (각 헬퍼가 자기 신수만 — 교차배선 방지)', () => {
+  // 4 헬퍼가 서로 다른 신수(suzaku/byakko/seiryu/genbu)를 읽음. 한 신수만 해방하고
+  // 그 헬퍼만 발동하는지(나머지는 기본값) 확인 → 키 오라우팅(분기점) 차단.
+  const only = (unlocked) => loadFunctions(
+    ['beastSuccessBonus', 'beastRescueSec', 'beastSealMul', 'beastChallengeMul', 'beastUnlocked'],
+    { state: { beastsUnlocked: { [unlocked]: true } } }
+  );
+  let f = only('suzaku');
+  assert.strictEqual(f.beastSuccessBonus(), 0.01, '朱雀 → 성공 +1%');
+  assert.strictEqual(f.beastRescueSec(), 0, '朱雀만 해방 → 회수 0');
+  assert.strictEqual(f.beastSealMul(), 1, '朱雀만 해방 → seal ×1');
+  assert.strictEqual(f.beastChallengeMul(), 1, '朱雀만 해방 → 도전 ×1');
+  f = only('byakko');
+  assert.strictEqual(f.beastRescueSec(), 0.5, '白虎 → 회수 +0.5s');
+  assert.strictEqual(f.beastSuccessBonus(), 0, '白虎만 → 성공 0');
+  f = only('seiryu');
+  assert.strictEqual(f.beastSealMul(), 1.03, '靑龍 → seal ×1.03');
+  assert.strictEqual(f.beastSuccessBonus(), 0, '靑龍만 → 성공 0');
+  f = only('genbu');
+  assert.strictEqual(f.beastChallengeMul(), 1.05, '玄武 → 도전 ×1.05');
+  assert.strictEqual(f.beastSealMul(), 1, '玄武만 → seal ×1');
+});
+
 test('todayStr: 로컬 YYYY-MM-DD (timezone-safe, 0-패딩 — 일일 리셋 핵심)', () => {
   const at = (y, mIndex, day) => {
     function FakeDate() {}
