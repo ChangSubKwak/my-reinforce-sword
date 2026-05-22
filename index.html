@@ -17087,8 +17087,12 @@
   // 점수: 처치 수 + 봉인 검 × 100 + 최고 강화 × 10
   function progressScore(s) {
     if (!s || typeof s !== 'object') return -1;
+    // v357 — 殿堂(enshrined) 검도 봉인검과 동등 가치(×100). 누락 시 道 검을 진열한(매각 대신)
+    // 세이브가 동기화 우열 판정에서 과소평가되어 더 진행된 로컬이 클라우드에 덮여 손실될 수
+    // 있었음 (v350 merged-collection류, 단 여기선 진행 손실 직결이라 더 중요).
     return (s.totalSlain || 0)
          + ((Array.isArray(s.sealedSwords) ? s.sealedSwords.length : 0) * 100)
+         + ((Array.isArray(s.enshrined) ? s.enshrined.length : 0) * 100)
          + ((s.bestLevel || 0) * 10);
   }
   // 클라우드 데이터를 state에 안전하게 적용 (load() 보정 재사용)

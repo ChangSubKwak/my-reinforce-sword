@@ -162,6 +162,9 @@ test('progressScore: 처치 + 봉인검×100 + 최고강화×10', () => {
   assert.strictEqual(psFns.progressScore({ sealedSwords: [1, 2, 3] }), 300);
   assert.strictEqual(psFns.progressScore({ bestLevel: 12 }), 120);
   assert.strictEqual(psFns.progressScore({ totalSlain: 5, sealedSwords: [1, 2], bestLevel: 10 }), 5 + 200 + 100);
+  // v357 — 殿堂(enshrined) 검도 ×100 (道 검 진열 세이브가 동기화에서 과소평가→손실되던 것 방지)
+  assert.strictEqual(psFns.progressScore({ enshrined: [1, 2] }), 200);
+  assert.strictEqual(psFns.progressScore({ sealedSwords: [1], enshrined: [1, 2] }), 300);
 });
 test('progressScore: 다른 요인 동일하면 봉인검 많은 쪽이 우위 (봉인검=최고강화 10단계 가치)', () => {
   const more = psFns.progressScore({ sealedSwords: [1, 2], bestLevel: 15 });
