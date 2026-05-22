@@ -5563,13 +5563,16 @@
   const inscribeKanji = $('inscribe-kanji');
   const inscribeLabel = $('inscribe-label');
 
+  // v245u — 큰 수 천 단위 구분 (가독성). 숫자 아니면 0.
+  function fmtNum(n) { return (typeof n === 'number' && isFinite(n) ? n : 0).toLocaleString('en-US'); }
+
   // === 렌더 ===
   function render() {
-    statShards.textContent = state.shards;
-    statProtections.textContent = state.protections;
+    statShards.textContent = fmtNum(state.shards);
+    statProtections.textContent = fmtNum(state.protections);
     statBest.textContent = '+' + state.bestLevel;
-    statSlain.textContent = state.totalSlain;
-    statDestroyed.textContent = state.totalDestroyed;
+    statSlain.textContent = fmtNum(state.totalSlain);
+    statDestroyed.textContent = fmtNum(state.totalDestroyed);
     renderInscriptions();
     applyFormVisual();
     applyLevelVisual();
