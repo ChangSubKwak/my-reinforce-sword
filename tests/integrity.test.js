@@ -442,6 +442,16 @@ test('모든 $("id") DOM 참조가 존재하는 id를 가리킴 (오타→null-d
   assert.deepStrictEqual([...missing], [], '존재하지 않는 id를 $()로 참조(null-deref 위험): ' + [...missing].join(', '));
 });
 
+test('정적 HTML 요소 id는 유일 (중복 id → getElementById가 첫 요소만 잡는 wrong-element 버그 방지)', () => {
+  // $() resolve 가드의 짝(uniqueness). 정적 마크업 id만 검사 — <script> 내 JS-문자열 id는
+  // 동적 render마다 생성/제거되므로 소스에 같은 문자열이 여러 번 나오는 게 정상(제외).
+  const staticHtml = html.replace(/<script[\s\S]*?<\/script>/g, '');
+  const counts = {};
+  for (const m of staticHtml.matchAll(/\sid="([^"]+)"/g)) counts[m[1]] = (counts[m[1]] || 0) + 1;
+  const dups = Object.entries(counts).filter(([, v]) => v > 1).map(([k]) => k);
+  assert.deepStrictEqual(dups, [], '중복된 정적 HTML id (getElementById 모호성): ' + dups.join(', '));
+});
+
 test('NEWSWORD_COST 단일 진원 (v370t — 표시·행동·재시작이 같은 const, 지역 재선언 금지)', () => {
   // 새 검 비용이 render 표시·click 행동·restartFromGameOver에서 각각 하드코딩(=50)되어
   // 한 곳만 바꾸면 표시≠실제 비용 드리프트하던 것 → 모듈 const 1개로 통일. 지역 재선언 회귀 차단.
