@@ -440,3 +440,13 @@ test('메인 게임 컨테이너에 role="main" 랜드마크 (v339 a11y)', () =>
   assert.match(html, /<div id="game" role="main"/, '#game이 main 랜드마크 (스크린리더 본문 점프)');
   assert.strictEqual((html.match(/role="main"/g) || []).length, 1, 'main 랜드마크는 정확히 1개');
 });
+
+test('v342: 結界 흡수 파괴 확률이 단일 진원(sanctumAbsorbedDestroy)으로 통일 — 표시·실제 굴림 드리프트 방지', () => {
+  // 표시(sanctumAbsorbedShow)와 실제 굴림(sanctumDestroyAbsorbed)이 손으로 동기화하던
+  // 두 인라인 사본 → 한 헬퍼로 묶음. 향후 감소항 추가 시 한쪽만 수정되어 발생하던
+  // display≠actual 드리프트(weather/wish/solar가 이렇게 누락됐었음)를 구조적으로 차단.
+  const defCount = (js.match(/function sanctumAbsorbedDestroy\(/g) || []).length;
+  assert.strictEqual(defCount, 1, 'sanctumAbsorbedDestroy 정의는 정확히 1개');
+  const callCount = (js.match(/sanctumAbsorbedDestroy\(lv\)/g) || []).length;
+  assert.ok(callCount >= 2, '표시·실제 두 경로가 sanctumAbsorbedDestroy(lv)를 호출해야 함 (got ' + callCount + ')');
+});
