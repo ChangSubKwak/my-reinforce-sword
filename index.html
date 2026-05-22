@@ -6370,7 +6370,9 @@
   };
   function dominantFormFromSealedSwords() {
     const counts = { '直':0, '曲':0, '重':0, '速':0 };
-    (state.sealedSwords || []).forEach(s => { if (s.form && counts[s.form] !== undefined) counts[s.form]++; });
+    // v360 — 殿堂 검도 포함(시 dominant form이 전체 컬렉션 반영). 마지막 형-집계 sealedSwords-only
+    // 였던 곳 — 다른 모든 형 집계가 enshrined 합산하므로 일관성 위해 통일(순수 narrative).
+    (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => { if (s.form && counts[s.form] !== undefined) counts[s.form]++; });
     let max = 0, dom = null;
     Object.keys(counts).forEach(f => { if (counts[f] > max) { max = counts[f]; dom = f; } });
     if (state.hasSword && state.currentSword && state.currentSword.form && !dom) return state.currentSword.form;
