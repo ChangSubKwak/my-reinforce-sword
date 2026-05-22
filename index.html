@@ -9774,7 +9774,8 @@
     const el = $('solar-term-mark');
     if (el) {
       el.textContent = t.name;
-      el.title = t.name + ' — ' + t.verse;
+      const eff = solarTermEffect(t);
+      el.title = t.name + ' — ' + t.verse + (eff ? ' · ' + eff : '');
       el.style.display = '';
     }
     if (state.lastSolarTerm !== t.key) {
@@ -9796,6 +9797,17 @@
   function solarRescueSec() { const t = getCurrentSolarTerm(); return t.rescueSec || 0; }
   function solarDestroyReduce() { const t = getCurrentSolarTerm(); return t.destroyReduce || 0; }
   function solarSoulMul() { const t = getCurrentSolarTerm(); return t.soulMul || 1; }
+  function solarTermEffect(t) {
+    t = t || getCurrentSolarTerm();
+    if (t.costMul && t.costMul !== 1) return '강화 비용 ' + Math.round((t.costMul - 1) * 100) + '%';
+    if (t.soulMul && t.soulMul !== 1) return '영혼 +' + Math.round((t.soulMul - 1) * 100) + '%';
+    if (t.challengeMul && t.challengeMul !== 1) return '도전 출현 +' + Math.round((t.challengeMul - 1) * 100) + '%';
+    if (t.rewardMul && t.rewardMul !== 1) return '도전 보상 +' + Math.round((t.rewardMul - 1) * 100) + '%';
+    if (t.sealMul && t.sealMul !== 1) return '봉인 보상 +' + Math.round((t.sealMul - 1) * 100) + '%';
+    if (t.rescueSec) return '회수 +' + t.rescueSec + '초';
+    if (t.destroyReduce) return '파괴 -' + Math.round(t.destroyReduce * 100) + '%';
+    return '';
+  }
   function showSolarTermFade(t) {
     const el = document.createElement('div');
     el.innerHTML = '<div style="font-size:11px;color:rgba(212,175,55,0.7);letter-spacing:6px;margin-bottom:14px">節 氣</div>' +
@@ -10483,7 +10495,7 @@
     const eraNow = getCurrentEra();
     timeLines.push(line('紀元', eraNow.name + ' (' + (state.stats && state.stats.enhanceAttempts || 0) + ' 시도)'));
     if (typeof getSeason === 'function') timeLines.push(line('季節', getSeason().name));
-    if (typeof getCurrentSolarTerm === 'function') { const st = getCurrentSolarTerm(); timeLines.push(line('節氣', st.name, 'var(--dim)')); }
+    if (typeof getCurrentSolarTerm === 'function') { const st = getCurrentSolarTerm(); const se = (typeof solarTermEffect === 'function') ? solarTermEffect(st) : ''; timeLines.push(line('節氣', st.name + (se ? ' · ' + se : ''), 'var(--dim)')); }
     if (typeof getTimeOfDay === 'function') timeLines.push(line('朝夕', getTimeOfDay().name + ' (' + getTimeOfDay().label + ')'));
     if (typeof weatherActive !== 'undefined' && weatherActive) {
       timeLines.push(line('天候', weatherActive === 'rain' ? '雨' : '風'));

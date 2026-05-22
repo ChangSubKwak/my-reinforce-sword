@@ -804,3 +804,16 @@ test('eternityBonus: cap 5% (25 道)', () => {
     assert.ok(Math.abs(fns.eternityBonus() - expect) < 1e-9, `永劫 ${eternityPoints} → ${expect}`);
   });
 });
+
+test('solarTermEffect: 모든 節氣가 비어있지 않은 효과 라벨을 가짐 (v264)', () => {
+  // v263에서 절기 보너스 6종을 연결했고, v264가 효과를 표시 → 각 절기는 정확히 한 효과 필드.
+  const SOLAR_TERMS = extractConst('SOLAR_TERMS');
+  assert.ok(Array.isArray(SOLAR_TERMS) && SOLAR_TERMS.length === 8, '8주요 절기');
+  let active = SOLAR_TERMS[0];
+  const fns = loadFunctions(['solarTermEffect'], { getCurrentSolarTerm: () => active });
+  SOLAR_TERMS.forEach(t => {
+    active = t;
+    const label = fns.solarTermEffect();
+    assert.ok(typeof label === 'string' && label.length > 0, t.key + '는 효과 라벨이 있어야 함');
+  });
+});
