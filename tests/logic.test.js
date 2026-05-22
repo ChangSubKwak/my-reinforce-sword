@@ -1194,3 +1194,25 @@ test('SCHOOLS 보너스 값 잠금 (流派 dial — 直流+1%/曲流-1%/重流×
   assert.strictEqual(S['重'].schoolBonusSealMul, 1.10, '重流 봉인 ×1.10');
   assert.strictEqual(S['速'].schoolBonusRescueSec, 1.0, '速流 회수 +1s');
 });
+
+test('todayStr: 로컬 YYYY-MM-DD (timezone-safe, 0-패딩 — 일일 리셋 핵심)', () => {
+  const at = (y, mIndex, day) => {
+    function FakeDate() {}
+    FakeDate.prototype.getFullYear = function () { return y; };
+    FakeDate.prototype.getMonth = function () { return mIndex; };
+    FakeDate.prototype.getDate = function () { return day; };
+    return loadFunctions(['todayStr'], { Date: FakeDate, String: String }).todayStr();
+  };
+  assert.strictEqual(at(2026, 4, 22), '2026-05-22', '월 0-index +1');
+  assert.strictEqual(at(2026, 0, 5), '2026-01-05', '한 자리 월/일 0-패딩');
+  assert.strictEqual(at(2026, 11, 31), '2026-12-31');
+});
+
+test('formatPlayTime: ms → 분/시간/일 (v174 歲月)', () => {
+  const f = loadFunctions(['formatPlayTime']).formatPlayTime;
+  assert.strictEqual(f(0), '1분 미만');
+  assert.strictEqual(f(59000), '1분 미만', '<1분');
+  assert.strictEqual(f(60000), '1분');
+  assert.strictEqual(f(3660000), '1시간 1분', '61분');
+  assert.strictEqual(f(90000000), '1일 1시간', '1500분=25시간');
+});
