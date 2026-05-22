@@ -9700,7 +9700,10 @@
   // === v178 共鳴 — 같은 형 봉인 검과의 공명 ===
   function sameFormSealedCount(form) {
     if (!form) return 0;
-    return (state.sealedSwords || []).filter(s => s.form === form).length;
+    // v358 — 共鳴은 형-수집 보너스. 殿堂(enshrined) 도 같은 형 검도 共鳴해야 함(같은 형의 道 검은
+    // 최고 등급). v350에서 流派(getFormCounts)는 enshrined 포함하므로, 같은 형-수집 보너스인
+    // 共鳴만 sealedSwords-only면 비일관. 두 컬렉션 합산으로 통일(balance-adjacent, 되돌릴 수 있음).
+    return (state.sealedSwords || []).concat(state.enshrined || []).filter(s => s.form === form).length;
   }
   function resonanceBonus() {
     const f = state.hasSword && state.currentSword && state.currentSword.form;
