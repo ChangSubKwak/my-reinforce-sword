@@ -1216,3 +1216,11 @@ test('formatPlayTime: ms → 분/시간/일 (v174 歲月)', () => {
   assert.strictEqual(f(3660000), '1시간 1분', '61분');
   assert.strictEqual(f(90000000), '1일 1시간', '1500분=25시간');
 });
+
+test('computeOverallProgress: 大成 — 신규 0%, 100 cap (가중치 합 100)', () => {
+  // 의존 상수/함수 미주입(typeof undefined) + 빈 state → 모든 기여 0 → 0%
+  const zero = loadFunctions(['computeOverallProgress'], { state: { stats: {}, enshrined: [] } }).computeOverallProgress();
+  assert.strictEqual(zero, 0, '신규 플레이어 大成 0% (NaN/부분값 아님)');
+  // 소스가 100으로 cap (가중치 합 100 초과 방지)
+  assert.match(readScript(), /return Math\.min\(100, Math\.round\(total\)\)/, '大成 100 cap');
+});
