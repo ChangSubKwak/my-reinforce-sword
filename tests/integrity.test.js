@@ -39,6 +39,18 @@ test('성공률 분해가 successChanceNow의 즉시/검별 성공원도 표시 
     assert.ok(body.includes(src), '성공 분해에 ' + src + ' 출처 누락'));
 });
 
+test('초기 state.currentSword가 newSword 전용 필드 포함 (shape drift 방지, v290)', () => {
+  // 첫 currentSword 리터럴(초기 state)이 newSword가 만드는 검과 동일 필드를 가져야 함 —
+  // 누락 시 첫 검에서만 해당 필드가 undefined (foesEncountered 등).
+  const i = js.indexOf('currentSword: {');
+  assert.ok(i >= 0, 'currentSword 리터럴 존재');
+  let s = js.indexOf('{', i), d = 0, end = -1;
+  for (let j = s; j < js.length; j++) { const c = js[j]; if (c === '{') d++; else if (c === '}') { d--; if (d === 0) { end = j; break; } } }
+  const body = js.slice(s, end + 1);
+  ['startLevel', 'foesEncountered', 'playerSeal', 'bornTod'].forEach(f =>
+    assert.ok(body.includes(f + ':'), '초기 currentSword에 ' + f + ' 누락'));
+});
+
 test('최상위 함수 이름 중복 없음 (동명 함수 shadowing 방지 — v288 renderRecords 버그類)', () => {
   // 같은 스코프 두 번째 function 선언이 첫 번째를 가려, 호출자가 의도와 다른 함수를 부르는 버그.
   // v288: renderRecords가 2개(records-list 채움 vs 新記 html 반환)여서 劍士録 모달이 비어 있었음.
