@@ -988,3 +988,17 @@ test('SHADOW_TYPES 값 잠금 (전투 dial — flee/steel 보정)', () => {
   assert.strictEqual(by.steel.rewardMul, 1.5, '鋼影 보상 ×1.5');
   assert.strictEqual(by.steel.strengthAdd, 3, '鋼影 강도 +3');
 });
+
+test('affinityRewardMul: 形相剋 보상 배율 잠금 (favored ×1.25 / weakness ×0.85, v129)', () => {
+  const FA = extractConst('FORM_AFFINITY');
+  assert.strictEqual(FA['直'].favored, 'normal'); assert.strictEqual(FA['直'].weakness, 'demon');
+  assert.strictEqual(FA['速'].favored, 'flee'); assert.strictEqual(FA['重'].favored, 'demon');
+  assert.match(readScript(), /AFFINITY_FAVORED_MUL = 1\.25/, 'favored ×1.25');
+  assert.match(readScript(), /AFFINITY_WEAKNESS_MUL = 0\.85/, 'weakness ×0.85');
+  const f = loadFunctions(['affinityRewardMul', 'getAffinity'], { FORM_AFFINITY: FA, AFFINITY_FAVORED_MUL: 1.25, AFFINITY_WEAKNESS_MUL: 0.85 });
+  assert.strictEqual(f.affinityRewardMul('直', 'normal'), 1.25, '直>평범 favored');
+  assert.strictEqual(f.affinityRewardMul('直', 'demon'), 0.85, '直<검귀 weakness');
+  assert.strictEqual(f.affinityRewardMul('速', 'flee'), 1.25, '速>도망 favored');
+  assert.strictEqual(f.affinityRewardMul('直', 'steel'), 1.0, '中립');
+  assert.strictEqual(f.affinityRewardMul(null, 'normal'), 1.0, 'form 없음 中립');
+});
