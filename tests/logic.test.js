@@ -177,6 +177,33 @@ test('progressScore: 손상된 sealedSwords(비배열) 안전 처리', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// startBonus — 선대 강기 → 새 검 시작 강화 (진행 곡선, cap 6)
+// ─────────────────────────────────────────────────────────────
+function startBonusAt(legacyTotal) {
+  return loadFunctions(['startBonus'], {
+    legacyStrength: () => legacyTotal, START_BONUS_CAP: 6, START_BONUS_DIVISOR: 25,
+  }).startBonus();
+}
+test('startBonus: CLAUDE.md 곡선 (25→1, 50→2, 100→4, 150→6)', () => {
+  assert.strictEqual(startBonusAt(0), 0);
+  assert.strictEqual(startBonusAt(25), 1);
+  assert.strictEqual(startBonusAt(50), 2);
+  assert.strictEqual(startBonusAt(100), 4);
+  assert.strictEqual(startBonusAt(150), 6);
+});
+test('startBonus: cap 6 (점수 인플레이션 차단)', () => {
+  assert.strictEqual(startBonusAt(200), 6);
+  assert.strictEqual(startBonusAt(10000), 6);
+});
+test('startBonus: extraLegacy 인자 반영 (융검 미리보기)', () => {
+  const f = loadFunctions(['startBonus'], {
+    legacyStrength: () => 50, START_BONUS_CAP: 6, START_BONUS_DIVISOR: 25,
+  });
+  assert.strictEqual(f.startBonus(0), 2, '50 → 2');
+  assert.strictEqual(f.startBonus(-25), 1, '50-25=25 → 1 (융검 손실 반영)');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
