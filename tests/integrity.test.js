@@ -406,3 +406,11 @@ test('aria-labelledby/for/aria-describedby가 존재하는 id를 가리킴 (깨�
     for (const ref of m[1].split(/\s+/)) if (ref && !ids.has(ref)) broken.push(ref);
   assert.deepStrictEqual([...new Set(broken)], [], '존재하지 않는 id 참조(스크린리더 라벨 깨짐): ' + [...new Set(broken)].join(', '));
 });
+
+test('SVG url(#id) 참조가 정의된 id를 가리킴 (그라데이션/필터 깨짐 방지)', () => {
+  const ids = new Set();
+  for (const m of html.matchAll(/\sid="([^"]+)"/g)) ids.add(m[1]);
+  const broken = [];
+  for (const m of html.matchAll(/url\(#([^)\s"']+)\)/g)) if (!ids.has(m[1])) broken.push(m[1]);
+  assert.deepStrictEqual([...new Set(broken)], [], '정의 안 된 SVG id 참조(그라데이션/필터 미적용): ' + [...new Set(broken)].join(', '));
+});
