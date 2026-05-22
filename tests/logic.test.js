@@ -828,3 +828,24 @@ test('solarTermEffect: 모든 節氣가 비어있지 않은 효과 라벨을 가
     assert.ok(typeof label === 'string' && label.length > 0, t.key + '는 효과 라벨이 있어야 함');
   });
 });
+
+test('escapeHtml: 위험 문자 이스케이프 (v275 — 공유 데이터 저장형 XSS 차단)', () => {
+  const { escapeHtml } = loadFunctions(['escapeHtml']);
+  assert.strictEqual(escapeHtml('<img src=x onerror=alert(1)>'), '&lt;img src=x onerror=alert(1)&gt;');
+  assert.strictEqual(escapeHtml('a&b'), 'a&amp;b');
+  assert.strictEqual(escapeHtml('"q\'s"'), '&quot;q&#39;s&quot;');
+  assert.strictEqual(escapeHtml(null), '');
+  assert.strictEqual(escapeHtml(undefined), '');
+  assert.strictEqual(escapeHtml(42), '42');
+  // 정상 닉네임/검명은 그대로
+  assert.strictEqual(escapeHtml('直道劍'), '直道劍');
+});
+
+test('리더보드 닉네임·손님 검 이름이 escapeHtml로 렌더됨 (XSS 회귀 방지)', () => {
+  const { readScript } = require('./harness');
+  const js = readScript();
+  // 리더보드 닉네임
+  assert.match(js, /escapeHtml\(nickname\)/, '리더보드 닉네임 이스케이프');
+  // 손님 검 이름
+  assert.match(js, /escapeHtml\(s\.name \|\| '無名'\)/, '손님 검 이름 이스케이프');
+});
