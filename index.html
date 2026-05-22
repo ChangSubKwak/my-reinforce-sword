@@ -10396,6 +10396,36 @@
     if (typeof breathBonus === 'function') {
       const v = breathBonus(); if (v) successLines.push(line('호흡', pct(v)));
     }
+    if (typeof resonanceBonus === 'function') {
+      const v = resonanceBonus(); if (v) successLines.push(line('共鳴', pct(v)));
+    }
+    if (typeof beastSuccessBonus === 'function') {
+      const v = beastSuccessBonus(); if (v) successLines.push(line('四神 (朱雀)', pct(v)));
+    }
+    if (typeof treasureGlobalBonus === 'function') {
+      const v = treasureGlobalBonus(); if (v) successLines.push(line('七寶 圓滿', pct(v)));
+    }
+    if (typeof eternityBonus === 'function') {
+      const v = eternityBonus(); if (v) successLines.push(line('永劫', pct(v)));
+    }
+    if (typeof weatherSuccessBonus === 'function') {
+      const v = weatherSuccessBonus(); if (v) successLines.push(line('天候 (雷)', pct(v)));
+    }
+    if (typeof moodSuccessBonus === 'function') {
+      const v = moodSuccessBonus(); if (v) successLines.push(line('心象', pct(v), v < 0 ? 'var(--danger)' : null));
+    }
+    if (typeof dawnBonusSuccess === 'function') {
+      const v = dawnBonusSuccess(); if (v) successLines.push(line('黎明 (새벽)', pct(v)));
+    }
+    if (typeof wishSuccessBonus === 'function') {
+      const v = wishSuccessBonus(); if (v) successLines.push(line('유언 (願)', pct(v)));
+    }
+    if (typeof ultimateSuccessBonus === 'function') {
+      const v = ultimateSuccessBonus(); if (v) successLines.push(line('究極', pct(v)));
+    }
+    if (typeof mutationSuccessBonus === 'function') {
+      const v = mutationSuccessBonus(); if (v) successLines.push(line('變異 (鋼骨)', pct(v)));
+    }
     sections.push(section('강화 성공 보너스', successLines));
 
     // 2. 활성 charges (1회용)

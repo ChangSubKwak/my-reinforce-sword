@@ -15,6 +15,19 @@ test('인라인 스크립트가 유효한 JS로 파싱됨', () => {
   assert.doesNotThrow(() => new Function(js), 'script가 파싱되어야 함');
 });
 
+test('성공률 breakdown(renderStatus)이 persistentSuccessBonus 전 항목을 표시 (display≠actual 방지)', () => {
+  // persistentSuccessBonus()가 합산하는 모든 성공 보너스 출처는 renderStatus 분해 표시에도
+  // 나타나야 함 — 헤드라인 %는 맞는데 항목 합이 안 맞는 v257-류 divergence 방지.
+  const pm = js.match(/function persistentSuccessBonus\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(pm, 'persistentSuccessBonus 본문');
+  const terms = [...new Set([...pm[1].matchAll(/(\w+(?:Bonus|Success))\(\)/g)].map(m => m[1]))];
+  assert.ok(terms.length >= 16, 'persistentSuccessBonus 항목 ≥16개 (현재 ' + terms.length + ')');
+  const rm = js.match(/function renderStatus\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(rm, 'renderStatus 본문');
+  const missing = terms.filter(t => !rm[1].includes(t + '()'));
+  assert.deepStrictEqual(missing, [], 'breakdown에서 누락된 성공 보너스 출처: ' + missing.join(', '));
+});
+
 test('중복 HTML id 없음', () => {
   const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(x => x[1]);
   const seen = {}, dups = [];
