@@ -15651,7 +15651,7 @@
     }
     // v149 神祠 — 護 헌사: 새 검 탄생 시 시작 보호권 +1
     if (shrineHas('d2')) state.protections += 1;
-    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0, protectsUsed: 0, stars: {}, playerSeal: state.playerSeal || '' };
+    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0, protectsUsed: 0, stars: {}, playerSeal: state.playerSeal || '', bornTod: getTimeOfDay().name };  // v252 時生 — 빚어진 시각(朝/晝/夕/夜)
     // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (state.firstWayReached) {
@@ -16021,6 +16021,7 @@
       stars: Object.assign({}, state.currentSword.stars || {}),
       playerSeal: state.currentSword.playerSeal || state.playerSeal || '',  // v140 篆刻
       kigen: (userKigen && userKigen.trim()) ? userKigen.trim() : null,  // v158 寄言
+      bornTod: state.currentSword.bornTod || null,  // v252 時生 — 빚어진 시각
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -16514,6 +16515,7 @@
       '<div style="display:flex;justify-content:space-around;padding:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:14px;font-size:11px">' +
         '<div><span style="color:var(--dim)">형</span> <span style="color:var(--accent);margin-left:6px">' + (s.form || '無') + '</span> <span style="color:var(--dim);font-size:10px">(' + formLabel + ')</span></div>' +
         '<div><span style="color:var(--dim)">강화도</span> <span style="color:var(--accent);margin-left:6px">+' + s.level + '</span></div>' +
+        (s.bornTod ? '<div><span style="color:var(--dim)">時生</span> <span style="color:#a8c0d8;margin-left:6px">' + s.bornTod + '</span></div>' : '') +  // v252 빚어진 시각
       '</div>' +
       verseBlock +
       // v204 起念 — 탄생문 (회고에 영구 표시)
