@@ -449,6 +449,21 @@ test('봉인·殿堂 push가 로직/표시 의존 sword 필드를 모두 보존 
     const missing = reads.filter(f => !new RegExp('\\b' + f + '\\s*[:,]').test(body));
     assert.deepStrictEqual(missing, [], name + ' 검에 미보존된 의존 필드: ' + missing.join(', '));
   }
+  // v370g — 고정 리스트 대신 두 push의 필드 집합 자체를 비교: 한쪽에만 필드를 추가하는
+  // 드리프트(v313/v344 재발 클래스)를 리스트 갱신 없이 자동 차단. enshrinedAt만 殿堂 전용 허용.
+  const fieldsOf = (marker) => {
+    const body = pushBody(marker).replace(/\/\/[^\n]*/g, '');  // 인라인 주석 제거
+    const set = new Set(); let m; const re = /[{,]\s*([a-zA-Z_]\w*)\s*(?=[:,}])/g;
+    while ((m = re.exec(body))) set.add(m[1]);
+    return set;
+  };
+  const doSet = fieldsOf('state.sealedSwords.push({');
+  const enSet = fieldsOf('state.enshrined.push({');
+  const ENSHRINE_ONLY = new Set(['enshrinedAt']);  // 殿堂 진열 시각 — 의도적 enshrine 전용
+  const inDoNotEn = [...doSet].filter(f => !enSet.has(f));
+  const inEnNotDo = [...enSet].filter(f => !doSet.has(f) && !ENSHRINE_ONLY.has(f));
+  assert.deepStrictEqual(inDoNotEn, [], 'doSeal에만 있고 enshrineSeal에 누락된 필드(殿堂 검 정체성 소실): ' + inDoNotEn.join(', '));
+  assert.deepStrictEqual(inEnNotDo, [], 'enshrineSeal에만 있고 doSeal에 누락된 필드(봉인 검 소실): ' + inEnNotDo.join(', '));
 });
 
 test('server.js: 루트 디렉토리 정적 서빙 안 함 — 소스/CLAUDE.md 노출 방지 (v332)', () => {
