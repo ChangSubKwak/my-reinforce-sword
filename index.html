@@ -17868,23 +17868,37 @@
 
   function renderAnthology() {
     const list = $('anthology-list');
-    const dao = state.sealedSwords.filter(s => s.verse && Array.isArray(s.verse));
-    if (dao.length === 0) {
-      list.innerHTML = '<p style="text-align:center;color:var(--dim);font-size:12px;padding:32px 0;line-height:1.8">아직 도(道)에 이른 검이 없습니다.<br><br>최고 단계 +' + MAX_LEVEL + '까지 키운 검을 팔면<br>그 검의 일생이 시구로 새겨집니다.</p>';
+    const sealed = state.sealedSwords || [];
+    if (sealed.length === 0) {
+      list.innerHTML = '<p style="text-align:center;color:var(--dim);font-size:12px;padding:32px 0;line-height:1.8">아직 봉인된 검이 없습니다.<br><br>검을 팔면 그 검의 일생시(道)와<br>마지막 말(遺言)이 이곳에 모입니다.</p>';
       return;
     }
-    // 최근 순
-    const items = dao.slice().reverse().map((s, ri) => {
-      const i = dao.length - ri;
-      const name = s.name || ('검 #' + i);
-      const verseHtml = s.verse.map(line => '<div>' + line + '</div>').join('');
-      return '<div style="padding:18px 8px;border-bottom:1px solid var(--line);text-align:center">' +
-        '<div style="color:var(--accent);letter-spacing:6px;font-size:18px;margin-bottom:14px">' + name + '</div>' +
-        '<div style="color:var(--fg);font-size:13px;line-height:2.2;letter-spacing:3px;opacity:0.9">' + verseHtml + '</div>' +
-        '<div style="color:var(--dim);font-size:10px;margin-top:10px;letter-spacing:2px">— 道 #' + i + ' —</div>' +
+    let html = '';
+    // 一生詩 — 道에 이른 검 (최근 순)
+    const dao = sealed.filter(s => s.verse && Array.isArray(s.verse));
+    if (dao.length > 0) {
+      html += '<div style="text-align:center;color:var(--accent);letter-spacing:6px;font-size:12px;padding:8px 0 4px;opacity:0.7">一 生 詩</div>';
+      html += dao.slice().reverse().map((s, ri) => {
+        const i = dao.length - ri;
+        const name = s.name || ('검 #' + i);
+        const verseHtml = s.verse.map(line => '<div>' + line + '</div>').join('');
+        return '<div style="padding:18px 8px;border-bottom:1px solid var(--line);text-align:center">' +
+          '<div style="color:var(--accent);letter-spacing:6px;font-size:18px;margin-bottom:14px">' + name + '</div>' +
+          '<div style="color:var(--fg);font-size:13px;line-height:2.2;letter-spacing:3px;opacity:0.9">' + verseHtml + '</div>' +
+          '<div style="color:var(--dim);font-size:10px;margin-top:10px;letter-spacing:2px">— 道 #' + i + ' —</div>' +
+          '</div>';
+      }).join('');
+    }
+    // 遺言 — 모든 봉인 검의 마지막 말 (최근 20, v248)
+    html += '<div style="text-align:center;color:#a8c0d8;letter-spacing:6px;font-size:12px;padding:16px 0 4px;opacity:0.7">遺 言</div>';
+    html += sealed.slice(-20).reverse().map((s) => {
+      const name = s.name || makeSwordName(s.form, s.inscriptions || [], s.level);
+      return '<div style="padding:10px 8px;border-bottom:1px solid var(--line);text-align:center">' +
+        '<div style="color:var(--accent);letter-spacing:3px;font-size:12px;margin-bottom:4px">' + name + ' <span style="color:var(--dim);font-size:9px">+' + (s.level || 0) + ' · ' + deriveTemperament(s).name + '</span></div>' +
+        '<div style="color:#a8c0d8;font-size:11px;letter-spacing:2px;font-style:italic;line-height:1.6;opacity:0.9">「' + generateLastWords(s) + '」</div>' +
         '</div>';
-    });
-    list.innerHTML = items.join('');
+    }).join('');
+    list.innerHTML = html;
   }
 
   // v50 사용자 페르소나 — 통계 기반 자동 분류
