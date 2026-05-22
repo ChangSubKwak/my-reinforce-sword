@@ -1068,3 +1068,15 @@ test('encodeSwordCode→decodeSwordCode 라운드트립 — 공유 코드 무결
   assert.strictEqual(r.beads, 40, 'beads 라운드트립');
   assert.strictEqual(r.isGuest, true);
 });
+
+test('resonanceBonus: 共鳴 — 같은 형 봉인 검당 +0.5%, cap 5% (v178 dial)', () => {
+  const mk = (form, sealedForms) => loadFunctions(['resonanceBonus', 'sameFormSealedCount'], {
+    state: { hasSword: true, currentSword: { form }, sealedSwords: sealedForms.map(f => ({ form: f })) },
+  });
+  assert.strictEqual(mk('直', []).resonanceBonus(), 0, '같은 형 0개 → 0');
+  assert.ok(Math.abs(mk('直', ['直', '直']).resonanceBonus() - 0.01) < 1e-9, '直 2개 → +1%');
+  assert.ok(Math.abs(mk('直', ['直', '曲', '直']).resonanceBonus() - 0.01) < 1e-9, '直 2개만 카운트(曲 무시)');
+  assert.strictEqual(mk('直', Array(20).fill('直')).resonanceBonus(), 0.05, 'cap +5%');
+  const noSword = loadFunctions(['resonanceBonus', 'sameFormSealedCount'], { state: { hasSword: false, sealedSwords: [] } });
+  assert.strictEqual(noSword.resonanceBonus(), 0, '검 없음 → 0');
+});
