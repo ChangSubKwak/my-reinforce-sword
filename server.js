@@ -16,20 +16,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// 정적 파일 (index.html, CLAUDE.md 등 루트 파일)
-app.use(express.static(path.join(__dirname), {
-  index: 'index.html',
-  maxAge: '5m',
-  setHeaders: (res, filePath) => {
-    // index.html은 캐시 안 함 — 항상 최신 버전
-    if (filePath.endsWith('index.html')) {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    }
-  },
-}));
-
-// SPA 폴백 — 어떤 경로든 index.html 반환
+// v332 — 단일 파일 게임: 모든 경로에 index.html만 서빙.
+// (이전엔 express.static(__dirname)으로 루트 전체를 공개 → CLAUDE.md[숨은 메커니즘·확률
+//  전부]·server.js·supabase/schema.sql·tests/·package.json 이 노출됐다. 게임은 인라인
+//  단일 index.html이고 Supabase는 외부 CDN·파비콘은 data-URI라 다른 로컬 자산이 없으므로
+//  소스/문서/스키마 노출을 막기 위해 index.html만 서빙한다.)
 app.get('*', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
