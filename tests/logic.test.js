@@ -253,6 +253,35 @@ test('recordActivityDate: 120일 초과 시 가장 오래된 항목 정리', () 
 });
 
 // ─────────────────────────────────────────────────────────────
+// v11 makeSwordName — 검명 생성 (28슬롯 컬렉션 구동, 결정적)
+// ─────────────────────────────────────────────────────────────
+(function () {
+  const js = readScript();
+  const NAME_SUFFIX = eval(js.match(/const NAME_SUFFIX = (\[[\s\S]*?\]);/)[1]);
+  const NUM_KANJI = eval(js.match(/const NUM_KANJI = (\[[^\]]*\]);/)[1]);
+  const nameFns = loadFunctions(['makeSwordName'], { NAME_SUFFIX, NUM_KANJI });
+  const mk = nameFns.makeSwordName;
+
+  test('makeSwordName: 정점 명문 우선순위 (道 > 鬼斬 > 本 > ...)', () => {
+    assert.strictEqual(mk('直', ['道'], 15), '直道');
+    assert.strictEqual(mk('曲', ['鬼斬', '本'], 10), '曲魔', '鬼斬이 本보다 우선');
+    assert.strictEqual(mk('速', ['久', '道'], 5), '速道', '道가 久보다 우선(배열 순서)');
+  });
+  test('makeSwordName: 명문 없으면 강화도 한자', () => {
+    assert.strictEqual(mk('重', [], 7), '重七');
+    assert.strictEqual(mk('直', [], 0), '直零');
+    assert.strictEqual(mk('曲', [], 15), '曲十五');
+  });
+  test('makeSwordName: form 없으면 無 접두', () => {
+    assert.strictEqual(mk(null, [], 3), '無三');
+    assert.strictEqual(mk(undefined, ['本'], 9), '無本');
+  });
+  test('makeSwordName: 결정적 (같은 입력 같은 검명)', () => {
+    assert.strictEqual(mk('重', ['剛體'], 12), mk('重', ['剛體'], 12));
+  });
+})();
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
