@@ -1283,6 +1283,37 @@ test('베기 보상 배수 dial 잠금 (氣分/소원/神殿/날씨/夜 — slay
   assert.strictEqual(cap(false), 0, '神殿 d5 미보유 → +0 (가산 기본 0)');
 });
 
+test('節氣 접근자 7종 필드 라우팅 잠금 (각 solar* 가 자기 필드만 읽음 — v177 죽은 보너스류 분기점 방지)', () => {
+  // integrity는 "호출됨"만 확인 — 어느 필드를 읽는지는 안 봄. 필드 오라우팅
+  // (예: solarRewardMul이 .sealMul을 읽음)은 분기점 버그라 따로 잠근다.
+  // 모든 필드에 서로 다른 sentinel을 넣어 각 헬퍼가 자기 필드만 집는지 검증.
+  const term = { costMul: 1.11, challengeMul: 1.22, rewardMul: 1.33, sealMul: 1.44, rescueSec: 5, destroyReduce: 0.07, soulMul: 1.66 };
+  const fns = loadFunctions(
+    ['solarCostMul', 'solarChallengeMul', 'solarRewardMul', 'solarSealMul', 'solarRescueSec', 'solarDestroyReduce', 'solarSoulMul'],
+    { getCurrentSolarTerm: () => term }
+  );
+  assert.strictEqual(fns.solarCostMul(), 1.11, 'solarCostMul → costMul');
+  assert.strictEqual(fns.solarChallengeMul(), 1.22, 'solarChallengeMul → challengeMul');
+  assert.strictEqual(fns.solarRewardMul(), 1.33, 'solarRewardMul → rewardMul');
+  assert.strictEqual(fns.solarSealMul(), 1.44, 'solarSealMul → sealMul');
+  assert.strictEqual(fns.solarRescueSec(), 5, 'solarRescueSec → rescueSec');
+  assert.strictEqual(fns.solarDestroyReduce(), 0.07, 'solarDestroyReduce → destroyReduce');
+  assert.strictEqual(fns.solarSoulMul(), 1.66, 'solarSoulMul → soulMul');
+
+  // 빈 절기(효과 없는 날) → 배수는 1, 가산/초는 0
+  const def = loadFunctions(
+    ['solarCostMul', 'solarChallengeMul', 'solarRewardMul', 'solarSealMul', 'solarRescueSec', 'solarDestroyReduce', 'solarSoulMul'],
+    { getCurrentSolarTerm: () => ({}) }
+  );
+  assert.strictEqual(def.solarCostMul(), 1, '무효과 → 비용배수 1');
+  assert.strictEqual(def.solarChallengeMul(), 1, '무효과 → 도전배수 1');
+  assert.strictEqual(def.solarRewardMul(), 1, '무효과 → 보상배수 1');
+  assert.strictEqual(def.solarSealMul(), 1, '무효과 → 봉인배수 1');
+  assert.strictEqual(def.solarRescueSec(), 0, '무효과 → 회수초 0');
+  assert.strictEqual(def.solarDestroyReduce(), 0, '무효과 → 파괴감소 0');
+  assert.strictEqual(def.solarSoulMul(), 1, '무효과 → 영혼배수 1');
+});
+
 test('todayStr: 로컬 YYYY-MM-DD (timezone-safe, 0-패딩 — 일일 리셋 핵심)', () => {
   const at = (y, mIndex, day) => {
     function FakeDate() {}
