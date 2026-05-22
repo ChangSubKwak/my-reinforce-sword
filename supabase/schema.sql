@@ -33,15 +33,20 @@ CREATE POLICY "user_state_update_own" ON public.user_state
 -- ============================================================
 -- 2) leaderboard — 공개 랭킹
 -- ============================================================
+-- 주의: 아래 CHECK 제약은 신규 설치(CREATE)에만 적용됨. 기존 테이블엔 수동 ALTER 필요:
+--   ALTER TABLE public.leaderboard ADD CONSTRAINT lb_nickname_len CHECK (char_length(nickname) BETWEEN 1 AND 16);
+--   ALTER TABLE public.leaderboard ADD CONSTRAINT lb_scores_nonneg CHECK (best_level BETWEEN 0 AND 15 AND way_reached >= 0 AND total_slain >= 0 AND sealed_count >= 0 AND total_destroyed >= 0);
 CREATE TABLE IF NOT EXISTS public.leaderboard (
   user_id        UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  nickname       TEXT NOT NULL,
+  -- 닉네임 길이 서버측 제약 (클라이언트 maxlength=16과 일치) — 직접 API 호출로 과대 닉네임 주입 방지
+  nickname       TEXT NOT NULL CHECK (char_length(nickname) BETWEEN 1 AND 16),
   email          TEXT,  -- 마스킹 표시용 (선택적, 사용자 동의 가정)
-  best_level     INT  NOT NULL DEFAULT 0,
-  way_reached    INT  NOT NULL DEFAULT 0,
-  total_slain    INT  NOT NULL DEFAULT 0,
-  sealed_count   INT  NOT NULL DEFAULT 0,
-  total_destroyed INT NOT NULL DEFAULT 0,
+  -- 점수 음수/비정상 방지 (랭킹 조작 방어). best_level은 MAX_LEVEL(15) 상한.
+  best_level     INT  NOT NULL DEFAULT 0 CHECK (best_level BETWEEN 0 AND 15),
+  way_reached    INT  NOT NULL DEFAULT 0 CHECK (way_reached >= 0),
+  total_slain    INT  NOT NULL DEFAULT 0 CHECK (total_slain >= 0),
+  sealed_count   INT  NOT NULL DEFAULT 0 CHECK (sealed_count >= 0),
+  total_destroyed INT NOT NULL DEFAULT 0 CHECK (total_destroyed >= 0),
   updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
 
