@@ -1051,3 +1051,20 @@ test('HIDDEN_ACHIEVEMENTS 慎重/無欲 + protectsUsed 보존 (v315)', () => {
   // 봉인 검에 protectsUsed가 보존돼야 위 check가 sealed 검에서 의미있음
   assert.match(readScript(), /protectsUsed: state\.currentSword\.protectsUsed \|\| 0/, 'seal 경로가 protectsUsed 보존');
 });
+
+test('encodeSwordCode→decodeSwordCode 라운드트립 — 공유 코드 무결성', () => {
+  const { encodeSwordCode, decodeSwordCode } = loadFunctions(['encodeSwordCode', 'decodeSwordCode']);
+  const sword = { name: '直道劍', form: '直', level: 12, inscriptions: ['道', '本'], soul: 67, verse: ['첫 행', '둘째 행'], beads: 40 };
+  const code = encodeSwordCode(sword);
+  assert.match(code, /^CK1/, 'CK1 접두사');
+  const r = decodeSwordCode(code);
+  assert.ok(r, '디코드 성공');
+  assert.strictEqual(r.name, '直道劍');
+  assert.strictEqual(r.form, '直');
+  assert.strictEqual(r.level, 12);
+  assert.strictEqual(JSON.stringify(r.inscriptions), JSON.stringify(['道', '本']), '명문 라운드트립');
+  assert.strictEqual(r.soul, 67);
+  assert.strictEqual(JSON.stringify(r.verse), JSON.stringify(['첫 행', '둘째 행']), '시구 join/split 라운드트립');
+  assert.strictEqual(r.beads, 40, 'beads 라운드트립');
+  assert.strictEqual(r.isGuest, true);
+});
