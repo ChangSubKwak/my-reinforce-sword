@@ -1250,6 +1250,39 @@ test('성공률 게이트 dial 잠금 (四道/究極/神殿/朝/소원 — succe
   assert.strictEqual(wish(null), 0, '소원 없음 → 0');
 });
 
+test('베기 보상 배수 dial 잠금 (氣分/소원/神殿/날씨/夜 — slayGrantAmount 곱셈항, 값+기본 1.0)', () => {
+  // 보상 배수는 기본값이 반드시 1.0 — 0으로 떨어지면 보상이 통째로 사라지는 고전 버그.
+  // 각 배수의 dial 값과 미발동 시 1.0 복귀를 잠근다.
+  const mood = (m) => loadFunctions(['moodSlayRewardMul'], { currentMood: m }).moodSlayRewardMul();
+  assert.strictEqual(mood('joy'), 1.05, '喜 → ×1.05');
+  assert.strictEqual(mood('rage'), 1.05, '怒 → ×1.05');
+  assert.strictEqual(mood('calm'), 1.0, '그 외 기분 → ×1.0 (기본)');
+
+  const shrine = (has) => loadFunctions(['shrineSlayRewardMul'], { shrineHas: (k) => has && k === 'd4' }).shrineSlayRewardMul();
+  assert.strictEqual(shrine(true), 1.02, '神殿 d4 → ×1.02');
+  assert.strictEqual(shrine(false), 1.0, '神殿 d4 미보유 → ×1.0');
+
+  const weather = (w) => loadFunctions(['weatherSlayRewardMul'], { weatherActive: w }).weatherSlayRewardMul();
+  assert.strictEqual(weather('wind'), 1.15, '風 → ×1.15');
+  assert.strictEqual(weather('rain'), 1.0, '그 외 날씨 → ×1.0');
+
+  const tod = (key) => loadFunctions(['todSlayRewardBonus'], { getTimeOfDay: () => ({ key }) }).todSlayRewardBonus();
+  assert.strictEqual(tod('night'), 1.02, '夜 → ×1.02');
+  assert.strictEqual(tod('morning'), 1.0, '그 외 시간대 → ×1.0');
+
+  const wish = (charges, mul) => loadFunctions(['wishSlayRewardMul'], {
+    state: { swordWishSlay: charges != null ? { charges, slayRewardMul: mul } : null },
+  }).wishSlayRewardMul();
+  assert.strictEqual(wish(1, 1.5), 1.5, '소원 슬레이 충전>0 → slayRewardMul 적용');
+  assert.strictEqual(wish(0, 1.5), 1.0, '소원 슬레이 소진 → ×1.0');
+  assert.strictEqual(wish(null), 1.0, '소원 없음 → ×1.0');
+
+  // 殿堂 수용량 보너스는 가산(기본 0) — 위 배수들과 기본값 의미가 다름을 함께 잠근다
+  const cap = (has) => loadFunctions(['shrineEnshrineCapBonus'], { shrineHas: (k) => has && k === 'd5' }).shrineEnshrineCapBonus();
+  assert.strictEqual(cap(true), 1, '神殿 d5 → 殿堂 +1칸');
+  assert.strictEqual(cap(false), 0, '神殿 d5 미보유 → +0 (가산 기본 0)');
+});
+
 test('todayStr: 로컬 YYYY-MM-DD (timezone-safe, 0-패딩 — 일일 리셋 핵심)', () => {
   const at = (y, mIndex, day) => {
     function FakeDate() {}
