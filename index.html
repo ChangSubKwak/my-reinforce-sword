@@ -10403,7 +10403,10 @@
       const v = todSuccessBonus(); if (v) successLines.push(line('朝 (시간대)', pct(v)));
     }
     if (typeof breathBonus === 'function') {
-      const v = breathBonus(); if (v) successLines.push(line('호흡', pct(v)));
+      let v = breathBonus();
+      const boosted = (typeof pendingBreathBoost !== 'undefined' && pendingBreathBoost && v > 0);
+      if (boosted) v *= 2;  // successChanceNow와 동일 — 天命 호흡 보너스 ×2
+      if (v) successLines.push(line('호흡' + (boosted ? ' ×2' : ''), pct(v)));
     }
     // v265 — successChanceNow의 즉시/검별 성공원도 분해에 포함 (形/砥/魂/守/覺悟/逆/잔향)
     if (state.hasSword) { const f0 = getForm(); const fb = (f0 && f0.successBonus) || 0; if (fb) successLines.push(line('形 ' + (f0.name || ''), pct(fb))); }
