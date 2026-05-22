@@ -101,6 +101,40 @@ test('shakeGuardCost: ceil((강도-레벨)/2), 최소 1', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// 강화 테이블 TABLE 불변식 (게임 곡선의 척추 — 향후 편집 안전망)
+// ─────────────────────────────────────────────────────────────
+const { readScript } = require('./harness');
+function extractTable() {
+  const js = readScript();
+  const m = js.match(/const TABLE = (\[[\s\S]*?\]);/);
+  if (!m) throw new Error('TABLE 정의를 찾지 못함');
+  // 주석 줄(// ...) 제거 후 eval
+  const cleaned = m[1].replace(/\/\/[^\n]*/g, '');
+  return eval(cleaned);
+}
+test('TABLE: 첫 행(+0→+1)은 무료·확정 성공 (튜토리얼 불변식)', () => {
+  const T = extractTable();
+  assert.strictEqual(T[0].cost, 0);
+  assert.strictEqual(T[0].success, 1.00);
+  assert.strictEqual(T[0].destroy, 0);
+  assert.strictEqual(T[0].downgrade, 0);
+});
+test('TABLE: 모든 행 destroy+downgrade <= 1, 확률 [0,1], cost>=0', () => {
+  const T = extractTable();
+  T.forEach((r, i) => {
+    assert.ok(r.success >= 0 && r.success <= 1, `행 ${i} success 범위`);
+    assert.ok(r.destroy >= 0 && r.destroy <= 1, `행 ${i} destroy 범위`);
+    assert.ok(r.downgrade >= 0 && r.downgrade <= 1, `행 ${i} downgrade 범위`);
+    assert.ok(r.destroy + r.downgrade <= 1 + 1e-9, `행 ${i} destroy+downgrade<=1 (현재 ${r.destroy + r.downgrade})`);
+    assert.ok(r.cost >= 0 && Number.isFinite(r.cost), `행 ${i} cost>=0`);
+  });
+});
+test('TABLE: 15단계(道까지) — MAX_LEVEL과 일치', () => {
+  const T = extractTable();
+  assert.strictEqual(T.length, 15, 'TABLE 길이 15 (현재 ' + T.length + ')');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
