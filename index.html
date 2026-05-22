@@ -10970,7 +10970,7 @@
     setTimeout(() => el.remove(), 3600);
     log('🏆 新記 — ' + def.label + ' ' + value + def.unit, 'success');
   }
-  function renderRecords() {
+  function renderShinkiSection() {  // v288 — 新記 html 반환 (記錄 모달 임베드용). 이전 이름 renderRecords가 劍士録 모달용 동명 함수(6986)를 가려 그 모달이 비어 있던 버그 수정.
     const r = state.records || {};
     let html = '<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">' +
       '<div style="font-size:11px;color:var(--accent);letter-spacing:5px;margin-bottom:10px;text-align:center">新  記</div>';
@@ -18359,7 +18359,7 @@
         if (levelDropCount(turbulent) > 0) h += row('가장 기복이 심한 검', nm(turbulent) + ' (波瀾 ' + levelDropCount(turbulent) + ')', '#a8c0d8');
         return h;
       })() +
-      renderRecords() +  // v156 新記
+      renderShinkiSection() +  // v156 新記 (v288 rename)
       renderHiddenAchievements();  // v152 風月
   }
   // 초기 라벨 반영

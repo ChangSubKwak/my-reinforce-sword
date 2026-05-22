@@ -39,6 +39,15 @@ test('성공률 분해가 successChanceNow의 즉시/검별 성공원도 표시 
     assert.ok(body.includes(src), '성공 분해에 ' + src + ' 출처 누락'));
 });
 
+test('최상위 함수 이름 중복 없음 (동명 함수 shadowing 방지 — v288 renderRecords 버그類)', () => {
+  // 같은 스코프 두 번째 function 선언이 첫 번째를 가려, 호출자가 의도와 다른 함수를 부르는 버그.
+  // v288: renderRecords가 2개(records-list 채움 vs 新記 html 반환)여서 劍士録 모달이 비어 있었음.
+  const counts = {};
+  for (const m of js.matchAll(/^  function (\w+)\s*\(/gm)) counts[m[1]] = (counts[m[1]] || 0) + 1;
+  const dups = Object.entries(counts).filter(([, v]) => v > 1).map(([k, v]) => k + ' ×' + v);
+  assert.deepStrictEqual(dups, [], '중복 최상위 함수 선언(뒤 정의가 앞을 가림): ' + dups.join(', '));
+});
+
 test('玉露 축복은 실패한 강화에만 환급 (성공 fall-through 회귀 방지, v285)', () => {
   // 玉露 발동이 enhanceFailed 가드 안에 있어야 함 — 공통 정리부에 있어 성공에도 환급되던 버그 방지.
   assert.match(js, /enhanceFailed && gyokuro && Math\.random\(\) < gyokuro\.chance/, '玉露는 enhanceFailed 가드 필요');
