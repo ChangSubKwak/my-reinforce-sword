@@ -70,6 +70,13 @@ test('節氣(solar-term) 보너스 접근자가 실제로 소비됨 (v263 — 6�
   });
 });
 
+test('v40+ 이후 제거된 검 SVG 요소를 참조하지 않음 (죽은 $() 방지)', () => {
+  // pommel/guard-deco/blade-shine/blade(static)는 v40 path 기반 재설계로 사라짐.
+  // 이들을 $()로 잡아도 항상 null이므로 참조 자체가 죽은 코드 → 재유입 방지.
+  ["'blade-shine'", "'guard-deco'", "'pommel'"].forEach(id =>
+    assert.ok(!js.includes('$(' + id + ')'), '죽은 SVG 참조 $(' + id + ') 재유입'));
+});
+
 test('localStorage.removeItem(SAVE_KEY) 호출은 모두 try-guarded (v267b — private mode 안전)', () => {
   // 초기화 경로(btn-reset / restartFromGameOver)에서 storage 예외가 in-memory 리셋을 막지 않도록.
   const all = [...js.matchAll(/(try\s*\{\s*)?localStorage\.removeItem\(SAVE_KEY\)/g)];

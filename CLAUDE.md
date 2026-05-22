@@ -94,11 +94,11 @@ UI 흐름: `showChallenge`는 `swordWrap.opacity=0`로 검 stage 숨기고 `#cha
 
 모든 상태 변경 후 `render()` 호출 — 통계 / SVG 검 외형 / 강화 정보 / 방지권 row 전부 재계산. 부분 업데이트 없음, 단순함이 우선.
 
-검 외형은 `state.level`에 따라:
-- `blade` 채움색 회색 → 황금 → 발광 (5 구간)
-- `swordSvg` class `glow-0/low/mid/high/divine`
-- `guardDeco` opacity (+5부터 황금 장식 등장)
-- `pommel` 색 (+8부터 황금)
+검 외형은 `state.level`에 따라 (v40+ path 기반 재설계 — `buildSwordBody(level, form, seal)`가 5 Tier별 SVG 문자열을 동적 생성, `applyLevelVisual()`에서 주입):
+- 칼날: tier별 Bézier path + `blade-grad-1~5` 그라데이션, tier≥4는 `strong-glow` 필터
+- `swordSvg` class `glow-0/low/mid/high/divine` (`applyLevelVisual`에서 setAttribute)
+- 가드 장식 / 폼멜 / 보석은 tier별로 path 문자열 안에 포함 (별도 정적 요소 아님)
+- 주의: v40 이전 정적 요소 `blade` / `guard-deco` / `pommel` / `blade-shine`은 제거됨 — `$()`로 잡지 말 것 (항상 null). integrity.test.js가 재유입 차단.
 
 ### 조합소 (`recipes`)
 
