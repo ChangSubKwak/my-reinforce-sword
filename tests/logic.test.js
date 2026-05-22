@@ -570,6 +570,29 @@ test('shadowTier: 강도 구간별 형용 (여린/굳센/강대한/흉험한)', 
 });
 
 // ─────────────────────────────────────────────────────────────
+// 통합: generateBiography — 파생 요소(時生·形·정점·性情)가 한 서사로 결합
+// ─────────────────────────────────────────────────────────────
+test('generateBiography 통합: 時生·형·정점·性情이 일대기에 결합', () => {
+  const bio = loadFunctions(['generateBiography', 'deriveTemperament']).generateBiography;
+  const sword = {
+    form: '直', name: '직검', level: 15, inscriptions: ['道'],
+    slainCount: 8, soul: 80, scars: 1, stars: {}, bornTod: '夜',
+    levelHistory: [0, 5, 10, 15],
+  };
+  const text = bio(sword);
+  assert.ok(text.length > 20, '비어있지 않은 서사');
+  assert.match(text, /깊은 밤/, '時生(夜) 개막 반영');
+  assert.match(text, /곧은 검 직검/, '形+검명');
+  assert.match(text, /도\(道\)/, '道 정점');
+  assert.match(text, /강\(剛\)/, '性情(베기 지배 → 剛) 결합');
+});
+test('generateBiography 통합: bornTod 없는 구 검도 안전 (접두 생략)', () => {
+  const bio = loadFunctions(['generateBiography', 'deriveTemperament']).generateBiography;
+  const text = bio({ form: '曲', name: '구검', level: 4, inscriptions: [], levelHistory: [0, 1] });
+  assert.ok(text.length > 0 && !text.startsWith(','), '접두 없이 정상 서사');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
