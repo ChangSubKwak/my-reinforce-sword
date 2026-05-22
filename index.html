@@ -16395,7 +16395,9 @@
         '</div>';
     }
     preview.innerHTML = html;
-    promptText.innerHTML = '자동 이름 <span style="color:var(--accent);letter-spacing:5px;font-size:14px">' + autoName + '</span><br>다른 이름을 짓고 싶으면 아래에 입력하세요';
+    promptText.innerHTML = '자동 이름 <span style="color:var(--accent);letter-spacing:5px;font-size:14px">' + autoName + '</span>' +
+      '<br><span style="color:var(--dim);font-size:10px;font-style:italic;letter-spacing:1px">' + deriveNameOrigin(form, ins, lv) + '</span>' +  // v312 名의 由來
+      '<br>다른 이름을 짓고 싶으면 아래에 입력하세요';
     input.placeholder = autoName;
     input.value = '';
     modal.classList.add('active');
