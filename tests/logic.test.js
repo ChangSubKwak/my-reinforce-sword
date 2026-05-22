@@ -484,6 +484,27 @@ test('formatTimeAgo: 단위 경계 + 미래 ts 방어', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v247 性情 — 검의 기질 (플레이 방식 → 정체성, 순수 파생)
+// ─────────────────────────────────────────────────────────────
+const tempFns = loadFunctions(['deriveTemperament']);
+const temp = s => tempFns.deriveTemperament(s).name;
+test('deriveTemperament: 剛(베기)·靜(흉터)·賭(고강화)·和(균형)', () => {
+  assert.strictEqual(temp({ slainCount: 5 }), '剛', '베기 지배 → 剛');
+  assert.strictEqual(temp({ scars: 2 }), '靜', '흉터(×2=4) 지배 → 靜');
+  assert.strictEqual(temp({ level: 12 }), '賭', '위험 영역(+12→5) 지배 → 賭');
+  assert.strictEqual(temp({ slainCount: 0, scars: 0, level: 5 }), '和', '뚜렷한 기질 없음 → 和');
+});
+test('deriveTemperament: 동점은 剛>靜>賭 우선', () => {
+  assert.strictEqual(temp({ slainCount: 4, scars: 2 }), '剛', '剛4=靜4 → 剛 우선');
+  assert.strictEqual(temp({ scars: 3, level: 13 }), '靜', '靜6=賭6 → 靜 우선');
+});
+test('deriveTemperament: null/무행동 안전 → 和', () => {
+  assert.strictEqual(tempFns.deriveTemperament(null).key, 'wa');
+  assert.strictEqual(temp({}), '和');
+  assert.strictEqual(temp({ level: 7 }), '和', '+7은 위험 영역 직전 → 0');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
