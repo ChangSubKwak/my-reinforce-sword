@@ -12145,8 +12145,10 @@
     checkStars();  // v116 七星
     updateMoodFromState();  // v127 氣 — 기분 갱신 (failStreak 기준)
     // v119 奇緣 — 玉露 (실패 시 환급) + 千年松 (일반 강화 이벤트)
+    // v285 — 玉露는 desc/주석대로 '실패한 강화'에만 환급 (성공 시엔 발동 X). roll<successChance가 성공.
+    const enhanceFailed = !(roll < successChance);
     const gyokuro = BLESSINGS.find(b => b.key === '玉露');
-    if (gyokuro && Math.random() < gyokuro.chance) {
+    if (enhanceFailed && gyokuro && Math.random() < gyokuro.chance) {
       const first = recordBlessing('玉露');
       showBlessing(gyokuro, first);
       state.shards += actualCost;
