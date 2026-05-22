@@ -29,7 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # 실행
 open index.html
 
-# JS parse 검증 (편집 후 필수)
+# JS parse 검증 (편집 후 필수) — npm run lint:parse 와 동일
 node -e "
 const fs=require('fs');
 const html=fs.readFileSync('index.html','utf8');
@@ -37,9 +37,14 @@ const m=html.match(/<script>([\s\S]*?)<\/script>/);
 new Function(m[1]);
 console.log('OK', m[1].length, 'bytes');
 "
+
+# 회귀 테스트 (편집 후 필수) — node --test, 의존성 0
+npm test
 ```
 
-진행도 초기화는 게임 내 "초기화" 버튼 또는 DevTools에서 `localStorage.removeItem('reinforce_sword_v1')`.
+**테스트 (`tests/`, node --test):** `harness.js`가 인라인 스크립트에서 순수 함수/상수를 추출(`extractConst`/`loadFunctions`)해 격리 sandbox에서 검증한다 (index.html은 비침투 보존). 게임 곡선·dial·구조 불변식이 ~170+ 테스트로 잠겨 있으니 **편집 후 `npm test` 필수**. 잠긴 항목 예: TABLE / SHADOW_TYPES / sealReward·sealRewardBase / enhanceCost·successChanceNow·effectiveDestroyChance 분해 완전성 / breathBonus(呼吸)·soulEffects(魂)·RESOLVE(覺悟)·guardianBonus(守)·MASTERY_TIERS(流派)·affinity(形相剋) / escapeHtml(공유데이터 XSS) / 동명 함수 중복 금지 / 레시피·砥 라벨 == 실제값. 새 dial/보너스 추가 시 해당 테스트도 갱신.
+
+진행도 초기화는 게임 내 "초기화" 버튼(`location.reload()` 방식 — v289) 또는 DevTools에서 `localStorage.removeItem('reinforce_sword_v1')`.
 
 ## 아키텍처 — 단일 파일 단일 IIFE
 
