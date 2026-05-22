@@ -962,3 +962,19 @@ test('guardianBonus: 守 형별 패시브 잠금 (道 검만 — v52 dial)', () 
   assert.strictEqual(f('重').rewardMul, 1.10, '重 ×1.10 보상');
   assert.strictEqual(f('速').rescueSec, 1.0, '速 +1s 회수');
 });
+
+test('getSchoolMastery / MASTERY_TIERS: 流派 숙련 임계 잠금 (모든 유파 보너스 배율)', () => {
+  const M = extractConst('MASTERY_TIERS');
+  assert.deepStrictEqual(M.map(t => [t.min, t.mul]), [[3, 1.0], [6, 1.5], [10, 2.0], [15, 2.5]], 'tier 값');
+  const at = (count) => loadFunctions(['getSchoolMastery', 'getFormCounts'], {
+    state: { sealedSwords: Array.from({ length: count }, () => ({ form: '直' })) },
+    MASTERY_TIERS: M,
+  }).getSchoolMastery('直');
+  assert.strictEqual(at(0), null, '0 = 미달성');
+  assert.strictEqual(at(2), null, '2 = 미달성 (<3, SCHOOL_THRESHOLD)');
+  assert.strictEqual(at(3).mul, 1.0, '3 = 入門 ×1.0');
+  assert.strictEqual(at(5).mul, 1.0, '5 = 여전히 入門');
+  assert.strictEqual(at(6).mul, 1.5, '6 = 師範 ×1.5');
+  assert.strictEqual(at(10).mul, 2.0, '10 = 宗師 ×2.0');
+  assert.strictEqual(at(15).mul, 2.5, '15 = 超越 ×2.5');
+});
