@@ -2,7 +2,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
-const { HTML_PATH, readScript } = require('./harness');
+const { HTML_PATH, readScript, loadFunctions } = require('./harness');
 
 const js = readScript();
 
@@ -62,6 +62,60 @@ test('normalizeState(): load()·applyCloudState 공유 (클라우드 복원도 �
   assert.ok(m, 'normalizeState 본문');
   ['treasures', 'eternityPoints', 'hourActivity', 'DEFAULT_STATS', 'gambleStats']
     .forEach(k => assert.ok(m[1].includes(k), k + ' 가드가 normalizeState에 포함'));
+});
+
+test('normalizeState() 동작 검증: 손상 입력 강제 보정 (정적 regex가 못 잡는 행위)', () => {
+  // normalizeState는 state.X만 변이(재대입 없음) → 주입 객체로 결과를 직접 읽을 수 있음.
+  const st = {
+    sealedSwords: 'CORRUPT', currentSword: null, whetstones: 'x',
+    enshrined: 42, hourActivity: [1, 2, 3], swordWish: 'bad',
+    gambleStats: null, stats: null,
+  };
+  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {} });
+  normalizeState();
+  // sandbox에서 생성된 배열/객체는 호스트와 prototype이 달라 deepStrictEqual 불가 → 구조 검사
+  const emptyArr = (x) => Array.isArray(x) && x.length === 0;
+  assert.ok(emptyArr(st.sealedSwords), '문자열 sealedSwords → []');
+  assert.ok(st.currentSword && typeof st.currentSword === 'object', 'null currentSword → 객체 재생성');
+  assert.ok(emptyArr(st.currentSword.inscriptions), 'currentSword.inscriptions → []');
+  assert.strictEqual(st.currentSword.soul, 0, 'soul → 0');
+  assert.strictEqual(st.whetstones, 0, '비숫자 whetstones → 0');
+  assert.ok(emptyArr(st.enshrined), '숫자 enshrined → []');
+  assert.strictEqual(st.hourActivity.length, 24, '길이≠24 hourActivity → 24칸 리셋');
+  assert.ok(st.hourActivity.every(v => v === 0), 'hourActivity 리셋값 전부 0');
+  assert.strictEqual(st.swordWish, null, 'object 아닌 swordWish → null');
+  assert.ok(st.gambleStats && st.gambleStats.win === 0 && st.gambleStats.lose === 0, 'null gambleStats → 기본 {win:0,lose:0}');
+});
+
+test('normalizeState() 동작 검증: stats 병합이 기존 값 보존 + 신규 키만 보강 (데이터 손실 방지)', () => {
+  // 핵심 불변식: Object.assign({}, DEFAULT, existing) 순서 — existing이 default를 이긴다.
+  // 순서가 뒤집히면 구 저장본의 누적 통계가 0으로 덮여 사라짐(데이터 손실).
+  const st = { stats: { enhanceSuccess: 7, slainDemon: 3, wayReached: 2 } };
+  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {} });
+  normalizeState();
+  assert.strictEqual(st.stats.enhanceSuccess, 7, '기존 enhanceSuccess 보존');
+  assert.strictEqual(st.stats.slainDemon, 3, '기존 slainDemon 보존');
+  assert.strictEqual(st.stats.wayReached, 2, '기존 wayReached 보존');
+  // 구 저장본에 없던 신규 키는 0으로 보강
+  assert.strictEqual(st.stats.stalemate, 0, '누락 신규키 stalemate → 0 보강');
+  assert.strictEqual(st.stats.downgraded, 0, '누락 신규키 downgraded → 0 보강');
+});
+
+test('normalizeState() 동작 검증: 정상 데이터는 건드리지 않음 (멱등·비파괴)', () => {
+  const good = {
+    sealedSwords: [{ form: '直' }], enshrined: [{ form: '曲' }],
+    currentSword: { enhanceAttempts: 5, slainCount: 2, inscriptions: ['道'], soul: 50, form: '重' },
+    whetstones: 3, hourActivity: new Array(24).fill(0), stats: { enhanceSuccess: 9 },
+  };
+  good.hourActivity[5] = 11;
+  const { normalizeState } = loadFunctions(['normalizeState'], { state: good, assignDestiny: () => {} });
+  normalizeState();
+  assert.strictEqual(good.sealedSwords.length, 1, 'sealedSwords 보존');
+  assert.strictEqual(good.currentSword.soul, 50, 'soul 보존');
+  assert.deepStrictEqual(good.currentSword.inscriptions, ['道'], 'inscriptions 보존');
+  assert.strictEqual(good.whetstones, 3, 'whetstones 보존');
+  assert.strictEqual(good.hourActivity[5], 11, '유효 길이-24 hourActivity 값 보존');
+  assert.strictEqual(good.stats.enhanceSuccess, 9, 'stats 기존값 보존');
 });
 
 test('save(): SAVE_KEY 사용', () => {
