@@ -12536,8 +12536,10 @@
   }
   function affinityLabel(form, shadowKey) {
     const a = getAffinity(form, shadowKey);
-    if (a === 'favored') return { text: '相剋 — 이 검에 강함 (×1.25 보상)', color: '#c8e6a0' };
-    if (a === 'weakness') return { text: '相剋 — 이 검에 약함 (×0.85 보상)', color: '#e6a0a0' };
+    // v349 — 배수를 상수에서 직접 보간 (하드코딩 '×1.25'/'×0.85'가 affinityRewardMul의
+    // AFFINITY_*_MUL과 drift하던 위험 제거 — 砥 라벨·레시피 비용류 단일 진원 규율).
+    if (a === 'favored') return { text: '相剋 — 이 검에 강함 (×' + AFFINITY_FAVORED_MUL + ' 보상)', color: '#c8e6a0' };
+    if (a === 'weakness') return { text: '相剋 — 이 검에 약함 (×' + AFFINITY_WEAKNESS_MUL + ' 보상)', color: '#e6a0a0' };
     return null;
   }
 
