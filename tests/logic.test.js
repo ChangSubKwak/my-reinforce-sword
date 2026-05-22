@@ -593,6 +593,33 @@ test('generateBiography 통합: bornTod 없는 구 검도 안전 (접두 생략)
 });
 
 // ─────────────────────────────────────────────────────────────
+// v15 generateVerse — 道 검 일생시 4행 (형/명문/슬레인 분기)
+// ─────────────────────────────────────────────────────────────
+const verseFns = loadFunctions(['generateVerse']);
+const verse = (f, ins, lv, sl) => verseFns.generateVerse(f, ins, lv, sl, 0, 0);
+test('generateVerse: 4행 반환 + 형/닫음 행', () => {
+  const v = verse('直', ['道'], 15, 8);
+  assert.strictEqual(v.length, 4);
+  assert.strictEqual(v[0], '강직의 검 한 자루', '直 형 행');
+  assert.strictEqual(v[3], '+15 의 길로 마무리되다', '닫음 행');
+});
+test('generateVerse: 명문 행 우선순위 (鬼斬+本 > 本 > 무명)', () => {
+  assert.strictEqual(verse('曲', ['鬼斬', '本'], 12, 3)[1], '본질을 깨우고 검귀의 피를 받아');
+  assert.strictEqual(verse('曲', ['本'], 12, 3)[1], '본질에 이르러');
+  assert.strictEqual(verse('曲', [], 12, 3)[1], '조용히 단련되어', '무명');
+});
+test('generateVerse: 슬레인 행 구간 (0 / 1 / <5 / <10 / 이상)', () => {
+  assert.match(verse('重', [], 10, 0)[2], /한 마리도 만나지 않은/);
+  assert.match(verse('重', [], 10, 1)[2], /단 한 마리/);
+  assert.match(verse('重', [], 10, 3)[2], /3의 그림자/);
+  assert.match(verse('重', [], 10, 7)[2], /거듭 갈라놓고/);
+  assert.match(verse('重', [], 10, 20)[2], /수많은 그림자/);
+});
+test('generateVerse: 형 없으면 이름 없는 검', () => {
+  assert.strictEqual(verse(null, [], 5, 0)[0], '이름 없는 검 한 자루');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
