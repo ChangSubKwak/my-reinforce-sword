@@ -527,13 +527,25 @@ test('generateLastWords: 결정적 (같은 검 같은 유언), null 안전', () 
 // ─────────────────────────────────────────────────────────────
 // v249 波瀾 — 일생 기복 (levelHistory 하락 횟수 파생)
 // ─────────────────────────────────────────────────────────────
-const journeyFns = loadFunctions(['deriveJourney']);
+const journeyFns = loadFunctions(['deriveJourney', 'levelDropCount']);
 const journey = h => journeyFns.deriveJourney({ levelHistory: h });
 test('deriveJourney: 하락 0 = 곧게, 1~2 = 다시 섬, 3~5 = 기복, 6+ = 수없이', () => {
   assert.match(journey([0, 1, 2, 3, 4]), /곧게 올랐다/, '단조 상승');
   assert.match(journey([0, 1, 0, 1, 2]), /1번 무너졌으나/, '1회 하락');
   assert.match(journey([3, 2, 3, 2, 3, 2, 4]), /기복의 검/, '3~5회');
   assert.match(journey([5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5]), /수없이 무너지고/, '6회+ (13개, 6하락)');
+});
+test('levelDropCount: levelHistory 하락 횟수', () => {
+  assert.strictEqual(journeyFns.levelDropCount({ levelHistory: [0, 1, 2, 3] }), 0);
+  assert.strictEqual(journeyFns.levelDropCount({ levelHistory: [3, 2, 3, 2] }), 2);
+  assert.strictEqual(journeyFns.levelDropCount({}), 0, '데이터 없음 → 0');
+});
+test('collectionHighlight: 점수 최대 검 선택, 빈 배열 null', () => {
+  const ch = loadFunctions(['collectionHighlight']).collectionHighlight;
+  const swords = [{ name: 'A', level: 5 }, { name: 'B', level: 12 }, { name: 'C', level: 9 }];
+  assert.strictEqual(ch(swords, s => s.level).name, 'B', '최고 강화도');
+  assert.strictEqual(ch([], s => s.level), null);
+  assert.strictEqual(ch(null, s => s.level), null);
 });
 test('deriveJourney: 데이터 부족(<2) 또는 없음 → 빈 문자열', () => {
   assert.strictEqual(journey([]), '');

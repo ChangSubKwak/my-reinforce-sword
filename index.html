@@ -14779,11 +14779,23 @@
   }
   // v249 波瀾 — 검의 일생 기복. levelHistory(저장됨)의 하락 횟수에서 파생한 여정 서술.
   // 一生 그래프(시각)에 narrative 해석을 더함 (메커니즘 효과 0).
+  function levelDropCount(sword) {  // v249 波瀾 — levelHistory 하락 횟수 (deriveJourney·컬렉션 하이라이트 공유)
+    const h = (sword && sword.levelHistory) || [];
+    let drops = 0;
+    for (let i = 1; i < h.length; i++) if (h[i] < h[i - 1]) drops++;
+    return drops;
+  }
+  // v250 검 중의 검 — 점수 기준 최고 검 선택 (컬렉션 하이라이트). 동점은 먼저 만난 검.
+  function collectionHighlight(sealed, scoreFn) {
+    if (!Array.isArray(sealed) || !sealed.length) return null;
+    let best = null, bestScore = -Infinity;
+    sealed.forEach(s => { const sc = scoreFn(s); if (sc > bestScore) { bestScore = sc; best = s; } });
+    return best;
+  }
   function deriveJourney(sword) {
     const h = (sword && sword.levelHistory) || [];
     if (h.length < 2) return '';  // 데이터 부족
-    let drops = 0;
-    for (let i = 1; i < h.length; i++) if (h[i] < h[i - 1]) drops++;
+    const drops = levelDropCount(sword);
     if (drops === 0) return '한 번도 무너지지 않고 곧게 올랐다.';
     if (drops <= 2) return drops + '번 무너졌으나 다시 일어섰다.';
     if (drops <= 5) return '여러 번 무너지고 다시 선, 기복의 검이었다.';
@@ -18078,6 +18090,20 @@
         const champ = getChampionInfo();
         if (!champ) return '';
         return '<div style="margin:10px 0;padding:8px 10px;background:rgba(255,245,192,0.06);border-left:2px solid #fff5c0;font-size:11px;letter-spacing:2px"><span style="color:#fff5c0;text-shadow:0 0 4px rgba(255,245,192,0.5)">鬪將</span> <span style="color:var(--fg)">' + (champ.sword.name || '검') + '</span> <span style="color:var(--dim);font-size:10px">— ' + champ.wins + '승</span></div>';
+      })() +
+      // v250 검 중의 검 — 컬렉션 하이라이트 (性情/波瀾 등 차원으로 주목할 검 명명)
+      (function() {
+        const sealed = state.sealedSwords || [];
+        if (sealed.length < 3) return '';
+        const nm = sw => sw ? (sw.name || makeSwordName(sw.form, sw.inscriptions || [], sw.level)) : '—';
+        const strongest = collectionHighlight(sealed, sw => sw.level || 0);
+        const slayer = collectionHighlight(sealed, sw => sw.slainCount || 0);
+        const turbulent = collectionHighlight(sealed, sw => levelDropCount(sw));
+        let h = '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">검 중의 검</div>';
+        h += row('가장 강한 검', nm(strongest) + ' (+' + (strongest.level || 0) + ' · ' + deriveTemperament(strongest).name + ')');
+        h += row('가장 많이 벤 검', nm(slayer) + ' (' + (slayer.slainCount || 0) + ')');
+        if (levelDropCount(turbulent) > 0) h += row('가장 기복이 심한 검', nm(turbulent) + ' (波瀾 ' + levelDropCount(turbulent) + ')', '#a8c0d8');
+        return h;
       })() +
       renderRecords() +  // v156 新記
       renderHiddenAchievements();  // v152 風月
