@@ -16699,7 +16699,13 @@
     });
     const active = getActiveSchools();
     const counts = getFormCounts();
-    let summary = '선대의 강기 ' + legacyStrength() + ' · 시작 +' + startBonus();
+    // v253 序 — 계보 머리글: 道號 + 컬렉션 규모로 검사의 길을 한 줄로 (정체성 종합)
+    const sealedCount = (state.sealedSwords || []).length;
+    let summary = '';
+    if (sealedCount > 0 && typeof generatePlayerTitle === 'function') {
+      summary += '<div style="color:var(--accent);letter-spacing:3px;font-size:11px;margin-bottom:6px;opacity:0.9">' + generatePlayerTitle() + ' · ' + sealedCount + '자루의 검을 남기다</div>';
+    }
+    summary += '선대의 강기 ' + legacyStrength() + ' · 시작 +' + startBonus();
     if (active.length) {
       // v106 合: 활성 유파에 마스터리 단계 표시
       const schoolDisplay = active.map(f => {
