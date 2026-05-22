@@ -380,3 +380,10 @@ test('모든 modal은 modal-close 또는 data-close 버튼 보유', () => {
   const closeCount = (html.match(/data-close/g) || []).length;
   assert.ok(closeCount >= modalCount * 0.8, '대부분 모달에 닫기 버튼 (' + closeCount + '/' + modalCount + ')');
 });
+
+test('초기화(btn-reset)는 reload 사용 — in-place state 리터럴 drift 재발 방지 (v289)', () => {
+  const m = js.match(/\$\('btn-reset'\)\.addEventListener\([\s\S]{0,400}?\n  \}\);/);
+  assert.ok(m, 'btn-reset 핸들러 추출');
+  assert.match(m[0], /location\.reload\(\)/, 'reset은 location.reload() 사용');
+  assert.ok(!/state = \{[\s\S]*?shards: 50/.test(m[0]), 'in-place 대형 state 리터럴 없어야 (drift 원인)');
+});
