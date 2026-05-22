@@ -1198,6 +1198,31 @@ test('SCHOOLS 보너스 값 잠금 (流派 dial — 直流+1%/曲流-1%/重流×
   assert.strictEqual(S['速'].schoolBonusRescueSec, 1.0, '速流 회수 +1s');
 });
 
+test('schoolRescueSec(): 速流 회수 보너스가 활성 임계·유파 숙련·殿堂 합산까지 합성 (v12/v65 회수 타이밍 dial)', () => {
+  const SCHOOLS = extractConst('SCHOOLS');
+  const MASTERY_TIERS = extractConst('MASTERY_TIERS');
+  const expectFast = SCHOOLS['速'].schoolBonusRescueSec; // 1.0
+  // 같은 컬렉션을 getFormCounts/getActiveSchools/schoolMasteryMul 전 체인에 흘려 합성 검증
+  const at = (sealed, enshrined) => loadFunctions(
+    ['schoolRescueSec', 'getActiveSchools', 'getFormCounts', 'schoolMasteryMul', 'getSchoolMastery'],
+    {
+      state: {
+        sealedSwords: (sealed || []).map(f => ({ form: f })),
+        enshrined: (enshrined || []).map(f => ({ form: f })),
+      },
+      SCHOOLS, SCHOOL_THRESHOLD: 3, MASTERY_TIERS,
+    }
+  ).schoolRescueSec();
+  assert.strictEqual(at([]), 0, '0자루 → 미활성 → 0초 (회수 보너스 없음)');
+  assert.strictEqual(at(['速', '速']), 0, '2 < 3 → 미활성 → 0초');
+  assert.strictEqual(at(['速', '速', '速']), expectFast * 1.0, '3자루 入門(×1.0) → +1.0초');
+  assert.strictEqual(at(['速', '速', '速', '速', '速', '速']), expectFast * 1.5, '6자루 師範(×1.5) → +1.5초');
+  // v350 머지 컬렉션: 봉인 2 + 殿堂 1 = 3 → 활성 (殿堂 검도 流派 진척에 합산)
+  assert.strictEqual(at(['速', '速'], ['速']), expectFast * 1.0, '봉인2+殿堂1=3 → 入門 활성');
+  // 다른 형은 速流 회수에 기여 안 함
+  assert.strictEqual(at(['直', '直', '直']), 0, '直流 3자루는 회수 보너스 0 (성공률 계열)');
+});
+
 test('todayStr: 로컬 YYYY-MM-DD (timezone-safe, 0-패딩 — 일일 리셋 핵심)', () => {
   const at = (y, mIndex, day) => {
     function FakeDate() {}
