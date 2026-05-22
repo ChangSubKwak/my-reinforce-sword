@@ -12059,7 +12059,7 @@
         bumpStat('rescued');
         bumpDaily('rescue', 1);  // v94 天時
         SFX.rescueSave();
-        log('조각 +' + shardReward + ' 주웠다', 'success');
+        log('조각 +' + fmtNum(shardReward) + ' 주웠다', 'success');
         endVoid(true);
       },
       // v219 賭 — 도박 회수 (50% 2배 / 50% 0)
@@ -12076,7 +12076,7 @@
           state.gambleStats.win++;
           SFX.rescueSave();
           showGambleResult(true, doubled);
-          log('賭 — 성공! 조각 +' + doubled + ' (2배)', 'success');
+          log('賭 — 성공! 조각 +' + fmtNum(doubled) + ' (2배)', 'success');
         } else {
           state.gambleStats.lose++;
           bumpStat('rescueFailed');
@@ -12092,7 +12092,7 @@
     const el = document.createElement('div');
     const color = win ? '#d4af37' : '#c0392b';
     const kanji = win ? '賭 ◯' : '賭 ✕';
-    const msg = win ? ('조각 +' + amount + ' — 두 배') : '모두 잃었다';
+    const msg = win ? ('조각 +' + fmtNum(amount) + ' — 두 배') : '모두 잃었다';
     el.innerHTML = '<div style="font-size:64px;color:' + color + ';letter-spacing:10px;text-shadow:0 0 30px ' + color + ';font-weight:200;line-height:1">' + kanji + '</div>' +
                     '<div style="font-size:13px;color:rgba(232,224,221,0.85);letter-spacing:4px;margin-top:18px">' + msg + '</div>';
     el.style.cssText = 'position:fixed;top:42%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6000;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:30px 50px;background:radial-gradient(ellipse,rgba(15,15,22,0.9) 0%,rgba(15,15,22,0.4) 70%,transparent 92%)';
@@ -13402,7 +13402,7 @@
     shadowStrength.textContent = (challenge.origin ? challenge.origin + ' · ' : '') + t.name + ' · 강도 +' + challenge.strength;
     // 베기 버튼에 보상 표시
     const slayRewardLabel = $('slay-reward-label');
-    if (slayRewardLabel) slayRewardLabel.textContent = '+' + slayGrantAmount(challenge.reward) + ' 조각';  // v244 連斬 반영
+    if (slayRewardLabel) slayRewardLabel.textContent = '+' + fmtNum(slayGrantAmount(challenge.reward)) + ' 조각';  // v244 連斬 반영
     const verdict = state.level >= challenge.strength
       ? '<span style="color:var(--safe)">충분히 강하다 — 한 번에 베어진다</span>'
       : '<span style="color:var(--danger)">검이 약하다 — 흔들릴 수 있다</span>'
@@ -13577,7 +13577,7 @@
       showSwordVoice('slay', state.level, slayShadowType);
       captureRubbing('firstSlay');  // v136 拓本 — 첫 슬레이
       // v34 一閃 결과 페이드 (의식) — v125 streak bonus 반영
-      inscribeQueue.push({ key: '斬', label: c.type.name + ' · 조각 +' + finalReward + (slayBonusMul > 1 ? ' (連斬 ×' + slayBonusMul.toFixed(2) + ')' : '') });
+      inscribeQueue.push({ key: '斬', label: c.type.name + ' · 조각 +' + fmtNum(finalReward) + (slayBonusMul > 1 ? ' (連斬 ×' + slayBonusMul.toFixed(2) + ')' : '') });
       if (!inscribeRunning) runInscribeQueue();
       // 통계: type별 격파 수
       recordHourActivity();  // v195 時計
@@ -13607,7 +13607,7 @@
         const dso = $('demon-slay-overlay');
         if (dso) {
           const dk = $('demon-slay-kanji'); if (dk) dk.textContent = '鬼斬';
-          $('demon-slay-msg').textContent = '검귀를 베어냈다 · 조각 +' + finalReward;
+          $('demon-slay-msg').textContent = '검귀를 베어냈다 · 조각 +' + fmtNum(finalReward);
           dso.classList.remove('active');
           void dso.offsetWidth;
           dso.classList.add('active');
@@ -13630,7 +13630,7 @@
           const dso = $('demon-slay-overlay');
           if (dso) {
             const dk = $('demon-slay-kanji'); if (dk) dk.textContent = foe.name;
-            $('demon-slay-msg').textContent = foe.name + '을 베어냈다 · 조각 +' + finalReward;
+            $('demon-slay-msg').textContent = foe.name + '을 베어냈다 · 조각 +' + fmtNum(finalReward);
             dso.classList.remove('active');
             void dso.offsetWidth;
             dso.classList.add('active');
