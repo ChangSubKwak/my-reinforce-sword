@@ -1090,3 +1090,18 @@ test('getScarDestroyReduce: 흉터당 -1% 파괴 (v111 刻痕 dial)', () => {
   assert.ok(Math.abs(at(3) - 0.03) < 1e-9, '흉터 3 → -3%');
   assert.strictEqual(at(0, false), 0, '검 없음 → 0');
 });
+
+test('moodSuccessBonus: 心象 — 喜 +3%, 怒 -2%, 그 외 0 (v127 dial)', () => {
+  const at = (mood) => loadFunctions(['moodSuccessBonus'], { currentMood: mood }).moodSuccessBonus();
+  assert.ok(Math.abs(at('joy') - 0.03) < 1e-9, '喜 +3%');
+  assert.ok(Math.abs(at('rage') - (-0.02)) < 1e-9, '怒 -2%');
+  assert.strictEqual(at('calm'), 0);
+  assert.strictEqual(at(null), 0);
+});
+
+test('enshrineSuccessBonus: 殿堂 검당 +1.5%, 최대 3진열 +4.5% (v118 dial)', () => {
+  const at = (n) => loadFunctions(['enshrineSuccessBonus', 'enshrineCount'], { state: { enshrined: Array(n).fill({}) } }).enshrineSuccessBonus();
+  assert.strictEqual(at(0), 0);
+  assert.ok(Math.abs(at(1) - 0.015) < 1e-9, '1진열 → +1.5%');
+  assert.ok(Math.abs(at(3) - 0.045) < 1e-9, '3진열 → +4.5%');
+});
