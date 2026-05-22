@@ -1080,3 +1080,13 @@ test('resonanceBonus: 共鳴 — 같은 형 봉인 검당 +0.5%, cap 5% (v178 di
   const noSword = loadFunctions(['resonanceBonus', 'sameFormSealedCount'], { state: { hasSword: false, sealedSwords: [] } });
   assert.strictEqual(noSword.resonanceBonus(), 0, '검 없음 → 0');
 });
+
+test('getScarDestroyReduce: 흉터당 -1% 파괴 (v111 刻痕 dial)', () => {
+  const at = (scars, hasSword = true) => loadFunctions(['getScarDestroyReduce'], {
+    state: { currentSword: hasSword ? { scars } : null },
+  }).getScarDestroyReduce();
+  assert.strictEqual(at(0), 0, '흉터 0 → 0');
+  assert.ok(Math.abs(at(1) - 0.01) < 1e-9, '흉터 1 → -1%');
+  assert.ok(Math.abs(at(3) - 0.03) < 1e-9, '흉터 3 → -3%');
+  assert.strictEqual(at(0, false), 0, '검 없음 → 0');
+});
