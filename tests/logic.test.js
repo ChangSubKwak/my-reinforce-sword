@@ -293,6 +293,37 @@ test('SWORD_FORMS: 효과는 미세 편향 (점수 인플레이션 회피, |bonu
 });
 
 // ─────────────────────────────────────────────────────────────
+// v238 enhanceCost — 비용 단일 진원 행동 테스트 (배수·ceil·floor 옵션)
+// ─────────────────────────────────────────────────────────────
+function makeEnhanceCost(deps) {
+  const base = {
+    TABLE: [{ cost: 10 }],
+    getForm: () => ({}), enhanceEcho: null, getResolve: () => ({ costMul: 1 }),
+    getSeason: () => ({ costMul: 1 }), getAgeEffect: () => ({ costMul: 1 }),
+    blessingCostMul: () => 1, sanctumCostMul: () => 1, wishCostMul: () => 1,
+    solarCostMul: () => 1, weekendCostMul: () => 1, flowCostReduce: () => 0,
+  };
+  return loadFunctions(['enhanceCost'], Object.assign(base, deps || {})).enhanceCost;
+}
+test('enhanceCost: 중립 배수 = 기본 비용, 범위 밖 = 0', () => {
+  assert.strictEqual(makeEnhanceCost()(0), 10);
+  assert.strictEqual(makeEnhanceCost()(5), 0, 'TABLE[5] 없음 → 0');
+});
+test('enhanceCost: 형 비용·잔향·계절 배수 곱셈 + Math.ceil', () => {
+  assert.strictEqual(makeEnhanceCost({ getForm: () => ({ costMul: 1.1 }) })(0), 11);
+  assert.strictEqual(makeEnhanceCost({ enhanceEcho: { costMul: 0.5 } })(0), 5, '餘香 -50%');
+  assert.strictEqual(makeEnhanceCost({ getSeason: () => ({ costMul: 0.95 }) })(0), 10, 'ceil(9.5)=10');
+});
+test('enhanceCost: 連氣 흐름 할인 (1-flowCostReduce)', () => {
+  assert.strictEqual(makeEnhanceCost({ flowCostReduce: () => 0.10 })(0), 9);
+});
+test('enhanceCost: floor 옵션은 保身(resolve costMul) 가산 무시', () => {
+  const heavy = { getResolve: () => ({ costMul: 1.5 }) };  // 保身
+  assert.strictEqual(makeEnhanceCost(heavy)(0), 15, '保身 비용 1.5배');
+  assert.strictEqual(makeEnhanceCost(heavy)(0, { floor: true }), 10, 'floor=保身 가산 제외(게임오버 판정)');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
