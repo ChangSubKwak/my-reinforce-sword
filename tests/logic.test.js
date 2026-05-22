@@ -978,3 +978,13 @@ test('getSchoolMastery / MASTERY_TIERS: 流派 숙련 임계 잠금 (모든 유�
   assert.strictEqual(at(10).mul, 2.0, '10 = 宗師 ×2.0');
   assert.strictEqual(at(15).mul, 2.5, '15 = 超越 ×2.5');
 });
+
+test('SHADOW_TYPES 값 잠금 (전투 dial — flee/steel 보정)', () => {
+  const by = Object.fromEntries(extractConst('SHADOW_TYPES').map(t => [t.key, t]));
+  assert.strictEqual(by.normal.strengthMul, 1.0); assert.strictEqual(by.normal.rewardMul, 1.0);
+  assert.strictEqual(by.flee.strengthMul, 0.85, '逃影 강도 ×0.85');
+  assert.strictEqual(by.flee.rewardMul, 1.8, '逃影 보상 ×1.8');
+  assert.strictEqual(by.flee.slayEvade, 0.35, '逃影 35% 회피');
+  assert.strictEqual(by.steel.rewardMul, 1.5, '鋼影 보상 ×1.5');
+  assert.strictEqual(by.steel.strengthAdd, 3, '鋼影 강도 +3');
+});
