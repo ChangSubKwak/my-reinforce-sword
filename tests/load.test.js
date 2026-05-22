@@ -145,6 +145,23 @@ test('normalizeState() 동작 검증: 검 사용자텍스트 태그문자 제거
   assert.strictEqual(st.userSeal[0], '正', '정상 印 글자 보존');
 });
 
+test('normalizeState() XSS sanitize는 assignDestiny가 throw해도 실행됨 (보안 skip 회귀 방지)', () => {
+  // XSS sanitize는 normalizeState 단일 try/catch 안에서 assignDestiny() 호출 뒤에 옴.
+  // assignDestiny가 (로컬 try-catch 없이) throw하면 normalizeState가 조기 abort → 악성
+  // import가 sanitize 안 된 채 통과. 현재 assignDestiny는 로컬 try-catch로 감싸져 안전한데,
+  // 이 회귀(로컬 try-catch 제거 / sanitize를 throw 뒤로 이동)를 잠근다.
+  const st = {
+    hasSword: true,
+    currentSword: { name: '<img onerror=x>', inscriptions: [] },  // destiny 없음 → assignDestiny 호출 트리거
+    sealedSwords: [{ name: '<b>evil' }], enshrined: [],
+  };
+  const throwingDestiny = () => { throw new Error('boom'); };
+  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: throwingDestiny, MAX_LEVEL: 15 });
+  normalizeState();
+  assert.ok(!/[<>]/.test(st.currentSword.name), 'assignDestiny throw에도 현재 검명 sanitize됨');
+  assert.ok(!/[<>]/.test(st.sealedSwords[0].name), 'assignDestiny throw에도 봉인 검명 sanitize됨');
+});
+
 test('normalizeState() 동작 검증: 핵심 수치 범위/정수 강제 (손상 import 게임-브로큰 방지, v370o)', () => {
   const st = {
     level: 999, bestLevel: 'abc', shards: -50, protections: 3.7,
