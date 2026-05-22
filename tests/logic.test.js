@@ -1137,3 +1137,19 @@ test('dailySeed: 결정적 해시 (같은 날짜 동일·음수 없음·날짜�
   assert.strictEqual(f(''), 0, '빈 문자열 → 0');
   assert.ok(Number.isInteger(f('2026-12-31')), '정수 반환');
 });
+
+test('getTimeOfDay: 시간대 경계 (朝5-11/晝11-17/夕17-21/夜 그 외 — v153/v252)', () => {
+  const at = (hour) => {
+    function FakeDate() {}
+    FakeDate.prototype.getHours = function () { return hour; };
+    return loadFunctions(['getTimeOfDay'], { Date: FakeDate }).getTimeOfDay().key;
+  };
+  assert.strictEqual(at(4), 'night', '4시 → 夜');
+  assert.strictEqual(at(5), 'morning', '5시 → 朝');
+  assert.strictEqual(at(10), 'morning');
+  assert.strictEqual(at(11), 'day', '11시 → 晝');
+  assert.strictEqual(at(16), 'day');
+  assert.strictEqual(at(17), 'evening', '17시 → 夕');
+  assert.strictEqual(at(20), 'evening');
+  assert.strictEqual(at(21), 'night', '21시 → 夜');
+});
