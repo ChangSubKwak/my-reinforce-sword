@@ -10481,6 +10481,27 @@
     }
     sections.push(section('파괴 확률 요인', destroyLines));
 
+    // 1c. 강화 비용 요인 (enhanceCost 거울 — form 重/계절/노쇠/保身/축복/聖域/유언/節氣/주말/連)
+    const costLines = [];
+    if (state.hasSword && typeof enhanceCost === 'function' && TABLE[state.level] && TABLE[state.level].cost > 0) {
+      const lv = state.level;
+      const costMulLine = (label, m) => { if (m !== 1) costLines.push(line(label, mul(m), m > 1 ? 'var(--danger)' : 'var(--safe)')); };
+      costLines.push(line('기본 비용 (+' + lv + '→+' + (lv + 1) + ')', fmtNum(TABLE[lv].cost) + ' 조각', 'var(--dim)'));
+      const f = getForm(); costMulLine('形 ' + ((f && f.name) || ''), (f && f.costMul) || 1);
+      costMulLine('季節', getSeason().costMul);
+      costMulLine('노쇠 (久/古)', getAgeEffect().costMul);
+      const rsv = getResolve(); costMulLine('覺悟 ' + rsv.label, rsv.costMul);
+      if (typeof enhanceEcho !== 'undefined' && enhanceEcho && enhanceEcho.costMul) costMulLine('잔향 (殘響)', enhanceEcho.costMul);
+      if (typeof blessingCostMul === 'function') costMulLine('축복 (千年松)', blessingCostMul());
+      if (typeof sanctumCostMul === 'function') costMulLine('聖域', sanctumCostMul());
+      if (typeof wishCostMul === 'function') costMulLine('유언 (願)', wishCostMul());
+      if (typeof solarCostMul === 'function') costMulLine('節氣', solarCostMul());
+      if (typeof weekendCostMul === 'function') costMulLine('주말 (休)', weekendCostMul());
+      if (typeof flowCostReduce === 'function') { const fr = flowCostReduce(); if (fr) costMulLine('連 흐름', 1 - fr); }
+      costLines.push(line('실제 비용', fmtNum(enhanceCost(lv)) + ' 조각', 'var(--accent)'));
+    }
+    sections.push(section('강화 비용 요인', costLines));
+
     // 2. 활성 charges (1회용)
     const chargeLines = [];
     if (state.metsumaoCharges > 0) chargeLines.push(line('滅魔 (다음 슬레이 ×1.5)', '×' + state.metsumaoCharges));

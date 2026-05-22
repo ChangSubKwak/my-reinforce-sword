@@ -39,6 +39,18 @@ test('성공률 분해가 successChanceNow의 즉시/검별 성공원도 표시 
     assert.ok(body.includes(src), '성공 분해에 ' + src + ' 출처 누락'));
 });
 
+test('강화 비용 분해(renderStatus)가 enhanceCost의 *CostMul/flowCostReduce 항을 모두 표시 (v273)', () => {
+  // enhanceCost가 곱하는 모든 단독 함수형 배수는 비용 분해 표시에도 나타나야 함 (display≠actual 방지).
+  const em = js.match(/function enhanceCost\([^)]*\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(em, 'enhanceCost 본문');
+  const muls = [...new Set([...em[1].matchAll(/(\w+CostMul|flowCostReduce)\(\)/g)].map(m => m[1]))];
+  assert.ok(muls.length >= 5, 'enhanceCost 단독 배수 함수 ≥5 (현재 ' + muls.length + ')');
+  const rm = js.match(/function renderStatus\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(rm, 'renderStatus 본문');
+  const missing = muls.filter(t => !rm[1].includes(t + '()'));
+  assert.deepStrictEqual(missing, [], '비용 분해에서 누락된 배수: ' + missing.join(', '));
+});
+
 test('파괴 확률 분해(renderStatus)가 effectiveDestroyChance의 *DestroyReduce 항을 모두 표시', () => {
   // effectiveDestroyChance가 빼는 모든 감소원은 파괴 분해 표시에도 나타나야 함 (display≠actual 방지).
   const em = js.match(/function effectiveDestroyChance\([^)]*\)\s*\{([\s\S]*?)\n  \}/);
