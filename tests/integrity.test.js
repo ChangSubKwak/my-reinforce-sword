@@ -435,3 +435,8 @@ test('server.js: 루트 디렉토리 정적 서빙 안 함 — 소스/CLAUDE.md 
   assert.match(srv, /sendFile\([^)]*index\.html/, 'catch-all로 index.html 서빙');
   assert.match(srv, /X-Frame-Options/, '보안 헤더 유지 (v334)');
 });
+
+test('메인 게임 컨테이너에 role="main" 랜드마크 (v339 a11y)', () => {
+  assert.match(html, /<div id="game" role="main"/, '#game이 main 랜드마크 (스크린리더 본문 점프)');
+  assert.strictEqual((html.match(/role="main"/g) || []).length, 1, 'main 랜드마크는 정확히 1개');
+});
