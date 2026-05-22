@@ -4363,6 +4363,22 @@
       if (typeof state.whetstones !== 'number') state.whetstones = 0;
       if (typeof state.spiritstones !== 'number') state.spiritstones = 0;
       if (typeof state.divinationStones !== 'number') state.divinationStones = 0;  // v122 占卜
+      // v370o 숫자 무결성 — 손상/크래프트된 import(백업·클라우드)의 핵심 수치 범위 검증.
+      // level/bestLevel이 범위 밖이면 TABLE 미정의 → enhance 비용 NaN·승률0 고착·도전 강도 폭주로
+      // 게임이 브로큰. 정수·범위 강제 (정상 저장본은 항상 범위 내라 no-op).
+      const clampInt = (v, lo, hi) => {
+        v = Math.floor(Number(v));
+        if (!isFinite(v)) return lo;
+        return hi != null ? Math.max(lo, Math.min(hi, v)) : Math.max(lo, v);
+      };
+      state.level = clampInt(state.level, 0, MAX_LEVEL);
+      state.bestLevel = clampInt(state.bestLevel, 0, MAX_LEVEL);
+      if (state.bestLevel < state.level) state.bestLevel = state.level;
+      state.shards = clampInt(state.shards, 0);
+      state.protections = clampInt(state.protections, 0);
+      state.whetstones = clampInt(state.whetstones, 0);
+      state.spiritstones = clampInt(state.spiritstones, 0);
+      state.divinationStones = clampInt(state.divinationStones, 0);
       if (typeof state.firstWayReached !== 'boolean') state.firstWayReached = false;
       if (typeof state.endingShown !== 'boolean') state.endingShown = false;
       if (!state.shadowOriginsSlain || typeof state.shadowOriginsSlain !== 'object') state.shadowOriginsSlain = {};
@@ -4379,6 +4395,9 @@
         if (typeof sw.memo === 'string') sw.memo = stripTags(sw.memo);
         if (typeof sw.kigen === 'string') sw.kigen = stripTags(sw.kigen);
         if (Array.isArray(sw.fusedFrom)) sw.fusedFrom = sw.fusedFrom.map(stripTags);
+        // v370o 봉인 검 level도 범위 강제 — 손상 import의 level=999가 계보 SVG·"가장 강한 검"
+        // 표시를 깨고 sealReward 표시를 폭주시키는 것 방지 (표시 전용이라 검 필드 sanitize에 동봉).
+        if (sw.level != null) sw.level = clampInt(sw.level, 0, MAX_LEVEL);
       };
       state.sealedSwords.forEach(sanitizeSword);
       state.enshrined.forEach(sanitizeSword);

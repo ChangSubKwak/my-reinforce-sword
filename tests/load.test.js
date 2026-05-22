@@ -105,7 +105,7 @@ test('normalizeState() 동작 검증: 손상 입력 강제 보정 (정적 regex�
     enshrined: 42, hourActivity: [1, 2, 3], swordWish: 'bad',
     gambleStats: null, stats: null,
   };
-  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {} });
+  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 });
   normalizeState();
   // sandbox에서 생성된 배열/객체는 호스트와 prototype이 달라 deepStrictEqual 불가 → 구조 검사
   const emptyArr = (x) => Array.isArray(x) && x.length === 0;
@@ -130,7 +130,7 @@ test('normalizeState() 동작 검증: 검 사용자텍스트 태그문자 제거
     currentSword: { name: '<b>cur', inscriptions: [] },
     userSeal: ['正', '</text><img onerror=x>'],  // v187 印 — buildSealSVG가 <text>에 raw 삽입
   };
-  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {} });
+  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 });
   normalizeState();
   const s0 = st.sealedSwords[0];
   assert.ok(!/[<>]/.test(s0.name), '봉인검명에서 < > 제거');
@@ -145,11 +145,37 @@ test('normalizeState() 동작 검증: 검 사용자텍스트 태그문자 제거
   assert.strictEqual(st.userSeal[0], '正', '정상 印 글자 보존');
 });
 
+test('normalizeState() 동작 검증: 핵심 수치 범위/정수 강제 (손상 import 게임-브로큰 방지, v370o)', () => {
+  const st = {
+    level: 999, bestLevel: 'abc', shards: -50, protections: 3.7,
+    whetstones: NaN, spiritstones: -1, divinationStones: 2,
+    sealedSwords: [{ level: 9999, name: 'x' }], enshrined: [],
+  };
+  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 });
+  normalizeState();
+  assert.strictEqual(st.level, 15, 'level 999 → MAX(15)로 클램프');
+  assert.strictEqual(st.bestLevel, 15, "bestLevel 'abc' → NaN이지만 level(15) 이상 보정");
+  assert.strictEqual(st.shards, 0, '음수 shards → 0');
+  assert.strictEqual(st.protections, 3, 'float protections → floor(3)');
+  assert.strictEqual(st.whetstones, 0, 'NaN whetstones → 0');
+  assert.strictEqual(st.spiritstones, 0, '음수 spiritstones → 0');
+  assert.strictEqual(st.divinationStones, 2, '정상값 보존');
+  assert.strictEqual(st.sealedSwords[0].level, 15, '봉인 검 level 9999 → MAX 클램프');
+});
+
+test('normalizeState() 동작 검증: 정상 수치는 클램프가 no-op (정상 저장본 불변)', () => {
+  const st = { level: 7, bestLevel: 12, shards: 340, protections: 2, whetstones: 1, spiritstones: 0, sealedSwords: [{ level: 10 }], enshrined: [] };
+  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 });
+  normalizeState();
+  assert.strictEqual(st.level, 7); assert.strictEqual(st.bestLevel, 12); assert.strictEqual(st.shards, 340);
+  assert.strictEqual(st.protections, 2); assert.strictEqual(st.sealedSwords[0].level, 10);
+});
+
 test('normalizeState() 동작 검증: stats 병합이 기존 값 보존 + 신규 키만 보강 (데이터 손실 방지)', () => {
   // 핵심 불변식: Object.assign({}, DEFAULT, existing) 순서 — existing이 default를 이긴다.
   // 순서가 뒤집히면 구 저장본의 누적 통계가 0으로 덮여 사라짐(데이터 손실).
   const st = { stats: { enhanceSuccess: 7, slainDemon: 3, wayReached: 2 } };
-  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {} });
+  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 });
   normalizeState();
   assert.strictEqual(st.stats.enhanceSuccess, 7, '기존 enhanceSuccess 보존');
   assert.strictEqual(st.stats.slainDemon, 3, '기존 slainDemon 보존');
