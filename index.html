@@ -5627,7 +5627,7 @@
       btnEnhance.disabled = !canAffordNew;
       btnEnhance.textContent = canAffordNew
         ? '새  검  빚 기  ·  조각 ' + NEWSWORD_COST
-        : '조 각  부 족  (조각 ' + NEWSWORD_COST + ' 필요 / 보유 ' + state.shards + ')';
+        : '조 각  부 족  (조각 ' + fmtNum(NEWSWORD_COST) + ' 필요 / 보유 ' + fmtNum(state.shards) + ')';
       oddsSuccess.innerHTML = '<span style="color:var(--danger)">검을 잃었다</span>';
       oddsFail.textContent = '새 검을 빚어 다시 시작하라';
       oddsCost.textContent = '';
@@ -5711,7 +5711,7 @@
     btnEnhance.disabled = !canAfford;
     btnEnhance.textContent = canAfford
       ? '강 화  →  +' + (lv + 1)
-      : '조 각  부 족  (' + actualCost + ' 필요 / 보유 ' + state.shards + ')';
+      : '조 각  부 족  (' + fmtNum(actualCost) + ' 필요 / 보유 ' + fmtNum(state.shards) + ')';
 
     const breathStr = breathLabel();
     // 첫 강화(+0→+1)는 무료임을 강조
@@ -5739,7 +5739,7 @@
     }
     oddsFail.innerHTML = failMsg.replace('파괴', '<span class="destroy">파괴</span>');
     const flowR = flowCostReduce();
-    oddsCost.textContent = '조각 ' + actualCost + ' 소모' + (flowR > 0 ? '  · 連氣 -' + Math.round(flowR * 100) + '%' : '');
+    oddsCost.textContent = '조각 ' + fmtNum(actualCost) + ' 소모' + (flowR > 0 ? '  · 連氣 -' + Math.round(flowR * 100) + '%' : '');
 
     // v91 覺悟 — 마음가짐 UI 갱신
     const rrow = $('resolve-row'), resolveDesc = $('resolve-desc');
@@ -15381,10 +15381,10 @@
         const riskStr = risk > 0
           ? ' <span style="color:var(--danger)">파괴 ' + risk + '%</span>'
           : ' 안전';
-        extraHint = '  <span style="font-size:9px;opacity:0.7;letter-spacing:1px">(+1 시 +' + diff + '↑ ·' + riskStr + ')</span>';
+        extraHint = '  <span style="font-size:9px;opacity:0.7;letter-spacing:1px">(+1 시 +' + fmtNum(diff) + '↑ ·' + riskStr + ')</span>';
       }
     }
-    lbl.innerHTML = '+' + reward + ' 조각' + extraHint;
+    lbl.innerHTML = '+' + fmtNum(reward) + ' 조각' + extraHint;
   }
 
   function renderCurrentChart() {
