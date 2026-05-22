@@ -18332,6 +18332,8 @@
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">생 사</div>' +
       row('조각 줍기 성공', fmtNum(s.rescued || 0) + ' 회') +
       row('조각 줍기 실패', fmtNum(s.rescueFailed || 0) + ' 회', 'var(--danger)') +
+      (((state.gambleStats && (state.gambleStats.win || state.gambleStats.lose)) ?
+        row('賭 회수 도박', fmtNum(state.gambleStats.win || 0) + '승 ' + fmtNum(state.gambleStats.lose || 0) + '패', '#d4af37') : '')) +
       row('검 파괴', fmtNum(state.totalDestroyed || 0) + ' 회', 'var(--danger)') +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">정 점</div>' +
       row('검 판매', fmtNum(s.sealed || 0) + ' 회') +
