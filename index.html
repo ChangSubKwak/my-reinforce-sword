@@ -12191,6 +12191,7 @@
     }
 
     let rescued = false;
+    let lastTickSec = Math.ceil(timeLeft);  // v282 — 초 단위 카운트다운 틱 사운드
     const tickInterval = setInterval(() => {
       timeLeft -= 0.1;
       if (timeLeft <= 0) {
@@ -12199,6 +12200,8 @@
         if (!rescued) endVoid(false);
       } else {
         rescueTimer.textContent = timeLeft.toFixed(1) + '초 안에  ·  +' + shardReward + ' 조각';
+        const sec = Math.ceil(timeLeft);  // v282 — 매 초 경계마다 rescueTick (정의됐으나 미연결이던 SFX)
+        if (sec !== lastTickSec) { lastTickSec = sec; SFX.rescueTick(); }
       }
     }, 100);
 
