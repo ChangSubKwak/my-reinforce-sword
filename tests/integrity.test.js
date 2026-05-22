@@ -70,6 +70,14 @@ test('節氣(solar-term) 보너스 접근자가 실제로 소비됨 (v263 — 6�
   });
 });
 
+test('Esc가 열린 일반 모달을 닫음 (name/form-select 제외, 챌린지보다 우선)', () => {
+  // v266: ~50개 정보 모달에 Esc-닫기가 없던 UX 갭. 전역 keydown에서 처리.
+  assert.match(js, /querySelectorAll\('\.modal\.active'\)/, '활성 모달 셀렉터 사용');
+  assert.match(js, /m\.id !== 'name-modal' && m\.id !== 'form-select-modal'/, 'name/form-select 제외');
+  assert.match(js, /open\[open\.length - 1\]\.classList\.remove\('active'\)/, '최상단 모달 닫기');
+  assert.match(js, /else if \(challenge\) flee\(\)/, '모달 없을 때만 챌린지 flee');
+});
+
 test('중복 HTML id 없음', () => {
   const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(x => x[1]);
   const seen = {}, dups = [];

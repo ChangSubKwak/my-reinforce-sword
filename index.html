@@ -18454,7 +18454,13 @@
       else if (rescueWindow) rescueWindow.rescue();
       else if (!btnEnhance.disabled) enhance();
     }
-    if (e.key === 'Escape' && challenge) flee();
+    if (e.key === 'Escape') {
+      // 열린 일반 모달이 있으면 가장 위(마지막)부터 닫기 — name/form-select는 자체 처리/필수 선택이라 제외
+      const open = [].filter.call(document.querySelectorAll('.modal.active'),
+        m => m.id !== 'name-modal' && m.id !== 'form-select-modal');
+      if (open.length) { e.preventDefault(); open[open.length - 1].classList.remove('active'); }
+      else if (challenge) flee();
+    }
     if (e.key === 'p' || e.key === 'P') {
       if (!protectCheck.disabled) protectCheck.checked = !protectCheck.checked;
     }
