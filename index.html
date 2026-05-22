@@ -14819,12 +14819,15 @@
     const stars = sword.stars || {};
     const name = sword.name || '이름 없는 검';
     // 1. 개막 (form 기반)
-    const formOpening = ({
+    // v252b 時生 — 빚어진 시각을 개막에 녹임
+    const todWord = ({ '朝': '아침', '晝': '한낮', '夕': '저녁', '夜': '깊은 밤' })[sword.bornTod] || '';
+    const todPrefix = todWord ? todWord + ', ' : '';
+    const formOpening = todPrefix + (({
       '直': '곧은 검 ' + name + '은 바람을 가르며 태어났다.',
       '曲': '굽은 검 ' + name + '은 강의 흐름처럼 태어났다.',
       '重': '무거운 검 ' + name + '은 산의 무게를 지고 태어났다.',
       '速': '빠른 검 ' + name + '은 빛처럼 빠르게 태어났다.',
-    })[form] || '검 ' + name + '은 이름 없이 태어났다.';
+    })[form] || '검 ' + name + '은 이름 없이 태어났다.');
     // 2. 정점 성취
     let peak;
     if (ins.includes('道')) peak = '주인의 손에서 도(道)에 이르렀다.';
