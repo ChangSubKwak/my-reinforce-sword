@@ -1223,6 +1223,33 @@ test('schoolRescueSec(): 速流 회수 보너스가 활성 임계·유파 숙련
   assert.strictEqual(at(['直', '直', '直']), 0, '直流 3자루는 회수 보너스 0 (성공률 계열)');
 });
 
+test('성공률 게이트 dial 잠금 (四道/究極/神殿/朝/소원 — successChanceNow 합산항, 값+게이트)', () => {
+  // 분기점 버그류(display≠actual)의 핵심: 성공률 합산항이 조용히 값/게이트가 바뀌면
+  // 표시·실제가 함께 어긋난다. 각 게이트 헬퍼의 dial 값과 on/off 조건을 잠근다.
+  const fourWay = (on) => loadFunctions(['fourWaySuccessBonus'], { hasFourWays: () => on }).fourWaySuccessBonus();
+  assert.strictEqual(fourWay(true), 0.03, '四道 달성 → +3%');
+  assert.strictEqual(fourWay(false), 0, '四道 미달 → 0');
+
+  const ult = (on) => loadFunctions(['ultimateSuccessBonus'], { state: { ultimateAchieved: on } }).ultimateSuccessBonus();
+  assert.strictEqual(ult(true), 0.01, '究極 달성 → 영구 +1%');
+  assert.strictEqual(ult(false), 0, '究極 미달 → 0');
+
+  const shrine = (has) => loadFunctions(['shrineSuccessBonus'], { shrineHas: (k) => has && k === 'd1' }).shrineSuccessBonus();
+  assert.strictEqual(shrine(true), 0.01, "神殿 d1 보유 → +1%");
+  assert.strictEqual(shrine(false), 0, '神殿 d1 미보유 → 0');
+
+  const tod = (key) => loadFunctions(['todSuccessBonus'], { getTimeOfDay: () => ({ key }) }).todSuccessBonus();
+  assert.strictEqual(tod('morning'), 0.01, '朝(morning) → +1%');
+  assert.strictEqual(tod('night'), 0, '그 외 시간대 → 0');
+
+  const wish = (charges, bonus) => loadFunctions(['wishSuccessBonus'], {
+    state: { swordWish: charges != null ? { charges, successBonus: bonus } : null },
+  }).wishSuccessBonus();
+  assert.strictEqual(wish(2, 0.05), 0.05, '소원 충전>0 → swordWish.successBonus 적용');
+  assert.strictEqual(wish(0, 0.05), 0, '소원 충전 소진 → 0');
+  assert.strictEqual(wish(null), 0, '소원 없음 → 0');
+});
+
 test('todayStr: 로컬 YYYY-MM-DD (timezone-safe, 0-패딩 — 일일 리셋 핵심)', () => {
   const at = (y, mIndex, day) => {
     function FakeDate() {}
