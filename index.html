@@ -6973,7 +6973,7 @@
       { label:'단일 검 최다 강화 시도', val: r.maxEnhance + '회', color:'#d4af37' },
       { label:'단일 검 최다 念珠', val: r.maxBeads, color:'#a8c0d8' },
       { label:'단일 검 최고 영혼', val: r.maxSoul, color:'#88c8a8' },
-      { label:'최대 봉인 보상', val: r.maxSealReward + ' 조각', color:'#d4af37' },
+      { label:'최대 봉인 보상', val: fmtNum(r.maxSealReward) + ' 조각', color:'#d4af37' },
       { label:'최고 연속 일자', val: r.bestStreak + '일', color:'#c8a0e8' },
       { label:'누적 검 (代)', val: r.totalGen, color:'#a8a098' },
     ];
@@ -8011,7 +8011,7 @@
     if (state.hasSword && state.level >= 7 && (typeof sealRewardDisplay === 'function')) {
       const insNow = (state.currentSword && state.currentSword.inscriptions) || [];
       const r = sealRewardDisplay(state.level, insNow, insNow.includes('道'));  // v242 단일 진원
-      if (r >= 100) return { text: '봉인 보상 ' + r + ' 조각 — 거두기 좋은 때', tone: 'tip' };
+      if (r >= 100) return { text: '봉인 보상 ' + fmtNum(r) + ' 조각 — 거두기 좋은 때', tone: 'tip' };
     }
     // 9) 조각 충분 + 새 검 안 빚을 때 (skip — 검 보유)
     if (state.shards >= 200 && !state.hasSword) {
@@ -8876,7 +8876,7 @@
     el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.75);letter-spacing:8px;margin-bottom:16px">練  日  ─  圓  滿</div>' +
                     '<div style="font-size:80px;color:#fff5c0;letter-spacing:14px;text-shadow:0 0 35px #fff5c0,0 0 70px rgba(212,175,55,0.5);font-weight:200">' + m.kanji + '</div>' +
                     '<div style="font-size:13px;color:rgba(168,184,200,0.9);letter-spacing:4px;margin-top:20px;font-style:italic">' + m.label + '</div>' +
-                    '<div style="font-size:11px;color:var(--accent);letter-spacing:3px;margin-top:12px">조각 +' + m.reward + '</div>';
+                    '<div style="font-size:11px;color:var(--accent);letter-spacing:3px;margin-top:12px">조각 +' + fmtNum(m.reward) + '</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5500;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:38px 56px;background:radial-gradient(ellipse,rgba(15,15,22,0.92) 0%,rgba(15,15,22,0.6) 60%,transparent 90%);';
     document.body.appendChild(el);
     el.animate([
@@ -8900,7 +8900,7 @@
         });
       }
     } catch(e) {}
-    log('練日 ' + m.label + ' — 조각 +' + m.reward, 'success');
+    log('練日 ' + m.label + ' — 조각 +' + fmtNum(m.reward), 'success');
   }
   function renderStreakMark() {
     let el = document.getElementById('streak-mark');
@@ -13759,7 +13759,7 @@
       checkInscriptions();
       checkStars();  // v116 七星
       setTimeout(() => checkScrolls(), 400);  // v124 古文書
-      log(c.type.name + ' 베어냄 +' + finalReward + ' 조각', 'success');
+      log(c.type.name + ' 베어냄 +' + fmtNum(finalReward) + ' 조각', 'success');
       recordEvent(c.type.name + ' 베어냄 +' + finalReward);
       burstParticles(c.type.isDemon ? '#c0392b' : '#d4af37', c.type.isDemon ? 30 : 18);
       // v114 餘香 — 슬레이 타입별 다음 강화 잔향 (검귀/이름있는적은 위에서 처리, 여기서는 일반/逃影/鋼影)
@@ -16210,9 +16210,9 @@
     recordRapidAction();
     setTimeout(() => maybeDropTreasure(), 1400);  // v189 七寶 — 봉인 시 보물 drop 시도
     if (isWay) { bumpStat('wayReached'); grantEternity(); }  // v225 無極
-    recordEvent('판매 ' + swordName + ' +' + reward + ' 조각');
+    recordEvent('판매 ' + swordName + ' +' + fmtNum(reward) + ' 조각');
     updateSealRecord(reward);  // v224 劍士録
-    log('판매 +' + lv + ' — 조각 ' + reward, 'success');
+    log('판매 +' + lv + ' — 조각 ' + fmtNum(reward), 'success');
     // v78 봉인 직후 카드 (방금 봉인된 검 요약)
     showSealCard(swordName, lv, ins, reward);
     // v87 자동 클라우드 동기화 (debounced)
@@ -16314,7 +16314,7 @@
     let html =
       formStr + '  ·  <span style="color:var(--accent)">+' + lv + '</span><br>' +
       insStr + '<br><br>' +
-      '<span style="color:var(--accent);font-size:13px;letter-spacing:4px">팔면 ' + reward + ' 조각 획득</span>';
+      '<span style="color:var(--accent);font-size:13px;letter-spacing:4px">팔면 ' + fmtNum(reward) + ' 조각 획득</span>';
     if (verse && Array.isArray(verse)) {
       html += '<br><br><div style="color:var(--dim);font-size:10px;line-height:2;letter-spacing:2px;opacity:0.75">' +
         verse.map(line => '<div>' + line + '</div>').join('') +
@@ -16440,7 +16440,7 @@
       '<span>' + verse[1] + '</span><br>' +
       '<span>' + verse[2] + '</span><br>' +
       '<span class="accent">' + verse[3] + '</span><br><br>' +
-      '<span style="color:var(--accent);letter-spacing:6px;font-size:12px">조각 ' + reward + ' 획득</span>';
+      '<span style="color:var(--accent);letter-spacing:6px;font-size:12px">조각 ' + fmtNum(reward) + ' 획득</span>';
     ritualEl.classList.remove('active');
     void ritualEl.offsetWidth;
     ritualEl.classList.add('active');
@@ -16494,7 +16494,7 @@
     if (!card) return;
     $('seal-card-name').textContent = name;
     const insStr = ins.length ? ins.join(' · ') : '명문 없음';
-    $('seal-card-info').innerHTML = '+' + lv + ' · 회수 ' + reward + ' 조각<br><span style="font-size:10px;opacity:0.75">' + insStr + '</span>';
+    $('seal-card-info').innerHTML = '+' + lv + ' · 회수 ' + fmtNum(reward) + ' 조각<br><span style="font-size:10px;opacity:0.75">' + insStr + '</span>';
     card.classList.remove('active');
     void card.offsetWidth;
     card.classList.add('active');
@@ -17929,7 +17929,7 @@
       const border = slain ? '1px solid var(--accent)' : (reachable ? '1px solid var(--danger)' : '1px dashed var(--line)');
       const insLine = slain
         ? '<div style="color:var(--accent);font-size:10px;letter-spacing:3px;margin-top:4px">명문 「' + f.inscription + '」 새김</div>'
-        : '<div style="color:var(--dim);font-size:10px;letter-spacing:2px;margin-top:4px">보상: 조각 +' + f.reward + ' · 명문 「' + (reachable || slain ? f.inscription : '???') + '」</div>';
+        : '<div style="color:var(--dim);font-size:10px;letter-spacing:2px;margin-top:4px">보상: 조각 +' + fmtNum(f.reward) + ' · 명문 「' + (reachable || slain ? f.inscription : '???') + '」</div>';
       const barLine = (!slain && !reachable)
         ? (function() {
             const cur = Math.min(state.bestLevel || 0, f.trigger);
