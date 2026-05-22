@@ -1128,3 +1128,12 @@ test('challengeReward: 베기 기본 보상 곡선 strength*4+6 (단조 증가)'
   let prev = -1;
   for (let s = 1; s <= 20; s++) { const r = f(s); assert.ok(r > prev, '강도 ' + s + ' 단조'); prev = r; }
 });
+
+test('dailySeed: 결정적 해시 (같은 날짜 동일·음수 없음·날짜별 변화)', () => {
+  const f = loadFunctions(['dailySeed']).dailySeed;
+  assert.strictEqual(f('2026-05-22'), f('2026-05-22'), '같은 날짜 → 동일 seed (결정적)');
+  assert.ok(f('2026-05-22') >= 0, '음수 없음');
+  assert.notStrictEqual(f('2026-05-22'), f('2026-05-23'), '다른 날짜 → 다른 seed');
+  assert.strictEqual(f(''), 0, '빈 문자열 → 0');
+  assert.ok(Number.isInteger(f('2026-12-31')), '정수 반환');
+});
