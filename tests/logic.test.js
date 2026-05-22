@@ -1022,3 +1022,11 @@ test('deriveNameOrigin: 이름의 유래 서사 (makeSwordName 우선순위 거�
   assert.match(f(['本'], 10), /본질을 깨달아 本의 이름을 얻었다/);
   assert.match(f([], 7), /강화 \+7의 자취로 이름을 얻었다/, '명문 없으면 강화도');
 });
+
+test('deriveForging: 단련 노고 서사 (시도/강화도 비, v313)', () => {
+  const f = loadFunctions(['deriveForging']).deriveForging;
+  assert.strictEqual(f(0, 5), '', '시도 0 → 표시 없음');
+  assert.match(f(8, 10), /순탄한 단련/, '8≤10*1.5 순탄');
+  assert.match(f(45, 10), /험난한 길/, '45≥10*4 험난');
+  assert.match(f(25, 10), /25번 두드려 \+10에 이르렀다/, '중간');
+});

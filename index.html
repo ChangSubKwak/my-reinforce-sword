@@ -15307,6 +15307,7 @@
     const verse = generateVerse(form, ins, lv, slainHere, 0, state.currentSword.soul || 0);
     state.enshrined.push({
       level: lv, inscriptions: ins, form,
+      enhanceAttempts: state.currentSword.enhanceAttempts || 0,  // v313 단련
       soul: state.currentSword.soul || 0, name: swordName,
       slainCount: slainHere, verse,
       levelHistory: (state.currentSword.levelHistory || []).slice(),
@@ -15415,6 +15416,14 @@
   ];
   const NUM_KANJI = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五'];
 
+  // v313 단련 — 강화 시도 횟수 대비 도달 강화도로 단련의 험난함을 서사화 (봉인 시 보존된 enhanceAttempts)
+  function deriveForging(att, level) {
+    att = att || 0; level = level || 0;
+    if (att <= 0) return '';
+    if (level > 0 && att <= level * 1.5) return att + '번 만에 +' + level + ' — 순탄한 단련';
+    if (level > 0 && att >= level * 4) return att + '번을 두드려 +' + level + ' — 험난한 길';
+    return att + '번 두드려 +' + level + '에 이르렀다';
+  }
   function makeSwordName(form, inscriptions, level) {
     const prefix = form || '無';
     for (const def of NAME_SUFFIX) {
@@ -16199,6 +16208,7 @@
     const fourWaysBefore = hasFourWays();
     state.sealedSwords.push({
       level: lv, inscriptions: ins, form,
+      enhanceAttempts: state.currentSword.enhanceAttempts || 0,  // v313 단련 — 검의 단련 노고 보존
       soul: state.currentSword.soul || 0, name: swordName,
       slainCount: slainHere, verse,
       levelHistory: (state.currentSword.levelHistory || []).slice(),
@@ -16709,6 +16719,7 @@
         '<div><span style="color:var(--dim)">형</span> <span style="color:var(--accent);margin-left:6px">' + (s.form || '無') + '</span> <span style="color:var(--dim);font-size:10px">(' + formLabel + ')</span></div>' +
         '<div><span style="color:var(--dim)">강화도</span> <span style="color:var(--accent);margin-left:6px">+' + s.level + '</span></div>' +
         '<div style="color:var(--dim);font-size:10px;font-style:italic;letter-spacing:1px;margin:2px 0 4px">' + deriveNameOrigin(s.form, s.inscriptions || [], s.level) + '</div>' +
+        (deriveForging(s.enhanceAttempts, s.level) ? '<div style="color:var(--dim);font-size:10px;font-style:italic;letter-spacing:1px;margin:0 0 4px">' + deriveForging(s.enhanceAttempts, s.level) + '</div>' : '') +
         (s.bornTod ? '<div><span style="color:var(--dim)">時生</span> <span style="color:#a8c0d8;margin-left:6px">' + s.bornTod + '</span></div>' : '') +  // v252 빚어진 시각
       '</div>' +
       verseBlock +
