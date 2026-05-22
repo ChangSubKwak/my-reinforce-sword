@@ -648,6 +648,19 @@ test('generateBiography 통합: bornTod 없는 구 검도 안전 (접두 생략)
   const text = bio({ form: '曲', name: '구검', level: 4, inscriptions: [], levelHistory: [0, 1] });
   assert.ok(text.length > 0 && !text.startsWith(','), '접두 없이 정상 서사');
 });
+test('generateBiography: 名(명명된 적) 격파가 일대기에 결합 — 龍斬은 鬼斬보다 우선 (v370h)', () => {
+  const bio = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath']).generateBiography;
+  const mk = (ins, extra) => bio(Object.assign({ form: '直', name: '검', level: 10, slainCount: 0, levelHistory: [0, 10] }, { inscriptions: ins }, extra || {}));
+  assert.match(mk(['龍斬']), /용\(龍\)을 베어냈/, '龍斬 → 용 격파 서사');
+  assert.match(mk(['帝斬']), /귀제\(鬼帝\)/, '帝斬 → 귀제 격파');
+  assert.match(mk(['風斬']), /흑풍\(黑風\)/, '風斬 → 흑풍 격파');
+  // 龍斬은 鬼斬보다 우선 (정점 무훈)
+  assert.match(mk(['龍斬', '鬼斬']), /용\(龍\)을 베어냈/, '龍斬+鬼斬 → 龍 우선');
+  // 그 외 명명된 적은 鬼斬보다 아래
+  assert.match(mk(['帝斬', '鬼斬']), /검귀의 피/, '帝斬+鬼斬 → 鬼斬 우선 (龍 외엔 鬼斬이 위)');
+  // 명명된 적 없으면 기존 일반 슬레인 서사 유지
+  assert.match(mk([], { slainCount: 6 }), /6의 그림자를 베어냈/, '명명된 적 없음 → 일반 슬레인');
+});
 
 // ─────────────────────────────────────────────────────────────
 // v15 generateVerse — 道 검 일생시 4행 (형/명문/슬레인 분기)

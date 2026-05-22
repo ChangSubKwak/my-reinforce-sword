@@ -15061,8 +15061,14 @@
     // 3. 특이사항
     let notable;
     const notes = [];
-    if (ins.includes('鬼斬')) notes.push('검귀의 피를 받았고');
+    // v370h — 名(명명된 적, v90) 격파를 일대기에 결합. 보스 처치는 검의 정점 무훈인데
+    // 一代記가 무시하던 누락(龍을 벤 검도 "평범한 생"이 될 수 있었음). 명문에서 파생, 효과 0.
+    const FOE_NARR = { '龍斬': '전설의 용(龍)을 베어냈고', '帝斬': '귀제(鬼帝)를 쓰러뜨렸고', '刃斬': '천 개의 칼날(千刃)을 갈랐고', '月斬': '은월(銀月)을 베었고', '風斬': '흑풍(黑風)을 잠재웠고' };
+    const foeKill = ['龍斬', '帝斬', '刃斬', '月斬', '風斬'].find(k => ins.includes(k));
+    if (foeKill === '龍斬') notes.push(FOE_NARR['龍斬']);  // 명명된 용은 정점 — 검귀(鬼斬)보다 위
+    else if (ins.includes('鬼斬')) notes.push('검귀의 피를 받았고');
     else if (ins.includes('斷魔')) notes.push('네 그림자를 모두 베어냈고');
+    else if (foeKill) notes.push(FOE_NARR[foeKill]);  // 그 외 명명된 적 (帝/刃/月/風)
     else if (slain >= 5) notes.push(slain + '의 그림자를 베어냈고');
     else if (slain >= 1) notes.push('그림자 ' + slain + '을 베어냈고');
     if (ins.includes('本')) notes.push('본질을 깨우쳤다');
