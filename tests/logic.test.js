@@ -505,6 +505,26 @@ test('deriveTemperament: null/무행동 안전 → 和', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v248 遺言 — 검의 1인칭 마지막 말 (性情 파생, 결정적)
+// ─────────────────────────────────────────────────────────────
+const lwFns = loadFunctions(['generateLastWords', 'deriveTemperament']);
+const lw = s => lwFns.generateLastWords(s);
+test('generateLastWords: 道 검은 전용 유언', () => {
+  assert.strictEqual(lw({ inscriptions: ['道'], slainCount: 5, level: 15 }), '나는 도(道)를 보았다. 그것으로 족하다.');
+});
+test('generateLastWords: 性情별 유언 (剛/靜/賭/和)', () => {
+  assert.ok(lw({ slainCount: 5, level: 5 }).length > 0, '剛 유언');
+  assert.ok(lw({ scars: 2, level: 4 }).includes('부서지지') || lw({ scars: 2, level: 4 }).includes('지켜냈다'), '靜 유언');
+  assert.ok(lw({ level: 12 }).includes('올랐다') || lw({ level: 12 }).includes('도박'), '賭 유언');
+  assert.ok(lw({ level: 3 }).includes('고요히') || lw({ level: 3 }).includes('평범'), '和 유언');
+});
+test('generateLastWords: 결정적 (같은 검 같은 유언), null 안전', () => {
+  const s = { slainCount: 3, level: 6 };
+  assert.strictEqual(lw(s), lw(s));
+  assert.strictEqual(lw(null), '');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];

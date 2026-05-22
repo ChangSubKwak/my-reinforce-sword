@@ -14762,6 +14762,21 @@
     if (jeong === max) return { key: 'jeong', name: '靜', line: '부서짐을 견디며 지키는 정(靜)의 기질을 품었다.' };
     return { key: 'do', name: '賭', line: '위험을 무릅쓰고 높이 오르는 도(賭)의 기질을 품었다.' };
   }
+  // v248 遺言 — 봉인되는 검의 1인칭 마지막 말. 一代記(3인칭 서술)·一生詩(道 한정 시)와 달리
+  // 검 자신의 목소리. 性情(v247) + 정점 성취에서 결정적 파생 (메커니즘 효과 0, 순수 narrative).
+  function generateLastWords(sword) {
+    if (!sword) return '';
+    const ins = sword.inscriptions || [];
+    if (ins.includes('道')) return '나는 도(道)를 보았다. 그것으로 족하다.';
+    const byTemp = {
+      gang: ['더 벨 그림자가 남았으나, 이제 칼을 거둔다.', '나아감을 멈추지 않았다 — 그것이 나의 길이었다.'],
+      jeong: ['부서지지 않았으니, 그것으로 충분하다.', '지켜냈다. 흉터는 자랑이 아니라 증거다.'],
+      do:   ['높이 올랐다, 떨어질 것을 알면서도.', '도박이었으나 후회는 없다.'],
+      wa:   ['고요히 왔다가 고요히 간다.', '평범했으나, 한 자루의 검이었다.'],
+    };
+    const arr = byTemp[deriveTemperament(sword).key] || byTemp.wa;
+    return arr[(sword.level || 0) % arr.length];  // 결정적 (강화도 기반)
+  }
   function generateBiography(sword) {
     if (!sword) return '';
     const form = sword.form;
@@ -16467,6 +16482,11 @@
       '<div style="margin:14px 0;padding:14px 12px;background:rgba(212,175,55,0.025);border-left:2px solid rgba(212,175,55,0.4);font-size:11px;line-height:1.9;letter-spacing:1.5px;color:var(--fg);font-style:italic">' +
         '<div style="color:var(--dim);font-size:9px;letter-spacing:3px;margin-bottom:6px;font-style:normal">一 代 記</div>' +
         generateBiography(s) +
+      '</div>' +
+      // v248 遺言 — 검의 1인칭 마지막 말
+      '<div style="margin:14px 0;padding:12px;text-align:center;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">' +
+        '<div style="color:var(--dim);font-size:9px;letter-spacing:3px;margin-bottom:6px">遺 言</div>' +
+        '<div style="color:#a8c0d8;font-size:11.5px;letter-spacing:2px;line-height:1.7;font-style:italic">「' + generateLastWords(s) + '」</div>' +
       '</div>' +
       destinyBlock +
       '<div style="color:var(--dim);font-size:11px;margin-bottom:6px;letter-spacing:3px">— 명문 —</div>' +
