@@ -37,7 +37,8 @@ function extractConst(name) {
   const src = readScript();
   const m = src.match(new RegExp('const ' + name + '\\s*=\\s*([\\s\\S]*?);'));
   if (!m) throw new Error('상수 ' + name + ' 를 찾을 수 없음');
-  return eval(m[1].replace(/\/\/[^\n]*/g, ''));
+  // 괄호로 감싸 객체 리터럴 {...}도 블록이 아닌 표현식으로 평가 (배열 [...]도 안전)
+  return eval('(' + m[1].replace(/\/\/[^\n]*/g, '') + ')');
 }
 
 // 지정한 함수들을 추출해, 주어진 의존성(sandbox 전역)과 함께 평가하고 함수 핸들 반환

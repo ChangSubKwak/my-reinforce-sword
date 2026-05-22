@@ -271,6 +271,28 @@ test('recordActivityDate: 120일 초과 시 가장 오래된 항목 정리', () 
 })();
 
 // ─────────────────────────────────────────────────────────────
+// v6 形 — SWORD_FORMS 4종 효과 (enhanceCost/successChanceNow/fleeCost 구동)
+// ─────────────────────────────────────────────────────────────
+test('SWORD_FORMS: 4종(直曲重速) 정의 + 문서화된 효과', () => {
+  const F = extractConst('SWORD_FORMS');
+  assert.deepStrictEqual(Object.keys(F).sort(), ['曲', '直', '重', '速'].sort(), '4종 형');
+  assert.strictEqual(F['直'].successBonus, 0.03, '直 성공 +3%');
+  assert.strictEqual(F['曲'].destroyReduce, 0.03, '曲 파괴 -3%');
+  assert.strictEqual(F['重'].costMul, 1.10, '重 비용 +10%');
+  assert.strictEqual(F['重'].rewardMul, 1.20, '重 보상 +20%');
+  assert.strictEqual(F['速'].fleeFree, true, '速 도망 무료');
+});
+test('SWORD_FORMS: 효과는 미세 편향 (점수 인플레이션 회피, |bonus|<=0.2)', () => {
+  const F = extractConst('SWORD_FORMS');
+  Object.values(F).forEach(f => {
+    if (typeof f.successBonus === 'number') assert.ok(Math.abs(f.successBonus) <= 0.05, 'successBonus 미세');
+    if (typeof f.destroyReduce === 'number') assert.ok(Math.abs(f.destroyReduce) <= 0.05, 'destroyReduce 미세');
+    if (typeof f.costMul === 'number') assert.ok(f.costMul >= 0.8 && f.costMul <= 1.2, 'costMul ±20% 이내');
+    if (typeof f.rewardMul === 'number') assert.ok(f.rewardMul >= 0.8 && f.rewardMul <= 1.3, 'rewardMul 범위');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
