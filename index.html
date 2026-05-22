@@ -15182,7 +15182,11 @@
 
   function getFormCounts() {
     const counts = {};
-    for (const s of state.sealedSwords) {
+    // v350 — 봉인 + 殿堂 모두 집계. getFormCounts만 sealedSwords-only였던 outlier로,
+    // 道 검을 殿堂에 진열하면 流派(유파) 진척에서 빠지던 버그 — 四道(getWayFormCounts)와
+    // 다른 ~10개 집계 지점은 두 컬렉션을 합산함. enshrine은 봉인의 한 형태이므로 같이 센다.
+    const all = (state.sealedSwords || []).concat(state.enshrined || []);
+    for (const s of all) {
       if (s.form) counts[s.form] = (counts[s.form] || 0) + 1;
     }
     return counts;

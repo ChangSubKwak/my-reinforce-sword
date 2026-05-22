@@ -503,3 +503,12 @@ test('v349b: 覺悟(RESOLVE) 라벨·desc가 상수와 일치 (하드코딩 drif
   assert.ok(html.includes('성공 ' + Math.round(gSucc * 100) + '%'), '保身 성공 라벨 == successAdd(' + gSucc + ')');
   assert.ok(html.includes('비용 ' + gCost + '배'), '保身 비용 라벨 == costMul(' + gCost + ')');
 });
+
+test('v350: getFormCounts가 sealedSwords+enshrined 둘 다 집계 (流派가 殿堂 검 누락하던 outlier 방지)', () => {
+  // getWayFormCounts(四道)·~10개 집계 지점은 두 컬렉션을 합산하는데 getFormCounts만
+  // sealedSwords-only였음 → 道 검 殿堂 진열 시 流派 진척에서 빠짐. 같은 형 검 집계는
+  // 봉인+殿堂을 합쳐야 함(enshrine은 봉인의 한 형태, 四道와 동일 처리).
+  const m = js.match(/function getFormCounts\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(m, 'getFormCounts 본문');
+  assert.match(m[1], /state\.enshrined/, 'getFormCounts는 state.enshrined도 집계해야 함');
+});
