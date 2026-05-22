@@ -539,3 +539,14 @@ test('merged-collection: 形/道 집계·필터가 sealedSwords-only면 안 됨 
   const daoBad = daoOnly.filter(s => s.indexOf('道') >= 0);
   assert.deepStrictEqual(daoBad, [], 'sealedSwords-only 道 필터(enshrined 누락 회귀): ' + daoBad.join(' || '));
 });
+
+test('v368: isStuck가 voidPending도 가드 — 파괴~회수창(350ms) 사이 game-over가 회수창을 덮지 않음', () => {
+  // 파괴 시 hasSword=false 즉시, showVoid(rescueWindow 설정)는 +350ms. 그 갭의 동기 render()가
+  // game-over를 띄우면 #gameover-overlay(z-index:500)가 회수창(#void, z-index auto)을 덮음.
+  // voidPending: 파괴 분기에서 set, isStuck에서 가드, showVoid/endVoid에서 해제(reload 리셋 → soft-lock 불가).
+  assert.match(js, /if \(rescueWindow \|\| voidPending\) return false;/, 'isStuck가 voidPending 가드');
+  assert.match(js, /voidPending = true;[^\n]*\n\s*setTimeout\(\(\) => showVoid/, '파괴 분기에서 voidPending=true (showVoid 예약 직전)');
+  // showVoid가 voidPending 해제 (rescueWindow 인계) — soft-lock 방지의 핵심
+  const sv = js.match(/function showVoid\([^)]*\)\s*\{([\s\S]{0,120})/);
+  assert.ok(sv && /voidPending = false/.test(sv[1]), 'showVoid 진입 시 voidPending 해제');
+});
