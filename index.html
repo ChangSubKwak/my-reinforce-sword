@@ -15430,9 +15430,10 @@
     const stage = getSoulStage();
     fill.className = stage === 'true' ? 'true' : stage === 'wake' ? 'wake' : '';
     label.className = fill.className;
+    // v245i — 다음 단계까지 남은 게이지 노출 (覺/本 도달 정보 → 베기/강화 페이싱 결정)
     if (stage === 'true') label.textContent = '本 · ' + soul;
-    else if (stage === 'wake') label.textContent = '覺 · ' + soul;
-    else label.textContent = soul > 0 ? ('魂 ' + soul) : '';
+    else if (stage === 'wake') label.textContent = '覺 · ' + soul + '  ·  本까지 ' + (SOUL_TRUE - soul);
+    else label.textContent = soul > 0 ? ('魂 ' + soul + '  ·  覺까지 ' + (SOUL_AWAKEN - soul)) : '';
     // v226 魂光 — 영혼 단계에 따른 검 발산
     if (swordSvg) {
       swordSvg.classList.remove('soul-wake', 'soul-true');
