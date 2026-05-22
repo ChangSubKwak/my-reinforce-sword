@@ -442,6 +442,13 @@ test('모든 $("id") DOM 참조가 존재하는 id를 가리킴 (오타→null-d
   assert.deepStrictEqual([...missing], [], '존재하지 않는 id를 $()로 참조(null-deref 위험): ' + [...missing].join(', '));
 });
 
+test('NEWSWORD_COST 단일 진원 (v370t — 표시·행동·재시작이 같은 const, 지역 재선언 금지)', () => {
+  // 새 검 비용이 render 표시·click 행동·restartFromGameOver에서 각각 하드코딩(=50)되어
+  // 한 곳만 바꾸면 표시≠실제 비용 드리프트하던 것 → 모듈 const 1개로 통일. 지역 재선언 회귀 차단.
+  const decls = (js.match(/const NEWSWORD_COST\b/g) || []).length;
+  assert.strictEqual(decls, 1, 'NEWSWORD_COST 선언은 정확히 1개(모듈 const)여야 함 (지역 재선언=드리프트): ' + decls);
+});
+
 test('Space/Enter enhance는 모달 열림 중 차단됨 (v370r — 모달 중 의도치 않은 강화·파괴 방지)', () => {
   // Space 핸들러의 enhance 분기가 .modal.active 가드를 가져야 함. 없으면 계보/회고 등 읽는 중
   // Space가 enhance()를 발동해 조각 소모·검 파괴. slay/rescue는 #challenge/#void(.modal 아님)라 무관.

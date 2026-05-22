@@ -5694,7 +5694,7 @@
       swordSvg.style.opacity = 0.15;
       levelBadge.textContent = '—';
       levelBadge.style.color = 'var(--dim)';
-      const NEWSWORD_COST = 50;
+      // v370t — 모듈 const NEWSWORD_COST(16110) 사용 (지역 재선언 제거: 표시·행동·재시작 단일 진원)
       btnEnhance.dataset.mode = 'newsword';
       const canAffordNew = state.shards >= NEWSWORD_COST;
       btnEnhance.disabled = !canAffordNew;
@@ -18589,7 +18589,6 @@
   btnEnhance.addEventListener('click', () => {
     if (btnEnhance.disabled) return;
     if (btnEnhance.dataset.mode === 'newsword') {
-      const NEWSWORD_COST = 50;
       if (state.shards < NEWSWORD_COST) return;
       state.shards -= NEWSWORD_COST;
       newSword();
