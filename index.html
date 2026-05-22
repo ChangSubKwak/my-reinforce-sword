@@ -4383,6 +4383,9 @@
       state.sealedSwords.forEach(sanitizeSword);
       state.enshrined.forEach(sanitizeSword);
       sanitizeSword(state.currentSword);
+      // userSeal(印, v187): buildSealSVG가 각 글자를 <text>에 raw 삽입 → innerHTML.
+      // 배열 가드만으론 원소 문자열이 import로 오염될 수 있어 태그문자 제거.
+      if (Array.isArray(state.userSeal)) state.userSeal = state.userSeal.map(stripTags);
       if (!state.blessingsDiscovered || typeof state.blessingsDiscovered !== 'object') state.blessingsDiscovered = {};  // v119 奇緣
       if (!state.erasEntered || typeof state.erasEntered !== 'object') state.erasEntered = {};  // v120 紀元
       if (typeof state.swordGeneration !== 'number') state.swordGeneration = state.sealedSwords ? state.sealedSwords.length : 0;  // v123 系譜 — 기존 사용자는 봉인된 검 수로 추정 초기화

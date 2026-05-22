@@ -128,6 +128,7 @@ test('normalizeState() 동작 검증: 검 사용자텍스트 태그문자 제거
     sealedSwords: [{ name: '검<img src=x onerror=alert(1)>', memo: 'a<b>c', kigen: '<svg onload=e>', fusedFrom: ['<i>A', 'B>'] }],
     enshrined: [{ name: 'safe', kigen: '<script>bad</script>' }],
     currentSword: { name: '<b>cur', inscriptions: [] },
+    userSeal: ['正', '</text><img onerror=x>'],  // v187 印 — buildSealSVG가 <text>에 raw 삽입
   };
   const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {} });
   normalizeState();
@@ -138,8 +139,10 @@ test('normalizeState() 동작 검증: 검 사용자텍스트 태그문자 제거
   assert.ok(s0.fusedFrom.every(n => !/[<>]/.test(n)), '血統 이름에서 < > 제거');
   assert.ok(!/[<>]/.test(st.enshrined[0].kigen), '殿堂 검 寄言에서 < > 제거');
   assert.ok(!/[<>]/.test(st.currentSword.name), '현재 검명에서 < > 제거');
+  assert.ok(st.userSeal.every(c => !/[<>]/.test(c)), '印(userSeal) 글자에서 < > 제거 (buildSealSVG raw 삽입 방어)');
   // 정상 텍스트는 보존 (태그문자 없는 한글/한자)
   assert.strictEqual(st.enshrined[0].name, 'safe', '정상 검명 보존');
+  assert.strictEqual(st.userSeal[0], '正', '정상 印 글자 보존');
 });
 
 test('normalizeState() 동작 검증: stats 병합이 기존 값 보존 + 신규 키만 보강 (데이터 손실 방지)', () => {
