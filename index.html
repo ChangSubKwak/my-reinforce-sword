@@ -18455,8 +18455,11 @@
         return '<div style="margin:10px 0;padding:8px 10px;background:rgba(255,245,192,0.06);border-left:2px solid #fff5c0;font-size:11px;letter-spacing:2px"><span style="color:#fff5c0;text-shadow:0 0 4px rgba(255,245,192,0.5)">鬪將</span> <span style="color:var(--fg)">' + (champ.sword.name || '검') + '</span> <span style="color:var(--dim);font-size:10px">— ' + champ.wins + '승</span></div>';
       })() +
       // v250 검 중의 검 — 컬렉션 하이라이트 (性情/波瀾 등 차원으로 주목할 검 명명)
+      // v370d — 殿堂(enshrined) 검도 합산. 가장 강한 검을 殿堂에 진열하면 명예의 전당에서
+      // 사라지던 merged-collection 누락(v350류) — collectionHighlight 헬퍼를 써서 .forEach
+      // grep sweep(v350~v359)에 안 잡혔던 site. 형분포·명문·검명 컬렉션은 이미 殿堂 합산함.
       (function() {
-        const sealed = state.sealedSwords || [];
+        const sealed = (state.sealedSwords || []).concat(state.enshrined || []);
         if (sealed.length < 3) return '';
         const nm = sw => sw ? (sw.name || makeSwordName(sw.form, sw.inscriptions || [], sw.level)) : '—';
         const strongest = collectionHighlight(sealed, sw => sw.level || 0);

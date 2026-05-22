@@ -540,6 +540,15 @@ test('merged-collection: 形/道 집계·필터가 sealedSwords-only면 안 됨 
   assert.deepStrictEqual(daoBad, [], 'sealedSwords-only 道 필터(enshrined 누락 회귀): ' + daoBad.join(' || '));
 });
 
+test('merged-collection: 검 중의 검(컬렉션 하이라이트)이 殿堂 검도 합산 (v370d — 헬퍼 site 회귀 방지)', () => {
+  // collectionHighlight(sealed,...) 헬퍼를 쓰는 site는 위 .forEach/.filter 정규식에 안 잡힘.
+  // 가장 강한 검을 殿堂에 진열하면 명예의 전당에서 사라지던 v350류 누락 — sealed-only 회귀 차단.
+  // 게이트(sealed.length<3) + collectionHighlight(sealed) 시그니처로 블록을 유일 식별
+  assert.match(js,
+    /const sealed = \(state\.sealedSwords \|\| \[\]\)\.concat\(state\.enshrined \|\| \[\]\);\s*\n\s*if \(sealed\.length < 3\)[\s\S]{0,260}?collectionHighlight\(sealed/,
+    '검 중의 검은 sealedSwords+enshrined 합산이어야 함 (殿堂 검 누락 회귀)');
+});
+
 test('v368: isStuck가 voidPending도 가드 — 파괴~회수창(350ms) 사이 game-over가 회수창을 덮지 않음', () => {
   // 파괴 시 hasSword=false 즉시, showVoid(rescueWindow 설정)는 +350ms. 그 갭의 동기 render()가
   // game-over를 띄우면 #gameover-overlay(z-index:500)가 회수창(#void, z-index auto)을 덮음.
