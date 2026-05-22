@@ -7724,6 +7724,7 @@
     const slain = s.slainCount || 0;
     const enhanceN = s.enhanceAttempts || 0;
     if (ins.indexOf('道') >= 0) return '도(道)의 검';
+    if (ins.indexOf('龍斬') >= 0) return '용을 벤 검';  // v370l 名 정점 무훈 — 비교에서도 고유 정체성
     if (ins.indexOf('鬼斬') >= 0 || slain >= 10) return '전투의 검';
     if (ins.indexOf('夜叉斬') >= 0) return '밤의 검';
     if (ins.indexOf('精進') >= 0 || enhanceN >= 50) return '수행의 검';

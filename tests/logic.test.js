@@ -615,6 +615,18 @@ test('deriveJourney: 데이터 부족(<2) 또는 없음 → 빈 문자열', () =
   assert.strictEqual(journeyFns.deriveJourney({}), '');
 });
 
+test('makeComparePersona: 검 비교 정체성 라벨 우선순위 (道 > 龍斬 > 전투 > 밤 ...)', () => {
+  const mp = loadFunctions(['makeComparePersona']).makeComparePersona;
+  assert.strictEqual(mp({ inscriptions: ['道'] }), '도(道)의 검');
+  assert.strictEqual(mp({ inscriptions: ['龍斬'] }), '용을 벤 검', 'v370l 龍斬 → 고유 라벨');
+  assert.strictEqual(mp({ inscriptions: ['道', '龍斬'] }), '도(道)의 검', '道가 龍斬보다 우선');
+  assert.strictEqual(mp({ inscriptions: ['龍斬', '鬼斬'] }), '용을 벤 검', '龍斬이 전투(鬼斬)보다 우선');
+  assert.strictEqual(mp({ inscriptions: ['鬼斬'] }), '전투의 검');
+  assert.strictEqual(mp({ inscriptions: ['夜叉斬'] }), '밤의 검');
+  assert.strictEqual(mp({ inscriptions: [], slainCount: 0 }), '평화의 검', '무전투 → 평화');
+  assert.strictEqual(mp(null), '', 'null 안전');
+});
+
 // ─────────────────────────────────────────────────────────────
 // v251 影格 — 그림자 강도 등급 형용
 // ─────────────────────────────────────────────────────────────
