@@ -4368,6 +4368,21 @@
       if (!state.shadowOriginsSlain || typeof state.shadowOriginsSlain !== 'object') state.shadowOriginsSlain = {};
       if (!state.foesSlain || typeof state.foesSlain !== 'object') state.foesSlain = {};
       if (!Array.isArray(state.enshrined)) state.enshrined = [];  // v118 殿堂
+      // v370m XSS 경계 방어 — 검의 사용자 텍스트(검명/血統/메모/寄言)는 회고·계보·詩集 등에서
+      // innerHTML에 raw 삽입됨. 외부 백업/클라우드 import(cross-user)로 < > 포함 텍스트가 들어오면
+      // 스크립트 실행 가능 → 경계에서 태그 문자 제거. import/load/cloud-restore 모두 normalizeState
+      // 경유하므로 단일 지점 방어 (모든 렌더 site 일괄 보호).
+      const stripTags = (v) => (typeof v === 'string' ? v.replace(/[<>]/g, '') : v);
+      const sanitizeSword = (sw) => {
+        if (!sw || typeof sw !== 'object') return;
+        if (typeof sw.name === 'string') sw.name = stripTags(sw.name);
+        if (typeof sw.memo === 'string') sw.memo = stripTags(sw.memo);
+        if (typeof sw.kigen === 'string') sw.kigen = stripTags(sw.kigen);
+        if (Array.isArray(sw.fusedFrom)) sw.fusedFrom = sw.fusedFrom.map(stripTags);
+      };
+      state.sealedSwords.forEach(sanitizeSword);
+      state.enshrined.forEach(sanitizeSword);
+      sanitizeSword(state.currentSword);
       if (!state.blessingsDiscovered || typeof state.blessingsDiscovered !== 'object') state.blessingsDiscovered = {};  // v119 奇緣
       if (!state.erasEntered || typeof state.erasEntered !== 'object') state.erasEntered = {};  // v120 紀元
       if (typeof state.swordGeneration !== 'number') state.swordGeneration = state.sealedSwords ? state.sealedSwords.length : 0;  // v123 系譜 — 기존 사용자는 봉인된 검 수로 추정 초기화

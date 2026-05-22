@@ -121,6 +121,27 @@ test('normalizeState() 동작 검증: 손상 입력 강제 보정 (정적 regex�
   assert.ok(st.gambleStats && st.gambleStats.win === 0 && st.gambleStats.lose === 0, 'null gambleStats → 기본 {win:0,lose:0}');
 });
 
+test('normalizeState() 동작 검증: 검 사용자텍스트 태그문자 제거 (백업/클라우드 import XSS 경계 방어, v370m)', () => {
+  // 검명/메모/寄言/血統은 회고·계보·詩集에서 innerHTML에 raw 삽입됨. 외부 백업 import 시
+  // < > 포함 텍스트가 스크립트로 실행될 수 있어 normalizeState(import 경유)에서 제거해야 함.
+  const st = {
+    sealedSwords: [{ name: '검<img src=x onerror=alert(1)>', memo: 'a<b>c', kigen: '<svg onload=e>', fusedFrom: ['<i>A', 'B>'] }],
+    enshrined: [{ name: 'safe', kigen: '<script>bad</script>' }],
+    currentSword: { name: '<b>cur', inscriptions: [] },
+  };
+  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {} });
+  normalizeState();
+  const s0 = st.sealedSwords[0];
+  assert.ok(!/[<>]/.test(s0.name), '봉인검명에서 < > 제거');
+  assert.ok(!/[<>]/.test(s0.memo), '메모에서 < > 제거');
+  assert.ok(!/[<>]/.test(s0.kigen), '寄言에서 < > 제거');
+  assert.ok(s0.fusedFrom.every(n => !/[<>]/.test(n)), '血統 이름에서 < > 제거');
+  assert.ok(!/[<>]/.test(st.enshrined[0].kigen), '殿堂 검 寄言에서 < > 제거');
+  assert.ok(!/[<>]/.test(st.currentSword.name), '현재 검명에서 < > 제거');
+  // 정상 텍스트는 보존 (태그문자 없는 한글/한자)
+  assert.strictEqual(st.enshrined[0].name, 'safe', '정상 검명 보존');
+});
+
 test('normalizeState() 동작 검증: stats 병합이 기존 값 보존 + 신규 키만 보강 (데이터 손실 방지)', () => {
   // 핵심 불변식: Object.assign({}, DEFAULT, existing) 순서 — existing이 default를 이긴다.
   // 순서가 뒤집히면 구 저장본의 누적 통계가 0으로 덮여 사라짐(데이터 손실).
