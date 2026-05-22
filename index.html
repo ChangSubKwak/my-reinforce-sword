@@ -18383,55 +18383,10 @@
   $('btn-reset').addEventListener('click', () => {
     if (!confirm('모든 진행도를 지운다. 정말로?')) return;
     try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
-    state = {
-      level: 0, shards: 50, protections: 0, hasSword: true,
-      bestLevel: 0, totalDestroyed: 0, totalSlain: 0,
-      sealedSwords: [],
-    enshrined: [],  // v118 殿堂 — 박물관에 모셔진 道 검 (최대 3)
-    blessingsDiscovered: {},  // v119 奇緣 — 발견한 축복 영구 기록
-    swordGeneration: 0,       // v123 系譜 — 누적 검 생성 횟수
-    generationMilestones: {}, // v123 系譜 — 달성한 위계 마일스톤
-    scrollsUnlocked: {},      // v124 古文書 — 풀린 두루마리
-    scrollsAllRead: false,    // v124 古文書 — 모두 풀었는지
-    rubbings: [],             // v136 拓本 — 의미있는 순간 포착 (최대 20)
-    resonancesDiscovered: {}, // v138 雙銘 — 발견한 명문 쌍
-    metsumaoCharges: 0,       // v138 雙銘 — 滅魔 슬레이 ×1.5 남은 횟수
-    hondoCharges: 0,          // v138 雙銘 — 本道 새 검 시작 영혼 +20 남은 횟수
-    playerSeal: '',           // v140 篆刻 — 플레이어 인장 (1자)
-    collectionMilestones: {}, // v145 銘集 — 달성한 명문 수집 마일스톤
-    shrineDonations: {},      // v149 神祠 — 영구 헌사 잠금 해제
-    hiddenAchievements: {},   // v152 風月 — 숨겨진 조용한 성취
-    swordWish: null,          // v155 寒梅 — 현재 활성 유언 (강화형)
-    swordWishSlay: null,      // v155 寒梅 — 슬레이 보상 유언
-    records: {},              // v156 新記 — 개인 최고 기록
-    duelWins: {},             // v159 對局 — 봉인 검 대국 승리 카운트
-    ultimateAchieved: false,  // v170 千秋萬代 — 모든 메타 완성 1회 표식
-    ultimateAchievedAt: 0,    // v170 — 달성 시각
-    totalPlayTimeMs: 0,       // v174 歲月 — 누적 active play 시간 (ms)
-      currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} },
-      whetstones: 0, spiritstones: 0, divinationStones: 0,
-      firstWayReached: false,
-      endingShown: false,
-      shadowOriginsSlain: {},
-      foesSlain: {},
-      heritageInscription: null,
-      guardianIdx: null,
-      recentLog: [],
-      milestonesShown: {},
-      dailyTrial: null,
-      dailyCompletedCount: 0,
-      stats: { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0 },
-      seenHelp: true,
-    };
-    inscribeQueue = [];
-    gameOverShown = false;
-    fusionSelected = [];
-    resolveMode = 'normal';
-    assignDestiny();  // v93 天命 — 초기화 후 새 검에 운명 부여
-    $('gameover-overlay').classList.remove('active');
-    if (challenge) endChallenge();
-    save();
-    render();
+    // v289 — 완전 초기화는 새로고침으로. 과거 in-place 리터럴은 초기 state(77키)와 drift해
+    // 45키만 재생성(누락 32키 undefined) + 휘발성 모듈 변수/타이머도 잔존했다. reload는 IIFE를
+    // 재실행해 저장본 없는 깨끗한 기본 상태(전 키 + 새 검)를 보장한다.
+    location.reload();
   });
 
   // === 修練 토글 이벤트 ===
