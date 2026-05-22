@@ -146,6 +146,37 @@ test('SHADOW_TYPES: 가중치 합 = 1.0', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v88 progressScore — 클라우드 동기화 우열 판정 (진행 손실 방지 핵심)
+// ─────────────────────────────────────────────────────────────
+const psFns = loadFunctions(['progressScore']);
+test('progressScore: null/비객체는 -1 (빈 클라우드가 로컬을 이기지 못함)', () => {
+  assert.strictEqual(psFns.progressScore(null), -1);
+  assert.strictEqual(psFns.progressScore(undefined), -1);
+  assert.strictEqual(psFns.progressScore(42), -1);
+});
+test('progressScore: 처치 + 봉인검×100 + 최고강화×10', () => {
+  assert.strictEqual(psFns.progressScore({}), 0);
+  assert.strictEqual(psFns.progressScore({ totalSlain: 7 }), 7);
+  assert.strictEqual(psFns.progressScore({ sealedSwords: [1, 2, 3] }), 300);
+  assert.strictEqual(psFns.progressScore({ bestLevel: 12 }), 120);
+  assert.strictEqual(psFns.progressScore({ totalSlain: 5, sealedSwords: [1, 2], bestLevel: 10 }), 5 + 200 + 100);
+});
+test('progressScore: 다른 요인 동일하면 봉인검 많은 쪽이 우위 (봉인검=최고강화 10단계 가치)', () => {
+  const more = psFns.progressScore({ sealedSwords: [1, 2], bestLevel: 15 });
+  const fewer = psFns.progressScore({ sealedSwords: [1], bestLevel: 15 });
+  assert.ok(more > fewer, '최고강화 동일 시 봉인검 많은 쪽이 높아야');
+  // 봉인검 1개 = 최고강화 10단계 (가중치 설계 확인)
+  assert.strictEqual(
+    psFns.progressScore({ sealedSwords: [1] }),
+    psFns.progressScore({ bestLevel: 10 }),
+    '봉인검 1개(100) = 최고강화 10(100)'
+  );
+});
+test('progressScore: 손상된 sealedSwords(비배열) 안전 처리', () => {
+  assert.strictEqual(psFns.progressScore({ sealedSwords: 'corrupt', totalSlain: 3 }), 3);
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
