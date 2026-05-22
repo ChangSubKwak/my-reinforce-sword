@@ -54,6 +54,9 @@ test('normalizeState(): load()·applyCloudState 공유 (클라우드 복원도 �
   assert.match(js, /function normalizeState\(\)/, 'normalizeState 헬퍼 존재');
   assert.match(js, /if \(raw\) state = Object\.assign\(state, JSON\.parse\(raw\)\);\s*\n\s*normalizeState\(\);/, 'load()가 normalizeState 호출');
   assert.match(js, /state = Object\.assign\(\{\}, state, cloudData\);\s*\n\s*normalizeState\(\);/, 'applyCloudState가 normalizeState 호출');
+  assert.match(js, /state = Object\.assign\(\{\}, state, loaded\);\s*\n\s*normalizeState\(\);/, '파일 복원도 normalizeState 호출');
+  // 정규화 호출처 ≥ 3 (load·클라우드·파일 복원)
+  assert.ok((js.match(/normalizeState\(\);/g) || []).length >= 3, 'normalizeState가 3개 복원 경로 공유');
   // 핵심 가드들이 normalizeState 본문에 존재 (구 applyCloudState엔 없던 것들)
   const m = js.match(/function normalizeState\(\)\s*\{([\s\S]*?)\n  \}/);
   assert.ok(m, 'normalizeState 본문');

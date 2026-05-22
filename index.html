@@ -17155,13 +17155,7 @@
         if (!confirm('현재 진행도를 백업 파일로 덮어씁니다. 진행할까요?')) return;
         // 기본 state에 병합 — 누락 필드 안전
         state = Object.assign({}, state, loaded);
-        // load() 안의 보정 재실행
-        if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
-        if (!state.currentSword || typeof state.currentSword !== 'object') {
-          state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, scars: 0 };
-        }
-        if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
-        if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
+        normalizeState();  // v245x: load()와 동일한 전체 타입 방어 (파일 복원도 부분→전체 강화)
         save();
         gameOverShown = false;
         $('gameover-overlay').classList.remove('active');
