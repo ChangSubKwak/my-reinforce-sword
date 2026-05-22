@@ -7175,7 +7175,7 @@
       html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">卷  二  ─  검  들</div>';
       html += '<div style="font-size:13px;letter-spacing:4px;color:#e8e6dd;text-align:center;margin-bottom:18px;font-family:\'Noto Serif KR\',serif">' + sealed + '자루의 검 봉인, ' + swordGen + '대 이어졌다</div>';
       const formCounts = { '直':0,'曲':0,'重':0,'速':0 };
-      (state.sealedSwords || []).forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });
+      (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });  // v359 — 殿堂 검도 형 분포에 (display undercount)
       html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:20px 0">';
       const formCard = (f, n, c) => '<div style="text-align:center;padding:14px 4px;border:1px solid ' + c + ';border-radius:2px;background:rgba(15,15,22,0.5)"><div style="font-size:22px;color:' + c + '">' + f + '</div><div style="font-size:14px;color:#e8e6dd;margin-top:6px;font-weight:200">' + n + '</div></div>';
       html += formCard('直', formCounts['直'], '#a8c0e8');
@@ -7193,7 +7193,7 @@
     } else if (bookPageIdx === 2) {
       // 卷三 — 道
       html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">卷  三  ─  道</div>';
-      const wayswords = (state.sealedSwords || []).filter(s => (s.inscriptions || []).indexOf('道') >= 0);
+      const wayswords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).indexOf('道') >= 0);  // v359 — 殿堂 道 검도 劍士録에 (display undercount 수정)
       if (wayswords.length === 0) {
         html += '<div style="text-align:center;padding:30px;color:#888;font-style:italic;font-size:11px;letter-spacing:3px">아직 도(道)에 닿지 않았다 — +15까지 검을 강화하라</div>';
       } else {
@@ -9398,7 +9398,7 @@
     const trialsTotal = (typeof TRIALS !== 'undefined') ? TRIALS.length : 5;
     const playTime = formatPlayTime(state.totalPlayTimeMs || 0);
     const formCounts = { '直':0, '曲':0, '重':0, '速':0 };
-    (state.sealedSwords || []).forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });
+    (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });  // v359 — 殿堂 검도 형 분포에 (display undercount)
     // 메타 인장 결정
     let seal = '初';
     if (state.ultimateAchieved) seal = '極';
