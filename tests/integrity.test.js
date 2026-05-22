@@ -442,6 +442,17 @@ test('모든 $("id") DOM 참조가 존재하는 id를 가리킴 (오타→null-d
   assert.deepStrictEqual([...missing], [], '존재하지 않는 id를 $()로 참조(null-deref 위험): ' + [...missing].join(', '));
 });
 
+test('Space/Enter enhance는 모달 열림 중 차단됨 (v370r — 모달 중 의도치 않은 강화·파괴 방지)', () => {
+  // Space 핸들러의 enhance 분기가 .modal.active 가드를 가져야 함. 없으면 계보/회고 등 읽는 중
+  // Space가 enhance()를 발동해 조각 소모·검 파괴. slay/rescue는 #challenge/#void(.modal 아님)라 무관.
+  const m = js.match(/if \(e\.key === ' ' \|\| e\.key === 'Enter'\)\s*\{([\s\S]*?)\n    \}/);
+  assert.ok(m, 'Space/Enter 핸들러 본문');
+  const body = m[1];
+  assert.match(body, /modal\.active|modalOpen/, 'enhance 분기가 모달 열림 가드 보유');
+  // enhance() 호출이 모달 가드와 같은 조건에 묶여 있는지(분리 회귀 방지)
+  assert.match(body, /!modalOpen[\s\S]*enhance\(\)|modal\.active[\s\S]*enhance\(\)/, 'enhance()가 모달 가드로 보호됨');
+});
+
 test('UI 용어 일관성: 道를 로마자 "Dao"로 표기하지 않음 (한글/한자 톤, CLAUDE.md 영어 자제)', () => {
   // v370q — 게임오버 여정 텍스트가 한 화면에서 道(≥10/≥1 분기)와 'Dao'(≥5 분기)를 혼용하던
   // 불일치 수정. 한국어-조사 맥락의 로마자 道(Dao에/Dao를/Dao의)는 명백한 UI 문자열 → 재유입 차단.

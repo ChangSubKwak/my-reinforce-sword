@@ -18680,10 +18680,13 @@
   // 키보드 단축키
   document.addEventListener('keydown', (e) => {
     if (e.key === ' ' || e.key === 'Enter') {
-      e.preventDefault();
-      if (challenge) slay();
-      else if (rescueWindow) rescueWindow.rescue();
-      else if (!btnEnhance.disabled) enhance();
+      // v370r — 모달(계보/회고/조합소/詩集/記錄/이름 등) 열림 중 Space/Enter가 enhance()를
+      // 백그라운드로 발동해 의도치 않게 조각 소모·검 파괴되던 버그 차단. 도전(slay)/회수(rescue)는
+      // #challenge/#void(.modal 아님)라 영향 없음 — 오버레이 중 의도된 Space 동작 유지.
+      const modalOpen = !!document.querySelector('.modal.active');
+      if (challenge) { e.preventDefault(); slay(); }
+      else if (rescueWindow) { e.preventDefault(); rescueWindow.rescue(); }
+      else if (!btnEnhance.disabled && !modalOpen) { e.preventDefault(); enhance(); }
     }
     if (e.key === 'Escape') {
       // 열린 일반 모달이 있으면 가장 위(마지막)부터 닫기 — name/form-select는 자체 처리/필수 선택이라 제외
