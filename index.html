@@ -17663,7 +17663,11 @@
       list.innerHTML = '<p class="modal-empty">— 아직 마일스톤 없음 —<br><br><span style="font-size:10px;opacity:0.7">큰 성취 시 자동 기록</span></p>';
       return;
     }
-    list.innerHTML = '<div style="position:relative;padding-left:24px">' +
+    // v253b 紀程 머리글 — 여정의 규모 (이정표 수 · 첫 기록 이후 경과일)
+    const spanDays = Math.max(1, Math.round((Date.now() - events[0].time) / 86400000));
+    list.innerHTML =
+      '<div style="text-align:center;color:var(--dim);font-size:10px;letter-spacing:2px;padding:2px 0 12px">' + events.length + '개의 이정표 · 첫 기록 이후 ' + spanDays + '일</div>' +
+      '<div style="position:relative;padding-left:24px">' +
       // 세로 줄
       '<div style="position:absolute;left:9px;top:8px;bottom:8px;width:1px;background:linear-gradient(180deg,rgba(212,175,55,0.5),rgba(212,175,55,0.15))"></div>' +
       events.map(e => {
