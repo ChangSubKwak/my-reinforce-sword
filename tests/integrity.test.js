@@ -34,8 +34,11 @@ test('성공률 분해가 successChanceNow의 즉시/검별 성공원도 표시 
   const rm = js.match(/function renderStatus\(\)\s*\{([\s\S]*?)\n  \}/);
   assert.ok(rm, 'renderStatus 본문');
   const body = rm[1];
+  // v361 — 제목이 form/잔향도 주장하나 기존 리스트가 누락했음. 둘 다 객체-속성 성공항
+  // (f0.successBonus 形, enhanceEcho.successBonus 잔향)이라 함수형이 아님 — cost(v354)/destroy
+  // (v355)와 동일하게 명시 검사로 잠금. 이로써 success 분해의 객체-속성 성공원까지 완전 커버.
   ['guardianBonus', 'soulEffects', 'getResolve', 'schoolSuccessBonus', 'breathBonus',
-   'adversityReady', 'whet-check'].forEach(src =>
+   'adversityReady', 'whet-check', 'f0.successBonus', 'enhanceEcho.successBonus'].forEach(src =>
     assert.ok(body.includes(src), '성공 분해에 ' + src + ' 출처 누락'));
 });
 
