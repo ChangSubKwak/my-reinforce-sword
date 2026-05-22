@@ -28,6 +28,18 @@ test('성공률 breakdown(renderStatus)이 persistentSuccessBonus 전 항목을 
   assert.deepStrictEqual(missing, [], 'breakdown에서 누락된 성공 보너스 출처: ' + missing.join(', '));
 });
 
+test('파괴 확률 분해(renderStatus)가 effectiveDestroyChance의 *DestroyReduce 항을 모두 표시', () => {
+  // effectiveDestroyChance가 빼는 모든 감소원은 파괴 분해 표시에도 나타나야 함 (display≠actual 방지).
+  const em = js.match(/function effectiveDestroyChance\([^)]*\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(em, 'effectiveDestroyChance 본문');
+  const reducers = [...new Set([...em[1].matchAll(/(\w+DestroyReduce)\(\)/g)].map(m => m[1]))];
+  assert.ok(reducers.length >= 4, '*DestroyReduce 감소원 ≥4개 (현재 ' + reducers.length + ')');
+  const rm = js.match(/function renderStatus\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(rm, 'renderStatus 본문');
+  const missing = reducers.filter(t => !rm[1].includes(t + '()'));
+  assert.deepStrictEqual(missing, [], '파괴 분해에서 누락된 감소원: ' + missing.join(', '));
+});
+
 test('중복 HTML id 없음', () => {
   const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(x => x[1]);
   const seen = {}, dups = [];

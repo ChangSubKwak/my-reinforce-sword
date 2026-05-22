@@ -10428,6 +10428,38 @@
     }
     sections.push(section('강화 성공 보너스', successLines));
 
+    // 1b. 파괴 확률 요인 (가장 두려운 메커니즘의 투명한 분해 — effectiveDestroyChance 거울)
+    const destroyLines = [];
+    if (state.hasSword && typeof effectiveDestroyChance === 'function' && TABLE[state.level] && TABLE[state.level].destroy > 0) {
+      const lv = state.level;
+      const pctPlain = (n) => (Math.round(n * 1000) / 10) + '%';
+      const reduce = (v) => '-' + (Math.round(v * 1000) / 10) + '%';
+      destroyLines.push(line('기본 파괴 (+' + lv + '→+' + (lv + 1) + ')', pctPlain(TABLE[lv].destroy), 'var(--danger)'));
+      const spiritCheck = $('spirit-check');
+      const useSpirit = spiritCheck && spiritCheck.checked && !spiritCheck.disabled && (state.spiritstones || 0) > 0;
+      const fullBlock = useSpirit
+        || (typeof enhanceEcho !== 'undefined' && enhanceEcho && enhanceEcho.destroyBlock)
+        || (typeof sanctumBlocksDestroy === 'function' && sanctumBlocksDestroy());
+      if (fullBlock) {
+        destroyLines.push(line('靈石 / 잔향 / 聖域 — 파괴 차단', '0%', 'var(--safe)'));
+      } else {
+        const f = getForm();
+        const fdr = (f && f.destroyReduce) || 0;
+        if (fdr) destroyLines.push(line('形 ' + (f.name || '') + ' (굽은 검)', reduce(fdr), 'var(--safe)'));
+        if (typeof schoolDestroyReduce === 'function') { const v = schoolDestroyReduce(); if (v) destroyLines.push(line('유파 曲流', reduce(v), 'var(--safe)')); }
+        if (typeof guardianBonus === 'function') { const v = guardianBonus().destroyReduce; if (v) destroyLines.push(line('수호자 (守)', reduce(v), 'var(--safe)')); }
+        if (typeof adversityReady !== 'undefined' && adversityReady) destroyLines.push(line('逆 (역경 발동)', reduce(0.12), 'var(--safe)'));
+        if (typeof getScarDestroyReduce === 'function') { const v = getScarDestroyReduce(); if (v) destroyLines.push(line('흉터 (傷)', reduce(v), 'var(--safe)')); }
+        if (typeof weatherDestroyReduce === 'function') { const v = weatherDestroyReduce(); if (v) destroyLines.push(line('天候', reduce(v), 'var(--safe)')); }
+        if (typeof wishDestroyReduce === 'function') { const v = wishDestroyReduce(); if (v) destroyLines.push(line('유언 (願)', reduce(v), 'var(--safe)')); }
+        const rsv = getResolve();
+        if (rsv.destroyMul !== 1) destroyLines.push(line('覺悟 ' + rsv.label + ' 배수', '×' + rsv.destroyMul, rsv.destroyMul > 1 ? 'var(--danger)' : 'var(--safe)'));
+      }
+      const finalD = effectiveDestroyChance(lv);
+      destroyLines.push(line('실제 파괴 확률', pctPlain(finalD), finalD === 0 ? 'var(--safe)' : 'var(--danger)'));
+    }
+    sections.push(section('파괴 확률 요인', destroyLines));
+
     // 2. 활성 charges (1회용)
     const chargeLines = [];
     if (state.metsumaoCharges > 0) chargeLines.push(line('滅魔 (다음 슬레이 ×1.5)', '×' + state.metsumaoCharges));
