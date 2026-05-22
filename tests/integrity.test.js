@@ -39,6 +39,18 @@ test('성공률 분해가 successChanceNow의 즉시/검별 성공원도 표시 
     assert.ok(body.includes(src), '성공 분해에 ' + src + ' 출처 누락'));
 });
 
+test('조합소 레시피 표시 비용 == recipes 객체 cost (하드코딩 drift 방지)', () => {
+  // HTML 레시피 라벨의 "조각 N"이 recipes[key].cost와 일치해야 함 — 둘 다 하드코딩이라 drift 위험.
+  const pairs = [...html.matchAll(/<small>조각 (\d+)[^<]*<\/small><\/div>\s*<button class="recipe-btn" data-recipe="(\w+)"/g)]
+    .map(m => ({ cost: +m[1], key: m[2] }));
+  assert.ok(pairs.length >= 6, '레시피 cost↔key 페어 ≥6 (현재 ' + pairs.length + ')');
+  pairs.forEach(p => {
+    const m = js.match(new RegExp(p.key + ':\\s*\\{[\\s\\S]{0,80}?cost:\\s*(\\d+)'));
+    assert.ok(m, 'recipes.' + p.key + ' cost 정의 없음');
+    assert.strictEqual(+m[1], p.cost, p.key + ' 표시(' + p.cost + ') ≠ recipes.cost(' + m[1] + ')');
+  });
+});
+
 test('강화 비용 분해(renderStatus)가 enhanceCost의 *CostMul/flowCostReduce 항을 모두 표시 (v273)', () => {
   // enhanceCost가 곱하는 모든 단독 함수형 배수는 비용 분해 표시에도 나타나야 함 (display≠actual 방지).
   const em = js.match(/function enhanceCost\([^)]*\)\s*\{([\s\S]*?)\n  \}/);
