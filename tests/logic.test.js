@@ -1041,3 +1041,13 @@ test('computeRecords: 봉인 검의 beads·enhanceAttempts도 최댓값에 반�
   assert.strictEqual(r.maxEnhance, 30, '봉인 검 강화 시도가 최다 시도 기록에 반영');
   assert.strictEqual(r.maxSlain, 2);
 });
+
+test('HIDDEN_ACHIEVEMENTS 慎重/無欲 + protectsUsed 보존 (v315)', () => {
+  const by = Object.fromEntries(extractConst('HIDDEN_ACHIEVEMENTS').map(a => [a.key, a]));
+  assert.strictEqual(by.shinjuu.check({ protectsUsed: 5 }), true, '慎重: 보호권 5회');
+  assert.strictEqual(by.shinjuu.check({ protectsUsed: 4 }), false);
+  assert.strictEqual(by.muyoku.check({ level: 10, protectsUsed: 0 }), true, '無欲: +10 무보호');
+  assert.strictEqual(!!by.muyoku.check({ level: 10, protectsUsed: 3 }), false, '보호권 쓴 +10은 無欲 아님 (false-positive 방지)');
+  // 봉인 검에 protectsUsed가 보존돼야 위 check가 sealed 검에서 의미있음
+  assert.match(readScript(), /protectsUsed: state\.currentSword\.protectsUsed \|\| 0/, 'seal 경로가 protectsUsed 보존');
+});

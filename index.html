@@ -15309,6 +15309,7 @@
       level: lv, inscriptions: ins, form,
       enhanceAttempts: state.currentSword.enhanceAttempts || 0,  // v313 단련
       beads: state.currentSword.beads || 0,  // v314 念珠
+      protectsUsed: state.currentSword.protectsUsed || 0,  // v315 慎重/無欲
       soul: state.currentSword.soul || 0, name: swordName,
       slainCount: slainHere, verse,
       levelHistory: (state.currentSword.levelHistory || []).slice(),
@@ -16211,6 +16212,7 @@
       level: lv, inscriptions: ins, form,
       enhanceAttempts: state.currentSword.enhanceAttempts || 0,  // v313 단련 — 검의 단련 노고 보존
       beads: state.currentSword.beads || 0,  // v314 念珠 — 봉인 검에도 보존 (記錄 최다 念珠 정확화)
+      protectsUsed: state.currentSword.protectsUsed || 0,  // v315 — 慎重/無欲 숨은 성취 정확화
       soul: state.currentSword.soul || 0, name: swordName,
       slainCount: slainHere, verse,
       levelHistory: (state.currentSword.levelHistory || []).slice(),
