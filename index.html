@@ -4300,6 +4300,7 @@
   }
   function formatTimeAgo(ts) {
     const sec = Math.floor((Date.now() - ts) / 1000);
+    if (sec < 0) return '방금';  // v245v 미래 ts(시계 오차·기기간 클라우드 동기화) 음수 방어
     if (sec < 60) return sec + '초 전';
     if (sec < 3600) return Math.floor(sec / 60) + '분 전';
     if (sec < 86400) return Math.floor(sec / 3600) + '시간 전';
