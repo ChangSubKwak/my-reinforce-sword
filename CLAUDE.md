@@ -578,11 +578,12 @@ footer 7개 버튼 → 3개 (조합소·계보·詩集) + 우상단 ≡ 메뉴 (
 
 ### v81+ 호스팅 + 클라우드 (Render + Supabase)
 
-**v81 Node + Express 정적 서버**:
-- `server.js` — Express, 보안 헤더, index.html no-cache, SPA 폴백
-- `package.json` — express 4.21, `npm start`, node >=18
-- `render.yaml` — Render Blueprint (free plan, node 20, `npm install` + `npm start`)
-- `README.md` — 게임 설명 + 호스팅/단축키 가이드
+**v81 Node + Express 서버** (v332+ 하드닝됨):
+- `server.js` — Express. **catch-all로 index.html만 서빙** (v332: `express.static(__dirname)` 제거 — 루트 전체 서빙은 CLAUDE.md[숨은 메커니즘]·소스·schema.sql·tests/ 노출이었음. 게임은 인라인 단일 파일이라 로컬 자산 0 → index.html만 반환. **express.static 재도입 금지**). 보안 헤더: nosniff·Referrer-Policy·X-Frame-Options:DENY·Permissions-Policy (v334). index.html no-cache.
+- `package.json` — express 4.x, `npm start`, node >=18. `package-lock.json` 커밋됨(v333, 재현 가능 설치).
+- `render.yaml` — Render Blueprint (free, node 20, **`npm ci`**[v335 결정적] + `npm start`)
+- `supabase/schema.sql` — leaderboard에 서버측 CHECK 제약(v331: 닉네임 1~16자·점수 ≥0·best_level≤15, anti-cheat). 신규 설치만 적용 — 기존 테이블은 주석의 ALTER 수동 실행.
+- `README.md` — 게임 설명 + 호스팅/단축키 가이드 + 검증(npm test)
 
 로컬: `npm install && npm start` (PORT 환경변수 지원, 기본 3000).
 
