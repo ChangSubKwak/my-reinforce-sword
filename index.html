@@ -12091,7 +12091,7 @@
     // v219 賭 — 회수 도박 버튼 노출
     const gambleBtn = $('rescue-gamble');
     if (gambleBtn) gambleBtn.style.display = 'block';
-    const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec; // 速流 + 冬 + 수호자 速 보너스
+    const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec + beastRescueSec(); // 速流 + 冬 + 수호자 + 四神 白虎
     let timeLeft = totalSec;
     rescueTimer.textContent = timeLeft.toFixed(1) + '초 안에  ·  +' + shardReward + ' 조각';
     // v65 progress ring 5초 (또는 totalSec) 진행
@@ -12385,6 +12385,9 @@
     if (sMul !== 1) reward = Math.floor(reward * sMul);
     const gMul = guardianBonus().rewardMul;
     if (gMul !== 1) reward = Math.floor(reward * gMul);
+    // v261 四神 玄武 — 도전 보상 +5% (이름 있는 적도 도전)
+    const beastChMul = beastChallengeMul();
+    if (beastChMul !== 1) reward = Math.floor(reward * beastChMul);
     challenge = {
       strength: foe.strength,
       reward,
@@ -12477,6 +12480,9 @@
     if (sMul !== 1) reward = Math.floor(reward * sMul);
     const gMul = guardianBonus().rewardMul;
     if (gMul !== 1) reward = Math.floor(reward * gMul);
+    // v261 四神 玄武 — 도전 보상 +5%
+    const beastChMul = beastChallengeMul();
+    if (beastChMul !== 1) reward = Math.floor(reward * beastChMul);
     // v123 系譜 — 100代+ 슬레이 보상 보너스
     const slayMul = generationSlayMul();
     if (slayMul !== 1) reward = Math.floor(reward * slayMul);
@@ -15685,6 +15691,7 @@
     if (isWay || ins.includes('道')) reward = Math.floor(reward * 1.5);
     reward = Math.floor(reward * schoolSealMul());
     reward = Math.floor(reward * getSeason().sealMul);
+    reward = Math.floor(reward * beastSealMul());  // v261 四神 青龍 — 봉인 보상 +3%
     if (ins.includes('古')) reward = Math.floor(reward * 1.10);
     else if (ins.includes('久')) reward = Math.floor(reward * 1.05);
     if (ins.includes('七星')) reward = Math.floor(reward * 1.5);  // v116 七星

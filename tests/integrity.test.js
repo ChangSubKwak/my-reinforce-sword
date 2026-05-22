@@ -40,6 +40,15 @@ test('파괴 확률 분해(renderStatus)가 effectiveDestroyChance의 *DestroyRe
   assert.deepStrictEqual(missing, [], '파괴 분해에서 누락된 감소원: ' + missing.join(', '));
 });
 
+test('四神 보너스 접근자가 실제로 소비됨 (정의만 있고 미사용 = 죽은 보너스 방지)', () => {
+  // v261: beastSealMul/beastChallengeMul/beastRescueSec가 정의만 되고 호출 안 돼
+  // 青龍/玄武/白虎 보너스가 광고만 되고 미적용이던 버그 회귀 방지.
+  ['beastSuccessBonus', 'beastSealMul', 'beastChallengeMul', 'beastRescueSec'].forEach(fn => {
+    const calls = (js.match(new RegExp(fn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\(\\)', 'g')) || []).length;
+    assert.ok(calls >= 2, fn + '은 정의 외 호출처가 있어야 함 (현재 ' + calls + ')');
+  });
+});
+
 test('중복 HTML id 없음', () => {
   const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(x => x[1]);
   const seen = {}, dups = [];

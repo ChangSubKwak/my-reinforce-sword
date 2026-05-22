@@ -35,6 +35,7 @@ test('sealReward: lv=0 은 0', () => {
 // ─────────────────────────────────────────────────────────────
 const neutralSealDeps = {
   schoolSealMul: () => 1, getSeason: () => ({ sealMul: 1 }), generationSealMul: () => 1,
+  beastSealMul: () => 1,
 };
 const sealBaseFns = loadFunctions(['sealRewardBase', 'sealReward'], neutralSealDeps);
 
