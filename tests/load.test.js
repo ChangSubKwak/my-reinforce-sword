@@ -55,6 +55,21 @@ test('load(): 배열로 순회되는 모든 state 필드는 normalizeState 가�
   assert.deepStrictEqual(unguarded, [], '배열 순회되나 normalizeState 가드 없는 필드(손상 import 크래시 위험): ' + unguarded.join(', '));
 });
 
+test('load(): Object.keys/values/entries로 접근되는 state 필드는 normalizeState 객체 가드 보유 (Object.keys(null) 크래시 방지)', () => {
+  // Object.keys(null)/values/entries(null)은 TypeError throw — 손상 import가 객체 필드를
+  // null로 넣으면 render 크래시. 배열 가드(위)의 객체 짝. 소스에서 추출해 자동 강제.
+  const nm = js.match(/function normalizeState\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(nm, 'normalizeState 본문');
+  const body = nm[1];
+  const accessed = new Set();
+  let m; const re = /Object\.(?:keys|values|entries)\(state\.([a-zA-Z]+)\)/g;
+  while ((m = re.exec(js))) accessed.add(m[1]);
+  const unguarded = [...accessed].filter(f =>
+    !new RegExp("typeof state\\." + f + " !== 'object'").test(body)
+    && !new RegExp('Array\\.isArray\\(state\\.' + f + '\\)').test(body));
+  assert.deepStrictEqual(unguarded, [], 'Object.keys 접근되나 normalizeState 객체 가드 없는 필드(null→크래시 위험): ' + unguarded.join(', '));
+});
+
 test('load(): 핵심 배열 (sealedSwords/enshrined/recentLog) 타입 보정', () => {
   assert.match(js, /Array\.isArray\(state\.sealedSwords\)/);
   assert.match(js, /Array\.isArray\(state\.enshrined\)/);
