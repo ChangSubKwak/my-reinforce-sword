@@ -362,6 +362,41 @@ test('effectiveDestroyChance: 覺悟 destroyMul (一心 1.5배 / 保身 0)', () 
 });
 
 // ─────────────────────────────────────────────────────────────
+// v240 successChanceNow — 성공 확률 단일 진원 행동 테스트
+// ─────────────────────────────────────────────────────────────
+function makeSuccessChance(deps) {
+  const base = {
+    TABLE: [{ success: 0.50 }],
+    state: { level: 0, whetstones: 0 },
+    getForm: () => ({}), $: () => null, enhanceEcho: null,
+    breathBonus: () => 0, pendingBreathBoost: false,
+    soulEffects: () => ({ successBonus: 0 }), schoolSuccessBonus: () => 0,
+    guardianBonus: () => ({ successBonus: 0 }), getResolve: () => ({ successAdd: 0 }),
+    adversityReady: false, persistentSuccessBonus: () => 0,
+  };
+  return loadFunctions(['successChanceNow'], Object.assign(base, deps || {})).successChanceNow;
+}
+test('successChanceNow: 기본 성공률, 범위 밖 레벨 = 0', () => {
+  assert.ok(Math.abs(makeSuccessChance()() - 0.50) < 1e-9);
+  assert.strictEqual(makeSuccessChance({ state: { level: 9 } })(), 0, 'TABLE[9] 없음 → 0');
+});
+test('successChanceNow: 砥(체크박스)·형·역경·persistent 합산', () => {
+  const whetOn = { $: () => ({ checked: true, disabled: false }), state: { level: 0, whetstones: 1 } };
+  assert.ok(Math.abs(makeSuccessChance(whetOn)() - 0.75) < 1e-9, '砥 +25%');
+  assert.ok(Math.abs(makeSuccessChance({ getForm: () => ({ successBonus: 0.03 }) })() - 0.53) < 1e-9, '直 +3%');
+  assert.ok(Math.abs(makeSuccessChance({ adversityReady: true })() - 0.90) < 1e-9, '역경 +40%');
+  assert.ok(Math.abs(makeSuccessChance({ persistentSuccessBonus: () => 0.05 })() - 0.55) < 1e-9, 'persistent +5%');
+});
+test('successChanceNow: 眞空 호흡 ×2 (pendingBreathBoost)', () => {
+  assert.ok(Math.abs(makeSuccessChance({ breathBonus: () => 0.10, pendingBreathBoost: true })() - 0.70) < 1e-9, '0.5+0.2');
+  assert.ok(Math.abs(makeSuccessChance({ breathBonus: () => 0.10 })() - 0.60) < 1e-9, '부스트 없으면 0.5+0.1');
+});
+test('successChanceNow: [0,1] 클램프', () => {
+  assert.strictEqual(makeSuccessChance({ TABLE: [{ success: 0.9 }], adversityReady: true })(), 1, '1.3 → 1');
+  assert.strictEqual(makeSuccessChance({ getResolve: () => ({ successAdd: -0.7 }) })(), 0, '-0.2 → 0');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
