@@ -858,3 +858,53 @@ test('리더보드 숫자 필드가 Number()로 강제됨 (v276 — 문자열 �
   assert.match(js, /Number\(row\.best_level\) \|\| 0/, 'best_level 강제');
   assert.match(js, /Number\(row\.total_slain\) \|\| 0/, 'total_slain 강제');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v279 客劍 import 검증 — decodeSwordCode 입력 새니타이즈 (보안 핵심)
+// ─────────────────────────────────────────────────────────────
+const decodeFns = loadFunctions(['decodeSwordCode']);
+const mkCode = (obj) => 'CK1' + Buffer.from(encodeURIComponent(JSON.stringify(obj)), 'binary').toString('base64');
+
+test('decodeSwordCode: 정상 코드 디코드 + 수치 클램프', () => {
+  const r = decodeFns.decodeSwordCode(mkCode({ n: '直道劍', f: '直', l: 12, i: ['道'], s: 50, v: 'a/b', b: 3 }));
+  assert.strictEqual(r.name, '直道劍');
+  assert.strictEqual(r.form, '直');
+  assert.strictEqual(r.level, 12);
+  assert.strictEqual(r.soul, 50);
+  assert.deepStrictEqual(r.inscriptions, ['道']);
+  assert.strictEqual(r.isGuest, true);
+});
+
+test('decodeSwordCode: level 0~15 · soul 0~100 클램프', () => {
+  const hi = decodeFns.decodeSwordCode(mkCode({ n: 'x', f: '直', l: 99, i: [], s: 999, b: 0 }));
+  assert.strictEqual(hi.level, 15, 'level 상한 15');
+  assert.strictEqual(hi.soul, 100, 'soul 상한 100');
+  const lo = decodeFns.decodeSwordCode(mkCode({ n: 'x', f: '直', l: -5, i: [], s: -5, b: -9 }));
+  assert.strictEqual(lo.level, 0, 'level 하한 0');
+  assert.strictEqual(lo.soul, 0, 'soul 하한 0');
+  assert.strictEqual(lo.beads, 0, 'beads 하한 0');
+});
+
+test('decodeSwordCode: 形 화이트리스트 (직/곡/중/속만, 그 외 빈 문자열)', () => {
+  ['直', '曲', '重', '速'].forEach(f =>
+    assert.strictEqual(decodeFns.decodeSwordCode(mkCode({ n: 'x', f, l: 0, i: [] })).form, f));
+  assert.strictEqual(decodeFns.decodeSwordCode(mkCode({ n: 'x', f: '<img>', l: 0, i: [] })).form, '', '비정상 형 → 빈 값');
+  assert.strictEqual(decodeFns.decodeSwordCode(mkCode({ n: 'x', f: 'evil', l: 0, i: [] })).form, '');
+});
+
+test('decodeSwordCode: 이름 24자·명문 12개 상한 + 문자열 강제', () => {
+  const longName = 'あ'.repeat(50);
+  const manyIns = Array.from({ length: 30 }, (_, i) => i);  // 숫자 → String 강제 대상
+  const r = decodeFns.decodeSwordCode(mkCode({ n: longName, f: '直', l: 0, i: manyIns, s: 0 }));
+  assert.strictEqual(r.name.length, 24, '이름 24자 컷');
+  assert.strictEqual(r.inscriptions.length, 12, '명문 12개 컷');
+  assert.ok(r.inscriptions.every(x => typeof x === 'string'), '명문 모두 문자열');
+});
+
+test('decodeSwordCode: 잘못된 입력은 null (prefix/base64/JSON/필수필드)', () => {
+  assert.strictEqual(decodeFns.decodeSwordCode(''), null, '빈 문자열');
+  assert.strictEqual(decodeFns.decodeSwordCode('NOPREFIX'), null, 'CK1 접두사 없음');
+  assert.strictEqual(decodeFns.decodeSwordCode('CK1!!!'), null, '깨진 base64');
+  assert.strictEqual(decodeFns.decodeSwordCode(mkCode({ n: 'x', f: '直' })), null, 'l/i 누락 (l 숫자 아님)');
+  assert.strictEqual(decodeFns.decodeSwordCode(mkCode({ l: 5, i: 'notarray' })), null, 'i가 배열 아님');
+});
