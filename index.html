@@ -15812,6 +15812,7 @@
       state.currentSword.inscriptions.push(p.inscription);
     }
     state.currentSword.soul = Math.max(state.currentSword.soul, p.soul);
+    state.currentSword.fusedFrom = [nameA, nameB];  // v255 血統 — 융합 혈통 (정체성)
     checkInscriptions();
     captureRubbing('firstFusion');  // v136 拓本
     fusionSelected = [];
@@ -16025,6 +16026,7 @@
       playerSeal: state.currentSword.playerSeal || state.playerSeal || '',  // v140 篆刻
       kigen: (userKigen && userKigen.trim()) ? userKigen.trim() : null,  // v158 寄言
       bornTod: state.currentSword.bornTod || null,  // v252 時生 — 빚어진 시각
+      fusedFrom: state.currentSword.fusedFrom || null,  // v255 血統 — 융합 혈통
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -16523,6 +16525,8 @@
       verseBlock +
       // v204 起念 — 탄생문 (회고에 영구 표시)
       (s.birthStatement ? '<div style="margin:14px 0;padding:12px;background:rgba(168,184,200,0.04);border-left:2px solid rgba(168,184,200,0.4);font-size:10.5px;line-height:1.8;letter-spacing:2px;color:var(--fg);font-style:italic"><div style="color:var(--dim);font-size:9px;letter-spacing:3px;margin-bottom:5px;font-style:normal">起 念 — 탄생</div>' + s.birthStatement + '</div>' : '') +
+      // v255 血統 — 융합으로 태어난 검의 혈통
+      (Array.isArray(s.fusedFrom) && s.fusedFrom.length === 2 ? '<div style="text-align:center;color:#c8a8d8;font-size:10px;letter-spacing:2px;padding:4px 0">血統 — ' + s.fusedFrom[0] + ' + ' + s.fusedFrom[1] + ' 의 융합</div>' : '') +
       // v139 一代記 — 자동 일대기 narrative
       '<div style="margin:14px 0;padding:14px 12px;background:rgba(212,175,55,0.025);border-left:2px solid rgba(212,175,55,0.4);font-size:11px;line-height:1.9;letter-spacing:1.5px;color:var(--fg);font-style:italic">' +
         '<div style="color:var(--dim);font-size:9px;letter-spacing:3px;margin-bottom:6px;font-style:normal">一 代 記</div>' +
