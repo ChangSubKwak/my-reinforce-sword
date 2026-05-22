@@ -133,6 +133,11 @@ test('파괴 확률 분해(renderStatus)가 effectiveDestroyChance의 *DestroyRe
   assert.ok(rm, 'renderStatus 본문');
   const missing = reducers.filter(t => !rm[1].includes(t + '()'));
   assert.deepStrictEqual(missing, [], '파괴 분해에서 누락된 감소원: ' + missing.join(', '));
+  // v355 — 객체-속성 감소항(*DestroyReduce() 정규식이 못 잡는 것)도 분해에 있어야 함:
+  // 形(f.destroyReduce 曲)·守(guardianBonus().destroyReduce)·覺悟(rsv.destroyMul). 파괴 전용
+  // 속성이라 success/cost 분해와 안 겹침 — 그 라인 삭제 시 display<actual 미검출 갭(v354류).
+  ['f.destroyReduce', 'guardianBonus().destroyReduce', 'rsv.destroyMul'].forEach(term =>
+    assert.ok(rm[1].includes(term), '파괴 분해에 객체-속성 감소항 누락: ' + term));
 });
 
 test('四神 보너스 접근자가 실제로 소비됨 (정의만 있고 미사용 = 죽은 보너스 방지)', () => {
