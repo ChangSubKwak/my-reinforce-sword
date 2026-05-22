@@ -15352,7 +15352,7 @@
     wrap.classList.add('active');
     const body = $('guardian-body');
     if (body) body.innerHTML = buildSwordBody(g.level || 0, g.form, g.playerSeal || '');
-    $('guardian-name').textContent = (g.name || '검') + ' · 守';
+    $('guardian-name').textContent = (g.name || '검') + ' · 守 · ' + deriveTemperament(g).name;  // v247e 수호자 性情
     const bonusMap = {
       '直': '강화 +2%',
       '曲': '파괴 -2%',
