@@ -1153,3 +1153,18 @@ test('getTimeOfDay: 시간대 경계 (朝5-11/晝11-17/夕17-21/夜 그 외 — 
   assert.strictEqual(at(20), 'evening');
   assert.strictEqual(at(21), 'night', '21시 → 夜');
 });
+
+test('getCurrentSolarTerm: 날짜→절기 선택 (latest-passed term, v177)', () => {
+  const ST = extractConst('SOLAR_TERMS');
+  const at = (month, day) => {
+    function FakeDate() {}
+    FakeDate.prototype.getMonth = function () { return month - 1; };
+    FakeDate.prototype.getDate = function () { return day; };
+    return loadFunctions(['getCurrentSolarTerm'], { Date: FakeDate, SOLAR_TERMS: ST }).getCurrentSolarTerm().key;
+  };
+  assert.strictEqual(at(1, 1), 'dongzhi', '1월 → 冬至(전년 동지 유지, 立春 전)');
+  assert.strictEqual(at(2, 3), 'dongzhi', '2/3 → 아직 冬至');
+  assert.strictEqual(at(2, 4), 'lichun', '2/4 → 立春');
+  assert.strictEqual(at(6, 21), 'xiazhi', '6/21 → 夏至');
+  assert.strictEqual(at(12, 22), 'dongzhi', '12/22 → 冬至');
+});
