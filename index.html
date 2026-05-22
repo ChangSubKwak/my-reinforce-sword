@@ -18120,6 +18120,14 @@
       bar('검귀', fmtNum(s.slainDemon || 0) + ' 회', slainMax, '#fff5c0') +
       row('도망 그림자에게 놓침', fmtNum(s.evaded || 0) + ' 회', 'var(--dim)') +
       row('도전에서 도망', fmtNum(s.fled || 0) + ' 회', 'var(--dim)') +
+      // v256 學派 — 그림자 출신별 처치 + 斷魔 진척 (기존 shadowOriginsSlain 노출)
+      (function() {
+        const os = state.shadowOriginsSlain || {};
+        const done = ORIGIN_KEYS.filter(k => (os[k] || 0) > 0).length;
+        const breakdown = ORIGIN_KEYS.map(k => k + ' ' + fmtNum(os[k] || 0)).join('  ·  ');
+        return row('그림자 학파 처치', breakdown, '#a8c0d8') +
+          row('斷魔 진척', done >= ORIGIN_KEYS.length ? '達 — 네 학파 모두 베다' : done + ' / ' + ORIGIN_KEYS.length + ' 학파', done >= ORIGIN_KEYS.length ? '#fff5c0' : 'var(--dim)');
+      })() +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">생 사</div>' +
       row('조각 줍기 성공', fmtNum(s.rescued || 0) + ' 회') +
       row('조각 줍기 실패', fmtNum(s.rescueFailed || 0) + ' 회', 'var(--danger)') +
