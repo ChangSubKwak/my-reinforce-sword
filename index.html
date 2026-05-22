@@ -15068,6 +15068,7 @@
     const foeKill = ['龍斬', '帝斬', '刃斬', '月斬', '風斬'].find(k => ins.includes(k));
     if (foeKill === '龍斬') notes.push(FOE_NARR['龍斬']);  // 명명된 용은 정점 — 검귀(鬼斬)보다 위
     else if (ins.includes('鬼斬')) notes.push('검귀의 피를 받았고');
+    else if (ins.includes('夜叉斬')) notes.push('밤의 야차(夜叉)를 베어냈고');  // v370k 특수 그림자 격파 — 鬼斬 바로 아래(검명 우선순위와 일치)
     else if (ins.includes('斷魔')) notes.push('네 그림자를 모두 베어냈고');
     else if (foeKill) notes.push(FOE_NARR[foeKill]);  // 그 외 명명된 적 (帝/刃/月/風)
     else if (slain >= 5) notes.push(slain + '의 그림자를 베어냈고');
@@ -15124,6 +15125,8 @@
       insLine = '본질을 깨우고 검귀의 피를 받아';
     } else if (inscriptions.includes('鬼斬')) {
       insLine = '검귀의 그림자를 베고';
+    } else if (inscriptions.includes('夜叉斬')) {
+      insLine = '밤의 야차를 베어내고';  // v370k 특수 그림자 — 鬼斬 아래
     } else if (foeV) {
       insLine = FOE_VERSE[foeV];  // 그 외 명명된 적 (帝/刃/月/風)
     } else if (inscriptions.includes('本')) {
