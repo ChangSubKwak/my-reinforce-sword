@@ -933,3 +933,15 @@ test('soulEffects/getSoulStage: 魂 단계 임계 잠금 (覺34/本67 — v10 di
   const ew = make(34).soulEffects(); assert.strictEqual(ew.successBonus, 0.02); assert.strictEqual(ew.rewardMul, 1.0);
   const et = make(67).soulEffects(); assert.strictEqual(et.successBonus, 0.04); assert.strictEqual(et.rewardMul, 1.15);
 });
+
+test('RESOLVE 값 잠금 (覺悟 dial — 平常/一心/保身, v91)', () => {
+  const R = extractConst('RESOLVE');
+  assert.strictEqual(R.normal.successAdd, 0); assert.strictEqual(R.normal.destroyMul, 1);
+  assert.strictEqual(R.normal.downgradeMul, 1); assert.strictEqual(R.normal.costMul, 1);
+  // 一心 — 올인 도박: 성공 +8%, 파괴 ×1.5
+  assert.strictEqual(R.focus.successAdd, 0.08); assert.strictEqual(R.focus.destroyMul, 1.5);
+  assert.strictEqual(R.focus.downgradeMul, 1); assert.strictEqual(R.focus.costMul, 1);
+  // 保身 — 신중: 성공 -10%, 파괴 ×0, 하락 ×0.5, 비용 ×1.5
+  assert.strictEqual(R.guard.successAdd, -0.10); assert.strictEqual(R.guard.destroyMul, 0);
+  assert.strictEqual(R.guard.downgradeMul, 0.5); assert.strictEqual(R.guard.costMul, 1.5);
+});
