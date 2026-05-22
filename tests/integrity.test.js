@@ -429,8 +429,9 @@ test('봉인 push가 로직 의존 sword 필드를 모두 보존 (v313-315 류 f
 });
 
 test('server.js: 루트 디렉토리 정적 서빙 안 함 — 소스/CLAUDE.md 노출 방지 (v332)', () => {
-  const srv = fs.readFileSync(HTML_PATH.replace(/index\.html$/, 'server.js'), 'utf8');
-  assert.ok(!/express\.static/.test(srv), 'express.static 재도입 금지 (루트 전체 서빙 → 소스/CLAUDE.md/schema 노출)');
+  // 주석에도 'express.static' 단어가 있으므로(설명용) 실제 미들웨어 등록만 검사
+  const srv = fs.readFileSync(HTML_PATH.replace(/index\.html$/, 'server.js'), 'utf8').replace(/\/\/[^\n]*/g, '');
+  assert.ok(!/app\.use\(\s*express\.static/.test(srv), 'express.static 미들웨어 재도입 금지 (루트 전체 서빙 → 소스/CLAUDE.md/schema 노출)');
   assert.match(srv, /sendFile\([^)]*index\.html/, 'catch-all로 index.html 서빙');
   assert.match(srv, /X-Frame-Options/, '보안 헤더 유지 (v334)');
 });
