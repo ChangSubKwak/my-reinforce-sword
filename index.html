@@ -12349,7 +12349,9 @@
 
   // === 道魂 — 봉인된 道 검이 후세에 시구를 전한다 ===
   function whisperFromAncestor(currentForm) {
-    const sealed = state.sealedSwords.filter(s => s.verse && Array.isArray(s.verse));
+    // v369 — 殿堂 道 검도 후세에 시구를 전함(道魂). 殿堂 검은 가장 영예로운 道 검인데 기존엔
+    // sealedSwords만 봐서 안 속삭였음 — v359(劍士録 道 목록)·merged-collection류 표시 누락. 순수 narrative.
+    const sealed = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => s.verse && Array.isArray(s.verse));
     if (sealed.length === 0) return;
     // 같은 형 우선, 없으면 임의
     let candidates = sealed.filter(s => s.form === currentForm);
