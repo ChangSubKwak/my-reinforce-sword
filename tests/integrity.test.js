@@ -450,3 +450,17 @@ test('v342: 結界 흡수 파괴 확률이 단일 진원(sanctumAbsorbedDestroy)
   const callCount = (js.match(/sanctumAbsorbedDestroy\(lv\)/g) || []).length;
   assert.ok(callCount >= 2, '표시·실제 두 경로가 sanctumAbsorbedDestroy(lv)를 호출해야 함 (got ' + callCount + ')');
 });
+
+test('v343: 실제 강화 굴림(effectiveDestroy)이 표시 헬퍼(effectiveDestroyChance)와 동일한 파괴-감소항을 모두 포함 — display≠actual 드리프트 차단', () => {
+  // 헬퍼 직접 호출은 불가(헬퍼가 state.spiritstones를 live 재계산 → useSpirit 차감 후 회귀).
+  // 그래서 두 공식은 분리 유지하되, 감소항 집합은 반드시 일치해야 함. (v263이 헬퍼엔 solar를
+  // 넣었으나 이 인라인 굴림 사본을 못 고쳐 冬至 -2%가 표시·約束만 되고 실제론 무시됐던 버그.)
+  const reduceTerms = ['schoolDestroyReduce(', 'guardianBonus(', 'getScarDestroyReduce(',
+    'weatherDestroyReduce(', 'wishDestroyReduce(', 'solarDestroyReduce('];
+  // omen 경로(effectiveDestroyChance(lv) 직접 호출)와 구분 — 인라인 공식 굴림은 (useSpirit 로 시작.
+  const rollLine = (js.match(/const effectiveDestroy = \(useSpirit[^\n]*/) || [''])[0];
+  assert.ok(rollLine, 'enhance의 인라인 effectiveDestroy 할당을 찾아야 함');
+  for (const term of reduceTerms) {
+    assert.ok(rollLine.includes(term), '실제 굴림에 ' + term + ') 감소항 누락 — 표시와 드리프트');
+  }
+});
