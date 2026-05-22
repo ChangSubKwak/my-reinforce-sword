@@ -16309,7 +16309,7 @@
     // v156 新記 — 봉인 시 4 기록 갱신
     updateRecord('maxSealReward', reward);
     updateRecord('maxSoul', justSealed.soul || 0);
-    updateRecord('maxSwordLife', (state.currentSword && state.currentSword.enhanceAttempts) || 0);
+    updateRecord('maxSwordLife', justSealed.enhanceAttempts || 0);  // v353 — 형제 호출(soul/slainCount)처럼 captured justSealed 사용. 기존 state.currentSword는 newSword() 전이라 우연히 맞았으나 재정렬 시 새 검 0을 기록할 fragility 제거
     updateRecord('maxSlainPerSword', justSealed.slainCount || 0);
     // v117 四道 — 이 봉인으로 4형 道 모두 달성 시 큰 의식
     if (!fourWaysBefore && hasFourWays()) {
