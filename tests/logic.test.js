@@ -1168,3 +1168,21 @@ test('getCurrentSolarTerm: 날짜→절기 선택 (latest-passed term, v177)', (
   assert.strictEqual(at(6, 21), 'xiazhi', '6/21 → 夏至');
   assert.strictEqual(at(12, 22), 'dongzhi', '12/22 → 冬至');
 });
+
+test('stalemateCost: 對峙 비용 10 + ceil(강도*1.2) (v183)', () => {
+  const at = (strength) => loadFunctions(['stalemateCost'], { challenge: strength != null ? { strength } : null }).stalemateCost();
+  assert.strictEqual(at(null), 0, '도전 없음 → 0');
+  assert.strictEqual(at(5), 10 + Math.ceil(6), '강도5 → 16');
+  assert.strictEqual(at(10), 10 + Math.ceil(12), '강도10 → 22');
+});
+
+test('getActiveSchools: 같은 형 SCHOOL_THRESHOLD(3) 이상 봉인 시 활성 (v12)', () => {
+  const at = (forms) => loadFunctions(['getActiveSchools', 'getFormCounts'], {
+    state: { sealedSwords: forms.map(f => ({ form: f })) },
+    SCHOOLS: { '直': {}, '曲': {}, '重': {}, '速': {} }, SCHOOL_THRESHOLD: 3,
+  }).getActiveSchools();
+  assert.strictEqual(JSON.stringify(at([])), '[]', '0개 → 없음');
+  assert.strictEqual(JSON.stringify(at(['直', '直'])), '[]', '2 < 3 → 없음');
+  assert.strictEqual(JSON.stringify(at(['直', '直', '直'])), '["直"]', '直 3개 → 直流 활성');
+  assert.strictEqual(JSON.stringify(at(['直', '直', '直', '曲', '曲', '曲'])), JSON.stringify(['直', '曲']), '둘 다 활성');
+});
