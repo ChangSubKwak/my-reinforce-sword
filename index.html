@@ -12243,7 +12243,8 @@
           log('賭 — 성공! 조각 +' + fmtNum(doubled) + ' (2배)', 'success');
         } else {
           state.gambleStats.lose++;
-          bumpStat('rescueFailed');
+          // v346 — rescueFailed는 endVoid(false)가 단일 집계. 여기서 또 올리면 도박 패배가
+          // 회수실패 통계에 2회 잡힘(중복). gambleStats.lose가 도박 패배를 따로 추적.
           if (typeof SFX.destroy === 'function') SFX.destroy();
           showGambleResult(false, 0);
           log('賭 — 실패. 조각 모두 잃었다', 'destroy');
