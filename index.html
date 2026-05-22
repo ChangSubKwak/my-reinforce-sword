@@ -5980,9 +5980,6 @@
   function shrineSuccessBonus() {
     return shrineHas('d1') ? 0.01 : 0;
   }
-  function shrineStartProtection() {
-    return shrineHas('d2') ? 1 : 0;
-  }
   function shrineStartSoul() {
     return shrineHas('d3') ? 5 : 0;
   }
@@ -8460,9 +8457,6 @@
       }
     });
   }
-  function resetBeads() {
-    if (state.hasSword && state.currentSword) state.currentSword.beads = 0;
-  }
   function showBeadMilestone(m) {
     const el = document.createElement('div');
     const rewardLabel = m.reward.type === 'shards' ? ('조각 +' + m.reward.amount) : ('영혼 +' + m.reward.amount);
@@ -8494,15 +8488,6 @@
       }
     } catch(e) {}
     log('念珠 ' + m.label + ' — ' + m.verse, 'success');
-  }
-  function getBeadStage() {
-    if (!state.hasSword || !state.currentSword) return null;
-    const b = state.currentSword.beads || 0;
-    if (b >= 108) return { kanji:'圓', count:b };
-    if (b >= 72) return { kanji:'半', count:b };
-    if (b >= 36) return { kanji:'朔', count:b };
-    if (b > 0) return { kanji:'念', count:b };
-    return null;
   }
 
   // === v199 稟賦 — 새 검 생성 시 무작위 mutation (천부적 재능) ===
@@ -15237,9 +15222,6 @@
     },
   ];
   const blessingState = { matsuCount: 0, ginhaActive: false, sinmuPending: false };
-  function blessingDiscovered(key) {
-    return !!(state.blessingsDiscovered && state.blessingsDiscovered[key]);
-  }
   function recordBlessing(key) {
     if (!state.blessingsDiscovered) state.blessingsDiscovered = {};
     if (state.blessingsDiscovered[key]) return false;
