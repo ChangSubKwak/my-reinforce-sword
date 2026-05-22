@@ -678,6 +678,36 @@ test('generatePlayerTitle: 무성취도 항상 칭호 반환 (빈 문자열 아�
 })();
 
 // ─────────────────────────────────────────────────────────────
+// v89 시련의 혼 — trial 메타 진행 (봉인 검 수 기반, 게임오버 영구)
+// ─────────────────────────────────────────────────────────────
+(function () {
+  const TRIALS = extractConst('TRIALS');
+  function trials(n) {
+    const sealedSwords = new Array(n).fill({ level: 1 });
+    return loadFunctions(
+      ['trialCount', 'trialUnlocked', 'trialSuccessBonus', 'trialStartSoulBonus', 'trialStartLevelBonus'],
+      { state: { sealedSwords }, TRIALS }
+    );
+  }
+  test('trialUnlocked: 봉인 검 수 임계 (1/3/5/10/20)', () => {
+    assert.strictEqual(trials(0).trialUnlocked('t1'), false);
+    assert.strictEqual(trials(1).trialUnlocked('t1'), true, '1봉인 → t1');
+    assert.strictEqual(trials(4).trialUnlocked('t3'), false, '4 < 5');
+    assert.strictEqual(trials(5).trialUnlocked('t3'), true, '5 → t3');
+    assert.strictEqual(trials(19).trialUnlocked('t5'), false);
+    assert.strictEqual(trials(20).trialUnlocked('t5'), true, '20 → t5');
+  });
+  test('trial 보너스: 임계 충족 시만 (성공+1%/영혼+20/시작+1)', () => {
+    assert.strictEqual(trials(5).trialSuccessBonus(), 0.01, '5봉인 → +1%');
+    assert.strictEqual(trials(4).trialSuccessBonus(), 0, '4 → 0');
+    assert.strictEqual(trials(3).trialStartSoulBonus(), 20, '3봉인 → 영혼+20');
+    assert.strictEqual(trials(2).trialStartSoulBonus(), 0);
+    assert.strictEqual(trials(20).trialStartLevelBonus(), 1, '20봉인 → 시작+1');
+    assert.strictEqual(trials(19).trialStartLevelBonus(), 0);
+  });
+})();
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
