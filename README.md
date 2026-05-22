@@ -45,7 +45,7 @@ npm test             # 회귀 테스트 (게임 곡선·dial·구조 불변식, 
 수동 설정 시:
 - **Type**: Web Service
 - **Runtime**: Node
-- **Build Command**: `npm install`
+- **Build Command**: `npm ci`  <!-- render.yaml과 일치 (커밋된 lockfile 결정적 설치) -->
 - **Start Command**: `npm start`
 - **Plan**: Free (무료 플랜 충분)
 
