@@ -397,3 +397,12 @@ test('정의되지 않은 CSS 변수 참조 없음 (var(--x) 오타/누락 방�
   for (const m of html.matchAll(/var\((--[\w-]+)/g)) if (!defined.has(m[1])) missing.add(m[1]);
   assert.deepStrictEqual([...missing], [], '정의 안 된 CSS 변수 참조(폴백되어 의도색 미적용): ' + [...missing].join(', '));
 });
+
+test('aria-labelledby/for/aria-describedby가 존재하는 id를 가리킴 (깨진 ARIA 참조 방지)', () => {
+  const ids = new Set();
+  for (const m of html.matchAll(/\sid="([^"]+)"/g)) ids.add(m[1]);
+  const broken = [];
+  for (const m of html.matchAll(/(?:aria-labelledby|aria-describedby|for)="([^"]+)"/g))
+    for (const ref of m[1].split(/\s+/)) if (ref && !ids.has(ref)) broken.push(ref);
+  assert.deepStrictEqual([...new Set(broken)], [], '존재하지 않는 id 참조(스크린리더 라벨 깨짐): ' + [...new Set(broken)].join(', '));
+});
