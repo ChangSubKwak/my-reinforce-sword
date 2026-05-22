@@ -16613,7 +16613,7 @@
           (isChampion ? '<div style="position:absolute;top:-6px;right:-6px;background:#fff5c0;color:#1a0f08;font-size:8px;letter-spacing:1px;padding:2px 5px;border-radius:2px;font-weight:700;text-shadow:none;z-index:5">鬪將</div>' : '') +
           buildMiniSwordSVG(s) +
           '<div class="lc-name">' + name + '</div>' +
-          '<div class="lc-meta">+' + (s.level || 0) + (soulStr ? ' · 魂' + soulStr : '') + '</div>' +
+          '<div class="lc-meta">+' + (s.level || 0) + (soulStr ? ' · 魂' + soulStr : '') + ' · ' + deriveTemperament(s).name + '</div>' +  // v247b 性情
           '<div class="lc-badges">' + keyIns.slice(0,3).map(k =>
             '<span class="lc-badge' + (k === '道' ? ' way' : '') + '">' + k + '</span>'
           ).join('') + '</div>' +
