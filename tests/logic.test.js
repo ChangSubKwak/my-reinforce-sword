@@ -525,6 +525,24 @@ test('generateLastWords: 결정적 (같은 검 같은 유언), null 안전', () 
 });
 
 // ─────────────────────────────────────────────────────────────
+// v249 波瀾 — 일생 기복 (levelHistory 하락 횟수 파생)
+// ─────────────────────────────────────────────────────────────
+const journeyFns = loadFunctions(['deriveJourney']);
+const journey = h => journeyFns.deriveJourney({ levelHistory: h });
+test('deriveJourney: 하락 0 = 곧게, 1~2 = 다시 섬, 3~5 = 기복, 6+ = 수없이', () => {
+  assert.match(journey([0, 1, 2, 3, 4]), /곧게 올랐다/, '단조 상승');
+  assert.match(journey([0, 1, 0, 1, 2]), /1번 무너졌으나/, '1회 하락');
+  assert.match(journey([3, 2, 3, 2, 3, 2, 4]), /기복의 검/, '3~5회');
+  assert.match(journey([5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5]), /수없이 무너지고/, '6회+ (13개, 6하락)');
+});
+test('deriveJourney: 데이터 부족(<2) 또는 없음 → 빈 문자열', () => {
+  assert.strictEqual(journey([]), '');
+  assert.strictEqual(journey([5]), '');
+  assert.strictEqual(journeyFns.deriveJourney(null), '');
+  assert.strictEqual(journeyFns.deriveJourney({}), '');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];

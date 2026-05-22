@@ -14777,6 +14777,18 @@
     const arr = byTemp[deriveTemperament(sword).key] || byTemp.wa;
     return arr[(sword.level || 0) % arr.length];  // 결정적 (강화도 기반)
   }
+  // v249 波瀾 — 검의 일생 기복. levelHistory(저장됨)의 하락 횟수에서 파생한 여정 서술.
+  // 一生 그래프(시각)에 narrative 해석을 더함 (메커니즘 효과 0).
+  function deriveJourney(sword) {
+    const h = (sword && sword.levelHistory) || [];
+    if (h.length < 2) return '';  // 데이터 부족
+    let drops = 0;
+    for (let i = 1; i < h.length; i++) if (h[i] < h[i - 1]) drops++;
+    if (drops === 0) return '한 번도 무너지지 않고 곧게 올랐다.';
+    if (drops <= 2) return drops + '번 무너졌으나 다시 일어섰다.';
+    if (drops <= 5) return '여러 번 무너지고 다시 선, 기복의 검이었다.';
+    return '수없이 무너지고도 끝내 다시 일어선 검이었다.';
+  }
   function generateBiography(sword) {
     if (!sword) return '';
     const form = sword.form;
@@ -16470,6 +16482,8 @@
     $('detail-body').innerHTML =
       buildDetailSwordSVG(s) +
       buildLevelChart(s.levelHistory) +
+      // v249 波瀾 — 일생 그래프 아래 여정 기복 서술 (데이터 충분할 때)
+      (deriveJourney(s) ? '<div style="text-align:center;color:#a8c0d8;font-size:10px;letter-spacing:2px;margin:-6px 0 10px;font-style:italic;opacity:0.85">波瀾 — ' + deriveJourney(s) + '</div>' : '') +
       '<div style="text-align:center;color:var(--dim);font-size:11px;margin-bottom:14px;letter-spacing:3px">검 #' + index + '</div>' +
       '<div style="display:flex;justify-content:space-around;padding:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:14px;font-size:11px">' +
         '<div><span style="color:var(--dim)">형</span> <span style="color:var(--accent);margin-left:6px">' + (s.form || '無') + '</span> <span style="color:var(--dim);font-size:10px">(' + formLabel + ')</span></div>' +
