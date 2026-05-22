@@ -5177,7 +5177,10 @@
       failRoll = Math.random();
     }
     if (successRoll < trueSuccess) return 'success';
-    if (failRoll < effectiveDestroy / (1 - trueSuccess + 0.001)) return 'destroy';
+    // v347 — 실제 굴림과 동일 임계로 예측. effectiveDestroy는 이미 '실패 조건부' 파괴확률
+    // (실제 enhance: else(실패) 분기에서 failRoll < effectiveDestroy). 기존 /(1-success)는
+    // 이미 조건부인 값을 절대확률로 오인한 이중변환 → 占卜(잠긴 롤)이 파괴를 과대 예측(거짓양성)했다.
+    if (failRoll < effectiveDestroy) return 'destroy';
     return 'hold';
   }
   function clearDivinationLock() {

@@ -473,3 +473,14 @@ test('v343: 실제 강화 굴림(effectiveDestroy)이 표시 헬퍼(effectiveDes
     assert.ok(rollLine.includes(term), '실제 굴림에 ' + term + ') 감소항 누락 — 표시와 드리프트');
   }
 });
+
+test('v347: rollOmen(占卜 예측)이 실제 굴림과 동일 파괴 임계 사용 — 이중변환 division 재발 방지', () => {
+  // 占卜은 잠긴 롤(divinationLockedFailRoll)을 실제 enhance가 재사용 → 예측=실제 보장.
+  // 단 임계가 같아야 함: 실제는 else(실패) 분기에서 failRoll < effectiveDestroy(조건부).
+  // 과거 rollOmen이 /(1-success)로 나눠 파괴를 과대예측(거짓양성)했다(v122/v347).
+  const m = js.match(/function rollOmen\(\)\s*\{[\s\S]*?\n  \}/);
+  assert.ok(m, 'rollOmen 함수를 찾아야 함');
+  const body = m[0];
+  assert.match(body, /failRoll < effectiveDestroy\)/, 'rollOmen 파괴 임계는 실제 굴림과 동일한 plain effectiveDestroy');
+  assert.doesNotMatch(body, /effectiveDestroy\s*\//, 'effectiveDestroy를 나누면 안 됨(이중변환 — 占卜 거짓양성)');
+});
