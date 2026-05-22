@@ -16810,6 +16810,7 @@
       '<div style="display:flex;justify-content:space-around;padding:10px 0;margin-top:14px;border-top:1px solid var(--line);font-size:11px">' +
         '<div><span style="color:var(--dim)">魂</span> <span style="color:#6a8a9a;margin-left:6px">' + (s.soul || 0) + '</span></div>' +
         '<div><span style="color:var(--dim)">性情</span> <span style="color:var(--accent);margin-left:6px">' + deriveTemperament(s).name + '</span></div>' +
+        (deriveNaturePath(s).name ? '<div><span style="color:var(--dim)">率性</span> <span style="color:var(--accent);margin-left:6px">' + deriveNaturePath(s).name + '</span></div>' : '') +  // v370 — 性情 옆에 形 합치/배반
         '<div><span style="color:var(--dim)">베어낸 그림자</span> <span style="color:var(--accent);margin-left:6px">' + (s.slainCount || 0) + '</span></div>' +
         ((s.beads || 0) > 0 ? '<div><span style="color:var(--dim)">念珠</span> <span style="color:var(--accent);margin-left:6px">' + (s.beads || 0) + '</span></div>' : '') +  // v317 — v314 보존된 念珠 수를 회고에 표시
       '</div>' +
