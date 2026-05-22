@@ -620,6 +620,25 @@ test('generateVerse: 형 없으면 이름 없는 검', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v50 getPersonas — 플레이어 페르소나 (스탯 임계)
+// ─────────────────────────────────────────────────────────────
+function personaNames(st) {
+  return loadFunctions(['getPersonas'], { state: st }).getPersonas().map(p => p.name);
+}
+test('getPersonas: 무성취 → 초보', () => {
+  assert.ok(personaNames({ stats: {}, sealedSwords: [], bestLevel: 0 }).some(x => x.includes('초보')));
+});
+test('getPersonas: 임계 달성 페르소나', () => {
+  assert.ok(personaNames({ stats: { slainDemon: 3 }, sealedSwords: [] }).some(x => x.includes('귀살자')));
+  const masters = personaNames({ stats: { wayReached: 5 }, sealedSwords: [] });
+  assert.ok(masters.some(x => x.includes('달인')) && masters.some(x => x.includes('추구자')), 'wayReached 5 → 달인+추구자');
+  assert.ok(personaNames({ stats: {}, totalDestroyed: 10, sealedSwords: [] }).some(x => x.includes('도박꾼')));
+});
+test('getPersonas: 집착자 (봉인 0 + 최고 +8)', () => {
+  assert.ok(personaNames({ stats: {}, sealedSwords: [], bestLevel: 8 }).some(x => x.includes('집착자')));
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
