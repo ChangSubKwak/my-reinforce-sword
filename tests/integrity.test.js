@@ -39,6 +39,11 @@ test('성공률 분해가 successChanceNow의 즉시/검별 성공원도 표시 
     assert.ok(body.includes(src), '성공 분해에 ' + src + ' 출처 누락'));
 });
 
+test('메뉴 aria-expanded가 class 변경에 동기화됨 (v297 — stale 방지)', () => {
+  // 한자 메뉴 버튼들은 닫을 때 syncMenuAria 미호출 → MutationObserver로 단일 지점 동기화.
+  assert.match(js, /new MutationObserver\(syncMenuAria\)\.observe\([^,]+,\s*\{\s*attributes:\s*true,\s*attributeFilter:\s*\['class'\]/, 'menu-drop class 관찰로 aria 동기화');
+});
+
 test('초기 state.currentSword가 newSword 전용 필드 포함 (shape drift 방지, v290)', () => {
   // 첫 currentSword 리터럴(초기 state)이 newSword가 만드는 검과 동일 필드를 가져야 함 —
   // 누락 시 첫 검에서만 해당 필드가 undefined (foesEncountered 등).

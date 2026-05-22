@@ -16960,6 +16960,14 @@
     const t = $('menu-toggle');
     if (t) t.setAttribute('aria-expanded', $('menu-drop').classList.contains('open') ? 'true' : 'false');
   }
+  // v297 — 메뉴가 어느 경로로 닫히든(한자 버튼 핸들러들은 syncMenuAria 미호출) aria-expanded
+  // 동기화. class 변경 관찰로 단일 지점 보장 → stale 'true' 방지.
+  try {
+    const _md = $('menu-drop');
+    if (_md && typeof MutationObserver === 'function') {
+      new MutationObserver(syncMenuAria).observe(_md, { attributes: true, attributeFilter: ['class'] });
+    }
+  } catch (e) {}
   $('menu-toggle').addEventListener('click', (e) => {
     e.stopPropagation();
     $('menu-drop').classList.toggle('open');
