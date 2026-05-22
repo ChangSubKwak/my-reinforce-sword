@@ -31,6 +31,15 @@ function extractFunction(src, name) {
   return src.slice(startMatch.index, end + 1);
 }
 
+// const NAME = <배열/객체 리터럴>; 을 추출해 eval (순수 데이터 상수 — TABLE/SHADOW_TYPES 등).
+// 주석(// ...) 제거 후 평가. 첫 ';' 까지 lazy 매칭 (데이터 리터럴엔 내부 ';' 없음).
+function extractConst(name) {
+  const src = readScript();
+  const m = src.match(new RegExp('const ' + name + '\\s*=\\s*([\\s\\S]*?);'));
+  if (!m) throw new Error('상수 ' + name + ' 를 찾을 수 없음');
+  return eval(m[1].replace(/\/\/[^\n]*/g, ''));
+}
+
 // 지정한 함수들을 추출해, 주어진 의존성(sandbox 전역)과 함께 평가하고 함수 핸들 반환
 function loadFunctions(names, deps) {
   const src = readScript();
@@ -48,4 +57,4 @@ function loadFunctions(names, deps) {
   return vm.runInContext(code, sandbox, { filename: 'extracted-functions.js' });
 }
 
-module.exports = { readScript, extractFunction, loadFunctions, HTML_PATH };
+module.exports = { readScript, extractFunction, extractConst, loadFunctions, HTML_PATH };

@@ -103,15 +103,8 @@ test('shakeGuardCost: ceil((강도-레벨)/2), 최소 1', () => {
 // ─────────────────────────────────────────────────────────────
 // 강화 테이블 TABLE 불변식 (게임 곡선의 척추 — 향후 편집 안전망)
 // ─────────────────────────────────────────────────────────────
-const { readScript } = require('./harness');
-function extractTable() {
-  const js = readScript();
-  const m = js.match(/const TABLE = (\[[\s\S]*?\]);/);
-  if (!m) throw new Error('TABLE 정의를 찾지 못함');
-  // 주석 줄(// ...) 제거 후 eval
-  const cleaned = m[1].replace(/\/\/[^\n]*/g, '');
-  return eval(cleaned);
-}
+const { readScript, extractConst } = require('./harness');
+function extractTable() { return extractConst('TABLE'); }
 test('TABLE: 첫 행(+0→+1)은 무료·확정 성공 (튜토리얼 불변식)', () => {
   const T = extractTable();
   assert.strictEqual(T[0].cost, 0);
@@ -136,10 +129,7 @@ test('TABLE: 15단계(道까지) — MAX_LEVEL과 일치', () => {
 
 // SHADOW_TYPES 가중치 합 = 1.0 (rollShadowType 확률 분포 보장 — CLAUDE.md 불변식)
 test('SHADOW_TYPES: 가중치 합 = 1.0', () => {
-  const js = readScript();
-  const m = js.match(/const SHADOW_TYPES = (\[[\s\S]*?\n  \]);/);
-  assert.ok(m, 'SHADOW_TYPES 정의');
-  const types = eval(m[1].replace(/\/\/[^\n]*/g, ''));
+  const types = extractConst('SHADOW_TYPES');
   const sum = types.reduce((a, t) => a + (t.weight || 0), 0);
   assert.ok(Math.abs(sum - 1.0) < 1e-9, '가중치 합 1.0이어야 함 (현재 ' + sum + ')');
   assert.ok(types.length >= 4, '최소 4종 (normal/flee/steel/demon)');
@@ -256,9 +246,8 @@ test('recordActivityDate: 120일 초과 시 가장 오래된 항목 정리', () 
 // v11 makeSwordName — 검명 생성 (28슬롯 컬렉션 구동, 결정적)
 // ─────────────────────────────────────────────────────────────
 (function () {
-  const js = readScript();
-  const NAME_SUFFIX = eval(js.match(/const NAME_SUFFIX = (\[[\s\S]*?\]);/)[1]);
-  const NUM_KANJI = eval(js.match(/const NUM_KANJI = (\[[^\]]*\]);/)[1]);
+  const NAME_SUFFIX = extractConst('NAME_SUFFIX');
+  const NUM_KANJI = extractConst('NUM_KANJI');
   const nameFns = loadFunctions(['makeSwordName'], { NAME_SUFFIX, NUM_KANJI });
   const mk = nameFns.makeSwordName;
 
