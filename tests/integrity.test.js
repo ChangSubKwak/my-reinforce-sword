@@ -115,6 +115,12 @@ test('강화 비용 분해(renderStatus)가 enhanceCost의 *CostMul/flowCostRedu
   assert.ok(rm, 'renderStatus 본문');
   const missing = muls.filter(t => !rm[1].includes(t + '()'));
   assert.deepStrictEqual(missing, [], '비용 분해에서 누락된 배수: ' + missing.join(', '));
+  // v354 — 객체-속성 배수(getSeason()/getAgeEffect()/getResolve()의 .costMul)도 분해에 있어야 함.
+  // 위 정규식은 *CostMul() 함수형만 잡아 季節/노쇠/覺悟를 놓침 → 그 라인 삭제 시 display<actual 미검출.
+  // (覺悟는 분해에서 rsv = getResolve() 별칭으로 쓰므로 '함수 호출됨'으로 검사.)
+  const objMuls = [...new Set([...em[1].matchAll(/(\w+)\(\)\.costMul/g)].map(m => m[1]))];
+  const objMissing = objMuls.filter(fn => !rm[1].includes(fn + '()'));
+  assert.deepStrictEqual(objMissing, [], '비용 분해에서 누락된 객체-속성 배수 함수: ' + objMissing.join(', '));
 });
 
 test('파괴 확률 분해(renderStatus)가 effectiveDestroyChance의 *DestroyReduce 항을 모두 표시', () => {
