@@ -39,6 +39,12 @@ test('성공률 분해가 successChanceNow의 즉시/검별 성공원도 표시 
     assert.ok(body.includes(src), '성공 분해에 ' + src + ' 출처 누락'));
 });
 
+test('玉露 축복은 실패한 강화에만 환급 (성공 fall-through 회귀 방지, v285)', () => {
+  // 玉露 발동이 enhanceFailed 가드 안에 있어야 함 — 공통 정리부에 있어 성공에도 환급되던 버그 방지.
+  assert.match(js, /enhanceFailed && gyokuro && Math\.random\(\) < gyokuro\.chance/, '玉露는 enhanceFailed 가드 필요');
+  assert.match(js, /const enhanceFailed = !\(roll < successChance\)/, 'enhanceFailed = 비성공 정의');
+});
+
 test('砥 라벨 +N% == successChanceNow whetBonus (3중 하드코딩 drift 방지)', () => {
   // "+25%"가 정적 HTML·render JS·successChanceNow(0.25) 세 곳에 하드코딩 → 한쪽 변경 시 표시≠실제.
   const m = js.match(/whetBonus\s*=\s*useWhet\s*\?\s*(0?\.\d+)/);
