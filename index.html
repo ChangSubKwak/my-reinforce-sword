@@ -10408,6 +10408,14 @@
     if (typeof breathBonus === 'function') {
       const v = breathBonus(); if (v) successLines.push(line('호흡', pct(v)));
     }
+    // v265 — successChanceNow의 즉시/검별 성공원도 분해에 포함 (形/砥/魂/守/覺悟/逆/잔향)
+    if (state.hasSword) { const f0 = getForm(); const fb = (f0 && f0.successBonus) || 0; if (fb) successLines.push(line('形 ' + (f0.name || ''), pct(fb))); }
+    (function() { const wc = $('whet-check'); if (wc && wc.checked && !wc.disabled && (state.whetstones || 0) > 0) successLines.push(line('砥石 (이번 1회)', pct(0.25))); })();
+    if (typeof soulEffects === 'function') { const v = soulEffects().successBonus; if (v) successLines.push(line('魂', pct(v))); }
+    if (typeof guardianBonus === 'function') { const v = guardianBonus().successBonus; if (v) successLines.push(line('수호자 (守)', pct(v))); }
+    if (typeof getResolve === 'function') { const r = getResolve(); if (r.successAdd) successLines.push(line('覺悟 ' + r.label, pct(r.successAdd), r.successAdd < 0 ? 'var(--danger)' : null)); }
+    if (typeof adversityReady !== 'undefined' && adversityReady) successLines.push(line('逆 (역경 발동)', pct(0.40), '#fff5c0'));
+    if (typeof enhanceEcho !== 'undefined' && enhanceEcho && enhanceEcho.successBonus) successLines.push(line('잔향 (殘響)', pct(enhanceEcho.successBonus)));
     if (typeof resonanceBonus === 'function') {
       const v = resonanceBonus(); if (v) successLines.push(line('共鳴', pct(v)));
     }

@@ -28,6 +28,17 @@ test('성공률 breakdown(renderStatus)이 persistentSuccessBonus 전 항목을 
   assert.deepStrictEqual(missing, [], 'breakdown에서 누락된 성공 보너스 출처: ' + missing.join(', '));
 });
 
+test('성공률 분해가 successChanceNow의 즉시/검별 성공원도 표시 (v265 — form/砥/魂/守/覺悟/逆/잔향)', () => {
+  // v259는 persistent 항만 채웠음. successChanceNow는 form/whet/soul/guardian/resolve/adversity/echo도
+  // 더하므로 (直+砥면 헤드라인이 분해 합보다 ~28%p 높았음) 분해에 동일 출처가 있어야 함.
+  const rm = js.match(/function renderStatus\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(rm, 'renderStatus 본문');
+  const body = rm[1];
+  ['guardianBonus', 'soulEffects', 'getResolve', 'schoolSuccessBonus', 'breathBonus',
+   'adversityReady', 'whet-check'].forEach(src =>
+    assert.ok(body.includes(src), '성공 분해에 ' + src + ' 출처 누락'));
+});
+
 test('파괴 확률 분해(renderStatus)가 effectiveDestroyChance의 *DestroyReduce 항을 모두 표시', () => {
   // effectiveDestroyChance가 빼는 모든 감소원은 파괴 분해 표시에도 나타나야 함 (display≠actual 방지).
   const em = js.match(/function effectiveDestroyChance\([^)]*\)\s*\{([\s\S]*?)\n  \}/);
