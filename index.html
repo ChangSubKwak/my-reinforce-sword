@@ -15112,11 +15112,19 @@
       '速': '바람의 검 한 자루',
     })[form] || '이름 없는 검 한 자루';
 
+    // v370i — 名(명명된 적) 격파를 一生詩(道 검 시)에도 결합. 龍을 벤 道 검의 시가 그
+    // 정점 무훈을 노래하지 않던 누락 (v370h 一代記과 동일 시스템, 시 surface에도 적용).
+    const FOE_VERSE = { '龍斬': '용(龍)을 베어 하늘마저 가르고', '帝斬': '귀제(鬼帝)를 쓰러뜨리고', '刃斬': '천 개의 칼날을 가르며', '月斬': '은월(銀月)을 베고', '風斬': '흑풍(黑風)을 잠재우고' };
+    const foeV = ['龍斬', '帝斬', '刃斬', '月斬', '風斬'].find(k => inscriptions.includes(k));
     let insLine;
-    if (inscriptions.includes('鬼斬') && inscriptions.includes('本')) {
+    if (inscriptions.includes('龍斬')) {
+      insLine = FOE_VERSE['龍斬'];  // 정점 무훈 — 鬼斬보다 위
+    } else if (inscriptions.includes('鬼斬') && inscriptions.includes('本')) {
       insLine = '본질을 깨우고 검귀의 피를 받아';
     } else if (inscriptions.includes('鬼斬')) {
       insLine = '검귀의 그림자를 베고';
+    } else if (foeV) {
+      insLine = FOE_VERSE[foeV];  // 그 외 명명된 적 (帝/刃/月/風)
     } else if (inscriptions.includes('本')) {
       insLine = '본질에 이르러';
     } else if (inscriptions.includes('剛體')) {
