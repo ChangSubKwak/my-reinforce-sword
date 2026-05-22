@@ -4643,7 +4643,7 @@
         '어느 하나도 정답은 아니다.',
       ],
       unlock: () => {
-        const forms = new Set(state.sealedSwords.filter(s => s.form).map(s => s.form));
+        const forms = new Set((state.sealedSwords || []).concat(state.enshrined || []).filter(s => s.form).map(s => s.form));  // v352 — 殿堂 검 형도 집계
         return forms.size >= 4;
       },
     },
@@ -4654,7 +4654,7 @@
         '사용할수록 깊어진다.',
         '평범에서 깨움(覺)으로, 깨움에서 본질(本)로.',
       ],
-      unlock: () => state.sealedSwords.some(s => (s.inscriptions || []).includes('本')),
+      unlock: () => (state.sealedSwords || []).concat(state.enshrined || []).some(s => (s.inscriptions || []).includes('本')),  // v352 — 殿堂 검도
     },
     {
       key: 'dou', kanji: '道', title: '도',
@@ -16504,7 +16504,7 @@
     const overlay = $('ending-overlay');
     if (!overlay) return;
     // 봉인 검 중 道 명문 보유한 것들의 검명 cascade
-    const daoSwords = state.sealedSwords.filter(s => (s.inscriptions || []).includes('道'));
+    const daoSwords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).includes('道'));  // v352 — 殿堂 道 검도 엔딩 行列에
     const cascadeNames = daoSwords.slice(-12).reverse(); // 최근 12개
     const cascade = $('ending-cascade');
     if (cascade) {
