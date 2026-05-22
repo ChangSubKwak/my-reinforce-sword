@@ -5592,6 +5592,10 @@
     statBest.textContent = '+' + state.bestLevel;
     statSlain.textContent = fmtNum(state.totalSlain);
     statDestroyed.textContent = fmtNum(state.totalDestroyed);
+    // v341 — 탭 제목에 진행 상태 반영 (최소화/멀티탭 시 진척 확인)
+    try {
+      document.title = (!state.hasSword ? '검을 빚어라' : state.level >= MAX_LEVEL ? '道 — 최고의 검' : '검 +' + state.level) + ' · 강화의 도';
+    } catch (e) {}
     renderInscriptions();
     applyFormVisual();
     applyLevelVisual();
