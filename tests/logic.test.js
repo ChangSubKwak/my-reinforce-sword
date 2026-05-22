@@ -1314,6 +1314,35 @@ test('節氣 접근자 7종 필드 라우팅 잠금 (각 solar* 가 자기 필�
   assert.strictEqual(def.solarSoulMul(), 1, '무효과 → 영혼배수 1');
 });
 
+test('단일 게이트 dial 잠금 (蝕/주말/사방신/변이/七寶/雷 — 값+게이트+기본 타입)', () => {
+  // 배수(기본 1.0)와 가산(기본 0)을 섞어 잠근다 — 둘을 헷갈리면 보상/확률이 통째 사라지거나 0이 됨.
+  const eclipse = (on) => loadFunctions(['eclipseSoulMul'], { eclipseActive: on }).eclipseSoulMul();
+  assert.strictEqual(eclipse(true), 2.0, '日蝕 중 → 영혼 ×2.0');
+  assert.strictEqual(eclipse(false), 1.0, '평시 → ×1.0 (배수 기본)');
+
+  const weekend = (on) => loadFunctions(['weekendChallengeMul'], { isWeekend: () => on }).weekendChallengeMul();
+  assert.strictEqual(weekend(true), 1.05, '주말 → 도전 ×1.05');
+  assert.strictEqual(weekend(false), 1, '평일 → ×1');
+
+  const beast = (on) => loadFunctions(['beastChallengeMul'], { beastUnlocked: (k) => on && k === 'genbu' }).beastChallengeMul();
+  assert.strictEqual(beast(true), 1.05, '玄武 해방 → 도전 ×1.05');
+  assert.strictEqual(beast(false), 1, '미해방 → ×1');
+
+  const mut = (m) => loadFunctions(['mutationSuccessBonus'], {
+    state: { hasSword: true, currentSword: { mutation: m } },
+  }).mutationSuccessBonus();
+  assert.strictEqual(mut('gangol'), 0.02, '鋼骨 변이 → 성공 +2%');
+  assert.strictEqual(mut('none'), 0, '그 외 변이 → +0 (가산 기본)');
+
+  const treasure = (on) => loadFunctions(['treasureGlobalBonus'], { allSevenTreasures: () => on }).treasureGlobalBonus();
+  assert.strictEqual(treasure(true), 0.015, '七寶 완성 → 글로벌 +1.5%');
+  assert.strictEqual(treasure(false), 0, '미완성 → +0');
+
+  const weather = (on) => loadFunctions(['weatherSuccessBonus'], { lightningBonusReady: on }).weatherSuccessBonus();
+  assert.strictEqual(weather(true), 0.10, '雷 충전 → 성공 +10%');
+  assert.strictEqual(weather(false), 0, '평시 → +0');
+});
+
 test('todayStr: 로컬 YYYY-MM-DD (timezone-safe, 0-패딩 — 일일 리셋 핵심)', () => {
   const at = (y, mIndex, day) => {
     function FakeDate() {}
