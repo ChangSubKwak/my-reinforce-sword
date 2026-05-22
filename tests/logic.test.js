@@ -204,6 +204,38 @@ test('startBonus: extraLegacy 인자 반영 (융검 미리보기)', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v27/v37 季節 + 久/古 — 경제 배수 곡선 (cost·seal에 영향)
+// ─────────────────────────────────────────────────────────────
+function seasonAt(attempts) {
+  return loadFunctions(['getSeason'], { state: { stats: { enhanceAttempts: attempts } } }).getSeason();
+}
+test('getSeason: 누적 강화 시도별 4계절 임계 (50/150/400)', () => {
+  assert.strictEqual(seasonAt(0).key, 'spring');
+  assert.strictEqual(seasonAt(49).key, 'spring');
+  assert.strictEqual(seasonAt(50).key, 'summer');
+  assert.strictEqual(seasonAt(149).key, 'summer');
+  assert.strictEqual(seasonAt(150).key, 'autumn');
+  assert.strictEqual(seasonAt(399).key, 'autumn');
+  assert.strictEqual(seasonAt(400).key, 'winter');
+});
+test('getSeason: 계절별 미세 효과 (±10% 이내, 점수 인플레이션 회피)', () => {
+  assert.strictEqual(seasonAt(0).costMul, 0.95, '春 비용 -5%');
+  assert.strictEqual(seasonAt(50).challengeMul, 1.05, '夏 도전 +5%');
+  assert.strictEqual(seasonAt(150).sealMul, 1.05, '秋 봉인 +5%');
+  assert.strictEqual(seasonAt(400).rescueSec, 1.0, '冬 회수 +1초');
+});
+test('getAgeEffect: 古(×1.10)·久(×1.05)·무명(×1), 古 우선', () => {
+  const age = ins => loadFunctions(['getAgeEffect'], {
+    state: { hasSword: true, currentSword: { inscriptions: ins } },
+  }).getAgeEffect();
+  const eq = (a, c, s) => { assert.strictEqual(a.costMul, c); assert.strictEqual(a.sealMul, s); };
+  eq(age([]), 1, 1);
+  eq(age(['久']), 1.05, 1.05);
+  eq(age(['古']), 1.10, 1.10);
+  eq(age(['久', '古']), 1.10, 1.10);  // 古 우선
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
