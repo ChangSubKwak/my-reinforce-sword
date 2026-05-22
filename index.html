@@ -9042,24 +9042,28 @@
     { key:'genbu',  name:'玄武', dir:'北', dirKr:'북', element:'水', color:'#4a7a9a',
       condition: () => ((state.stats && state.stats.stalemate) || 0) >= 5,
       conditionDesc: '對峙 5회',
+      progress: () => ({ cur: (state.stats && state.stats.stalemate) || 0, max: 5 }),
       bonusDesc: '도전 보상 +5%',
       bonusKey: 'challengeRewardMul', bonusVal: 1.05,
       verse: '북방의 수호자가 강림하였다 — 양보가 길임을 알렸다' },
     { key:'suzaku', name:'朱雀', dir:'南', dirKr:'남', element:'火', color:'#c04040',
       condition: () => ((state.stats && state.stats.slainDemon) || 0) >= 3,
       conditionDesc: '검귀 3회 베기',
+      progress: () => ({ cur: (state.stats && state.stats.slainDemon) || 0, max: 3 }),
       bonusDesc: '강화 성공 +1%',
       bonusKey: 'successBonus', bonusVal: 0.01,
       verse: '남방의 화염이 검의 길을 비춘다' },
     { key:'seiryu', name:'青龍', dir:'東', dirKr:'동', element:'木', color:'#4a9a6a',
       condition: () => ((state.sealedSwords || []).length) >= 10,
       conditionDesc: '봉인 10자루',
+      progress: () => ({ cur: (state.sealedSwords || []).length, max: 10 }),
       bonusDesc: '봉인 보상 +3%',
       bonusKey: 'sealRewardMul', bonusVal: 1.03,
       verse: '동방의 용이 봉인의 길에 깃들었다' },
     { key:'byakko', name:'白虎', dir:'西', dirKr:'서', element:'金', color:'#c8b8a8',
       condition: () => ((state.stats && state.stats.wayReached) || 0) >= 3,
       conditionDesc: '道 3회 도달',
+      progress: () => ({ cur: (state.stats && state.stats.wayReached) || 0, max: 3 }),
       bonusDesc: '회수 +0.5초',
       bonusKey: 'rescueSec', bonusVal: 0.5,
       verse: '서방의 호랑이가 길에 닿은 자를 알아본다' },
@@ -9167,6 +9171,15 @@
       html += '<div style="font-size:10px;letter-spacing:5px;color:' + (u ? b.color : '#888') + '">' + b.dirKr + ' · ' + b.element + '</div>';
       html += '<div style="font-size:11px;letter-spacing:2px;color:#e8e6dd;margin-top:4px">' + b.bonusDesc + '</div>';
       html += '<div style="font-size:9px;letter-spacing:2px;color:#888;margin-top:4px">조건: ' + b.conditionDesc + ' — ' + (u ? '<span style="color:var(--accent)">강림</span>' : '대기') + '</div>';
+      if (!u && b.progress) {
+        const pr = b.progress();
+        const cur = Math.min(pr.cur, pr.max);
+        const pct = Math.round(cur / pr.max * 100);
+        html += '<div style="display:flex;align-items:center;gap:8px;margin-top:5px">';
+        html += '<div style="flex:1;height:4px;background:#1a1a22;border-radius:2px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + b.color + ';opacity:0.7;transition:width 0.5s"></div></div>';
+        html += '<div style="font-size:9px;letter-spacing:1px;color:#a8a098;min-width:34px;text-align:right">' + cur + ' / ' + pr.max + '</div>';
+        html += '</div>';
+      }
       html += '</div></div>';
       if (u) html += '<div style="font-size:10px;font-style:italic;color:rgba(168,184,200,0.7);margin-top:8px;letter-spacing:1px">' + b.verse + '</div>';
       html += '</div>';
