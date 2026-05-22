@@ -17982,9 +17982,9 @@
       : '';
     $('stats-list').innerHTML = personasHTML + formChartHTML + collectionGrid + timeLogHTML +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:14px 0 4px;margin-top:4px">강 화</div>' +
-      bar('성공률', rate + '% (' + (s.enhanceSuccess || 0) + '/' + (s.enhanceAttempts || 0) + ')',
+      bar('성공률', rate + '% (' + fmtNum(s.enhanceSuccess || 0) + '/' + fmtNum(s.enhanceAttempts || 0) + ')',
           100, 'var(--safe)').replace(/>(\d+)% \(/, '><span style="font-size:10px">$1% (') +
-      row('강화 시도', (s.enhanceAttempts || 0) + ' 회') +
+      row('강화 시도', fmtNum(s.enhanceAttempts || 0) + ' 회') +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">그 림 자</div>' +
       bar('그림자', (s.slainNormal || 0) + ' 회', slainMax) +
       bar('도망 그림자', (s.slainFlee || 0) + ' 회', slainMax, '#aac0c8') +
