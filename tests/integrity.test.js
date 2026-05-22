@@ -442,6 +442,13 @@ test('모든 $("id") DOM 참조가 존재하는 id를 가리킴 (오타→null-d
   assert.deepStrictEqual([...missing], [], '존재하지 않는 id를 $()로 참조(null-deref 위험): ' + [...missing].join(', '));
 });
 
+test('UI 용어 일관성: 道를 로마자 "Dao"로 표기하지 않음 (한글/한자 톤, CLAUDE.md 영어 자제)', () => {
+  // v370q — 게임오버 여정 텍스트가 한 화면에서 道(≥10/≥1 분기)와 'Dao'(≥5 분기)를 혼용하던
+  // 불일치 수정. 한국어-조사 맥락의 로마자 道(Dao에/Dao를/Dao의)는 명백한 UI 문자열 → 재유입 차단.
+  const stray = js.match(/Dao(에|를|의|로|가|에서|까지)/g) || [];
+  assert.deepStrictEqual(stray, [], '로마자 "Dao" + 한글 조사 (道로 표기해야 함): ' + stray.join(', '));
+});
+
 test('봉인·殿堂 push가 로직/표시 의존 sword 필드를 모두 보존 (v313-315/v344 류 field-drop 방지)', () => {
   // records(computeRecords)·achievements(HIDDEN_ACHIEVEMENTS)·duel(duelPower)이 읽는 로직 필드 +
   // SVG/회고/血統/時生이 읽는 표시 필드는 봉인 시 반드시 보존돼야 함. 누락 시 기록 미집계·성취
