@@ -708,6 +708,20 @@ test('generatePlayerTitle: 무성취도 항상 칭호 반환 (빈 문자열 아�
 })();
 
 // ─────────────────────────────────────────────────────────────
+// v225 無極 — eternityTitle 칭호 임계 (永/劫/無極)
+// ─────────────────────────────────────────────────────────────
+test('eternityTitle: 永劫 점수 임계 (0→없음, 1→永, 10→劫, 25→無極)', () => {
+  const title = p => loadFunctions(['eternityTitle'], { state: { eternityPoints: p } }).eternityTitle();
+  assert.strictEqual(title(0), null);
+  assert.strictEqual(title(1), '永');
+  assert.strictEqual(title(9), '永');
+  assert.strictEqual(title(10), '劫');
+  assert.strictEqual(title(24), '劫');
+  assert.strictEqual(title(25), '無極');
+  assert.strictEqual(title(100), '無極');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
