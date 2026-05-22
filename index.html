@@ -7143,11 +7143,10 @@
     const ways = (state.stats && state.stats.wayReached) || 0;
     const enhAttempts = (state.stats && state.stats.enhanceAttempts) || 0;
     const enhSuccess = (state.stats && state.stats.enhanceSuccess) || 0;
-    const totalSlain = ((state.stats && state.stats.slainNormal) || 0) +
-                       ((state.stats && state.stats.slainFlee) || 0) +
-                       ((state.stats && state.stats.slainSteel) || 0) +
-                       ((state.stats && state.stats.slainDemon) || 0) +
-                       ((state.stats && state.stats.yakshaSlain) || 0);
+    // v345 — 斬 카드는 권위 카운터 state.totalSlain 사용 (메인 통계·게임오버·리더보드와 일치).
+    // 기존 유형별 합산(slainNormal+Flee+Steel+Demon+yaksha)은 名(named foe) 처치를 누락해
+    // 劍士録에서만 베어낸 수가 적게 표시되던 불일치 — 단일 진원으로 통일.
+    const totalSlain = state.totalSlain || 0;
     const swordGen = state.swordGeneration || 1;
     let html = '';
     if (bookPageIdx === 0) {
