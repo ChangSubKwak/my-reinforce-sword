@@ -1119,3 +1119,12 @@ test('getCurrentEra / eraSuccessBonus: 紀元 임계(300/1000/3000/8000) + 성�
   assert.ok(Math.abs(at(8000) - 0.05) < 1e-9, '8000 → 神域');
   assert.ok(Math.abs(at(99999) - 0.05) < 1e-9, '최고 era 유지');
 });
+
+test('challengeReward: 베기 기본 보상 곡선 strength*4+6 (단조 증가)', () => {
+  const f = loadFunctions(['challengeReward']).challengeReward;
+  assert.strictEqual(f(1), 10, '1*4+6');
+  assert.strictEqual(f(6), 30, '黑風(강도6)');
+  assert.strictEqual(f(15), 66);
+  let prev = -1;
+  for (let s = 1; s <= 20; s++) { const r = f(s); assert.ok(r > prev, '강도 ' + s + ' 단조'); prev = r; }
+});
