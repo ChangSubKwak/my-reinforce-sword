@@ -4318,6 +4318,13 @@
     try {
       const raw = localStorage.getItem(SAVE_KEY);
       if (raw) state = Object.assign(state, JSON.parse(raw));
+      normalizeState();
+    } catch (e) {}
+  }
+  // 상태 정규화 — 누락/손상 키 타입 방어. load()와 applyCloudState(클라우드 복원)가 공유.
+  // (이전엔 applyCloudState가 부분 방어만 해 손상된 클라우드 데이터가 게임을 깨뜨릴 위험)
+  function normalizeState() {
+    try {
       if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
       if (!state.currentSword || typeof state.currentSword !== 'object') {
         state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [] };
@@ -16711,13 +16718,7 @@
   // 클라우드 데이터를 state에 안전하게 적용 (load() 보정 재사용)
   function applyCloudState(cloudData) {
     state = Object.assign({}, state, cloudData);
-    if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
-    if (!state.currentSword || typeof state.currentSword !== 'object') {
-      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} };
-    }
-    if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
-    if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
-    if (!Array.isArray(state.currentSword.levelHistory)) state.currentSword.levelHistory = [state.level || 0];
+    normalizeState();  // v245g: load()와 동일한 전체 타입 방어 (부분 방어 → 전체로 강화)
     save();
     gameOverShown = false;
     const overlay = $('gameover-overlay');

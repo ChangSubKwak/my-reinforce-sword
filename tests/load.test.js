@@ -48,6 +48,19 @@ test('load(): try/catch로 감싸 손상 JSON에도 throw 안 함', () => {
   assert.ok(m, 'load()는 try/catch로 보호되어야 함');
 });
 
+test('normalizeState(): load()·applyCloudState 공유 (클라우드 복원도 전체 타입 방어)', () => {
+  // v245g: applyCloudState가 부분 방어만 해 손상된 클라우드 데이터가 게임을 깨뜨릴 위험 →
+  // load()의 전체 정규화를 normalizeState()로 추출해 양쪽이 공유.
+  assert.match(js, /function normalizeState\(\)/, 'normalizeState 헬퍼 존재');
+  assert.match(js, /if \(raw\) state = Object\.assign\(state, JSON\.parse\(raw\)\);\s*\n\s*normalizeState\(\);/, 'load()가 normalizeState 호출');
+  assert.match(js, /state = Object\.assign\(\{\}, state, cloudData\);\s*\n\s*normalizeState\(\);/, 'applyCloudState가 normalizeState 호출');
+  // 핵심 가드들이 normalizeState 본문에 존재 (구 applyCloudState엔 없던 것들)
+  const m = js.match(/function normalizeState\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(m, 'normalizeState 본문');
+  ['treasures', 'eternityPoints', 'hourActivity', 'DEFAULT_STATS', 'gambleStats']
+    .forEach(k => assert.ok(m[1].includes(k), k + ' 가드가 normalizeState에 포함'));
+});
+
 test('save(): SAVE_KEY 사용', () => {
   const m = js.match(/function save\(\)\s*\{([\s\S]{0,400})/);
   assert.ok(m, 'save() 정의');
