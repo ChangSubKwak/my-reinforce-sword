@@ -415,17 +415,26 @@ test('SVG url(#id) 참조가 정의된 id를 가리킴 (그라데이션/필터 �
   assert.deepStrictEqual([...new Set(broken)], [], '정의 안 된 SVG id 참조(그라데이션/필터 미적용): ' + [...new Set(broken)].join(', '));
 });
 
-test('봉인 push가 로직 의존 sword 필드를 모두 보존 (v313-315 류 field-drop 방지)', () => {
-  // records(computeRecords)·achievements(HIDDEN_ACHIEVEMENTS)·duel(duelPower)이 읽는 검 필드는
-  // 봉인 시 반드시 보존돼야 함 — 누락 시 기록 미집계/성취 획득불가·오발동 발생.
-  const i = js.indexOf('state.sealedSwords.push({');
-  assert.ok(i >= 0, 'doSeal push 존재');
-  let s = js.indexOf('{', i), d = 0, end = -1;
-  for (let j = s; j < js.length; j++) { const c = js[j]; if (c === '{') d++; else if (c === '}') { d--; if (d === 0) { end = j; break; } } }
-  const body = js.slice(s, end + 1);
-  const reads = ['inscriptions', 'level', 'protectsUsed', 'scars', 'slainCount', 'soul', 'stars', 'enhanceAttempts', 'beads'];
-  const missing = reads.filter(f => !new RegExp('\\b' + f + '\\s*[:,]').test(body));
-  assert.deepStrictEqual(missing, [], '봉인 검에 미보존된 로직 의존 필드: ' + missing.join(', '));
+test('봉인·殿堂 push가 로직/표시 의존 sword 필드를 모두 보존 (v313-315/v344 류 field-drop 방지)', () => {
+  // records(computeRecords)·achievements(HIDDEN_ACHIEVEMENTS)·duel(duelPower)이 읽는 로직 필드 +
+  // SVG/회고/血統/時生이 읽는 표시 필드는 봉인 시 반드시 보존돼야 함. 누락 시 기록 미집계·성취
+  // 오발동, 또는 정체성(篆刻/時生/血統) 소실. 소비자가 sealedSwords+enshrined를 concat해 함께
+  // 순회하므로(예: computeRecords) 두 push가 같은 필드 집합을 가져야 한다 (v344: enshrine이
+  // playerSeal/bornTod/fusedFrom를 누락해 殿堂 검만 정체성 소실하던 드리프트 수정).
+  function pushBody(marker) {
+    const i = js.indexOf(marker);
+    assert.ok(i >= 0, marker + ' 존재');
+    let s = js.indexOf('{', i), d = 0, end = -1;
+    for (let j = s; j < js.length; j++) { const c = js[j]; if (c === '{') d++; else if (c === '}') { d--; if (d === 0) { end = j; break; } } }
+    return js.slice(s, end + 1);
+  }
+  const reads = ['inscriptions', 'level', 'protectsUsed', 'scars', 'slainCount', 'soul', 'stars',
+    'enhanceAttempts', 'beads', 'playerSeal', 'bornTod', 'fusedFrom', 'levelHistory', 'form', 'verse'];
+  for (const [name, marker] of [['doSeal', 'state.sealedSwords.push({'], ['enshrineSeal', 'state.enshrined.push({']]) {
+    const body = pushBody(marker);
+    const missing = reads.filter(f => !new RegExp('\\b' + f + '\\s*[:,]').test(body));
+    assert.deepStrictEqual(missing, [], name + ' 검에 미보존된 의존 필드: ' + missing.join(', '));
+  }
 });
 
 test('server.js: 루트 디렉토리 정적 서빙 안 함 — 소스/CLAUDE.md 노출 방지 (v332)', () => {

@@ -15333,6 +15333,9 @@
       stars: Object.assign({}, state.currentSword.stars || {}),
       enshrinedAt: Date.now(),
       kigen: (userKigen && userKigen.trim()) ? userKigen.trim() : null,  // v158 寄言
+      playerSeal: state.currentSword.playerSeal || state.playerSeal || '',  // v344 篆刻 — doSeal과 동기 (殿堂 검도 인장 보존)
+      bornTod: state.currentSword.bornTod || null,  // v344 時生 — 빚어진 시각 보존 (회고·一代記)
+      fusedFrom: state.currentSword.fusedFrom || null,  // v344 血統 — 융합 혈통 보존
     });
     bumpStat('wayReached');
     grantEternity();  // v225 無極 — 道 검 殿堂도 永劫 +1
