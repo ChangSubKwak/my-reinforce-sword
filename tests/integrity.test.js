@@ -526,3 +526,16 @@ test('v350: getFormCounts가 sealedSwords+enshrined 둘 다 집계 (流派가 �
   assert.ok(m, 'getFormCounts 본문');
   assert.match(m[1], /state\.enshrined/, 'getFormCounts는 state.enshrined도 집계해야 함');
 });
+
+test('merged-collection: 形/道 집계·필터가 sealedSwords-only면 안 됨 (v350-362 클러스터 회귀 방지)', () => {
+  // 道 검을 殿堂(enshrined)에 진열하면 流派/共鳴/sync/표시/업적에서 빠지던 버그 군집(v350-362).
+  // 모든 形/道 tally는 sealedSwords+enshrined 합산해야 함. fixed 패턴은 ).concat(state.enshrined
+  // 가 사이에 있어 아래 정규식(즉시 .forEach/.filter)에 안 걸림 → 매치 = 회귀.
+  // (legacyStrength는 s.level 합, whisper는 s.verse 필터라 form/道 아님 — 의도적 trade-off, 미포함.)
+  const formOnly = js.match(/state\.sealedSwords \|\| \[\]\)\.(forEach|filter|map)\([^)]*\bs\.form\b/g) || [];
+  assert.deepStrictEqual(formOnly, [], 'sealedSwords-only 形 집계(enshrined 누락 회귀): ' + formOnly.join(' || '));
+  const daoOnly = js.match(/state\.sealedSwords \|\| \[\]\)\.filter\([^)]*['"道]/g) || [];
+  // 道 = 道. filter에서 道 검 거르는데 enshrined 미합산이면 회귀.
+  const daoBad = daoOnly.filter(s => s.indexOf('道') >= 0);
+  assert.deepStrictEqual(daoBad, [], 'sealedSwords-only 道 필터(enshrined 누락 회귀): ' + daoBad.join(' || '));
+});
