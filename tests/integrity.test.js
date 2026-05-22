@@ -427,3 +427,10 @@ test('봉인 push가 로직 의존 sword 필드를 모두 보존 (v313-315 류 f
   const missing = reads.filter(f => !new RegExp('\\b' + f + '\\s*[:,]').test(body));
   assert.deepStrictEqual(missing, [], '봉인 검에 미보존된 로직 의존 필드: ' + missing.join(', '));
 });
+
+test('server.js: 루트 디렉토리 정적 서빙 안 함 — 소스/CLAUDE.md 노출 방지 (v332)', () => {
+  const srv = fs.readFileSync(HTML_PATH.replace(/index\.html$/, 'server.js'), 'utf8');
+  assert.ok(!/express\.static/.test(srv), 'express.static 재도입 금지 (루트 전체 서빙 → 소스/CLAUDE.md/schema 노출)');
+  assert.match(srv, /sendFile\([^)]*index\.html/, 'catch-all로 index.html 서빙');
+  assert.match(srv, /X-Frame-Options/, '보안 헤더 유지 (v334)');
+});
