@@ -1186,3 +1186,11 @@ test('getActiveSchools: 같은 형 SCHOOL_THRESHOLD(3) 이상 봉인 시 활성 
   assert.strictEqual(JSON.stringify(at(['直', '直', '直'])), '["直"]', '直 3개 → 直流 활성');
   assert.strictEqual(JSON.stringify(at(['直', '直', '直', '曲', '曲', '曲'])), JSON.stringify(['直', '曲']), '둘 다 활성');
 });
+
+test('SCHOOLS 보너스 값 잠금 (流派 dial — 直流+1%/曲流-1%/重流×1.10/速流+1s, v12)', () => {
+  const S = extractConst('SCHOOLS');
+  assert.strictEqual(S['直'].schoolBonusSuccess, 0.01, '直流 성공 +1%');
+  assert.strictEqual(S['曲'].schoolBonusDestroyReduce, 0.01, '曲流 파괴 -1%');
+  assert.strictEqual(S['重'].schoolBonusSealMul, 1.10, '重流 봉인 ×1.10');
+  assert.strictEqual(S['速'].schoolBonusRescueSec, 1.0, '速流 회수 +1s');
+});
