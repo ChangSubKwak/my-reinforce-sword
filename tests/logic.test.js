@@ -639,6 +639,22 @@ test('getPersonas: 집착자 (봉인 0 + 최고 +8)', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v141 道號 — generatePlayerTitle 우선순위 (희귀 성취 우선)
+// ─────────────────────────────────────────────────────────────
+function playerTitle(st) {
+  return loadFunctions(['generatePlayerTitle'], { state: st, hasFourWays: () => false }).generatePlayerTitle();
+}
+test('generatePlayerTitle: 최고 성취 우선 (ultimate > 道15 > ...)', () => {
+  assert.match(playerTitle({ ultimateAchieved: true, stats: { wayReached: 15 } }), /千秋萬代/, 'ultimate 최우선');
+  assert.match(playerTitle({ stats: { wayReached: 15 } }), /十五道師/, '道 15');
+  assert.match(playerTitle({ stats: { wayReached: 1 } }), /道를 본 자/, '道 1회');
+});
+test('generatePlayerTitle: 무성취도 항상 칭호 반환 (빈 문자열 아님)', () => {
+  const t = playerTitle({ stats: {} });
+  assert.ok(typeof t === 'string' && t.length > 0, '신규 플레이어도 칭호');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];
