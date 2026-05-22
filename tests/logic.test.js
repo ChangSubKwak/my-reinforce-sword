@@ -1002,3 +1002,14 @@ test('affinityRewardMul: 形相剋 보상 배율 잠금 (favored ×1.25 / weakne
   assert.strictEqual(f.affinityRewardMul('直', 'steel'), 1.0, '中립');
   assert.strictEqual(f.affinityRewardMul(null, 'normal'), 1.0, 'form 없음 中립');
 });
+
+test('computeMindChart: 무행동(zero) 상태도 NaN 없이 0% (|| 1 가드)', () => {
+  const zero = loadFunctions(['computeMindChart'], { state: { stats: {}, gambleStats: {} } }).computeMindChart();
+  zero.forEach(b => {
+    assert.ok(Number.isFinite(b.pct), b.name + ' pct가 유한해야 (NaN 금지)');
+    assert.strictEqual(b.pct, 0, b.name + ' = 0%');
+  });
+  const f = loadFunctions(['computeMindChart'], { state: { stats: { slainNormal: 3 }, gambleStats: { win: 1 } } }).computeMindChart();
+  assert.strictEqual(f.find(b => b.name.startsWith('戰')).pct, 75, '3/(3+1)=75%');
+  assert.strictEqual(f.find(b => b.name.startsWith('賭')).pct, 25, '1/4=25%');
+});
