@@ -4133,6 +4133,7 @@
 
   // === 상태 ===
   const SAVE_KEY = 'reinforce_sword_v1';
+  const MUTE_KEY = 'reinforce_sword_muted';  // v307 — SAVE_KEY/AUTOSYNC_KEY와 동일하게 상수화 (오타 방지)
   let state = {
     level: 0,
     shards: 50,
@@ -4961,7 +4962,7 @@
   // === 響 — Web Audio 톤 합성 ===
   let audioCtx = null;
   let muted = false;
-  try { muted = localStorage.getItem('reinforce_sword_muted') === '1'; } catch (e) {}
+  try { muted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) {}
 
   function getAudio() {
     if (muted) return null;
@@ -5114,7 +5115,7 @@
 
   function toggleMute() {
     muted = !muted;
-    try { localStorage.setItem('reinforce_sword_muted', muted ? '1' : '0'); } catch (e) {}
+    try { localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); } catch (e) {}
     const btn = $('btn-mute');
     if (btn) btn.textContent = muted ? '소 리  켜 기' : '소 리  끄 기';
     log(muted ? '소리 끔' : '소리 켬', 'fail');
