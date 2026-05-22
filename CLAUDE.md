@@ -165,7 +165,7 @@ UI 흐름: `showChallenge`는 `swordWrap.opacity=0`로 검 stage 숨기고 `#cha
 
 ### 形 (`SWORD_FORMS` / `decideForm` / `getForm`) — v6
 
-검의 천성. 첫 강화 시 4종 중 균일 랜덤 — 봉인까지 유지. 각 형은 미세 편향:
+검의 천성. 첫 강화 시 4종 중 선택 (v109 選形 — `decideForm` → `showFormSelectModal`, 원래 v6 균일 랜덤에서 플레이어 선택으로 변경) — 봉인까지 유지. 각 형은 미세 편향:
 
 | key | 효과 |
 |---|---|
