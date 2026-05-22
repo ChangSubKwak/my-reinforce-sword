@@ -16748,6 +16748,7 @@
         '<div><span style="color:var(--dim)">魂</span> <span style="color:#6a8a9a;margin-left:6px">' + (s.soul || 0) + '</span></div>' +
         '<div><span style="color:var(--dim)">性情</span> <span style="color:var(--accent);margin-left:6px">' + deriveTemperament(s).name + '</span></div>' +
         '<div><span style="color:var(--dim)">베어낸 그림자</span> <span style="color:var(--accent);margin-left:6px">' + (s.slainCount || 0) + '</span></div>' +
+        ((s.beads || 0) > 0 ? '<div><span style="color:var(--dim)">念珠</span> <span style="color:var(--accent);margin-left:6px">' + (s.beads || 0) + '</span></div>' : '') +  // v317 — v314 보존된 念珠 수를 회고에 표시
       '</div>' +
       (s.omenTotal >= 5 ? '<div style="text-align:center;color:var(--dim);font-size:10px;padding:4px 0;letter-spacing:2px">전조 적중률 ' + (s.omenHits || 0) + '/' + s.omenTotal + ' (' + Math.round((s.omenHits || 0) / s.omenTotal * 100) + '%)</div>' : '') +
       (s.scars > 0 ? '<div style="text-align:center;color:rgba(180,70,50,0.8);font-size:10px;padding:4px 0;letter-spacing:3px">刻痕 ' + '●'.repeat(s.scars) + '○'.repeat(3 - s.scars) + '  · 파괴 직전 ' + s.scars + '번 살아남았다</div>' : '') +
