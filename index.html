@@ -17298,7 +17298,7 @@
       myRankBox.innerHTML = '<span style="color:var(--dim);font-size:11px">내 순위</span> ' +
         '<span style="color:var(--accent);font-size:16px">#' + myRank.rank + '</span>' +
         '<span style="color:var(--dim);font-size:11px"> / ' + myRank.total + '명</span>' +
-        (inTop ? '' : '<div style="font-size:10px;color:var(--dim);margin-top:4px">道 ' + (myRank.mine.way_reached || 0) + ' · 최고 +' + (myRank.mine.best_level || 0) + ' · 베어냄 ' + (myRank.mine.total_slain || 0) + '</div>');
+        (inTop ? '' : '<div style="font-size:10px;color:var(--dim);margin-top:4px">道 ' + (Number(myRank.mine.way_reached) || 0) + ' · 최고 +' + (Number(myRank.mine.best_level) || 0) + ' · 베어냄 ' + (Number(myRank.mine.total_slain) || 0) + '</div>');
     } else if (myRankBox) {
       myRankBox.style.display = 'none';
     }
@@ -17319,9 +17319,9 @@
             '<span style="color:' + (isMe ? 'var(--accent)' : 'var(--fg)') + ';font-size:13px;letter-spacing:2px">' + escapeHtml(nickname) + '</span>' +
             (masked ? '<span style="color:var(--dim);font-size:9px;letter-spacing:0;margin-top:2px">' + escapeHtml(masked) + '</span>' : '') +
           '</span>' +
-          '<span style="text-align:right;color:#fff5c0">' + (row.way_reached || 0) + '</span>' +
-          '<span style="text-align:right;color:var(--accent)">+' + (row.best_level || 0) + '</span>' +
-          '<span style="text-align:right;color:var(--dim)">' + (row.total_slain || 0) + '</span>' +
+          '<span style="text-align:right;color:#fff5c0">' + fmtNum(Number(row.way_reached) || 0) + '</span>' +
+          '<span style="text-align:right;color:var(--accent)">+' + (Number(row.best_level) || 0) + '</span>' +
+          '<span style="text-align:right;color:var(--dim)">' + fmtNum(Number(row.total_slain) || 0) + '</span>' +
         '</div>';
       }).join('');
   });

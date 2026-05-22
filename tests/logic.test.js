@@ -849,3 +849,12 @@ test('리더보드 닉네임·손님 검 이름이 escapeHtml로 렌더됨 (XSS 
   // 손님 검 이름
   assert.match(js, /escapeHtml\(s\.name \|\| '無名'\)/, '손님 검 이름 이스케이프');
 });
+
+test('리더보드 숫자 필드가 Number()로 강제됨 (v276 — 문자열 주입 차단)', () => {
+  const { readScript } = require('./harness');
+  const js = readScript();
+  // 서버 row의 숫자 필드는 사용자가 쓸 수 있으므로 innerHTML 삽입 전 Number 강제
+  assert.match(js, /Number\(row\.way_reached\) \|\| 0/, 'way_reached 강제');
+  assert.match(js, /Number\(row\.best_level\) \|\| 0/, 'best_level 강제');
+  assert.match(js, /Number\(row\.total_slain\) \|\| 0/, 'total_slain 강제');
+});
