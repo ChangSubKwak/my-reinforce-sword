@@ -945,3 +945,20 @@ test('RESOLVE 값 잠금 (覺悟 dial — 平常/一心/保身, v91)', () => {
   assert.strictEqual(R.guard.successAdd, -0.10); assert.strictEqual(R.guard.destroyMul, 0);
   assert.strictEqual(R.guard.downgradeMul, 0.5); assert.strictEqual(R.guard.costMul, 1.5);
 });
+
+test('guardianBonus: 守 형별 패시브 잠금 (道 검만 — v52 dial)', () => {
+  const make = (sword, idx = 0) => loadFunctions(['guardianBonus', 'getGuardian'], {
+    state: { guardianIdx: sword ? idx : null, sealedSwords: sword ? [sword] : [] },
+  });
+  const none = make(null).guardianBonus();
+  assert.strictEqual(none.successBonus, 0); assert.strictEqual(none.rewardMul, 1);
+  assert.strictEqual(none.rescueSec, 0); assert.strictEqual(none.destroyReduce, 0);
+  // 道 아닌 검은 수호자 불가 → all-zero
+  assert.strictEqual(make({ form: '直', inscriptions: [] }).guardianBonus().successBonus, 0, '非道 검은 무효');
+  // 道 검 형별 패시브
+  const f = (form) => make({ form, inscriptions: ['道'] }).guardianBonus();
+  assert.strictEqual(f('直').successBonus, 0.02, '直 +2% 성공');
+  assert.strictEqual(f('曲').destroyReduce, 0.02, '曲 -2% 파괴');
+  assert.strictEqual(f('重').rewardMul, 1.10, '重 ×1.10 보상');
+  assert.strictEqual(f('速').rescueSec, 1.0, '速 +1s 회수');
+});
