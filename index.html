@@ -15008,6 +15008,20 @@
     sealed.forEach(s => { const sc = scoreFn(s); if (sc > bestScore) { bestScore = sc; best = s; } });
     return best;
   }
+  // v370c 率性 — 컬렉션 전체의 천성 따름/거스름 경향. per-sword 率性(v370)을 합산한
+  // swordsmith의 거울 — "검을 천성대로 두는가, 거슬러 빚는가". 표본 부족(<3) 시 침묵.
+  function collectionNatureTendency(swords) {
+    let follow = 0, defy = 0;
+    (swords || []).forEach(s => {
+      const k = deriveNaturePath(s).key;
+      if (k === 'follow') follow++;
+      else if (k === 'defy') defy++;
+    });
+    if (follow + defy < 3) return { key: 'none', line: '' };
+    if (follow > defy * 1.5) return { key: 'follow', line: '그대의 검들은 대개 타고난 形을 따랐다 — 率性의 길.' };
+    if (defy > follow * 1.5) return { key: 'defy', line: '그대의 검들은 자주 천성을 거슬렀다 — 逆性의 길.' };
+    return { key: 'balanced', line: '率性과 逆性이 그대의 검들 안에 고루 깃들었다.' };
+  }
   function deriveJourney(sword) {
     const h = (sword && sword.levelHistory) || [];
     if (h.length < 2) return '';  // 데이터 부족
@@ -18453,6 +18467,10 @@
         h += row('가장 많이 벤 검', nm(slayer) + ' (' + (slayer.slainCount || 0) + ')');
         if (levelDropCount(turbulent) > 0) h += row('가장 기복이 심한 검', nm(turbulent) + ' (波瀾 ' + levelDropCount(turbulent) + ')', '#a8c0d8');
         return h;
+      })() +
+      (function() {  // v370c 率性 — 컬렉션 전체 천성 경향 (殿堂 포함 합산)
+        const t = collectionNatureTendency((state.sealedSwords || []).concat(state.enshrined || []));
+        return t.line ? '<div style="color:#a8c0d8;font-size:10.5px;letter-spacing:1.5px;padding:8px 0;line-height:1.6;font-style:italic">率性 — ' + t.line + '</div>' : '';
       })() +
       renderShinkiSection() +  // v156 新記 (v288 rename)
       renderHiddenAchievements();  // v152 風月

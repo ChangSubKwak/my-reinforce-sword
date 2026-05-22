@@ -545,6 +545,22 @@ test('deriveNaturePath: 形 미정·null은 판정 보류 (빈 name·라인, 하
   assert.strictEqual(npFns.deriveNaturePath({ form: '直', slainCount: 5 }).line.length > 0, true, '판정 시 line 존재');
 });
 
+test('collectionNatureTendency: 率性/逆性 우세·균형·표본부족 (컬렉션 거울)', () => {
+  const fns = loadFunctions(['collectionNatureTendency', 'deriveNaturePath', 'deriveTemperament']);
+  const ct = fns.collectionNatureTendency;
+  const follow = { form: '直', slainCount: 5 };  // 率性
+  const defy = { form: '直', scars: 3 };          // 逆性
+  const quiet = { form: '直' };                    // 和 → 無爲 (집계 제외)
+  assert.strictEqual(ct([follow, follow]).key, 'none', '판정 검 2 < 3 → 표본 부족');
+  assert.strictEqual(ct([follow, defy]).key, 'none', '판정 검 2 < 3 → 표본 부족');
+  assert.strictEqual(ct([follow, follow, follow, defy]).key, 'follow', '率性 3 vs 逆性 1 (3>1.5) → follow');
+  assert.strictEqual(ct([defy, defy, defy, follow]).key, 'defy', '逆性 3 vs 1 → defy');
+  assert.strictEqual(ct([follow, follow, defy, defy]).key, 'balanced', '2:2 (2>3 거짓) → balanced');
+  assert.strictEqual(ct([follow, follow, defy, defy, quiet]).key, 'balanced', '無爲(quiet) 분모 제외 → 2:2 balanced');
+  assert.strictEqual(ct([]).key, 'none', '빈 컬렉션 → none');
+  assert.ok(ct([follow, follow, follow]).line.length > 0, '판정 시 line 존재 (3:0 follow)');
+});
+
 // ─────────────────────────────────────────────────────────────
 // v248 遺言 — 검의 1인칭 마지막 말 (性情 파생, 결정적)
 // ─────────────────────────────────────────────────────────────
