@@ -5340,6 +5340,9 @@
     if (slayStreak >= 3) return 1.10;
     return 1.0;
   }
+  // v244 — 베기 실제 보상 단일 진원. 표시(베기 버튼·검귀/명적 컷씬)와 실제 지급이
+  // 連斬 streak 배수를 동일하게 반영해야 함 (streak는 베기 후에만 변하므로 표시=지급 시점 동일).
+  function slayGrantAmount(base) { return Math.floor(base * slayStreakRewardBonus()); }
 
   function checkAdversity() {
     if (adversityReady) return;
@@ -13372,7 +13375,7 @@
     shadowStrength.textContent = (challenge.origin ? challenge.origin + ' · ' : '') + t.name + ' · 강도 +' + challenge.strength;
     // 베기 버튼에 보상 표시
     const slayRewardLabel = $('slay-reward-label');
-    if (slayRewardLabel) slayRewardLabel.textContent = '+' + challenge.reward + ' 조각';
+    if (slayRewardLabel) slayRewardLabel.textContent = '+' + slayGrantAmount(challenge.reward) + ' 조각';  // v244 連斬 반영
     const verdict = state.level >= challenge.strength
       ? '<span style="color:var(--safe)">충분히 강하다 — 한 번에 베어진다</span>'
       : '<span style="color:var(--danger)">검이 약하다 — 흔들릴 수 있다</span>';
@@ -13512,9 +13515,9 @@
         setTimeout(() => screenShake(false), 180);
       }
       challengeSword.classList.add('strike');
-      // v125 連斬 — streak에 따른 보상 배율 적용 (이전 streak 기준)
+      // v125 連斬 — streak에 따른 보상 배율 적용 (이전 streak 기준). v244 단일 진원.
       const slayBonusMul = slayStreakRewardBonus();
-      const finalReward = Math.floor(c.reward * slayBonusMul);
+      const finalReward = slayGrantAmount(c.reward);
       state.shards += finalReward;
       state.totalSlain++;
       state.currentSword.slainCount++;
@@ -13576,7 +13579,7 @@
         const dso = $('demon-slay-overlay');
         if (dso) {
           const dk = $('demon-slay-kanji'); if (dk) dk.textContent = '鬼斬';
-          $('demon-slay-msg').textContent = '검귀를 베어냈다 · 조각 +' + c.reward;
+          $('demon-slay-msg').textContent = '검귀를 베어냈다 · 조각 +' + finalReward;
           dso.classList.remove('active');
           void dso.offsetWidth;
           dso.classList.add('active');
@@ -13599,7 +13602,7 @@
           const dso = $('demon-slay-overlay');
           if (dso) {
             const dk = $('demon-slay-kanji'); if (dk) dk.textContent = foe.name;
-            $('demon-slay-msg').textContent = foe.name + '을 베어냈다 · 조각 +' + c.reward;
+            $('demon-slay-msg').textContent = foe.name + '을 베어냈다 · 조각 +' + finalReward;
             dso.classList.remove('active');
             void dso.offsetWidth;
             dso.classList.add('active');

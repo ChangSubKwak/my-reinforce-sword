@@ -62,6 +62,22 @@ test('sealRewardBase: 七星 ×1.5 중첩', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// v244 連斬 — 베기 보상 단일 진원 slayGrantAmount (streak 배수)
+// ─────────────────────────────────────────────────────────────
+test('slayGrantAmount: 連斬 streak 배수 적용 (3=×1.1, 5=×1.2, 7=×1.3)', () => {
+  const at = s => loadFunctions(['slayGrantAmount', 'slayStreakRewardBonus'], { slayStreak: s }).slayGrantAmount(100);
+  assert.strictEqual(at(0), 100, 'streak 0 → ×1');
+  assert.strictEqual(at(3), 110, 'streak 3 → ×1.1');
+  assert.strictEqual(at(5), 120, 'streak 5 → ×1.2');
+  assert.strictEqual(at(7), 130, 'streak 7 → ×1.3');
+});
+
+test('slayGrantAmount: floor 적용 (정수 조각)', () => {
+  const f = loadFunctions(['slayGrantAmount', 'slayStreakRewardBonus'], { slayStreak: 3 });
+  assert.strictEqual(f.slayGrantAmount(15), Math.floor(15 * 1.1), '15×1.1=16.5 → 16');
+});
+
+// ─────────────────────────────────────────────────────────────
 // v229 劍鳴 — 검 고유 소리 시그니처 (결정성 + 펜타토닉 제약)
 // ─────────────────────────────────────────────────────────────
 const SIGNATURE_SCALE = [262, 294, 330, 392, 440, 523, 587, 659, 784];

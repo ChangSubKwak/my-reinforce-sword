@@ -171,6 +171,15 @@ test('previewResonanceReward는 부작용(onSealPersistent) 호출 안 함 — �
   assert.match(m[1], /onSeal\b/, 'onSeal 보상 배수만 적용');
 });
 
+test('베기 보상 표시 — slayGrantAmount/finalReward로 連斬 반영 (표시=실제)', () => {
+  // v244: 베기 버튼·검귀/명적 컷씬이 streak 미반영 c.reward를 표시해 실제 지급보다 적게 보이던 버그.
+  assert.match(js, /function slayGrantAmount\(/, 'slayGrantAmount 헬퍼 존재');
+  assert.match(js, /slayGrantAmount\(challenge\.reward\)/, '베기 버튼 라벨이 streak 반영');
+  assert.match(js, /const finalReward = slayGrantAmount\(c\.reward\)/, '실제 지급도 동일 헬퍼');
+  // 컷씬 메시지에 streak 미반영 raw c.reward 표시 잔존 없음
+  assert.strictEqual((js.match(/조각 \+' \+ c\.reward/g) || []).length, 0, '컷씬에 raw c.reward 표시 없음');
+});
+
 test('모든 modal은 modal-close 또는 data-close 버튼 보유', () => {
   // 각 class="modal" 블록에 data-close 가 최소 1개 (대략적 검증)
   const modalCount = (html.match(/class="modal"/g) || []).length;
