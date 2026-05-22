@@ -7256,7 +7256,7 @@
   // === v217 暦 — 월별 활동 캘린더 ===
   function recordActivityDate() {
     if (!state.activityByDate) state.activityByDate = {};
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayStr();  // v245h 로컬 날짜 (캘린더 키 = 로컬 일자)
     state.activityByDate[today] = (state.activityByDate[today] || 0) + 1;
   }
   function renderCalendar() {
@@ -7267,7 +7267,7 @@
     const lastDay = new Date(year, month + 1, 0);
     const startWday = firstDay.getDay();  // 0=Sun
     const daysInMonth = lastDay.getDate();
-    const todayStr = now.toISOString().slice(0, 10);
+    const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');  // v245h 로컬 날짜
     const todayDate = now.getDate();
     const map = state.activityByDate || {};
     // 월 stats
@@ -7437,7 +7437,9 @@
   }
 
   // === v214 三禮 — 占/籤/拈花 일일 3 의식 완성 보너스 ===
-  function todayStr3() { return new Date().toISOString().slice(0, 10); }
+  // v245h — 로컬 날짜로 통일(이전엔 UTC라 KST 사용자는 매일 리셋이 오전 9시에 발생).
+  // 일일 도전(v94 todayStr)과 동일하게 로컬 자정 기준. todayStr()는 캐노니컬 로컬 날짜.
+  function todayStr3() { return todayStr(); }
   function didOracleToday() { return state.oracleResultDate === todayStr3(); }
   function didSenToday() { return state.lastSenDate === todayStr3(); }
   function didPluckToday() { return state.lastPluckedDate === todayStr3(); }
@@ -7749,7 +7751,7 @@
   function weekendChallengeMul() { return isWeekend() ? 1.05 : 1; }
   function checkWeekendGreeting() {
     if (!isWeekend()) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayStr3();  // v245h 로컬 날짜
     if (state.lastWeekendGreeting === today) return;
     // 토요일 첫 진입만 인사 (일요일 다시 X)
     const d = new Date().getDay();
@@ -7807,7 +7809,7 @@
     { kanji:'隱', color:'#5878a8', verse:'숨겨진 한 호흡',             type:'soul',   amount:8,  label:'영혼 +8' },
   ];
   function canDrawSenToday() {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayStr3();  // v245h 로컬 날짜
     return state.lastSenDate !== today;
   }
   function drawSenResults() {
@@ -7853,7 +7855,7 @@
   function selectSenStick(idx) {
     if (!senCandidates[idx]) return;
     const picked = senCandidates[idx];
-    state.lastSenDate = new Date().toISOString().slice(0, 10);
+    state.lastSenDate = todayStr3();  // v245h 로컬 날짜
     state.lastSenResult = picked;
     // 보상 적용
     if (picked.type === 'shards') state.shards = (state.shards || 0) + picked.amount;
@@ -8048,7 +8050,7 @@
     '난초 한 송이 — 백 자루의 검과 같은 무게',
   ];
   function canPluckToday() {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayStr3();  // v245h 로컬 날짜
     return state.lastPluckedDate !== today;
   }
   function pluckOrchid() {
@@ -8061,7 +8063,7 @@
       log('拈花 — 蘭이 아직 피지 않았다 (道 1회 도달 필요)', 'warn');
       return;
     }
-    state.lastPluckedDate = new Date().toISOString().slice(0, 10);
+    state.lastPluckedDate = todayStr3();  // v245h 로컬 날짜
     // 보상
     if (state.hasSword) addSoul(5);
     else state.shards = (state.shards || 0) + 5;
@@ -8652,7 +8654,7 @@
     { kanji:'凶',   color:'#882828', tone:'bad',     verse:'조심하라 — 한 호흡 깊이' },
   ];
   function todayOracleDateStr() {
-    return new Date().toISOString().slice(0, 10);
+    return todayStr();  // v245h 로컬 날짜 (일일 리셋 = 로컬 자정)
   }
   function consultOracle() {
     const today = todayOracleDateStr();
@@ -8812,7 +8814,7 @@
     { n: 100, kanji:'百', label:'백일 수행 — 의지의 검',  reward:400 },
     { n: 365, kanji:'年', label:'1년 수행 — 길의 검사',   reward:1200 },
   ];
-  function todayDateStr() { return new Date().toISOString().slice(0,10); }
+  function todayDateStr() { return todayStr(); }  // v245h 로컬 날짜 (연속 출석 = 로컬 자정 기준)
   function dateDiffDays(a, b) {
     const da = new Date(a + 'T00:00:00');
     const db = new Date(b + 'T00:00:00');

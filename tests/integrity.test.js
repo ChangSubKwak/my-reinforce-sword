@@ -199,6 +199,20 @@ test('結界 하락 흡수 표시 — 靈石/餘香 동시 차단 시 흡수 0 (
   assert.match(js, /sanctumActive && !useSpiritR && !echoBlockR/, '표시 흡수 조건이 spirit/echo 차단 반영');
 });
 
+test('일일 리셋 날짜 — 로컬 자정 기준 (UTC toISOString 미사용)', () => {
+  // v245h: 占/籤/拈花/三儀/연속출석/캘린더 등 일일 기능이 UTC라 KST 사용자는 오전 9시에 리셋되던 버그.
+  // 날짜 헬퍼가 캐노니컬 로컬 todayStr()로 위임 (toISOString 미사용).
+  ['todayStr3', 'todayDateStr', 'todayOracleDateStr'].forEach(fn => {
+    const m = js.match(new RegExp('function ' + fn + '\\(\\)\\s*\\{([^}]*)\\}'));
+    assert.ok(m, fn + ' 정의');
+    assert.ok(!m[1].includes('toISOString'), fn + '는 toISOString(UTC) 미사용');
+    assert.match(m[1], /todayStr\(\)/, fn + '는 로컬 todayStr() 위임');
+  });
+  // todayStr() 자체는 로컬 (getFullYear/getMonth/getDate)
+  const tm = js.match(/function todayStr\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(tm && /getFullYear\(\)/.test(tm[1]) && /getDate\(\)/.test(tm[1]), 'todayStr는 로컬 날짜 구성');
+});
+
 test('모든 modal은 modal-close 또는 data-close 버튼 보유', () => {
   // 각 class="modal" 블록에 data-close 가 최소 1개 (대략적 검증)
   const modalCount = (html.match(/class="modal"/g) || []).length;
