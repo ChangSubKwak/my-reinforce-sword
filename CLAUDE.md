@@ -668,6 +668,17 @@ Web Audio API 기반 실시간 반응 사운드스케이프. 외부 파일 0, �
 - **유파 색조**: 활성 유파 → `#stage[data-school="*"]::after` CSS radial gradient. 직류(파랑) / 곡류(황토) / 중류(초록) / 속류(청록). 5초 CSS transition.
 - `#stage-bg`: `position:absolute;inset:0;z-index:0;overflow:hidden` — 검 뒤 레이어.
 
+### v247~v252 정체성·서사 군집 (이번 세션 추가 — 모두 메커니즘 효과 0, 순수 narrative, 기존 데이터 파생)
+
+검 한 자루의 정체성을 다차원으로 응결하는 군집. **모두 점수 인플레이션 0** (서사/식별만). 단위·통합 테스트는 `tests/logic.test.js`.
+
+- **v247 性情 (`deriveTemperament(sword)`)**: 플레이 방식 → 기질 4종. `slainCount`=剛 / `scars*2`=靜 / `max(0,level-7)`=賭, 최댓값 기질(동점 剛>靜>賭), 무행동=和. 形/魂/銘과 직교하는 정체성 축. 상태 저장 불필요(기존 stats 파생, 하위호환). 표시: 一代記 문장 + 회고 뱃지 + 계보 카드/분포 + 修練 중 현재 검(`renderInscriptions`, 和는 비표시) + 수호자(守) + 記錄 「검 중의 검」.
+- **v248 遺言 (`generateLastWords(sword)`)**: 검의 1인칭 마지막 말(道 전용 / 性情별, 강화도 기반 결정적). 회고 「遺言」 + 詩集(`renderAnthology`) 遺言 섹션(전체 봉인 검 최근 20).
+- **v249 波瀾 (`deriveJourney`/`levelDropCount`)**: `levelHistory` 하락 횟수 → 기복 서술. 회고 일생 그래프 아래 캡션. `levelDropCount`는 `collectionHighlight`(記錄 「검 중의 검」)와 공유.
+- **v250 검 중의 검 (`collectionHighlight(sealed, scoreFn)`)**: 컬렉션 최고 검 선택(강한/많이 벤/기복). 記錄 모달, 봉인 3+.
+- **v251 影格 (`shadowTier(strength)`)**: 그림자 강도 등급 형용(여린/굳센/강대한/흉험한). 도전 표시 + 斬 베기 페이드. 적 측 정체성.
+- **v252 時生 (`bornTod`)**: 검이 빚어진 시각(朝/晝/夕/夜, `getTimeOfDay` 재사용). `newSword`에서 기록 → `doSeal` 보존 → 회고 時生 + 一代記 개막 문장. 신규 검만(하위호환).
+
 ### 봉인 균형 곡선 (참고)
 
 | 검 강화도 | 봉인 보상 (조각) |
