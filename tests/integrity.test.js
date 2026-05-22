@@ -39,6 +39,13 @@ test('성공률 분해가 successChanceNow의 즉시/검별 성공원도 표시 
     assert.ok(body.includes(src), '성공 분해에 ' + src + ' 출처 누락'));
 });
 
+test('모든 role="dialog"에 aria-modal="true" (v298 — 모달 시맨틱)', () => {
+  const dialogs = (html.match(/role="dialog"/g) || []).length;
+  const modal = (html.match(/role="dialog" aria-modal="true"/g) || []).length;
+  assert.ok(dialogs > 0, 'role=dialog 존재');
+  assert.strictEqual(modal, dialogs, '모든 dialog가 aria-modal=true (' + modal + '/' + dialogs + ')');
+});
+
 test('메뉴 aria-expanded가 class 변경에 동기화됨 (v297 — stale 방지)', () => {
   // 한자 메뉴 버튼들은 닫을 때 syncMenuAria 미호출 → MutationObserver로 단일 지점 동기화.
   assert.match(js, /new MutationObserver\(syncMenuAria\)\.observe\([^,]+,\s*\{\s*attributes:\s*true,\s*attributeFilter:\s*\['class'\]/, 'menu-drop class 관찰로 aria 동기화');
