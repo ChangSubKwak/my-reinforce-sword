@@ -17965,6 +17965,9 @@
         '<div style="color:#a8c0d8;font-size:11px;letter-spacing:2px;font-style:italic;line-height:1.6;opacity:0.9">「' + generateLastWords(s) + '」</div>' +
         '</div>';
     }).join('');
+    if (sealed.length > 20) {  // v255b 가려진 옛 검 안내 (투명성)
+      html += '<div style="text-align:center;color:var(--dim);font-size:9px;letter-spacing:2px;padding:8px 0;opacity:0.6">… 그 이전 ' + (sealed.length - 20) + '자루의 검도 잠들어 있다</div>';
+    }
     list.innerHTML = html;
   }
 
