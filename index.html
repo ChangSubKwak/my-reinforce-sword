@@ -18290,6 +18290,15 @@
     });
   });
 
+  // v267 — 배경(백드롭) 클릭으로 모달 닫기 (Esc 닫기의 짝). 다이얼로그 박스 클릭은 무시.
+  // name/form-select는 결정/필수 선택이라 오클릭 해제 제외 (Esc와 동일).
+  document.querySelectorAll('.modal').forEach(modal => {
+    if (modal.id === 'name-modal' || modal.id === 'form-select-modal') return;
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.remove('active');
+    });
+  });
+
   // === 초기화 ===
   $('btn-reset').addEventListener('click', () => {
     if (!confirm('모든 진행도를 지운다. 정말로?')) return;
