@@ -1030,3 +1030,14 @@ test('deriveForging: 단련 노고 서사 (시도/강화도 비, v313)', () => {
   assert.match(f(45, 10), /험난한 길/, '45≥10*4 험난');
   assert.match(f(25, 10), /25번 두드려 \+10에 이르렀다/, '중간');
 });
+
+test('computeRecords: 봉인 검의 beads·enhanceAttempts도 최댓값에 반영 (v313/v314 보존 검증)', () => {
+  const state = {
+    sealedSwords: [{ beads: 50, enhanceAttempts: 30, slainCount: 2, soul: 10 }],
+    enshrined: [], hasSword: false, bestLevel: 5, swordGeneration: 1, bestStreak: 0,
+  };
+  const r = loadFunctions(['computeRecords'], { state }).computeRecords();
+  assert.strictEqual(r.maxBeads, 50, '봉인 검 念珠가 최다 念珠 기록에 반영');
+  assert.strictEqual(r.maxEnhance, 30, '봉인 검 강화 시도가 최다 시도 기록에 반영');
+  assert.strictEqual(r.maxSlain, 2);
+});
