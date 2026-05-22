@@ -555,6 +555,15 @@ test('merged-collection: 形/道 집계·필터가 sealedSwords-only면 안 됨 
   assert.deepStrictEqual(daoBad, [], 'sealedSwords-only 道 필터(enshrined 누락 회귀): ' + daoBad.join(' || '));
 });
 
+test('save(): 저장 실패를 침묵하지 않고 1회 경고 (v370p — quota 초과 시 무음 데이터손실 방지)', () => {
+  // 매 액션마다 save()되므로 침묵 catch면 quota 초과 시 진행도 미저장을 모른 채 손실.
+  const m = js.match(/function save\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(m, 'save() 본문');
+  const body = m[1];
+  assert.match(body, /catch\s*\([^)]*\)\s*\{[\s\S]*log\(/, 'save() catch가 log로 사용자 경고 (침묵 catch 회귀 방지)');
+  assert.match(body, /saveFailedWarned/, 'save()가 1회-경고 플래그 사용 (매 액션 스팸 방지)');
+});
+
 test('merged-collection: 검 중의 검(컬렉션 하이라이트)이 殿堂 검도 합산 (v370d — 헬퍼 site 회귀 방지)', () => {
   // collectionHighlight(sealed,...) 헬퍼를 쓰는 site는 위 .forEach/.filter 정규식에 안 잡힘.
   // 가장 강한 검을 殿堂에 진열하면 명예의 전당에서 사라지던 v350류 누락 — sealed-only 회귀 차단.

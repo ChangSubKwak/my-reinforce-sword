@@ -4221,9 +4221,20 @@
     seenHelp: false,
   };
 
+  let saveFailedWarned = false;  // v370p — 저장 실패(주로 quota 초과) 1회 경고 플래그
   function save() {
     state.lastPlayedTime = Date.now();  // v126 黎明 — 마지막 저장 시각
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {}
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+      saveFailedWarned = false;  // 성공 시 재무장 (일시적 quota 해소 대비)
+    } catch (e) {
+      // v370p — 저장 실패를 침묵하지 않고 1회 알림. 매 액션마다 save()되므로 스팸 방지 위해
+      // 세션당 한 번만. 침묵 실패는 진행도가 저장 안 된 줄 모른 채 새로고침 시 손실 → 최악 UX.
+      if (!saveFailedWarned) {
+        saveFailedWarned = true;
+        try { log('저장 실패 — 저장 공간이 부족할 수 있습니다. 메뉴에서 백업을 내보내 보관하세요.', 'danger'); } catch (e2) {}
+      }
+    }
   }
 
   // === v126 黎明 — 사용자 부재 후 복귀 의식 ===
