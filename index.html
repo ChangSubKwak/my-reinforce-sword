@@ -18027,7 +18027,7 @@
     const enshrined = state.enshrined || [];
     const progress = $('enshrined-progress');
     if (progress) {
-      progress.innerHTML = '진 열  ' + enshrined.length + ' / ' + ENSHRINE_CAP +
+      progress.innerHTML = '진 열  ' + enshrined.length + ' / ' + (ENSHRINE_CAP + shrineEnshrineCapBonus()) +  // v356 — 神祠 d5 cap 보너스 반영 (canEnshrineMore와 일치). 기존 ENSHRINE_CAP 고정 표시는 d5 시 /3으로 실제(/4)보다 낮게 보였음
         (enshrined.length > 0 ? '  ·  <span style="color:var(--accent)">강화 성공 +' + (enshrined.length * 1.5).toFixed(1) + '%</span>' : '');
     }
     const list = $('enshrined-list');
