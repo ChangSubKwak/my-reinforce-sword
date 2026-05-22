@@ -10482,6 +10482,7 @@
     const eraNow = getCurrentEra();
     timeLines.push(line('紀元', eraNow.name + ' (' + (state.stats && state.stats.enhanceAttempts || 0) + ' 시도)'));
     if (typeof getSeason === 'function') timeLines.push(line('季節', getSeason().name));
+    if (typeof getCurrentSolarTerm === 'function') { const st = getCurrentSolarTerm(); timeLines.push(line('節氣', st.name, 'var(--dim)')); }
     if (typeof getTimeOfDay === 'function') timeLines.push(line('朝夕', getTimeOfDay().name + ' (' + getTimeOfDay().label + ')'));
     if (typeof weatherActive !== 'undefined' && weatherActive) {
       timeLines.push(line('天候', weatherActive === 'rain' ? '雨' : '風'));
