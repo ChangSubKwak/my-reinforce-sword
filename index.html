@@ -15423,6 +15423,19 @@
     // 명문이 약하면 강화도 한자
     return prefix + (NUM_KANJI[level] || ('+' + level));
   }
+  // v311 名의 由來 — 어느 명문/강화도에서 이름을 얻었는지 서사로 설명 (순수 파생, 상태 무변경)
+  function deriveNameOrigin(form, inscriptions, level) {
+    inscriptions = inscriptions || [];
+    const reason = {
+      '道': '도(道)에 이르러', '鬼斬': '검귀를 베어', '夜叉斬': '야차를 베어',
+      '本': '본질을 깨달아', '剛體': '강체를 이루어', '覺': '혼이 깨어나',
+      '古': '오랜 세월을 견뎌', '久': '긴 단련을 거쳐',
+    };
+    for (const def of NAME_SUFFIX) {
+      if (inscriptions.includes(def.key)) return (reason[def.key] || '') + ' ' + def.word + '의 이름을 얻었다';
+    }
+    return '강화 +' + (level || 0) + '의 자취로 이름을 얻었다';
+  }
 
   // === 銘 — 검의 명문 (일대기) ===
   // 각 명문: trigger(검 상태 + state) → 조건, label/sub → 표시 텍스트
@@ -16693,6 +16706,7 @@
       '<div style="display:flex;justify-content:space-around;padding:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:14px;font-size:11px">' +
         '<div><span style="color:var(--dim)">형</span> <span style="color:var(--accent);margin-left:6px">' + (s.form || '無') + '</span> <span style="color:var(--dim);font-size:10px">(' + formLabel + ')</span></div>' +
         '<div><span style="color:var(--dim)">강화도</span> <span style="color:var(--accent);margin-left:6px">+' + s.level + '</span></div>' +
+        '<div style="color:var(--dim);font-size:10px;font-style:italic;letter-spacing:1px;margin:2px 0 4px">' + deriveNameOrigin(s.form, s.inscriptions || [], s.level) + '</div>' +
         (s.bornTod ? '<div><span style="color:var(--dim)">時生</span> <span style="color:#a8c0d8;margin-left:6px">' + s.bornTod + '</span></div>' : '') +  // v252 빚어진 시각
       '</div>' +
       verseBlock +

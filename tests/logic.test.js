@@ -1013,3 +1013,12 @@ test('computeMindChart: 무행동(zero) 상태도 NaN 없이 0% (|| 1 가드)', 
   assert.strictEqual(f.find(b => b.name.startsWith('戰')).pct, 75, '3/(3+1)=75%');
   assert.strictEqual(f.find(b => b.name.startsWith('賭')).pct, 25, '1/4=25%');
 });
+
+test('deriveNameOrigin: 이름의 유래 서사 (makeSwordName 우선순위 거울, v311)', () => {
+  const NS = extractConst('NAME_SUFFIX');
+  const f = (ins, lv) => loadFunctions(['deriveNameOrigin'], { NAME_SUFFIX: NS }).deriveNameOrigin('直', ins, lv);
+  assert.match(f(['道'], 15), /도\(道\)에 이르러 道의 이름을 얻었다/);
+  assert.match(f(['鬼斬', '本'], 12), /魔의 이름을 얻었다/, '鬼斬이 本보다 우선');
+  assert.match(f(['本'], 10), /본질을 깨달아 本의 이름을 얻었다/);
+  assert.match(f([], 7), /강화 \+7의 자취로 이름을 얻었다/, '명문 없으면 강화도');
+});
