@@ -919,3 +919,17 @@ test('breathBonus: 呼吸 임계 잠금 (첫/60s+/20s+/8s+/그외 — v17 dial)'
   assert.strictEqual(at(now - 10000), 0.02, '8~20s = 0.02 (얕은 호흡)');
   assert.strictEqual(at(now - 3000), 0, '<8s = 0');
 });
+
+test('soulEffects/getSoulStage: 魂 단계 임계 잠금 (覺34/本67 — v10 dial)', () => {
+  const make = (soul, hasSword = true) => loadFunctions(['soulEffects', 'getSoulStage'], {
+    state: { hasSword, currentSword: { soul } }, SOUL_AWAKEN: 34, SOUL_TRUE: 67,
+  });
+  assert.strictEqual(make(33).getSoulStage(), 'plain', '33 = plain');
+  assert.strictEqual(make(34).getSoulStage(), 'wake', '34 = 覺');
+  assert.strictEqual(make(66).getSoulStage(), 'wake', '66 = 覺');
+  assert.strictEqual(make(67).getSoulStage(), 'true', '67 = 本');
+  assert.strictEqual(make(0, false).getSoulStage(), 'none', '검 없음 = none');
+  const e0 = make(33).soulEffects(); assert.strictEqual(e0.successBonus, 0); assert.strictEqual(e0.rewardMul, 1.0);
+  const ew = make(34).soulEffects(); assert.strictEqual(ew.successBonus, 0.02); assert.strictEqual(ew.rewardMul, 1.0);
+  const et = make(67).soulEffects(); assert.strictEqual(et.successBonus, 0.04); assert.strictEqual(et.rewardMul, 1.15);
+});
