@@ -18745,8 +18745,8 @@
 
   // v86 닉네임 자동 제안 — 사용자 道 검 중 가장 강한 것
   function suggestNickname() {
-    // 우선순위 1: 道 검 중 가장 강화도 높은 검명
-    const daoSwords = (state.sealedSwords || []).filter(s => (s.inscriptions || []).includes('道'));
+    // 우선순위 1: 道 검 중 가장 강화도 높은 검명 (v362 — 殿堂 道 검도 포함, 가장 영예로운 검)
+    const daoSwords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).includes('道'));
     if (daoSwords.length > 0) {
       const best = daoSwords.slice().sort((a, b) => (b.level || 0) - (a.level || 0))[0];
       return best.name || makeSwordName(best.form, best.inscriptions || [], best.level);
