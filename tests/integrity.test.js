@@ -591,7 +591,12 @@ test('server.js: 루트 디렉토리 정적 서빙 안 함 — 소스/CLAUDE.md 
   const srv = fs.readFileSync(HTML_PATH.replace(/index\.html$/, 'server.js'), 'utf8').replace(/\/\/[^\n]*/g, '');
   assert.ok(!/app\.use\(\s*express\.static/.test(srv), 'express.static 미들웨어 재도입 금지 (루트 전체 서빙 → 소스/CLAUDE.md/schema 노출)');
   assert.match(srv, /sendFile\([^)]*index\.html/, 'catch-all로 index.html 서빙');
-  assert.match(srv, /X-Frame-Options/, '보안 헤더 유지 (v334)');
+  // v334 보안 헤더 4종 전부 유지 — 하나만 검사하면 나머지 누락 회귀를 놓침
+  // (예: nosniff 제거 시 MIME 스니핑 노출). 의도적으로 추가된 4종 모두 잠금.
+  assert.match(srv, /X-Frame-Options/, '보안 헤더 유지: X-Frame-Options (v334)');
+  assert.match(srv, /X-Content-Type-Options/, '보안 헤더 유지: nosniff (MIME 스니핑 방지)');
+  assert.match(srv, /Referrer-Policy/, '보안 헤더 유지: Referrer-Policy');
+  assert.match(srv, /Permissions-Policy/, '보안 헤더 유지: Permissions-Policy');
 });
 
 test('메인 게임 컨테이너에 role="main" 랜드마크 (v339 a11y)', () => {
