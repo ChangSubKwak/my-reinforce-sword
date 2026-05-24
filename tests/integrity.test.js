@@ -264,6 +264,29 @@ test('autoPull은 autoPullRunning 재진입 가드 (동시 pull 경합/중복 �
   assert.match(body, /finally\s*\{[\s\S]*autoPullRunning\s*=\s*false/, 'finally에서 autoPullRunning=false 리셋');
 });
 
+// 동시성 안전 불변식 (CLAUDE.md 명시): enhance/sealSword는 도전·회수 활성 중 진입을 막아야
+// 하고(상태 손상 방지), slay는 보상 분기 전에 challenge를 즉시 null로 잠가야 함(더블클릭 시
+// 이중 보상/영혼 방지). 함수 선언 직후를 확인 — 긴 본문이라 선언 후 슬라이스로 견고하게.
+function afterDecl(sig, len) {
+  const i = js.indexOf(sig);
+  assert.ok(i >= 0, sig + ' 존재');
+  return js.slice(i + sig.length, i + sig.length + len);
+}
+test('enhance/sealSword 초입 동시성 가드 (도전·회수 중 진입 차단 — 상태 손상 방지)', () => {
+  assert.match(afterDecl('function enhance() {', 120), /if \(challenge \|\| rescueWindow\) return/,
+    'enhance는 초입에 challenge||rescueWindow 가드');
+  assert.match(afterDecl('function sealSword() {', 120), /if \(challenge \|\| rescueWindow\) return/,
+    'sealSword는 초입에 challenge||rescueWindow 가드');
+});
+test('slay는 보상 분기 전에 challenge를 즉시 null로 잠금 (더블클릭 이중 보상 방지)', () => {
+  const body = afterDecl('function slay() {', 400);
+  const nullIdx = body.indexOf('challenge = null');
+  const rewardIdx = body.indexOf('c.strength');
+  assert.ok(nullIdx >= 0, 'slay에 challenge=null 잠금 존재');
+  assert.ok(rewardIdx >= 0, 'slay에 c.strength 보상 분기 존재');
+  assert.ok(nullIdx < rewardIdx, 'challenge=null이 보상 분기보다 먼저 (더블클릭 안전)');
+});
+
 test('디버그 console.log 잔존 없음', () => {
   const n = (js.match(/console\.(log|debug)\(/g) || []).length;
   assert.strictEqual(n, 0, 'console.log/debug 잔존: ' + n);
