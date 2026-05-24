@@ -238,6 +238,32 @@ test('startHeartbeat는 재진입 시 이전 인터벌을 clearInterval로 정�
   assert.ok(clearIdx < setIdx, 'clearInterval이 setInterval보다 먼저 (재진입 누수 방지)');
 });
 
+// schedulePush는 매 액션(봉인 등)마다 호출되는 3초 디바운스 클라우드 push. 재진입 시
+// 이전 타이머를 clearTimeout으로 정리하지 않으면 연속 액션마다 별도 push가 쌓여
+// 중복 Supabase 쓰기 폭주가 된다. setTimeout이라 setInterval≤50 집계 가드는 못 잡음.
+test('schedulePush는 재진입 시 이전 타이머를 clearTimeout으로 정리 (중복 push 폭주 방지)', () => {
+  const m = js.match(/function schedulePush\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(m, 'schedulePush 함수 존재');
+  const body = m[1];
+  const clearIdx = body.indexOf('clearTimeout');
+  const setIdx = body.indexOf('setTimeout');
+  assert.ok(clearIdx >= 0, 'schedulePush에 clearTimeout 디바운스 가드 존재');
+  assert.ok(setIdx >= 0, 'schedulePush에 setTimeout 존재');
+  assert.ok(clearIdx < setIdx, 'clearTimeout이 setTimeout보다 먼저 (디바운스)');
+});
+
+// autoPull은 네트워크 await가 있는 비동기 클라우드 가져오기. 재진입 가드(autoPullRunning)가
+// 없으면 동시 pull이 겹쳐 클라우드 적용이 중복/경합(clobber)된다. 진입 시 early-return 가드 +
+// true 세팅 + finally 리셋의 3요소가 모두 있어야 함.
+test('autoPull은 autoPullRunning 재진입 가드 (동시 pull 경합/중복 적용 방지)', () => {
+  const m = js.match(/async function autoPull\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(m, 'autoPull 함수 존재');
+  const body = m[1];
+  assert.match(body, /autoPullRunning\)\s*return/, 'early-return 가드에 autoPullRunning 포함');
+  assert.match(body, /autoPullRunning\s*=\s*true/, '진입 시 autoPullRunning=true');
+  assert.match(body, /finally\s*\{[\s\S]*autoPullRunning\s*=\s*false/, 'finally에서 autoPullRunning=false 리셋');
+});
+
 test('디버그 console.log 잔존 없음', () => {
   const n = (js.match(/console\.(log|debug)\(/g) || []).length;
   assert.strictEqual(n, 0, 'console.log/debug 잔존: ' + n);
