@@ -224,6 +224,20 @@ test('setInterval 호출이 과도하지 않음 (메모리 누수 감시 — 50�
   assert.ok(n <= 50, 'setInterval 수가 50 이하여야 함 (현재 ' + n + ')');
 });
 
+// startHeartbeat는 80ms 고빈도 타이머라 재진입 시 이전 핸들을 clearInterval로 정리하지
+// 않으면 인터벌이 누적 누수된다. 호출부 수는 그대로(1)라 위 setInterval≤50 집계 가드로는
+// 잡히지 않는 회귀 클래스 — 함수 본문에서 clearInterval이 setInterval보다 먼저 와야 함.
+test('startHeartbeat는 재진입 시 이전 인터벌을 clearInterval로 정리 (80ms 타이머 누수 방지)', () => {
+  const m = js.match(/function startHeartbeat\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(m, 'startHeartbeat 함수 존재');
+  const body = m[1];
+  const clearIdx = body.indexOf('clearInterval');
+  const setIdx = body.indexOf('setInterval');
+  assert.ok(clearIdx >= 0, 'startHeartbeat에 clearInterval 가드 존재');
+  assert.ok(setIdx >= 0, 'startHeartbeat에 setInterval 존재');
+  assert.ok(clearIdx < setIdx, 'clearInterval이 setInterval보다 먼저 (재진입 누수 방지)');
+});
+
 test('디버그 console.log 잔존 없음', () => {
   const n = (js.match(/console\.(log|debug)\(/g) || []).length;
   assert.strictEqual(n, 0, 'console.log/debug 잔존: ' + n);
