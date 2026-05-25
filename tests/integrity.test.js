@@ -287,6 +287,20 @@ test('slay는 보상 분기 전에 challenge를 즉시 null로 잠금 (더블클
   assert.ok(nullIdx < rewardIdx, 'challenge=null이 보상 분기보다 먼저 (더블클릭 안전)');
 });
 
+// 회수/도박 핸들러도 slay와 같은 더블클릭 클래스 — 보상(조각) 전에 rescued로 잠그지 않으면
+// 빠른 더블탭이 이중 회수된다. rescueWindow 객체 리터럴 안의 두 핸들러 모두 잠금 검사.
+test('회수/도박 핸들러는 조각 지급 전에 rescued 잠금 (더블클릭 이중 회수 방지)', () => {
+  const i = js.indexOf('rescueWindow = {');
+  assert.ok(i >= 0, 'rescueWindow 객체 존재');
+  const slice = js.slice(i, i + 1200);
+  const guardIdx = slice.indexOf('if (rescued) return');
+  const rewardIdx = slice.indexOf('state.shards += shardReward');
+  assert.ok(guardIdx >= 0, 'rescued 가드 존재');
+  assert.ok(rewardIdx >= 0, 'shardReward 지급 존재');
+  assert.ok(guardIdx < rewardIdx, 'rescued 잠금이 조각 지급보다 먼저 (더블클릭 안전)');
+  assert.ok((slice.match(/rescued = true/g) || []).length >= 2, '회수·도박 두 핸들러 모두 rescued 잠금');
+});
+
 // v371 率性 인식 순간: deriveNaturePath(v370)가 follow/defy일 때 1회만 페이드. naturePathSeen
 // 플래그로 재발화 차단, 명문 cadence(checkInscriptions)에 훅. 점수 효과 0 — 회귀 시 즉발/중복/무발화.
 test('v371: checkNaturePath는 follow/defy 1회성 게이트 + checkInscriptions 훅', () => {
