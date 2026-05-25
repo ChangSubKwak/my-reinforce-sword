@@ -1504,3 +1504,32 @@ test('computeOverallProgress: 大成 — 신규 0%, 100 cap (가중치 합 100)'
   // 소스가 100으로 cap (가중치 합 100 초과 방지)
   assert.match(readScript(), /return Math\.min\(100, Math\.round\(total\)\)/, '大成 100 cap');
 });
+
+// v371 checkNaturePath — 率性 인식 순간의 발화 로직 (행동 테스트, 와이어링 가드와 상보)
+test('v371 checkNaturePath: follow/defy만 1회 발화 + seen 잠금 + 일지 기록', () => {
+  function run(np, seen, hasSword) {
+    const calls = { announce: [], record: [] };
+    const state = { hasSword: hasSword !== false, currentSword: { naturePathSeen: !!seen } };
+    loadFunctions(['checkNaturePath'], {
+      state,
+      deriveNaturePath: () => np,
+      announceInscription: (k, l) => calls.announce.push([k, l]),
+      recordEvent: (t) => calls.record.push(t),
+    }).checkNaturePath();
+    return { calls, state };
+  }
+  // follow → 발화 1회 + 일지 + seen 잠금
+  let r = run({ key: 'follow', name: '率性' }, false, true);
+  assert.strictEqual(r.calls.announce.length, 1, 'follow 발화');
+  assert.strictEqual(r.calls.record.length, 1, 'follow 일지 기록');
+  assert.strictEqual(r.state.currentSword.naturePathSeen, true, '발화 후 seen 잠금');
+  // defy → 발화
+  assert.strictEqual(run({ key: 'defy', name: '逆性' }, false, true).calls.announce.length, 1, 'defy 발화');
+  // 이미 본 검 → 무발화 (1회성)
+  assert.strictEqual(run({ key: 'follow', name: '率性' }, true, true).calls.announce.length, 0, 'seen=true 무발화');
+  // 無爲/none(길 미정) → 무발화 (즉발·싸구려 방지)
+  assert.strictEqual(run({ key: 'wuwei', name: '無爲' }, false, true).calls.announce.length, 0, '無爲 무발화');
+  assert.strictEqual(run({ key: 'none', name: '' }, false, true).calls.announce.length, 0, 'none 무발화');
+  // 검 없음 → 무발화
+  assert.strictEqual(run({ key: 'follow', name: '率性' }, false, false).calls.announce.length, 0, '검 없음 무발화');
+});
