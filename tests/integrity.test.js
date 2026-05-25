@@ -287,6 +287,20 @@ test('slay는 보상 분기 전에 challenge를 즉시 null로 잠금 (더블클
   assert.ok(nullIdx < rewardIdx, 'challenge=null이 보상 분기보다 먼저 (더블클릭 안전)');
 });
 
+// doSeal은 자체 재진입 가드가 없어, 봉인 더블클릭/더블엔터 방어는 askName이 책임진다:
+// onConfirm이 cleanup()(리스너 removeEventListener)을 callback(doSeal) *전에* 호출해야
+// 두 번째 이벤트가 무리스너로 무시된다. 이 순서가 깨지면 한 검이 이중 봉인(이중 보상+이중 push)된다.
+test('askName onConfirm은 callback(doSeal) 전에 cleanup으로 리스너 해제 (이중 봉인 방지)', () => {
+  const body = afterDecl('function onConfirm() {', 200);
+  const cleanIdx = body.indexOf('cleanup()');
+  const cbIdx = body.indexOf('callback(');
+  assert.ok(cleanIdx >= 0, 'onConfirm이 cleanup() 호출');
+  assert.ok(cbIdx >= 0, 'onConfirm이 callback() 호출');
+  assert.ok(cleanIdx < cbIdx, 'cleanup()이 callback()보다 먼저 (더블파이어 방지)');
+  // cleanup()은 confirm 리스너를 실제로 제거해야 함 (재호출 무력화)
+  assert.match(afterDecl('function cleanup() {', 300), /removeEventListener\('click',\s*onConfirm\)/, 'cleanup이 onConfirm 리스너 해제');
+});
+
 // 회수/도박 핸들러도 slay와 같은 더블클릭 클래스 — 보상(조각) 전에 rescued로 잠그지 않으면
 // 빠른 더블탭이 이중 회수된다. rescueWindow 객체 리터럴 안의 두 핸들러 모두 잠금 검사.
 test('회수/도박 핸들러는 조각 지급 전에 rescued 잠금 (더블클릭 이중 회수 방지)', () => {
