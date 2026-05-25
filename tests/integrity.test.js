@@ -287,6 +287,18 @@ test('slay는 보상 분기 전에 challenge를 즉시 null로 잠금 (더블클
   assert.ok(nullIdx < rewardIdx, 'challenge=null이 보상 분기보다 먼저 (더블클릭 안전)');
 });
 
+// 融劍도 보상-변이 행동 더블파이어 클래스: fuseSwords는 splice+과금 전에 hasSword로 잠근다.
+// newSword()가 hasSword=true를 동기 설정 → 두 번째 클릭은 차단(이중 splice/이중 과금 방지).
+test('fuseSwords는 splice/과금 전에 hasSword로 재진입 차단 (이중 융검 방지)', () => {
+  const body = afterDecl('function fuseSwords() {', 600);
+  const guardIdx = body.indexOf('if (state.hasSword) return');
+  const spliceIdx = body.indexOf('state.sealedSwords.splice');
+  const costIdx = body.indexOf('state.shards -= FUSION_COST');
+  assert.ok(guardIdx >= 0, 'fuseSwords에 hasSword 가드 존재');
+  assert.ok(spliceIdx >= 0 && costIdx >= 0, 'splice + 과금 존재');
+  assert.ok(guardIdx < spliceIdx && guardIdx < costIdx, 'hasSword 가드가 splice·과금보다 먼저');
+});
+
 // doSeal은 자체 재진입 가드가 없어, 봉인 더블클릭/더블엔터 방어는 askName이 책임진다:
 // onConfirm이 cleanup()(리스너 removeEventListener)을 callback(doSeal) *전에* 호출해야
 // 두 번째 이벤트가 무리스너로 무시된다. 이 순서가 깨지면 한 검이 이중 봉인(이중 보상+이중 push)된다.
