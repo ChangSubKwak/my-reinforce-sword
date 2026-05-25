@@ -294,6 +294,7 @@ test('v371: checkNaturePath는 follow/defy 1회성 게이트 + checkInscriptions
   assert.match(body, /naturePathSeen\)\s*return/, '이미 본 검은 재발화 안 함 (1회성)');
   assert.match(body, /'follow'.*'defy'|np\.key !== 'follow' && np\.key !== 'defy'/, 'follow/defy일 때만 (無爲/none 제외)');
   assert.match(body, /naturePathSeen\s*=\s*true/, '발화 후 seen=true 잠금');
+  assert.match(body, /recordEvent\(/, 'v371b — 발현을 일지(recentLog)에 기록 (생애 사건 일관성)');
   // checkInscriptions가 checkNaturePath를 호출해야 함 (행동 cadence 훅 — 회귀 시 무발화)
   assert.match(afterDecl('function checkInscriptions() {', 500), /checkNaturePath\(\)/, 'checkInscriptions가 checkNaturePath 호출');
 });

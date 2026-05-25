@@ -15656,6 +15656,7 @@
       ? '타고난 形을 따른다 — 率性'
       : '타고난 形을 거슬러 제 길을 연다 — 逆性';
     announceInscription(np.name, label);
+    if (typeof recordEvent === 'function') recordEvent(np.name + ' 발현');  // v371b — 생애 사건으로 일지에 남김
   }
 
   let inscribeQueue = [];
