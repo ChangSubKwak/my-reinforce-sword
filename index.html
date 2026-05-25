@@ -4164,7 +4164,7 @@
     ultimateAchieved: false,  // v170 千秋萬代 — 모든 메타 완성 1회 표식
     ultimateAchievedAt: 0,    // v170 — 달성 시각
     totalPlayTimeMs: 0,       // v174 歲月 — 누적 active play 시간 (ms)
-    currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {}, foesEncountered: {}, playerSeal: '', bornTod: null },  // v290 — newSword() shape와 정합 (첫 검도 동일 필드)
+    currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {}, foesEncountered: {}, playerSeal: '', bornTod: null, naturePathSeen: false },  // v290 — newSword() shape와 정합 (첫 검도 동일 필드)
     whetstones: 0,
     spiritstones: 0,
     divinationStones: 0,  // v122 占卜 — 정확한 전조
@@ -4360,6 +4360,7 @@
       if (state.currentSword.form === undefined) state.currentSword.form = null;
       if (typeof state.currentSword.soul !== 'number') state.currentSword.soul = 0;
       if (typeof state.currentSword.scars !== 'number') state.currentSword.scars = 0;
+      if (typeof state.currentSword.naturePathSeen !== 'boolean') state.currentSword.naturePathSeen = false;  // v371 率性 인식 순간 1회성 플래그
       if (typeof state.currentSword.protectsUsed !== 'number') state.currentSword.protectsUsed = 0;
       if (!state.currentSword.stars || typeof state.currentSword.stars !== 'object') state.currentSword.stars = {};
       // v93 天命 — 기존 검에 천명 없으면 부여
@@ -15638,6 +15639,23 @@
         announceInscription(def.key, def.label);
       }
     }
+    checkNaturePath();  // v371 — 명문과 같은 행동 cadence에서 천성 인식 순간 점검
+  }
+
+  // v371 率性 인식의 순간 — v370 率性 차원은 모달 텍스트로만 존재(침묵)했다. 形(v6)×性情(v247)이
+  // 합쳐져 천성을 따랐는지(率性)/거슬렀는지(逆性)가 *처음 뚜렷해지는* 순간에 1회 페이드로 새긴다.
+  // 銘 페이드 UI(announceInscription)를 재사용 — 별도 SFX/시스템 없음(섬 방지). 점수 효과 0, 순수 인식.
+  // 無爲(和, 길 미정)는 제외: 즉발·싸구려 방지. 명문 set엔 push 안 함(별개 차원, 식별만).
+  function checkNaturePath() {
+    if (!state.hasSword || !state.currentSword) return;
+    if (state.currentSword.naturePathSeen) return;
+    const np = (typeof deriveNaturePath === 'function') ? deriveNaturePath(state.currentSword) : { key: 'none' };
+    if (np.key !== 'follow' && np.key !== 'defy') return;  // 뚜렷한 따름/거스름일 때만
+    state.currentSword.naturePathSeen = true;
+    const label = np.key === 'follow'
+      ? '타고난 形을 따른다 — 率性'
+      : '타고난 形을 거슬러 제 길을 연다 — 逆性';
+    announceInscription(np.name, label);
   }
 
   let inscribeQueue = [];
@@ -15996,7 +16014,7 @@
     }
     // v149 神祠 — 護 헌사: 새 검 탄생 시 시작 보호권 +1
     if (shrineHas('d2')) state.protections += 1;
-    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0, protectsUsed: 0, stars: {}, playerSeal: state.playerSeal || '', bornTod: getTimeOfDay().name };  // v252 時生 — 빚어진 시각(朝/晝/夕/夜)
+    state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0, protectsUsed: 0, stars: {}, playerSeal: state.playerSeal || '', bornTod: getTimeOfDay().name, naturePathSeen: false };  // v252 時生 — 빚어진 시각(朝/晝/夕/夜)
     // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (state.firstWayReached) {
@@ -17446,7 +17464,7 @@
     // load 보정 재실행
     if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
     if (!state.currentSword || typeof state.currentSword !== 'object') {
-      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {} };
+      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {}, naturePathSeen: false };
     }
     if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
     if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;

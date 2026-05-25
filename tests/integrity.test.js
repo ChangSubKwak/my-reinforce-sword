@@ -287,6 +287,17 @@ test('slay는 보상 분기 전에 challenge를 즉시 null로 잠금 (더블클
   assert.ok(nullIdx < rewardIdx, 'challenge=null이 보상 분기보다 먼저 (더블클릭 안전)');
 });
 
+// v371 率性 인식 순간: deriveNaturePath(v370)가 follow/defy일 때 1회만 페이드. naturePathSeen
+// 플래그로 재발화 차단, 명문 cadence(checkInscriptions)에 훅. 점수 효과 0 — 회귀 시 즉발/중복/무발화.
+test('v371: checkNaturePath는 follow/defy 1회성 게이트 + checkInscriptions 훅', () => {
+  const body = afterDecl('function checkNaturePath() {', 600);
+  assert.match(body, /naturePathSeen\)\s*return/, '이미 본 검은 재발화 안 함 (1회성)');
+  assert.match(body, /'follow'.*'defy'|np\.key !== 'follow' && np\.key !== 'defy'/, 'follow/defy일 때만 (無爲/none 제외)');
+  assert.match(body, /naturePathSeen\s*=\s*true/, '발화 후 seen=true 잠금');
+  // checkInscriptions가 checkNaturePath를 호출해야 함 (행동 cadence 훅 — 회귀 시 무발화)
+  assert.match(afterDecl('function checkInscriptions() {', 500), /checkNaturePath\(\)/, 'checkInscriptions가 checkNaturePath 호출');
+});
+
 test('디버그 console.log 잔존 없음', () => {
   const n = (js.match(/console\.(log|debug)\(/g) || []).length;
   assert.strictEqual(n, 0, 'console.log/debug 잔존: ' + n);
