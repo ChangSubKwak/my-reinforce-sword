@@ -7,14 +7,14 @@
 <meta name="color-scheme" content="dark">
 <title>검 강화 — 강화의 도</title>
 <!-- v278 문서 메타 — 공유 링크 미리보기 + 파비콘 (외부 파일 0, 인라인 SVG data-URI) -->
-<meta name="description" content="검을 강화하고, 부서지면 다섯 호흡 안에 거두며, 그림자를 베고, 봉인하여 다음 검에 힘을 잇는다. '다음 한 번만 더'의 도(道) — 미니멀 흑금 강화 시뮬레이션.">
+<meta name="description" content="검을 강화하고, 부서지면 다섯 호흡 안에 거두며, 그림자를 베고, 봉인하여 다음 검에 힘을 잇는다. '다음 한 번만 더'의 도 — 미니멀 흑금 강화 시뮬레이션.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="검(劍) — 강화의 도">
-<meta property="og:description" content="다음 한 번만 더. 검을 강화하고 봉인하여 도(道)에 이르는 미니멀 강화 시뮬레이션.">
+<meta property="og:title" content="검 — 강화의 도">
+<meta property="og:description" content="다음 한 번만 더. 검을 강화하고 봉인하여 도에 이르는 미니멀 강화 시뮬레이션.">
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="검(劍) — 강화의 도">
-<meta name="twitter:description" content="다음 한 번만 더. 검을 강화하고 봉인하여 도(道)에 이르는 미니멀 강화 시뮬레이션.">
+<meta name="twitter:title" content="검 — 강화의 도">
+<meta name="twitter:description" content="다음 한 번만 더. 검을 강화하고 봉인하여 도에 이르는 미니멀 강화 시뮬레이션.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231f1a14'/%3E%3Ctext x='16' y='23' font-size='22' text-anchor='middle' fill='%23e8c454' font-family='serif'%3E%E5%8A%8D%3C/text%3E%3C/svg%3E">
 <!-- v82+ Supabase 클라이언트 (최신 stable) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -3402,7 +3402,7 @@
 <div class="modal" id="anthology-modal">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mtitle-3" style="max-width: 420px;">
     <h2 id="mtitle-3">검의 노래</h2>
-    <p>도(道)에 이른 검들의 일생을 시구로</p>
+    <p>도에 이른 검들의 일생을 시구로</p>
     <div id="anthology-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px;"></div>
     <button class="modal-close" data-close>닫 기</button>
   </div>
@@ -3848,7 +3848,7 @@
     <h2 id="mtitle-33">전당</h2>
     <p id="enshrined-progress" class="modal-progress"></p>
     <p class="modal-note">
-      도(道)에 이른 검을 봉인 대신 영구 진열.<br>
+      도에 이른 검을 봉인 대신 영구 진열.<br>
       각 진열 검: 모든 미래 검에 강화 성공 +1.5% (최대 3자루).
     </p>
     <div id="enshrined-list" style="max-height: 380px; overflow-y: auto; padding: 0 4px"></div>
@@ -4700,8 +4700,8 @@
     {
       key: 'kei', kanji: '形', title: '형',
       lines: [
-        '검의 형(形)은 검사의 형(形).',
-        '강직(直)·유연(曲)·무거움(重)·빠름(速).',
+        '검의 형은 검사의 형.',
+        '강직·유연·무거움·빠름.',
         '어느 하나도 정답은 아니다.',
       ],
       unlock: () => {
@@ -4714,14 +4714,14 @@
       lines: [
         '검에는 혼이 깃든다.',
         '사용할수록 깊어진다.',
-        '평범에서 깨움(覺)으로, 깨움에서 본질(本)로.',
+        '평범에서 깨움으로, 깨움에서 본질로.',
       ],
       unlock: () => (state.sealedSwords || []).concat(state.enshrined || []).some(s => (s.inscriptions || []).includes('本')),  // v352 — 殿堂 검도
     },
     {
       key: 'dou', kanji: '道', title: '도',
       lines: [
-        '도(道)는 끝이 아니다.',
+        '도는 끝이 아니다.',
         '새 시작의 다른 이름이다.',
         '한 번 도에 이른 자는 다시 평범하게 살 수 없다.',
       ],
@@ -4730,7 +4730,7 @@
     {
       key: 'en', kanji: '緣', title: '인연',
       lines: [
-        '기연(奇緣)은 우연이 아니다.',
+        '기연은 우연이 아니다.',
         '검과 사람과 시간이 만든 보이지 않는 매듭.',
         '한 번 묶인 인연은 영원히 풀리지 않는다.',
       ],
@@ -4739,7 +4739,7 @@
     {
       key: 'sen', kanji: '仙', title: '신선',
       lines: [
-        '백 대(代)를 잇는 자는 검사가 아니다.',
+        '백 대를 잇는 자는 검사가 아니다.',
         '검과 사람의 경계가 흐려진다.',
         '신선이 된 자에게 검은 또 다른 자기 자신이다.',
       ],
@@ -6396,7 +6396,7 @@
     opening: [
       '한 자루의 검을 빚어',
       '검의 길 위에 서서',
-      '도(道)를 향한 발걸음 위에',
+      '도를 향한 발걸음 위에',
       '검과 그림자 사이의 침묵에서',
       '그림자가 깊은 밤,',
       '강철의 결마다 마음을 새겨',
@@ -6427,7 +6427,7 @@
       '검과 사람은 하나가 된다',
       '아직 길의 끝은 보이지 않는다',
       '오늘도 검을 쥐었다',
-      '도(道)는 멀지 않다',
+      '도는 멀지 않다',
     ],
   };
   function dominantFormFromSealedSwords() {
@@ -6754,7 +6754,7 @@
     const successRate = diff.enhanceAttempts > 0 ? Math.round(diff.enhanceSuccess / diff.enhanceAttempts * 100) : 0;
     // 결론 line — 어떤 측면이 두드러진가
     let summary = '';
-    if (diff.wayReached >= 1) summary = '도(道)에 ' + diff.wayReached + '회 닿았다 — 정점의 주';
+    if (diff.wayReached >= 1) summary = '도에 ' + diff.wayReached + '회 닿았다 — 정점의 주';
     else if (diff.sealed >= 5) summary = diff.sealed + '자루를 봉인했다 — 수집의 주';
     else if (diff.slain >= 10) summary = '그림자 ' + diff.slain + '을 베어냈다 — 전투의 주';
     else if (diff.stalemate >= 3) summary = '평화의 길을 ' + diff.stalemate + '회 — 對峙의 주';
@@ -6845,8 +6845,8 @@
       pool.push('봉인된 형제 「' + (bro.name || '無名') + '」이 꿈에 나타난다');
     }
     // 道
-    if (lv >= MAX_LEVEL) pool.push('도(道)에 닿은 꿈 — 이미 그곳에 있다');
-    else if (lv >= 11) pool.push('도(道)에 닿는 꿈 — 손끝에 닿을 듯하다');
+    if (lv >= MAX_LEVEL) pool.push('도에 닿은 꿈 — 이미 그곳에 있다');
+    else if (lv >= 11) pool.push('도에 닿는 꿈 — 손끝에 닿을 듯하다');
     else if (lv >= 5) pool.push('더 높은 곳을 향한 꿈을 꾼다');
     else pool.push('첫 강화의 기억이 흐릿하게 떠오른다');
     // 영혼
@@ -6988,7 +6988,7 @@
     const el = document.createElement('div');
     el.innerHTML = '<div style="font-size:10px;color:rgba(180,160,232,0.7);letter-spacing:12px;margin-bottom:18px">無  極</div>' +
                     '<div style="font-size:88px;color:#c8b8f0;letter-spacing:14px;text-shadow:0 0 40px #c8b8f0,0 0 80px rgba(180,160,232,0.5);font-weight:200;line-height:1">' + title + '</div>' +
-                    '<div class="verse-line">永劫 ' + points + ' — 도(道)를 거듭 넘었다</div>' +
+                    '<div class="verse-line">永劫 ' + points + ' — 도를 거듭 넘었다</div>' +
                     '<div style="font-size:11px;color:#c8b8f0;letter-spacing:3px;margin-top:12px">글로벌 강화 +' + (eternityBonus()*100).toFixed(1) + '%</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6300;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:42px 60px;background:radial-gradient(ellipse,rgba(18,15,28,0.95) 0%,rgba(18,15,28,0.6) 60%,transparent 90%);max-width:560px';
     document.body.appendChild(el);
@@ -7259,9 +7259,9 @@
       html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">卷  三  ─  道</div>';
       const wayswords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).indexOf('道') >= 0);  // v359 — 殿堂 道 검도 劍士録에 (display undercount 수정)
       if (wayswords.length === 0) {
-        html += '<div style="text-align:center;padding:30px;color:#888;font-style:italic;font-size:11px;letter-spacing:3px">아직 도(道)에 닿지 않았다 — +15까지 검을 강화하라</div>';
+        html += '<div style="text-align:center;padding:30px;color:#888;font-style:italic;font-size:11px;letter-spacing:3px">아직 도에 닿지 않았다 — +15까지 검을 강화하라</div>';
       } else {
-        html += '<div style="font-size:13px;color:#fff5c0;letter-spacing:4px;text-align:center;margin-bottom:18px">' + wayswords.length + '회 도(道) 도달 — 정점의 검</div>';
+        html += '<div style="font-size:13px;color:#fff5c0;letter-spacing:4px;text-align:center;margin-bottom:18px">' + wayswords.length + '회 도 도달 — 정점의 검</div>';
         wayswords.slice(0, 6).forEach(s => {
           html += '<div style="margin:8px 0;padding:8px 12px;border-left:2px solid #d4af37;background:rgba(212,175,55,0.06)">';
           html += '<div style="font-size:13px;color:#fff5c0;letter-spacing:3px">' + (s.name || '無名') + '</div>';
@@ -7319,8 +7319,8 @@
       html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);margin-bottom:24px">卷  六  ─  종  결</div>';
       // narrative summary
       let summary = '';
-      if (ways >= 5) summary = '여러 번 도(道)에 닿았다 — 검의 정점을 알았다.';
-      else if (ways >= 1) summary = '도(道)를 한 번 보았다 — 길이 보였다.';
+      if (ways >= 5) summary = '여러 번 도에 닿았다 — 검의 정점을 알았다.';
+      else if (ways >= 1) summary = '도를 한 번 보았다 — 길이 보였다.';
       else if (sealed >= 10) summary = '많은 검을 봉인했다 — 손이 길을 안다.';
       else if (sealed >= 1) summary = '검을 봉인하기 시작했다 — 길이 열렸다.';
       else summary = '아직 길 위에 서 있다 — 검의 본성을 찾는 중.';
@@ -7785,7 +7785,7 @@
     const ins = (s.inscriptions || []);
     const slain = s.slainCount || 0;
     const enhanceN = s.enhanceAttempts || 0;
-    if (ins.indexOf('道') >= 0) return '도(道)의 검';
+    if (ins.indexOf('道') >= 0) return '도의 검';
     if (ins.indexOf('龍斬') >= 0) return '용을 벤 검';  // v370l 名 정점 무훈 — 비교에서도 고유 정체성
     if (ins.indexOf('鬼斬') >= 0 || slain >= 10) return '전투의 검';
     if (ins.indexOf('夜叉斬') >= 0) return '밤의 검';
@@ -8081,9 +8081,9 @@
       if (state.shards >= cost) return { text: '검을 빚어라 — 조각 충분', tone: 'good' };
       return { text: '조각이 부족 — 부서진 검을 회수하라', tone: 'warn' };
     }
-    // 3) 도(道) 도달
+    // 3) 도 도달
     if (state.level >= (typeof MAX_LEVEL !== 'undefined' ? MAX_LEVEL : 15)) {
-      return { text: '도(道)에 닿았다 — 봉인의 의식을 생각하라', tone: 'best' };
+      return { text: '도에 닿았다 — 봉인의 의식을 생각하라', tone: 'best' };
     }
     // 4) 영혼 정점
     if (state.currentSword && (state.currentSword.soul || 0) >= 100) {
@@ -8726,7 +8726,7 @@
 
   // === v198 占 — 일일 점쾌 ===
   const ORACLE_RESULTS = [
-    { kanji:'大吉', color:'#fff5c0', tone:'best',    verse:'오늘은 강화의 날 — 도(道)에 한 걸음 더' },
+    { kanji:'大吉', color:'#fff5c0', tone:'best',    verse:'오늘은 강화의 날 — 도에 한 걸음 더' },
     { kanji:'吉',   color:'#d4af37', tone:'good',    verse:'오늘은 검을 들어라 — 길이 열린다' },
     { kanji:'小吉', color:'#c8a8a8', tone:'mild',    verse:'작은 기쁨이 깃들 것이다' },
     { kanji:'中',   color:'#a8a098', tone:'neutral', verse:'오늘은 균형 — 가운데를 지켜라' },
@@ -8801,7 +8801,7 @@
   const DAILY_SAYINGS = [
     '검은 사람을 닮는다',
     '강한 검은 부드럽다',
-    '도(道)는 멈춤에 있다',
+    '도는 멈춤에 있다',
     '한 번의 실패가 백 번의 성공보다 깊다',
     '검을 쥔 자는 검의 마음을 안다',
     '강은 가장 깊은 곳에서 가장 조용하다',
@@ -8810,55 +8810,55 @@
     '오래된 검은 침묵으로 말한다',
     '진정한 강자는 자신을 베어낸다',
     '바람이 그치면 검이 깨어난다',
-    '도(道)는 들리지 않으나 늘 있다',
+    '도는 들리지 않으나 늘 있다',
     '검의 길은 자신의 발자국 위에 있다',
     '봉인된 검도 살아있다',
     '한 자루의 검에 천 자루의 삶이 있다',
     '강함은 약함을 끌어안는다',
     '그림자가 깊은 곳에서 검이 빛난다',
     '검은 베지 않을 때 가장 검답다',
-    '도(道)의 끝은 도(道)의 시작이다',
+    '도의 끝은 도의 시작이다',
     '검을 잃은 자가 검을 안다',
     '천 번의 강화가 한 호흡만 못하다',
     '검은 무게로 쥐는 것이 아니다',
-    '도(道)는 멀지 않다 — 한 발자국이다',
+    '도는 멀지 않다 — 한 발자국이다',
     '오늘의 검이 어제의 검을 잊는다',
     '강한 그림자가 강한 검을 만든다',
     '봉인은 끝이 아닌 시작이다',
     '검의 수명은 사용자의 호흡이다',
     '하나를 베면 만이 산다',
     '검은 사용자를 키운다',
-    '도(道)는 검 안에 있고, 사용자 안에 있다',
+    '도는 검 안에 있고, 사용자 안에 있다',
     '바람의 검은 멈추지 않는다',
     '굽은 검도 곧은 길을 간다',
     '무거운 검이 가벼움을 안다',
     '빠른 검은 침묵을 안다',
-    '도(道)는 끊임없는 강화가 아니라 끊임없는 호흡이다',
+    '도는 끊임없는 강화가 아니라 끊임없는 호흡이다',
     '검을 보는 자가 검을 안다',
-    '검을 잊은 자가 도(道)에 닿는다',
+    '검을 잊은 자가 도에 닿는다',
     '한 자루의 검이 우주를 담는다',
     '한 번의 봉인이 만 가지 선택이다',
     '검의 무거움은 사용자의 사랑이다',
-    '도(道)의 검은 도(道)를 잊는다',
+    '도의 검은 도를 잊는다',
     '강한 검은 부서지지 않는 검이 아니다',
     '검은 사용자보다 오래 산다',
     '봉인된 검은 살아있는 영혼이다',
     '한 호흡이 검의 일생이다',
     '검의 노래는 사용자의 침묵이다',
     '검의 강도는 사용자의 의지다',
-    '도(道)는 손에 있고, 검에 있고, 마음에 있다',
-    '검과 사용자가 하나가 될 때 도(道)가 보인다',
+    '도는 손에 있고, 검에 있고, 마음에 있다',
+    '검과 사용자가 하나가 될 때 도가 보인다',
     '봉인된 검들이 별이 된다',
     '한 자루 검의 일생이 사용자의 일생이다',
     '검을 베면 그림자가 깊어진다',
     '검을 사랑하는 자가 검을 떠난다',
-    '도(道)의 끝은 도(道)의 처음이다',
+    '도의 끝은 도의 처음이다',
     '검은 강화될수록 가벼워진다',
     '오래된 검이 새 검을 가르친다',
     '검의 길은 사용자의 발자국이다',
     '한 자루 검이 천 자루 그림자를 베다',
     '검은 강화하는 것이 아니라 깨어나는 것이다',
-    '도(道)는 한 호흡으로 완성된다',
+    '도는 한 호흡으로 완성된다',
   ];
   function dailySayingIdx() {
     const today = new Date();
@@ -11483,7 +11483,7 @@
 
   // === v135 鍛 — 티어 전환 의식 + 高險 성공 의식 ===
   const TIER_NAMES = ['', '初', '練', '剛', '靈', '聖'];  // tier 1~5
-  const TIER_LABELS = ['', '단검 — 첫 단련', '사벨 — 정련된 강철', '양손검 — 영혼이 깃들다', '마법사검 — 신묘한 검', '신검 — 도(道)의 영역'];
+  const TIER_LABELS = ['', '단검 — 첫 단련', '사벨 — 정련된 강철', '양손검 — 영혼이 깃들다', '마법사검 — 신묘한 검', '신검 — 도의 영역'];
   function playTierTransition(tier) {
     if (tier < 2 || tier > 5) return;
     const rect = swordWrap.getBoundingClientRect();
@@ -12413,7 +12413,7 @@
 
   // === 道魂 — 봉인된 道 검이 후세에 시구를 전한다 ===
   function whisperFromAncestor(currentForm) {
-    // v369 — 殿堂 道 검도 후세에 시구를 전함(道魂). 殿堂 검은 가장 영예로운 道 검인데 기존엔
+    // v369 — 殿堂 道 검도 후세에 시구를 전함. 殿堂 검은 가장 영예로운 道 검인데 기존엔
     // sealedSwords만 봐서 안 속삭였음 — v359(劍士録 道 목록)·merged-collection류 표시 누락. 순수 narrative.
     const sealed = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => s.verse && Array.isArray(s.verse));
     if (sealed.length === 0) return;
@@ -12790,7 +12790,7 @@
     low:  ['아직 잠들어 있다', '검은 침묵한다', '깨어남을 기다린다'],
   };
   const STROKE_WHISPERS_LEVEL = {
-    high: ['도(道)가 가깝다', '거의 정점이다', '한 걸음 남았다'],
+    high: ['도가 가깝다', '거의 정점이다', '한 걸음 남았다'],
     mid:  ['검이 단단해진다', '강철이 깊어진다', '형태를 갖춰간다'],
     low:  ['아직 시작이다', '먼 길이 남았다', '첫 호흡의 검'],
   };
@@ -12820,7 +12820,7 @@
     const lv = state.level || 0;
     let pool;
     // 영혼 또는 강화도 중 더 두드러진 것 기반
-    if (lv >= MAX_LEVEL) pool = ['검과 사람이 하나가 되었다', '도(道)에 닿은 검'];
+    if (lv >= MAX_LEVEL) pool = ['검과 사람이 하나가 되었다', '도에 닿은 검'];
     else if (soul >= 67) pool = STROKE_WHISPERS_SOUL.high;
     else if (lv >= 11) pool = STROKE_WHISPERS_LEVEL.high;
     else if (soul >= 34) pool = STROKE_WHISPERS_SOUL.mid;
@@ -13412,7 +13412,7 @@
     '기다림은 검의 본성이다',
     '고요할 때 검은 깊어진다',
     '비어야 채워진다',
-    '도(道)는 가는 것이 아니다 — 보는 것이다',
+    '도는 가는 것이 아니다 — 보는 것이다',
     '마음이 머무는 곳에 검이 머문다',
     '한 호흡이 천 번의 시도보다 깊다',
     '검을 잊을 때 검이 된다',
@@ -15055,8 +15055,8 @@
   function generateLastWords(sword) {
     if (!sword) return '';
     const ins = sword.inscriptions || [];
-    if (ins.includes('道')) return '나는 도(道)를 보았다. 그것으로 족하다.';
-    if (ins.includes('龍斬')) return '용(龍)을 베었으니, 여한이 없다.';  // v370j 名 정점 무훈 — 검의 1인칭 회한
+    if (ins.includes('道')) return '나는 도를 보았다. 그것으로 족하다.';
+    if (ins.includes('龍斬')) return '용을 베었으니, 여한이 없다.';  // v370j 名 정점 무훈 — 검의 1인칭 회한
     // v371f 久/古(노쇠, v18) — 오래 산 검의 작별은 그 긴 생을 비춘다. 遺言이 무시하던 정체성 결합.
     // 정점(道/龍斬) 아래, 性情 위 우선순위(검명 NAME_SUFFIX와 동일하게 久/古는 낮으나 존재). 효과 0.
     if (ins.includes('古')) return '오랜 세월을 보았다. 이제 쉬어도 좋으리.';
@@ -15136,7 +15136,7 @@
     }
     // 2. 정점 성취
     let peak;
-    if (ins.includes('道')) peak = '주인의 손에서 도(道)에 이르렀다.';
+    if (ins.includes('道')) peak = '주인의 손에서 도에 이르렀다.';
     else if (lv >= 10) peak = '검은 +' + lv + '강의 영역에 닿았다.';
     else if (lv >= 5) peak = '검은 +' + lv + '강의 단계까지 단련되었다.';
     else peak = '검은 짧은 생을 살았으나 첫 빛을 보았다.';
@@ -15145,11 +15145,11 @@
     const notes = [];
     // v370h — 名(명명된 적, v90) 격파를 일대기에 결합. 보스 처치는 검의 정점 무훈인데
     // 一代記가 무시하던 누락(龍을 벤 검도 "평범한 생"이 될 수 있었음). 명문에서 파생, 효과 0.
-    const FOE_NARR = { '龍斬': '전설의 용(龍)을 베어냈고', '帝斬': '귀제(鬼帝)를 쓰러뜨렸고', '刃斬': '천 개의 칼날(千刃)을 갈랐고', '月斬': '은월(銀月)을 베었고', '風斬': '흑풍(黑風)을 잠재웠고' };
+    const FOE_NARR = { '龍斬': '전설의 용을 베어냈고', '帝斬': '귀제를 쓰러뜨렸고', '刃斬': '천 개의 칼날을 갈랐고', '月斬': '은월을 베었고', '風斬': '흑풍을 잠재웠고' };
     const foeKill = ['龍斬', '帝斬', '刃斬', '月斬', '風斬'].find(k => ins.includes(k));
-    if (foeKill === '龍斬') notes.push(FOE_NARR['龍斬']);  // 명명된 용은 정점 — 검귀(鬼斬)보다 위
+    if (foeKill === '龍斬') notes.push(FOE_NARR['龍斬']);  // 명명된 용은 정점 — 검귀보다 위
     else if (ins.includes('鬼斬')) notes.push('검귀의 피를 받았고');
-    else if (ins.includes('夜叉斬')) notes.push('밤의 야차(夜叉)를 베어냈고');  // v370k 특수 그림자 격파 — 鬼斬 바로 아래(검명 우선순위와 일치)
+    else if (ins.includes('夜叉斬')) notes.push('밤의 야차를 베어냈고');  // v370k 특수 그림자 격파 — 鬼斬 바로 아래(검명 우선순위와 일치)
     else if (ins.includes('斷魔')) notes.push('네 그림자를 모두 베어냈고');
     else if (foeKill) notes.push(FOE_NARR[foeKill]);  // 그 외 명명된 적 (帝/刃/月/風)
     else if (slain >= 5) notes.push(slain + '의 그림자를 베어냈고');
@@ -15175,7 +15175,7 @@
     } else if (allStarsLit) {
       ending = '七星을 모두 채우고 봉인되었다 — 흠 없는 일생.';
     } else if (ins.includes('道')) {
-      ending = '도(道)의 검사로서 봉인되었다.';
+      ending = '도의 검사로서 봉인되었다.';
     } else if (lv >= 10) {
       ending = '높은 단계에서 봉인되어 후일 다시 만나길 기약했다.';
     } else {
@@ -15204,7 +15204,7 @@
 
     // v370i — 名(명명된 적) 격파를 一生詩(道 검 시)에도 결합. 龍을 벤 道 검의 시가 그
     // 정점 무훈을 노래하지 않던 누락 (v370h 一代記과 동일 시스템, 시 surface에도 적용).
-    const FOE_VERSE = { '龍斬': '용(龍)을 베어 하늘마저 가르고', '帝斬': '귀제(鬼帝)를 쓰러뜨리고', '刃斬': '천 개의 칼날을 가르며', '月斬': '은월(銀月)을 베고', '風斬': '흑풍(黑風)을 잠재우고' };
+    const FOE_VERSE = { '龍斬': '용을 베어 하늘마저 가르고', '帝斬': '귀제를 쓰러뜨리고', '刃斬': '천 개의 칼날을 가르며', '月斬': '은월을 베고', '風斬': '흑풍을 잠재우고' };
     const foeV = ['龍斬', '帝斬', '刃斬', '月斬', '風斬'].find(k => inscriptions.includes(k));
     let insLine;
     if (inscriptions.includes('龍斬')) {
@@ -15267,7 +15267,7 @@
     if (!state.hasSword) { stopAutoEnhance('修練 중지 — 검 없음'); return; }
     if (challenge || rescueWindow) { scheduleAutoStep(); return; } // 일시 대기
     const lv = state.level;
-    if (lv >= MAX_LEVEL) { stopAutoEnhance('修練 중지 — 도(道) 도달'); return; }
+    if (lv >= MAX_LEVEL) { stopAutoEnhance('修練 중지 — 도 도달'); return; }
     const t = TABLE[lv];
     // 핵심 안전 조건: 파괴 위험이 있는 단계는 자동 금지
     if (t.destroy > 0) { stopAutoEnhance('修練 중지 — 위험 단계'); return; }
@@ -15499,7 +15499,7 @@
     if (!state.firstWayReached) {
       state.firstWayReached = true;
       if (!state.recordFirstWayGen) state.recordFirstWayGen = state.swordGeneration || 1;  // v224 劍士録
-      setTimeout(() => announceInscription('始祖', '첫 도(道) 달성 — 선조의 길이 열렸다'), 5800);
+      setTimeout(() => announceInscription('始祖', '첫 도 달성 — 선조의 길이 열렸다'), 5800);
     }
     if (((state.stats && state.stats.wayReached) || 0) === 5) setTimeout(() => maybeMaster('fiveWays'), 6800);  // v181 老師
     log('🏛 殿堂 — ' + swordName + ' 박물관에 영구 진열되었다 (강화 성공 +1.5%)', 'success');
@@ -15609,7 +15609,7 @@
   function deriveNameOrigin(form, inscriptions, level) {
     inscriptions = inscriptions || [];
     const reason = {
-      '道': '도(道)에 이르러', '鬼斬': '검귀를 베어', '夜叉斬': '야차를 베어',
+      '道': '도에 이르러', '鬼斬': '검귀를 베어', '夜叉斬': '야차를 베어',
       '本': '본질을 깨달아', '剛體': '강체를 이루어', '覺': '혼이 깨어나',
       '古': '오랜 세월을 견뎌', '久': '긴 단련을 거쳐',
     };
@@ -15644,8 +15644,8 @@
     { key: '覺',   label: '검이 깨어났다',                  verse: '검의 의식이 처음으로 열렸다',       trigger: () => false },
     { key: '本',   label: '본질에 이르렀다',               verse: '검의 본질이 검 안에 머물렀다',       trigger: () => false },
     { key: '始祖', label: '선조의 흔적이 깃들었다',         verse: '선조의 길이 새 검에 흐른다',         trigger: () => false },
-    { key: '達人', label: '도(道) 5번 달성',                verse: '다섯 길의 흔적이 검에 깃들었다',     trigger: () => false },
-    { key: '聖',   label: '도(道) 10번 달성',               verse: '검은 성인의 무게를 가진다',         trigger: () => false },
+    { key: '達人', label: '도 5번 달성',                verse: '다섯 길의 흔적이 검에 깃들었다',     trigger: () => false },
+    { key: '聖',   label: '도 10번 달성',               verse: '검은 성인의 무게를 가진다',         trigger: () => false },
     { key: '斷魔', label: '네 종류 그림자 모두 베어냈다',   verse: '검이 모든 어둠을 알아본다',         trigger: () => false },
     { key: '久',   label: '50번 강화한 오랜 검',            verse: '검에 세월의 빛이 깃들었다',         trigger: () => state.currentSword.enhanceAttempts >= 50 },
     { key: '古',   label: '100번 강화한 아주 오랜 검',      verse: '검은 잊혀진 시대를 기억한다',       trigger: () => state.currentSword.enhanceAttempts >= 100 },
@@ -15681,7 +15681,7 @@
   }
 
   // v371 率性 인식의 순간 — v370 率性 차원은 모달 텍스트로만 존재(침묵)했다. 形(v6)×性情(v247)이
-  // 합쳐져 천성을 따랐는지(率性)/거슬렀는지(逆性)가 *처음 뚜렷해지는* 순간에 1회 페이드로 새긴다.
+  // 합쳐져 천성을 따랐는지/거슬렀는지가 *처음 뚜렷해지는* 순간에 1회 페이드로 새긴다.
   // 銘 페이드 UI(announceInscription)를 재사용 — 별도 SFX/시스템 없음(섬 방지). 점수 효과 0, 순수 인식.
   // 無爲(和, 길 미정)는 제외: 즉발·싸구려 방지. 명문 set엔 push 안 함(별개 차원, 식별만).
   function checkNaturePath() {
@@ -16077,7 +16077,7 @@
     if (genIns && !state.currentSword.inscriptions.includes(genIns)) {
       state.currentSword.inscriptions.push(genIns);
     }
-    // v33 傳授: 도(道) 검 봉인 직후 전수된 명문 적용 (한 번만 — null로 비움)
+    // v33 傳授: 도 검 봉인 직후 전수된 명문 적용 (한 번만 — null로 비움)
     if (state.heritageInscription) {
       if (!state.currentSword.inscriptions.includes(state.heritageInscription)) {
         state.currentSword.inscriptions.push(state.heritageInscription);
@@ -16513,13 +16513,13 @@
       playRitual(form, ins, lv, reward);
       if (!state.firstWayReached) {
         state.firstWayReached = true;
-        setTimeout(() => announceInscription('始祖', '첫 도(道) 달성 — 선조의 길이 열렸다'), 5800);
+        setTimeout(() => announceInscription('始祖', '첫 도 달성 — 선조의 길이 열렸다'), 5800);
         // v150 道至 — 첫 道 도달 거대 의식 (표준 ritual 후)
         setTimeout(() => playFirstWayCeremony(), 6400);
       }
       const ways = (state.stats && state.stats.wayReached) || 0;
-      if (ways === 5) setTimeout(() => announceInscription('達人', '도(道) 5번 달성 — 달인의 경지'), 6200);
-      if (ways === 10) setTimeout(() => announceInscription('聖', '도(道) 10번 달성 — 성인의 경지'), 6600);
+      if (ways === 5) setTimeout(() => announceInscription('達人', '도 5번 달성 — 달인의 경지'), 6200);
+      if (ways === 10) setTimeout(() => announceInscription('聖', '도 10번 달성 — 성인의 경지'), 6600);
       // v84 엔딩은 봉인이 아닌 *최종 강화 +15 도달* 시점에 발동 (enhance 분기에서 처리)
       // v83 道 도달 시 로그인된 사용자에게 점수 등록 안내
       if (sbClient) {
@@ -16698,7 +16698,7 @@
         '<div><span class="label">총 강화 시도</span><span class="num">' + (stats.enhanceAttempts || 0) + '</span></div>' +
         '<div><span class="label">베어낸 그림자</span><span class="num">' + (state.totalSlain || 0) + '</span></div>' +
         '<div><span class="label">봉인한 검</span><span class="num">' + state.sealedSwords.length + '</span></div>' +
-        '<div><span class="label">도(道) 도달</span><span class="num">' + (stats.wayReached || 0) + '</span></div>';
+        '<div><span class="label">도 도달</span><span class="num">' + (stats.wayReached || 0) + '</span></div>';
     }
     overlay.classList.remove('active');
     void overlay.offsetWidth;
@@ -18308,8 +18308,8 @@
       '覺': '魂 게이지 ' + SOUL_AWAKEN + ' 도달',
       '本': '魂 게이지 ' + SOUL_TRUE + ' 도달',
       '始祖': '첫 道 도달 — 모든 새 검에 자동',
-      '達人': '도(道) 5번 도달 — 모든 새 검에 자동',
-      '聖': '도(道) 10번 도달 — 모든 새 검에 자동',
+      '達人': '도 5번 도달 — 모든 새 검에 자동',
+      '聖': '도 10번 도달 — 모든 새 검에 자동',
       '斷魔': '4종류 그림자(夜/霧/骨/焰) 모두 베어내기',
       '久': '한 검으로 50번 강화 시도',
       '古': '한 검으로 100번 강화 시도',
@@ -18367,12 +18367,12 @@
 
   function renderAnthology() {
     const list = $('anthology-list');
-    // v370e — 殿堂(enshrined) 검의 一生詩·遺言도 포함. 詩集은 모든 검의 시·말의 정전(正典)인데
+    // v370e — 殿堂(enshrined) 검의 一生詩·遺言도 포함. 詩集은 모든 검의 시·말의 정전인데
     // 가장 고운 시를 남길 道 검을 殿堂에 진열하면 詩集에서 사라지던 누락 — v369(whisper가
     // enshrined verse 합산)과 일관. 풀은 disjoint(enshrine은 이동이라 중복 없음).
     const sealed = (state.sealedSwords || []).concat(state.enshrined || []);
     if (sealed.length === 0) {
-      list.innerHTML = '<p style="text-align:center;color:var(--dim);font-size:12px;padding:32px 0;line-height:1.8">아직 봉인된 검이 없습니다.<br><br>검을 팔면 그 검의 일생시(道)와<br>마지막 말(遺言)이 이곳에 모입니다.</p>';
+      list.innerHTML = '<p style="text-align:center;color:var(--dim);font-size:12px;padding:32px 0;line-height:1.8">아직 봉인된 검이 없습니다.<br><br>검을 팔면 그 검의 일생시와<br>마지막 말이 이곳에 모입니다.</p>';
       return;
     }
     // v253c 序 — 詩集 머리글: 검들이 남긴 시와 말의 규모
@@ -18415,8 +18415,8 @@
     const personas = [];
     if ((s.slainDemon || 0) >= 3) personas.push({ name: '귀살자 (鬼殺者)', desc: '검귀를 거듭 베어낸 자' });
     if ((s.sealed || 0) >= 10) personas.push({ name: '봉인가 (封印家)', desc: '10자루 이상 봉인한 자' });
-    if ((s.wayReached || 0) >= 1) personas.push({ name: '도(道)의 추구자', desc: '최고 단계에 이른 적이 있다' });
-    if ((s.wayReached || 0) >= 5) personas.push({ name: '달인 (達人)', desc: '도(道)를 다섯 번 지났다' });
+    if ((s.wayReached || 0) >= 1) personas.push({ name: '도의 추구자', desc: '최고 단계에 이른 적이 있다' });
+    if ((s.wayReached || 0) >= 5) personas.push({ name: '달인 (達人)', desc: '도를 다섯 번 지났다' });
     if ((s.rescued || 0) >= 5) personas.push({ name: '구원자 (救援者)', desc: '검의 파편을 거듭 회수' });
     if ((state.totalDestroyed || 0) >= 10) personas.push({ name: '도박꾼 (賭博者)', desc: '많은 검을 잃었지만 계속 도전한다' });
     if ((s.fled || 0) >= 10) personas.push({ name: '바람의 검 (風劍)', desc: '도전에서 자주 물러난다' });
@@ -18574,7 +18574,7 @@
       row('검 파괴', fmtNum(state.totalDestroyed || 0) + ' 회', 'var(--danger)') +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">정 점</div>' +
       row('검 판매', fmtNum(s.sealed || 0) + ' 회') +
-      row('도(道) 달성', fmtNum(s.wayReached || 0) + ' 회', '#fff5c0') +
+      row('도 달성', fmtNum(s.wayReached || 0) + ' 회', '#fff5c0') +
       row('歲月 (누적)', formatPlayTime(state.totalPlayTimeMs || 0), '#a8c0d8') +  // v174
       (function() {
         // v163 鬪將 — 챔피언 표시
