@@ -5738,15 +5738,15 @@
 
     swordSvg.style.opacity = 1;
     // v45 단계별 한자 이름 + v57 道까지 거리
-    const tierName = state.level === 0 ? '始 (시작)'
-                   : state.level <= 2 ? '初 (초기)'
-                   : state.level <= 5 ? '鍊 (수련)'
-                   : state.level <= 9 ? '強 (강한 검)'
-                   : state.level <= 13 ? '靈 (영의 검)'
-                   : state.level < MAX_LEVEL ? '聖 (성스러운 검)'
-                   : '道 (최고의 검)';
+    const tierName = state.level === 0 ? '시작'
+                   : state.level <= 2 ? '초기'
+                   : state.level <= 5 ? '수련'
+                   : state.level <= 9 ? '강한 검'
+                   : state.level <= 13 ? '영의 검'
+                   : state.level < MAX_LEVEL ? '성스러운 검'
+                   : '도 — 최고의 검';
     const remaining = MAX_LEVEL - state.level;
-    const distNote = remaining > 0 ? ' · 道까지 ' + remaining : '';
+    const distNote = remaining > 0 ? ' · 도까지 ' + remaining : '';
     levelBadge.innerHTML = '+' + state.level + ' <span style="font-size:10px;color:var(--dim);letter-spacing:2px">' + tierName + distNote + '</span>';
     levelBadge.style.color = 'var(--accent)';
 
