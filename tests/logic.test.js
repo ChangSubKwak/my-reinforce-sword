@@ -1533,3 +1533,16 @@ test('v371 checkNaturePath: follow/defy만 1회 발화 + seen 잠금 + 일지 �
   // 검 없음 → 무발화
   assert.strictEqual(run({ key: 'follow', name: '率性' }, false, false).calls.announce.length, 0, '검 없음 무발화');
 });
+
+// v371d 天命 — 이룬 천명이 一代記에 결합되는지 (天命 v93 + 傳記 융합, 효과 0)
+test('v371d generateBiography: 달성한 天命은 일대기에 줄로 나타나고 미달성은 안 나타남', () => {
+  const DESTINIES = extractConst('DESTINIES');
+  const fns = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { DESTINIES });
+  const base = { form: '直', level: 13, inscriptions: [], slainCount: 0, soul: 0, scars: 0, stars: {}, name: '시험검' };
+  const fulfilled = fns.generateBiography(Object.assign({}, base, { destiny: 'reach13', destinyFulfilled: true }));
+  assert.match(fulfilled, /천명 「極의 천명」을 이루었다/, '달성한 天命이 일대기에 결합');
+  const unfulfilled = fns.generateBiography(Object.assign({}, base, { destiny: 'reach13', destinyFulfilled: false }));
+  assert.ok(!/천명 「/.test(unfulfilled), '미달성 검은 天命 줄 없음');
+  const noDestiny = fns.generateBiography(base);  // 하위호환: destiny 필드 없는 구 검
+  assert.ok(!/천명 「/.test(noDestiny), '천명 필드 없는 구 검 안전');
+});

@@ -15160,7 +15160,14 @@
     }
     const tempLine = deriveTemperament(sword).line;  // v247 性情
     const natureLine = deriveNaturePath(sword).line;  // v370 率性 — 形×性情 합치/배반
-    return formOpening + ' ' + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + ending;
+    // v371d 天命 — 이룬 천명(v93)을 一代記에 결합. 검의 숨은 목표 달성은 생애의 정점인데
+    // 傳記가 무시하던 누락(달성 데이터는 봉인 검에 보존되나 서술 안 됨). 보존 데이터 파생, 효과 0.
+    let destinyLine = '';
+    if (sword.destinyFulfilled && sword.destiny && typeof DESTINIES !== 'undefined') {
+      const dn = DESTINIES.find(x => x.key === sword.destiny);
+      if (dn) destinyLine = '타고난 천명 「' + dn.label + '」을 이루었다.';
+    }
+    return formOpening + ' ' + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + (destinyLine ? destinyLine + ' ' : '') + ending;
   }
 
   // === 一生詩 — 道 검 봉인 시 일생을 4행 시구로 응축 ===
