@@ -278,7 +278,7 @@ test('recordActivityDate: 120일 초과 시 가장 오래된 항목 정리', () 
     assert.strictEqual(mk('곡', [], 15), '곡십오');
   });
   test('makeSwordName: form 없으면 無 접두', () => {
-    assert.strictEqual(mk(null, [], 3), '無三');
+    assert.strictEqual(mk(null, [], 3), '無삼');
     assert.strictEqual(mk(undefined, ['本'], 9), '無本');
   });
   test('makeSwordName: 결정적 (같은 입력 같은 검명)', () => {
