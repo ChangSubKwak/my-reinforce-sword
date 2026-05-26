@@ -1557,3 +1557,15 @@ test('v371e generateBiography: 융합검은 血統(부모 검명) 줄이 나타�
   const plain = fns.generateBiography(base);  // fusedFrom 없음
   assert.ok(!/혼을 이어 태어났다/.test(plain), '비융합검은 血統 줄 없음');
 });
+
+// v371f 久/古 — 오래 산 검의 遺言이 longevity를 반영하는지 (道/龍斬 > 古 > 久 > 性情, 효과 0)
+test('v371f generateLastWords: 古/久 노쇠 검의 작별 + 우선순위', () => {
+  const fns = loadFunctions(['generateLastWords', 'deriveTemperament']);
+  assert.match(fns.generateLastWords({ inscriptions: ['古'], level: 5 }), /오랜 세월을 보았다/, '古 작별');
+  assert.match(fns.generateLastWords({ inscriptions: ['久'], level: 5 }), /긴 생이었다/, '久 작별');
+  // 정점(道/龍斬)이 노쇠보다 우선
+  assert.match(fns.generateLastWords({ inscriptions: ['道', '古'], level: 5 }), /도\(道\)를 보았다/, '道가 古보다 우선');
+  assert.match(fns.generateLastWords({ inscriptions: ['龍斬', '古'], level: 5 }), /용\(龍\)을 베었으니/, '龍斬이 古보다 우선');
+  // 노쇠 없으면 기존 性情 경로 (구 검 하위호환)
+  assert.ok(fns.generateLastWords({ inscriptions: [], level: 5 }).length > 0, '노쇠 없는 검도 작별 존재');
+});
