@@ -313,6 +313,15 @@ test('askName onConfirm은 callback(doSeal) 전에 cleanup으로 리스너 해�
   assert.match(afterDecl('function cleanup() {', 300), /removeEventListener\('click',\s*onConfirm\)/, 'cleanup이 onConfirm 리스너 해제');
 });
 
+// v371c 守魂 — 수호자(지정 道 검)가 있으면 一閃 도전 때 그가 우선 속삭인다(守+whisper 융합).
+// 회귀 시 수호자가 다시 침묵(임의 道 검만 속삭임)하므로 우선 로직을 잠근다.
+test('v371c 守魂: whisperFromAncestor는 수호자 우선 + 守 표식', () => {
+  const body = afterDecl('function whisperFromAncestor(', 1400);
+  assert.match(body, /getGuardian\(\)/, '수호자 조회');
+  assert.match(body, /isGuardian\s*=\s*true/, '수호자면 우선 화자 지정');
+  assert.match(body, /isGuardian \?/, '수호자 속삭임에 守 표식 분기');
+});
+
 // 회수/도박 핸들러도 slay와 같은 더블클릭 클래스 — 보상(조각) 전에 rescued로 잠그지 않으면
 // 빠른 더블탭이 이중 회수된다. rescueWindow 객체 리터럴 안의 두 핸들러 모두 잠금 검사.
 test('회수/도박 핸들러는 조각 지급 전에 rescued 잠금 (더블클릭 이중 회수 방지)', () => {

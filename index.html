@@ -12404,17 +12404,25 @@
     // sealedSwords만 봐서 안 속삭였음 — v359(劍士録 道 목록)·merged-collection류 표시 누락. 순수 narrative.
     const sealed = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => s.verse && Array.isArray(s.verse));
     if (sealed.length === 0) return;
-    // 같은 형 우선, 없으면 임의
-    let candidates = sealed.filter(s => s.form === currentForm);
-    if (candidates.length === 0) candidates = sealed;
-    const ancestor = candidates[Math.floor(Math.random() * candidates.length)];
+    // v371c 守魂 — 수호자(지정한 道 검)가 있으면 그가 시련을 지켜보며 속삭인다. 守(v52)는 그동안
+    // 패시브 stat로만 존재했으나, 一閃(도전) 때 제 목소리를 얻는다 (守+一閃 whisper 융합, 점수 0).
+    let ancestor, isGuardian = false;
+    const guardian = (typeof getGuardian === 'function') ? getGuardian() : null;
+    if (guardian && Array.isArray(guardian.verse) && guardian.verse.length) {
+      ancestor = guardian; isGuardian = true;
+    } else {
+      // 같은 형 우선, 없으면 임의
+      let candidates = sealed.filter(s => s.form === currentForm);
+      if (candidates.length === 0) candidates = sealed;
+      ancestor = candidates[Math.floor(Math.random() * candidates.length)];
+    }
     // 시구 4행 중 1행 (인덱스 1 또는 2 — 정점 행 우선)
     const lineIdx = Math.random() < 0.5 ? 1 : 2;
     const line = ancestor.verse[lineIdx] || ancestor.verse[0];
     const who = $('whisper-who');
     const lineEl = $('whisper-line');
     const wrap = $('ancestor-whisper');
-    who.textContent = '— ' + (ancestor.name || '지난 검') + ' —';
+    who.textContent = '— ' + (ancestor.name || '지난 검') + (isGuardian ? ' · 守' : '') + ' —';
     lineEl.textContent = line;
     wrap.classList.remove('active');
     void wrap.offsetWidth;
