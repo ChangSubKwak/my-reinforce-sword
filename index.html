@@ -4401,6 +4401,12 @@
           state.shadowOriginsSlain[nk] = (state.shadowOriginsSlain[nk] || 0) + state.shadowOriginsSlain[oldK];
           delete state.shadowOriginsSlain[oldK];
         } } }
+      // 한글화 7단계 — 형 키 한자→음역 마이그레이션 (현재검·봉인검·전당검의 form 필드)
+      { const FM = { '直': '직', '曲': '곡', '重': '중', '速': '속' };
+        const fixForm = o => { if (o && FM[o.form]) o.form = FM[o.form]; };
+        fixForm(state.currentSword);
+        (Array.isArray(state.sealedSwords) ? state.sealedSwords : []).forEach(fixForm);
+        (Array.isArray(state.enshrined) ? state.enshrined : []).forEach(fixForm); }
       if (!state.foesSlain || typeof state.foesSlain !== 'object') state.foesSlain = {};
       if (!Array.isArray(state.enshrined)) state.enshrined = [];  // v118 殿堂
       // v370m XSS 경계 방어 — 검의 사용자 텍스트(검명/血統/메모/寄言)는 회고·계보·詩集 등에서
@@ -4496,7 +4502,7 @@
     if (ways > 0) {
       // v117 四道 — 4형 道 진척도 또는 완성 표시
       const wc = getWayFormCounts();
-      const lit = ['直','曲','重','速'].filter(f => wc[f] > 0).length;
+      const lit = ['직','곡','중','속'].filter(f => wc[f] > 0).length;
       const fourWayLabel = hasFourWays()
         ? '<span style="color:#fff5c0;text-shadow:0 0 8px rgba(255,245,192,0.7);margin-left:8px;letter-spacing:2px">四道</span>'
         : (lit > 0 ? '<span style="color:var(--dim);margin-left:8px;font-size:9px;letter-spacing:2px">四道 ' + lit + '/4</span>' : '');
@@ -5129,25 +5135,25 @@
       if (!ctx) return;
       // 형별 4음 패턴 (Hz, 시작 ms, 길이 s, type)
       const motifs = {
-        '直': [  // 곧음 — 펜타토닉 상승 (C-D-E-G), 직선 진행
+        '직': [  // 곧음 — 펜타토닉 상승 (C-D-E-G), 직선 진행
           { f: 523, t: 0,   d: 0.22, type: 'sine' },
           { f: 587, t: 180, d: 0.22, type: 'sine' },
           { f: 659, t: 360, d: 0.22, type: 'sine' },
           { f: 784, t: 540, d: 0.40, type: 'sine' },
         ],
-        '曲': [  // 곡선 — 단조 휘어짐 (D-F-A♭-F), 굽이지는 슬픔
+        '곡': [  // 곡선 — 단조 휘어짐 (D-F-A♭-F), 굽이지는 슬픔
           { f: 587, t: 0,   d: 0.30, type: 'triangle' },
           { f: 698, t: 220, d: 0.30, type: 'triangle' },
           { f: 831, t: 440, d: 0.30, type: 'triangle' },
           { f: 698, t: 700, d: 0.45, type: 'triangle' },
         ],
-        '重': [  // 무거움 — 옥타브 도약 (C-G-Bb-C), 묵직한 점프
+        '중': [  // 무거움 — 옥타브 도약 (C-G-Bb-C), 묵직한 점프
           { f: 261, t: 0,   d: 0.45, type: 'sine' },
           { f: 392, t: 380, d: 0.45, type: 'sine' },
           { f: 466, t: 760, d: 0.45, type: 'sine' },
           { f: 523, t: 1140, d: 0.65, type: 'sine' },
         ],
-        '速': [  // 속도 — 빠른 트레몰로 (C-E-G-C), 짧고 날렵
+        '속': [  // 속도 — 빠른 트레몰로 (C-E-G-C), 짧고 날렵
           { f: 523, t: 0,   d: 0.12, type: 'sine' },
           { f: 659, t: 100, d: 0.12, type: 'sine' },
           { f: 784, t: 200, d: 0.12, type: 'sine' },
@@ -5320,10 +5326,10 @@
     // 유파 색조
     const schools = getActiveSchools();
     delete stageEl.dataset.school;
-    if (schools.includes('直流')) stageEl.dataset.school = 'direct';
-    else if (schools.includes('曲流')) stageEl.dataset.school = 'curve';
-    else if (schools.includes('重流')) stageEl.dataset.school = 'heavy';
-    else if (schools.includes('速流')) stageEl.dataset.school = 'fast';
+    if (schools.includes('직류')) stageEl.dataset.school = 'direct';
+    else if (schools.includes('곡류')) stageEl.dataset.school = 'curve';
+    else if (schools.includes('중류')) stageEl.dataset.school = 'heavy';
+    else if (schools.includes('속류')) stageEl.dataset.school = 'fast';
 
     // 계보 에코 검
     const bgEl = $('stage-bg');
@@ -5966,10 +5972,10 @@
 
   // === v155 寒梅 — 高 lv 봉인 검의 유언이 다음 검에 (4 형 × 4 유언) ===
   const SWORD_WISHES = {
-    '直': { key: '寒梅', label: '寒梅 — 차가운 매화의 약속', successBonus: 0.05,                  desc: '다음 검 첫 5강화 성공 +5%' },
-    '曲': { key: '流水', label: '流水 — 흐르는 물의 약속',     destroyReduce: 0.10,                desc: '다음 검 첫 5강화 파괴 -10%' },
-    '重': { key: '雷神', label: '雷神 — 천둥의 약속',         slayRewardMul: 1.2,                 desc: '다음 검 첫 5슬레이 보상 ×1.2' },
-    '速': { key: '風影', label: '風影 — 바람 그림자의 약속',   costMul: 0.9,                       desc: '다음 검 첫 5강화 비용 -10%' },
+    '직': { key: '寒梅', label: '寒梅 — 차가운 매화의 약속', successBonus: 0.05,                  desc: '다음 검 첫 5강화 성공 +5%' },
+    '곡': { key: '流水', label: '流水 — 흐르는 물의 약속',     destroyReduce: 0.10,                desc: '다음 검 첫 5강화 파괴 -10%' },
+    '중': { key: '雷神', label: '雷神 — 천둥의 약속',         slayRewardMul: 1.2,                 desc: '다음 검 첫 5슬레이 보상 ×1.2' },
+    '속': { key: '風影', label: '風影 — 바람 그림자의 약속',   costMul: 0.9,                       desc: '다음 검 첫 5강화 비용 -10%' },
   };
   function wishSuccessBonus() {
     return (state.swordWish && state.swordWish.charges > 0 && state.swordWish.successBonus) || 0;
@@ -6135,10 +6141,10 @@
     // form 색조 tint
     const f = state.hasSword && state.currentSword && state.currentSword.form;
     const tint = {
-      '直': 'rgba(168, 192, 232, 0.6)',
-      '曲': 'rgba(232, 168, 192, 0.6)',
-      '重': 'rgba(212, 175, 55, 0.55)',
-      '速': 'rgba(136, 232, 192, 0.55)',
+      '직': 'rgba(168, 192, 232, 0.6)',
+      '곡': 'rgba(232, 168, 192, 0.6)',
+      '중': 'rgba(212, 175, 55, 0.55)',
+      '속': 'rgba(136, 232, 192, 0.55)',
     }[f] || 'rgba(168, 184, 200, 0.5)';
     mirror.style.filter = 'blur(0.9px) drop-shadow(0 0 4px ' + tint + ')';
     // body class for visibility gating
@@ -6150,10 +6156,10 @@
     if (!container) return;
     const f = state.hasSword && state.currentSword && state.currentSword.form;
     const color = {
-      '直': 'rgba(168, 192, 232, 0.7)',
-      '曲': 'rgba(232, 168, 192, 0.7)',
-      '重': 'rgba(212, 175, 55, 0.7)',
-      '速': 'rgba(136, 232, 192, 0.7)',
+      '직': 'rgba(168, 192, 232, 0.7)',
+      '곡': 'rgba(232, 168, 192, 0.7)',
+      '중': 'rgba(212, 175, 55, 0.7)',
+      '속': 'rgba(136, 232, 192, 0.7)',
     }[f] || 'rgba(168, 184, 200, 0.65)';
     // 3 동심원 with stagger
     for (let i = 0; i < 3; i++) {
@@ -6326,7 +6332,7 @@
     galleryIdx = ((i % sealed.length) + sealed.length) % sealed.length;
     const s = sealed[galleryIdx];
     const isWay = (s.inscriptions || []).indexOf('道') >= 0;
-    const formLabel = { '直':'직','曲':'곡','重':'중','速':'속' }[s.form] || '無';
+    const formLabel = { '직':'직','곡':'곡','중':'중','속':'속' }[s.form] || '無';
     const sealSvg = '<svg viewBox="0 0 100 200" width="100" height="200" xmlns="http://www.w3.org/2000/svg"><g>' + buildSwordBody(s.level || 0, s.form, '') + '</g></svg>';
     const ins = (s.inscriptions || []).join(' · ') || '無';
     const verse = s.verse ? (Array.isArray(s.verse) ? s.verse.join(' / ') : s.verse) : '';
@@ -6396,10 +6402,10 @@
       '강철의 결마다 마음을 새겨',
     ],
     form: {
-      '直': ['곧은 칼날의 길을 따라', '강직의 검을 쥐고', '한 직선의 마음으로'],
-      '曲': ['굽은 칼날의 길을 따라', '유연의 검을 들고', '강물처럼 휘어'],
-      '重': ['무거운 검의 무게를 지고', '느린 강철의 길에서', '중후의 검을 받아들여'],
-      '速': ['바람처럼 빠른 검과', '신속의 칼을 휘둘러', '한 호흡보다 빨리'],
+      '직': ['곧은 칼날의 길을 따라', '강직의 검을 쥐고', '한 직선의 마음으로'],
+      '곡': ['굽은 칼날의 길을 따라', '유연의 검을 들고', '강물처럼 휘어'],
+      '중': ['무거운 검의 무게를 지고', '느린 강철의 길에서', '중후의 검을 받아들여'],
+      '속': ['바람처럼 빠른 검과', '신속의 칼을 휘둘러', '한 호흡보다 빨리'],
       'null': ['형을 정하지 않은 검과', '아직 본성을 모르는 칼과'],
     },
     achievement: [
@@ -6425,7 +6431,7 @@
     ],
   };
   function dominantFormFromSealedSwords() {
-    const counts = { '直':0, '曲':0, '重':0, '速':0 };
+    const counts = { '직':0, '곡':0, '중':0, '속':0 };
     // v360 — 殿堂 검도 포함(시 dominant form이 전체 컬렉션 반영). 마지막 형-집계 sealedSwords-only
     // 였던 곳 — 다른 모든 형 집계가 enshrined 합산하므로 일관성 위해 통일(순수 narrative).
     (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => { if (s.form && counts[s.form] !== undefined) counts[s.form]++; });
@@ -7232,14 +7238,14 @@
       // 卷二 — 검들
       html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">卷  二  ─  검  들</div>';
       html += '<div style="font-size:13px;letter-spacing:4px;color:#e8e6dd;text-align:center;margin-bottom:18px;font-family:\'Noto Serif KR\',serif">' + sealed + '자루의 검 봉인, ' + swordGen + '대 이어졌다</div>';
-      const formCounts = { '直':0,'曲':0,'重':0,'速':0 };
+      const formCounts = { '직':0,'곡':0,'중':0,'속':0 };
       (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });  // v359 — 殿堂 검도 형 분포에 (display undercount)
       html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:20px 0">';
       const formCard = (f, n, c) => '<div style="text-align:center;padding:14px 4px;border:1px solid ' + c + ';border-radius:2px;background:rgba(15,15,22,0.5)"><div style="font-size:22px;color:' + c + '">' + f + '</div><div style="font-size:14px;color:#e8e6dd;margin-top:6px;font-weight:200">' + n + '</div></div>';
-      html += formCard('直', formCounts['直'], '#a8c0e8');
-      html += formCard('曲', formCounts['曲'], '#e8a8c0');
-      html += formCard('重', formCounts['重'], '#d4af37');
-      html += formCard('速', formCounts['速'], '#88e8c0');
+      html += formCard('직', formCounts['직'], '#a8c0e8');
+      html += formCard('곡', formCounts['곡'], '#e8a8c0');
+      html += formCard('중', formCounts['중'], '#d4af37');
+      html += formCard('속', formCounts['속'], '#88e8c0');
       html += '</div>';
       // 流派 진행
       if (typeof getActiveSchools === 'function') {
@@ -7662,7 +7668,7 @@
       if (typeof c.l !== 'number' || !Array.isArray(c.i)) return null;
       return {
         name: String(c.n || '無名').slice(0, 24),
-        form: ['直','曲','重','速'].indexOf(c.f) >= 0 ? c.f : '',
+        form: ['직','곡','중','속'].indexOf(c.f) >= 0 ? c.f : '',
         level: Math.max(0, Math.min(15, c.l | 0)),
         inscriptions: c.i.slice(0, 12).map(String),
         soul: Math.max(0, Math.min(100, c.s | 0)),
@@ -7754,7 +7760,7 @@
     if (!s) return '<div style="text-align:center;padding:40px 0;color:#888;font-style:italic;font-size:10px;letter-spacing:3px">선택 안 됨</div>';
     const ins = (s.inscriptions || []);
     const isWay = ins.indexOf('道') >= 0;
-    const formLabel = ({ '直':'강직','曲':'유연','重':'무거움','速':'빠름' })[s.form] || '無';
+    const formLabel = ({ '직':'강직','곡':'유연','중':'무거움','속':'빠름' })[s.form] || '無';
     const svg = '<svg viewBox="0 0 100 200" width="60" height="120" xmlns="http://www.w3.org/2000/svg"><g>' + buildSwordBody(s.level || 0, s.form, '') + '</g></svg>';
     let html = '<div style="text-align:center;padding:8px">';
     html += '<div style="margin:0 auto">' + svg + '</div>';
@@ -8351,10 +8357,10 @@
     // form color
     const f = state.currentSword && state.currentSword.form;
     const color = {
-      '直': 'rgba(168,192,232,0.65)',
-      '曲': 'rgba(232,168,192,0.65)',
-      '重': 'rgba(212,175,55,0.65)',
-      '速': 'rgba(136,232,192,0.65)',
+      '직': 'rgba(168,192,232,0.65)',
+      '곡': 'rgba(232,168,192,0.65)',
+      '중': 'rgba(212,175,55,0.65)',
+      '속': 'rgba(136,232,192,0.65)',
     }[f] || 'rgba(212,175,55,0.55)';
     path.setAttribute('stroke', color);
     // 경로 생성
@@ -9362,10 +9368,10 @@
       return;
     }
     const formColor = {
-      '直': '#a8c0e8',
-      '曲': '#e8a8c0',
-      '重': '#d4af37',
-      '速': '#88e8c0',
+      '직': '#a8c0e8',
+      '곡': '#e8a8c0',
+      '중': '#d4af37',
+      '속': '#88e8c0',
     };
     // 별 위치: hash 기반 결정적 배치 (같은 검은 항상 같은 위치)
     function hashPos(idx, seed) {
@@ -9391,7 +9397,7 @@
     });
     // 같은 form 끼리 nearest-neighbor 라인 연결
     const linesByForm = {};
-    ['直','曲','重','速'].forEach(f => {
+    ['직','곡','중','속'].forEach(f => {
       const group = stars.filter(s => s.form === f).sort((a, b) => a.x - b.x);
       linesByForm[f] = [];
       for (let i = 0; i + 1 < group.length; i++) {
@@ -9456,7 +9462,7 @@
     const trialsUnlocked = (typeof TRIALS !== 'undefined') ? TRIALS.filter(t => trialUnlocked(t.key)).length : 0;
     const trialsTotal = (typeof TRIALS !== 'undefined') ? TRIALS.length : 5;
     const playTime = formatPlayTime(state.totalPlayTimeMs || 0);
-    const formCounts = { '直':0, '曲':0, '重':0, '速':0 };
+    const formCounts = { '직':0, '곡':0, '중':0, '속':0 };
     (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });  // v359 — 殿堂 검도 형 분포에 (display undercount)
     // 메타 인장 결정
     let seal = '初';
@@ -9522,10 +9528,10 @@
   <text x="260" y="183" font-family="Noto Serif KR, serif" font-size="14" fill="#a8c0d8">${trialsUnlocked}/${trialsTotal}</text>
 
   <!-- 4 form 분포 -->
-  ${formBar('直', formCounts['直'], '#a8c0e8', 30,  220)}
-  ${formBar('曲', formCounts['曲'], '#e8a8c0', 150, 220)}
-  ${formBar('重', formCounts['重'], '#d4af37', 30,  244)}
-  ${formBar('速', formCounts['速'], '#88e8c0', 150, 244)}
+  ${formBar('직', formCounts['직'], '#a8c0e8', 30,  220)}
+  ${formBar('곡', formCounts['곡'], '#e8a8c0', 150, 220)}
+  ${formBar('중', formCounts['중'], '#d4af37', 30,  244)}
+  ${formBar('속', formCounts['속'], '#88e8c0', 150, 244)}
 
   <!-- 황금 인장 -->
   <circle cx="${W-70}" cy="225" r="38" fill="none" stroke="${sealColor}" stroke-width="1.5" opacity="0.75"/>
@@ -10071,7 +10077,7 @@
 
   // === v172 蘭 — 무대 우하단 난초 (道 도달에 따라 성장 / 형별 색) ===
   function getDominantForm() {
-    const counts = { '直': 0, '曲': 0, '重': 0, '速': 0 };
+    const counts = { '직': 0, '곡': 0, '중': 0, '속': 0 };
     const all = [].concat(state.sealedSwords || [], state.enshrined || []);
     all.forEach(s => { if (s.form && counts[s.form] !== undefined) counts[s.form]++; });
     let best = null, bestCount = 0;
@@ -10087,12 +10093,12 @@
     const dominantForm = getDominantForm();
     // 형별 꽃 색
     const flowerColors = {
-      '直': { fill: '#f8f4e8', stroke: '#a8a090' },  // 백
-      '曲': { fill: '#e8a8c0', stroke: '#a85878' },  // 홍
-      '重': { fill: '#f0e090', stroke: '#a08830' },  // 황
-      '速': { fill: '#a8c0e8', stroke: '#5878a8' },  // 청
+      '직': { fill: '#f8f4e8', stroke: '#a8a090' },  // 백
+      '곡': { fill: '#e8a8c0', stroke: '#a85878' },  // 홍
+      '중': { fill: '#f0e090', stroke: '#a08830' },  // 황
+      '속': { fill: '#a8c0e8', stroke: '#5878a8' },  // 청
     };
-    const c = (dominantForm && flowerColors[dominantForm]) || flowerColors['直'];
+    const c = (dominantForm && flowerColors[dominantForm]) || flowerColors['직'];
     let svg = '';
     // 단계 0: 작은 싹 (기본)
     svg += '<path d="M 16 40 Q 14 36 14 32 Q 16 28 18 32 Q 18 36 16 40 Z" fill="#3a5a3a" opacity="0.85"/>';
@@ -10419,7 +10425,7 @@
     if (typeof hasFourWays === 'function' && hasFourWays()) total += 10;
     else if (typeof getWayFormCounts === 'function') {
       const wc = getWayFormCounts();
-      const formsWithWay = ['直','曲','重','速'].filter(f => wc[f] > 0).length;
+      const formsWithWay = ['직','곡','중','속'].filter(f => wc[f] > 0).length;
       total += (formsWithWay / 4) * 10;
     }
     // 道 누적 (10점) — min(wayReached, 10)
@@ -10549,7 +10555,7 @@
         const f = getForm();
         const fdr = (f && f.destroyReduce) || 0;
         if (fdr) destroyLines.push(line('形 ' + (f.name || '') + ' (굽은 검)', reduce(fdr), 'var(--safe)'));
-        if (typeof schoolDestroyReduce === 'function') { const v = schoolDestroyReduce(); if (v) destroyLines.push(line('유파 曲流', reduce(v), 'var(--safe)')); }
+        if (typeof schoolDestroyReduce === 'function') { const v = schoolDestroyReduce(); if (v) destroyLines.push(line('유파 곡류', reduce(v), 'var(--safe)')); }
         if (typeof guardianBonus === 'function') { const v = guardianBonus().destroyReduce; if (v) destroyLines.push(line('수호자 (守)', reduce(v), 'var(--safe)')); }
         if (typeof adversityReady !== 'undefined' && adversityReady) destroyLines.push(line('逆 (역경 발동)', reduce(0.12), 'var(--safe)'));
         if (typeof getScarDestroyReduce === 'function') { const v = getScarDestroyReduce(); if (v) destroyLines.push(line('흉터 (傷)', reduce(v), 'var(--safe)')); }
@@ -11872,7 +11878,7 @@
     const rect = swordWrap.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const baseY = rect.top + rect.height * 0.3;
-    const formColor = { '直': '#d4af37', '曲': '#a8c87a', '重': '#8ab0c8', '速': '#c8a0d4' };
+    const formColor = { '직': '#d4af37', '곡': '#a8c87a', '중': '#8ab0c8', '속': '#c8a0d4' };
     const color = formColor[form] || '#d4af37';
     interesting.slice(0, 5).forEach((kanji, i) => {
       const el = document.createElement('div');
@@ -12246,7 +12252,7 @@
     // v219 賭 — 회수 도박 버튼 노출
     const gambleBtn = $('rescue-gamble');
     if (gambleBtn) gambleBtn.style.display = 'block';
-    const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec + beastRescueSec() + solarRescueSec(); // 速流 + 冬 + 수호자 + 四神 白虎 + 節氣 立冬
+    const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec + beastRescueSec() + solarRescueSec(); // 속류 + 冬 + 수호자 + 四神 白虎 + 節氣 立冬
     let timeLeft = totalSec;
     rescueTimer.classList.remove('urgent');  // v284 — 새 윈도우는 평상 색으로 시작
     rescueTimer.textContent = timeLeft.toFixed(1) + '초 안에  ·  +' + shardReward + ' 조각';
@@ -12592,10 +12598,10 @@
   // === v129 形相剋 — 형 × 그림자 상성 시스템 ===
   // 각 형마다 1 강함 (+25% 보상) + 1 약함 (-15% 보상)
   const FORM_AFFINITY = {
-    '直': { favored: 'normal', weakness: 'demon' },  // 곧음 — 평범에 강, 검귀에 약
-    '曲': { favored: 'steel',  weakness: 'flee' },   // 곡선 — 강철에 강 (휘어 베기), 도망에 약 (못따라감)
-    '重': { favored: 'demon',  weakness: 'normal' }, // 무거움 — 검귀에 강 (일격), 평범에 약 (느림)
-    '速': { favored: 'flee',   weakness: 'steel' },  // 속도 — 도망에 강 (따라잡음), 강철에 약 (못뚫음)
+    '직': { favored: 'normal', weakness: 'demon' },  // 곧음 — 평범에 강, 검귀에 약
+    '곡': { favored: 'steel',  weakness: 'flee' },   // 곡선 — 강철에 강 (휘어 베기), 도망에 약 (못따라감)
+    '중': { favored: 'demon',  weakness: 'normal' }, // 무거움 — 검귀에 강 (일격), 평범에 약 (느림)
+    '속': { favored: 'flee',   weakness: 'steel' },  // 속도 — 도망에 강 (따라잡음), 강철에 약 (못뚫음)
   };
   const AFFINITY_FAVORED_MUL = 1.25;
   const AFFINITY_WEAKNESS_MUL = 0.85;
@@ -12746,7 +12752,7 @@
     if (!sword) return [392, 523, 659];
     // 검 속성으로 결정적 hash
     let h = (sword.level || 0) * 31;
-    h += { '直':1, '曲':2, '重':3, '速':4 }[sword.form] || 0;
+    h += { '직':1, '곡':2, '중':3, '속':4 }[sword.form] || 0;
     h *= 17;
     (sword.inscriptions || []).forEach((k, i) => {
       for (let c = 0; c < k.length; c++) h += k.charCodeAt(c) * (i + 2);
@@ -14230,10 +14236,10 @@
 
   // === 形 — 검의 천성 (첫 강화 시 결정) ===
   const SWORD_FORMS = {
-    '直': { name: '直', label: '곧은 검 — 강화 성공 +3%', successBonus: 0.03 },
-    '曲': { name: '曲', label: '굽은 검 — 파괴 확률 -3%', destroyReduce: 0.03 },
-    '重': { name: '重', label: '무거운 검 — 강화 비용 +10%, 그림자 보상 +20%', costMul: 1.10, rewardMul: 1.20 },
-    '速': { name: '速', label: '빠른 검 — 도전 도망 무료', fleeFree: true },
+    '직': { name: '직', label: '곧은 검 — 강화 성공 +3%', successBonus: 0.03 },
+    '곡': { name: '곡', label: '굽은 검 — 파괴 확률 -3%', destroyReduce: 0.03 },
+    '중': { name: '중', label: '무거운 검 — 강화 비용 +10%, 그림자 보상 +20%', costMul: 1.10, rewardMul: 1.20 },
+    '속': { name: '속', label: '빠른 검 — 도전 도망 무료', fleeFree: true },
   };
   const FORM_KEYS = Object.keys(SWORD_FORMS);
 
@@ -14269,12 +14275,12 @@
     }
     const recommended = FORM_KEYS[Math.floor(Math.random() * FORM_KEYS.length)];
     const formDesc = {
-      '直': '강화 성공 +3%',
-      '曲': '파괴 확률 -3%',
-      '重': '강화 비용 +10%\n그림자 보상 +20%',
-      '速': '도전 도망 무료',
+      '직': '강화 성공 +3%',
+      '곡': '파괴 확률 -3%',
+      '중': '강화 비용 +10%\n그림자 보상 +20%',
+      '속': '도전 도망 무료',
     };
-    const formKr = { '直': '곧은 검', '曲': '굽은 검', '重': '무거운 검', '速': '빠른 검' };
+    const formKr = { '직': '곧은 검', '곡': '굽은 검', '중': '무거운 검', '속': '빠른 검' };
     // v129 形相剋 — 상성 표기
     const affName = { 'normal': '普通', 'flee': '逃影', 'steel': '鋼影', 'demon': '검귀' };
     const formAff = {};
@@ -14363,7 +14369,7 @@
     else { tipY = 2; gardY = 146; }
     const midY = Math.floor((tipY + gardY) / 2);
 
-    if (form === '直') {
+    if (form === '직') {
       // 일본도 — 곧은 슬림 블레이드, 한쪽 날만 표현 (chisel point)
       const halfW = tier <= 1 ? 3 : tier <= 2 ? 3.5 : tier <= 3 ? 4 : tier <= 4 ? 4.5 : 5;
       const L = 50 - halfW, R = 50 + halfW;
@@ -14375,7 +14381,7 @@
         ' L ' + L + ' ' + (tipY + 10) +
         ' L 50 ' + tipY + ' Z';
     }
-    if (form === '曲') {
+    if (form === '곡') {
       // 시미타르 — 강한 곡선 (오른쪽으로 휘어짐), 너른 끝
       const baseW = tier <= 1 ? 3.5 : tier <= 2 ? 4 : tier <= 3 ? 4.5 : tier <= 4 ? 5 : 5.5;
       const curveAmt = tier <= 2 ? 6 : tier <= 3 ? 8 : 10;  // 휘어짐 정도
@@ -14388,7 +14394,7 @@
         ' Q ' + (50 - baseW + curveAmt) + ' ' + midY + ' ' + (50 + widerW * 0.5 + curveAmt * 0.3) + ' ' + (tipY + 4) +
         ' Z';
     }
-    if (form === '重') {
+    if (form === '중') {
       // 클레이모어 — 넓고 두꺼움, 큰 fuller, leaf shape
       const halfW = tier <= 1 ? 5.5 : tier <= 2 ? 6.5 : tier <= 3 ? 7.5 : tier <= 4 ? 8.5 : 9.5;
       const L = 50 - halfW, R = 50 + halfW;
@@ -14404,7 +14410,7 @@
         ' Q ' + (L - 1) + ' ' + (tipY + 12) + ' 50 ' + tipY +
         ' Z';
     }
-    if (form === '速') {
+    if (form === '속') {
       // 레이피어 — 매우 가는 침, 거의 직선
       const halfW = tier <= 1 ? 1.5 : tier <= 2 ? 1.8 : tier <= 3 ? 2 : tier <= 4 ? 2.3 : 2.6;
       const L = 50 - halfW, R = 50 + halfW;
@@ -14439,10 +14445,10 @@
 
   // v128 形體革命 — 형별 가드 디자인
   function buildGuard(tier, form) {
-    if (form === '直') return buildGuardKatana(tier);
-    if (form === '曲') return buildGuardScimitar(tier);
-    if (form === '重') return buildGuardClaymore(tier);
-    if (form === '速') return buildGuardRapier(tier);
+    if (form === '직') return buildGuardKatana(tier);
+    if (form === '곡') return buildGuardScimitar(tier);
+    if (form === '중') return buildGuardClaymore(tier);
+    if (form === '속') return buildGuardRapier(tier);
     return buildGuardDefault(tier);
   }
   // 직검 — 츠바 (일본도 가드): 작은 원/타원형, 가운데 칼날 구멍
@@ -14635,10 +14641,10 @@
 
   // v128 形體革命 — 형별 손잡이 디자인
   function buildGrip(tier, form) {
-    if (form === '直') return buildGripKatana(tier);
-    if (form === '曲') return buildGripScimitar(tier);
-    if (form === '重') return buildGripClaymore(tier);
-    if (form === '速') return buildGripRapier(tier);
+    if (form === '직') return buildGripKatana(tier);
+    if (form === '곡') return buildGripScimitar(tier);
+    if (form === '중') return buildGripClaymore(tier);
+    if (form === '속') return buildGripRapier(tier);
     return buildGripDefault(tier);
   }
   // 직검 — 사각 손잡이 (츠카) + 다이아 마키 와이어
@@ -14788,10 +14794,10 @@
 
   // v128 形體革命 — 형별 폼멜 디자인
   function buildPommel(tier, form) {
-    if (form === '直') return buildPommelKatana(tier);
-    if (form === '曲') return buildPommelScimitar(tier);
-    if (form === '重') return buildPommelClaymore(tier);
-    if (form === '速') return buildPommelRapier(tier);
+    if (form === '직') return buildPommelKatana(tier);
+    if (form === '곡') return buildPommelScimitar(tier);
+    if (form === '중') return buildPommelClaymore(tier);
+    if (form === '속') return buildPommelRapier(tier);
     return buildPommelDefault(tier);
   }
   // 직검 — 간소한 카시라 (작은 사각/타원 캡)
@@ -14966,7 +14972,7 @@
     // v140 篆刻 — 플레이어 인장 (제공된 경우 폼멜 영역에 작은 텍스트)
     if (sealText) {
       // 폼멜 y 위치는 form/tier에 따라 다르지만 대략 180~195
-      const sealY = form === '直' ? 183 : form === '曲' ? 178 : form === '重' ? 197 : form === '速' ? 180 : 188;
+      const sealY = form === '직' ? 183 : form === '곡' ? 178 : form === '중' ? 197 : form === '속' ? 180 : 188;
       const fillColor = '#c0392b';  // 봉인 인장은 붉은 인주 색
       svg += '<rect x="46" y="' + (sealY - 4) + '" width="8" height="8" fill="' + fillColor + '" opacity="0.85" stroke="#3a0a08" stroke-width="0.3"/>';
       svg += '<text x="50" y="' + (sealY + 2) + '" text-anchor="middle" font-size="5.5" fill="#fff5c0" font-family="\'Noto Serif KR\', serif" style="font-weight:700">' + sealText.substring(0, 1) + '</text>';
@@ -15009,10 +15015,10 @@
     const g = getGuardian();
     if (!g) return { successBonus: 0, rewardMul: 1, rescueSec: 0, destroyReduce: 0 };
     // 형별 미세 보너스
-    if (g.form === '直') return { successBonus: 0.02, rewardMul: 1, rescueSec: 0, destroyReduce: 0 };
-    if (g.form === '曲') return { successBonus: 0, rewardMul: 1, rescueSec: 0, destroyReduce: 0.02 };
-    if (g.form === '重') return { successBonus: 0, rewardMul: 1.10, rescueSec: 0, destroyReduce: 0 };
-    if (g.form === '速') return { successBonus: 0, rewardMul: 1, rescueSec: 1.0, destroyReduce: 0 };
+    if (g.form === '직') return { successBonus: 0.02, rewardMul: 1, rescueSec: 0, destroyReduce: 0 };
+    if (g.form === '곡') return { successBonus: 0, rewardMul: 1, rescueSec: 0, destroyReduce: 0.02 };
+    if (g.form === '중') return { successBonus: 0, rewardMul: 1.10, rescueSec: 0, destroyReduce: 0 };
+    if (g.form === '속') return { successBonus: 0, rewardMul: 1, rescueSec: 1.0, destroyReduce: 0 };
     return { successBonus: 0.01, rewardMul: 1, rescueSec: 0, destroyReduce: 0 };
   }
 
@@ -15039,7 +15045,7 @@
     if (!sword) return { key: 'none', name: '', line: '' };
     const temp = deriveTemperament(sword).key;  // gang/jeong/do/wa
     if (temp === 'wa') return { key: 'wuwei', name: '무위', line: '천성을 다투지 않고 무위로 살았다.' };
-    const affinity = { '直': 'gang', '曲': 'jeong', '重': 'jeong', '速': 'do' }[sword.form];
+    const affinity = { '직': 'gang', '곡': 'jeong', '중': 'jeong', '속': 'do' }[sword.form];
     if (!affinity) return { key: 'none', name: '', line: '' };  // 형 미정 → 판정 보류
     if (temp === affinity) return { key: 'follow', name: '솔성', line: '타고난 형 그대로 나아간, 천성을 따른 검이었다.' };
     return { key: 'defy', name: '역성', line: '타고난 형을 거슬러 제 길을 연, 천성을 거스른 검이었다.' };
@@ -15117,10 +15123,10 @@
     const todWord = ({ '朝': '아침', '晝': '한낮', '夕': '저녁', '夜': '깊은 밤' })[sword.bornTod] || '';
     const todPrefix = todWord ? todWord + ', ' : '';
     const formOpening = todPrefix + (({
-      '直': '곧은 검 ' + name + '은 바람을 가르며 태어났다.',
-      '曲': '굽은 검 ' + name + '은 강의 흐름처럼 태어났다.',
-      '重': '무거운 검 ' + name + '은 산의 무게를 지고 태어났다.',
-      '速': '빠른 검 ' + name + '은 빛처럼 빠르게 태어났다.',
+      '직': '곧은 검 ' + name + '은 바람을 가르며 태어났다.',
+      '곡': '굽은 검 ' + name + '은 강의 흐름처럼 태어났다.',
+      '중': '무거운 검 ' + name + '은 산의 무게를 지고 태어났다.',
+      '속': '빠른 검 ' + name + '은 빛처럼 빠르게 태어났다.',
     })[form] || '검 ' + name + '은 이름 없이 태어났다.');
     // v371e 血統 — 융합(融劍 v92)으로 태어난 검은 두 선대의 혼을 잇는다. fusedFrom(보존됨)을
     // 一代記 개막에 결합 — 합성검의 血統 origin이 서술에서 누락이던 갭. 보존 데이터 파생, 효과 0.
@@ -15190,10 +15196,10 @@
   // === 一生詩 — 道 검 봉인 시 일생을 4행 시구로 응축 ===
   function generateVerse(form, inscriptions, level, slainCount, reward, soul) {
     const formLine = ({
-      '直': '강직의 검 한 자루',
-      '曲': '유연의 검 한 자루',
-      '重': '무거운 검 한 자루',
-      '速': '바람의 검 한 자루',
+      '직': '강직의 검 한 자루',
+      '곡': '유연의 검 한 자루',
+      '중': '무거운 검 한 자루',
+      '속': '바람의 검 한 자루',
     })[form] || '이름 없는 검 한 자루';
 
     // v370i — 名(명명된 적) 격파를 一生詩(道 검 시)에도 결합. 龍을 벤 道 검의 시가 그
@@ -15296,10 +15302,10 @@
   // === 流派 — 같은 형 3자루 봉인 시 등극 ===
   const SCHOOL_THRESHOLD = 3;
   const SCHOOLS = {
-    '直': { name: '直流 (곧은 검 학파)', desc: '같은 형 3자루 판매 — 강화 성공 +1%',     schoolBonusSuccess: 0.01 },
-    '曲': { name: '曲流 (굽은 검 학파)', desc: '같은 형 3자루 판매 — 파괴 확률 -1%',     schoolBonusDestroyReduce: 0.01 },
-    '重': { name: '重流 (무거운 검 학파)', desc: '같은 형 3자루 판매 — 판매가 +10%',     schoolBonusSealMul: 1.10 },
-    '速': { name: '速流 (빠른 검 학파)', desc: '같은 형 3자루 판매 — 줍기 시간 +1초',   schoolBonusRescueSec: 1.0 },
+    '직': { name: '직류 (곧은 검 학파)', desc: '같은 형 3자루 판매 — 강화 성공 +1%',     schoolBonusSuccess: 0.01 },
+    '곡': { name: '곡류 (굽은 검 학파)', desc: '같은 형 3자루 판매 — 파괴 확률 -1%',     schoolBonusDestroyReduce: 0.01 },
+    '중': { name: '중류 (무거운 검 학파)', desc: '같은 형 3자루 판매 — 판매가 +10%',     schoolBonusSealMul: 1.10 },
+    '속': { name: '속류 (빠른 검 학파)', desc: '같은 형 3자루 판매 — 줍기 시간 +1초',   schoolBonusRescueSec: 1.0 },
   };
 
   // v106 合 — 유파 마스터리 4단계
@@ -15533,7 +15539,7 @@
 
   // === v117 四道 — 4형의 道(+15) 검을 모두 봉인하면 영구 패시브 ===
   function getWayFormCounts() {
-    const counts = { '直': 0, '曲': 0, '重': 0, '速': 0 };
+    const counts = { '직': 0, '곡': 0, '중': 0, '속': 0 };
     const all = (state.sealedSwords || []).concat(state.enshrined || []);
     for (const s of all) {
       if (s.form && (s.inscriptions || []).includes('道')) {
@@ -15544,7 +15550,7 @@
   }
   function hasFourWays() {
     const c = getWayFormCounts();
-    return c['直'] > 0 && c['曲'] > 0 && c['重'] > 0 && c['速'] > 0;
+    return c['직'] > 0 && c['곡'] > 0 && c['중'] > 0 && c['속'] > 0;
   }
   function fourWaySuccessBonus() {
     return hasFourWays() ? 0.03 : 0;
@@ -15735,10 +15741,10 @@
     if (body) body.innerHTML = buildSwordBody(g.level || 0, g.form, g.playerSeal || '');
     $('guardian-name').textContent = (g.name || '검') + ' · 守 · ' + deriveTemperament(g).name;  // v247e 수호자 性情
     const bonusMap = {
-      '直': '강화 +2%',
-      '曲': '파괴 -2%',
-      '重': '보상 ×1.1',
-      '速': '회수 +1초',
+      '직': '강화 +2%',
+      '곡': '파괴 -2%',
+      '중': '보상 ×1.1',
+      '속': '회수 +1초',
     };
     $('guardian-bonus').textContent = bonusMap[g.form] || '강화 +1%';
   }
@@ -15999,7 +16005,7 @@
       if (steps && mul !== 1) steps.push({ label: label, mul: mul });
     };
     step('道 (정점)', 1.5, (isWay || ins.includes('道')));
-    step('유파 重流', schoolSealMul());
+    step('유파 중류', schoolSealMul());
     step('季節', getSeason().sealMul);
     step('四神 青龍', beastSealMul());  // v261
     step('節氣', solarSealMul());       // v263
@@ -16860,7 +16866,7 @@
 
   function showSwordDetail(s, index) {
     const ins = s.inscriptions || [];
-    const formLabel = ({ '直': '강직', '曲': '유연', '重': '무거움', '速': '빠름' })[s.form] || '無';
+    const formLabel = ({ '직': '강직', '곡': '유연', '중': '무거움', '속': '빠름' })[s.form] || '無';
     $('detail-name').textContent = s.name || ('검 #' + index);
     // 검 회고 모달 — 수호자 지정 가능 여부 + 현재 상태
     const idx0 = index - 1;
@@ -16869,10 +16875,10 @@
     let guardianBlock = '';
     if (isWay) {
       const bonusDesc = ({
-        '直': '강화 성공 +2%',
-        '曲': '파괴 확률 -2%',
-        '重': '도전 보상 ×1.10',
-        '速': '회수 시간 +1초'
+        '직': '강화 성공 +2%',
+        '곡': '파괴 확률 -2%',
+        '중': '도전 보상 ×1.10',
+        '속': '회수 시간 +1초'
       })[s.form] || '강화 성공 +1%';
       if (isGuardian) {
         guardianBlock = '<div style="margin-top:10px;padding:10px;background:rgba(212,175,55,0.08);border:1px solid var(--accent);text-align:center"><div style="color:var(--accent);letter-spacing:4px;font-size:12px">守 — 수호자</div><div style="color:var(--dim);font-size:10px;margin-top:4px">' + bonusDesc + '</div><button id="detail-unguard" style="margin-top:6px;padding:6px 14px;background:transparent;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:10px;letter-spacing:3px;cursor:pointer">수호자 해제</button></div>';
@@ -17006,10 +17012,10 @@
       sealed.forEach(s => { tc[deriveTemperament(s).name]++; });
       const filters = [
         { key: 'all', label: '전체', count: sealed.length },
-        { key: '直', label: '直', count: counts['直'] || 0 },
-        { key: '曲', label: '曲', count: counts['曲'] || 0 },
-        { key: '重', label: '重', count: counts['重'] || 0 },
-        { key: '速', label: '速', count: counts['速'] || 0 },
+        { key: '직', label: '직', count: counts['직'] || 0 },
+        { key: '곡', label: '곡', count: counts['곡'] || 0 },
+        { key: '중', label: '중', count: counts['중'] || 0 },
+        { key: '속', label: '속', count: counts['속'] || 0 },
         { key: '道', label: '道', count: wayCount },
         { key: '剛', label: '剛', count: tc['剛'] },
         { key: '靜', label: '靜', count: tc['靜'] },
@@ -18471,8 +18477,8 @@
     // 그림자 type 4종 — 가장 많이 베어낸 것 기준 비율
     const slainMax = Math.max(s.slainNormal || 0, s.slainFlee || 0, s.slainSteel || 0, s.slainDemon || 0, 1);
     // v76 형 분포 차트
-    const formCounts = { '直': 0, '曲': 0, '重': 0, '速': 0 };
-    const formNames = { '直': '곧은', '曲': '굽은', '重': '무거운', '速': '빠른' };
+    const formCounts = { '직': 0, '곡': 0, '중': 0, '속': 0 };
+    const formNames = { '직': '곧은', '곡': '굽은', '중': '무거운', '속': '빠른' };
     (state.sealedSwords || []).concat(state.enshrined || []).forEach(sw => {  // v351 — 殿堂 검도 형 분포에 집계
       if (sw.form && formCounts[sw.form] !== undefined) formCounts[sw.form]++;
     });
@@ -18496,7 +18502,7 @@
       : '';
 
     // v72 검명 컬렉션 — 4 form × 7 suffix
-    const forms = ['直', '曲', '重', '速'];
+    const forms = ['직', '곡', '중', '속'];
     const suffixes = NAME_SUFFIX.map(s => s.word); // 道/魔/本/剛/覺/古/久
     const collectedNames = new Set();
     (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => {  // v351 — 殿堂 검명도 컬렉션 집계

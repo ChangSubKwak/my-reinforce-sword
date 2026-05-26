@@ -204,8 +204,8 @@ test('normalizeState() 동작 검증: stats 병합이 기존 값 보존 + 신규
 
 test('normalizeState() 동작 검증: 정상 데이터는 건드리지 않음 (멱등·비파괴)', () => {
   const good = {
-    sealedSwords: [{ form: '直' }], enshrined: [{ form: '曲' }],
-    currentSword: { enhanceAttempts: 5, slainCount: 2, inscriptions: ['道'], soul: 50, form: '重' },
+    sealedSwords: [{ form: '직' }], enshrined: [{ form: '곡' }],
+    currentSword: { enhanceAttempts: 5, slainCount: 2, inscriptions: ['道'], soul: 50, form: '중' },
     whetstones: 3, hourActivity: new Array(24).fill(0), stats: { enhanceSuccess: 9 },
   };
   good.hourActivity[5] = 11;
@@ -233,4 +233,14 @@ test('normalizeState: 그림자 학파 키 夜流→야류 등 무손실 변환'
   assert.strictEqual(st.shadowOriginsSlain['야류'], 5, '夜流(3)+기존 야류(2) 합산');
   assert.strictEqual(st.shadowOriginsSlain['무류'], 1, '霧流→무류');
   assert.ok(!('夜流' in st.shadowOriginsSlain) && !('霧流' in st.shadowOriginsSlain), '구 한자 키 제거');
+});
+
+// 한글화 7단계 — 형 키 마이그레이션 (현재검·봉인검·전당검 form 한자→음역)
+test('normalizeState: 형 키 直/曲/重/速 → 직/곡/중/속 마이그레이션', () => {
+  const st = { currentSword: { form: '直' }, sealedSwords: [{ form: '曲' }, { form: '速' }], enshrined: [{ form: '重' }] };
+  loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 }).normalizeState();
+  assert.strictEqual(st.currentSword.form, '직', '현재검 直→직');
+  assert.strictEqual(st.sealedSwords[0].form, '곡', '봉인검 曲→곡');
+  assert.strictEqual(st.sealedSwords[1].form, '속', '봉인검 速→속');
+  assert.strictEqual(st.enshrined[0].form, '중', '전당검 重→중');
 });
