@@ -503,20 +503,20 @@ test('formatTimeAgo: 단위 경계 + 미래 ts 방어', () => {
 // ─────────────────────────────────────────────────────────────
 const tempFns = loadFunctions(['deriveTemperament']);
 const temp = s => tempFns.deriveTemperament(s).name;
-test('deriveTemperament: 剛(베기)·靜(흉터)·賭(고강화)·和(균형)', () => {
-  assert.strictEqual(temp({ slainCount: 5 }), '剛', '베기 지배 → 剛');
-  assert.strictEqual(temp({ scars: 2 }), '靜', '흉터(×2=4) 지배 → 靜');
-  assert.strictEqual(temp({ level: 12 }), '賭', '위험 영역(+12→5) 지배 → 賭');
-  assert.strictEqual(temp({ slainCount: 0, scars: 0, level: 5 }), '和', '뚜렷한 기질 없음 → 和');
+test('deriveTemperament: 강(베기)·정(흉터)·도(고강화)·화(균형)', () => {
+  assert.strictEqual(temp({ slainCount: 5 }), '강', '베기 지배 → 강');
+  assert.strictEqual(temp({ scars: 2 }), '정', '흉터(×2=4) 지배 → 정');
+  assert.strictEqual(temp({ level: 12 }), '도', '위험 영역(+12→5) 지배 → 도');
+  assert.strictEqual(temp({ slainCount: 0, scars: 0, level: 5 }), '화', '뚜렷한 기질 없음 → 화');
 });
-test('deriveTemperament: 동점은 剛>靜>賭 우선', () => {
-  assert.strictEqual(temp({ slainCount: 4, scars: 2 }), '剛', '剛4=靜4 → 剛 우선');
-  assert.strictEqual(temp({ scars: 3, level: 13 }), '靜', '靜6=賭6 → 靜 우선');
+test('deriveTemperament: 동점은 강>정>도 우선', () => {
+  assert.strictEqual(temp({ slainCount: 4, scars: 2 }), '강', '강4=정4 → 강 우선');
+  assert.strictEqual(temp({ scars: 3, level: 13 }), '정', '정6=도6 → 정 우선');
 });
-test('deriveTemperament: null/무행동 안전 → 和', () => {
+test('deriveTemperament: null/무행동 안전 → 화', () => {
   assert.strictEqual(tempFns.deriveTemperament(null).key, 'wa');
-  assert.strictEqual(temp({}), '和');
-  assert.strictEqual(temp({ level: 7 }), '和', '+7은 위험 영역 직전 → 0');
+  assert.strictEqual(temp({}), '화');
+  assert.strictEqual(temp({ level: 7 }), '화', '+7은 위험 영역 직전 → 0');
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -524,20 +524,20 @@ test('deriveTemperament: null/무행동 안전 → 和', () => {
 // ─────────────────────────────────────────────────────────────
 const npFns = loadFunctions(['deriveNaturePath', 'deriveTemperament']);
 const np = s => npFns.deriveNaturePath(s).name;
-test('deriveNaturePath: 形 친화 기질과 합치 → 率性', () => {
-  assert.strictEqual(np({ form: '直', slainCount: 5 }), '率性', '直(剛친화) + 剛 → 率性');
-  assert.strictEqual(np({ form: '曲', scars: 3 }), '率性', '曲(靜친화) + 靜 → 率性');
-  assert.strictEqual(np({ form: '重', scars: 3 }), '率性', '重(靜친화) + 靜 → 率性');
-  assert.strictEqual(np({ form: '速', level: 12 }), '率性', '速(賭친화) + 賭 → 率性');
+test('deriveNaturePath: 形 친화 기질과 합치 → 솔성', () => {
+  assert.strictEqual(np({ form: '直', slainCount: 5 }), '솔성', '直(강친화) + 강 → 솔성');
+  assert.strictEqual(np({ form: '曲', scars: 3 }), '솔성', '曲(정친화) + 정 → 솔성');
+  assert.strictEqual(np({ form: '重', scars: 3 }), '솔성', '重(정친화) + 정 → 솔성');
+  assert.strictEqual(np({ form: '速', level: 12 }), '솔성', '速(도친화) + 도 → 솔성');
 });
-test('deriveNaturePath: 形 친화와 배반 → 逆性', () => {
-  assert.strictEqual(np({ form: '直', scars: 3 }), '逆性', '直(剛친화) + 靜 → 逆性');
-  assert.strictEqual(np({ form: '速', slainCount: 5 }), '逆性', '速(賭친화) + 剛 → 逆性');
-  assert.strictEqual(np({ form: '曲', level: 12 }), '逆性', '曲(靜친화) + 賭 → 逆性');
+test('deriveNaturePath: 形 친화와 배반 → 역성', () => {
+  assert.strictEqual(np({ form: '直', scars: 3 }), '역성', '直(강친화) + 정 → 역성');
+  assert.strictEqual(np({ form: '速', slainCount: 5 }), '역성', '速(도친화) + 강 → 역성');
+  assert.strictEqual(np({ form: '曲', level: 12 }), '역성', '曲(정친화) + 도 → 역성');
 });
-test('deriveNaturePath: 和(뚜렷한 기질 없음) → 無爲 (形 무관)', () => {
-  assert.strictEqual(np({ form: '直' }), '無爲', '무행동 直 → 無爲');
-  assert.strictEqual(np({ form: '速', level: 7 }), '無爲', '+7 직전 → 和 → 無爲');
+test('deriveNaturePath: 화(뚜렷한 기질 없음) → 무위 (形 무관)', () => {
+  assert.strictEqual(np({ form: '直' }), '무위', '무행동 直 → 무위');
+  assert.strictEqual(np({ form: '速', level: 7 }), '무위', '+7 직전 → 화 → 무위');
 });
 test('deriveNaturePath: 形 미정·null은 판정 보류 (빈 name·라인, 하위호환)', () => {
   assert.strictEqual(npFns.deriveNaturePath(null).key, 'none', 'null → none');
@@ -657,7 +657,7 @@ test('generateBiography 통합: 時生·형·정점·性情이 일대기에 결�
   assert.match(text, /깊은 밤/, '時生(夜) 개막 반영');
   assert.match(text, /곧은 검 직검/, '形+검명');
   assert.match(text, /도\(道\)/, '道 정점');
-  assert.match(text, /강\(剛\)/, '性情(베기 지배 → 剛) 결합');
+  assert.match(text, /베기로써 나아가는 기질/, '性情(베기 지배 → 강) 결합');
 });
 test('generateBiography 통합: bornTod 없는 구 검도 안전 (접두 생략)', () => {
   const bio = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath']).generateBiography;

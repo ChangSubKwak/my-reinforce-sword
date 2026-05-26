@@ -15014,15 +15014,15 @@
   // "어떻게 살았는가"(베기/생존/위험감수)가 누적 stats에서 결정적으로 파생 (메커니즘 효과 0, 순수 정체성).
   // 상태 저장 불필요 — sealedSwords의 기존 stats(slainCount/scars/level)로 파생 (하위호환).
   function deriveTemperament(sword) {
-    if (!sword) return { key: 'wa', name: '和', line: '' };
-    const gang = sword.slainCount || 0;            // 剛 — 베기로 나아감
-    const jeong = (sword.scars || 0) * 2;          // 靜 — 부서짐을 견디며 지킴 (흉터는 드물어 가중)
-    const doagi = Math.max(0, (sword.level || 0) - 7);  // 賭 — 위험 영역(+8~)까지 밀어붙임
+    if (!sword) return { key: 'wa', name: '화', line: '' };
+    const gang = sword.slainCount || 0;            // 강 — 베기로 나아감
+    const jeong = (sword.scars || 0) * 2;          // 정 — 부서짐을 견디며 지킴 (흉터는 드물어 가중)
+    const doagi = Math.max(0, (sword.level || 0) - 7);  // 도 — 위험 영역(+8~)까지 밀어붙임
     const max = Math.max(gang, jeong, doagi);
-    if (max <= 0) return { key: 'wa', name: '和', line: '뚜렷한 기질 없이 고요한 균형 속에 살았다.' };
-    if (gang === max) return { key: 'gang', name: '剛', line: '베기로써 나아가는 강(剛)의 기질을 품었다.' };
-    if (jeong === max) return { key: 'jeong', name: '靜', line: '부서짐을 견디며 지키는 정(靜)의 기질을 품었다.' };
-    return { key: 'do', name: '賭', line: '위험을 무릅쓰고 높이 오르는 도(賭)의 기질을 품었다.' };
+    if (max <= 0) return { key: 'wa', name: '화', line: '뚜렷한 기질 없이 고요한 균형 속에 살았다.' };
+    if (gang === max) return { key: 'gang', name: '강', line: '베기로써 나아가는 기질을 품었다.' };
+    if (jeong === max) return { key: 'jeong', name: '정', line: '부서짐을 견디며 지키는 기질을 품었다.' };
+    return { key: 'do', name: '도', line: '위험을 무릅쓰고 높이 오르는 기질을 품었다.' };
   }
   // v370 率性 — 形(타고난 천성, v6)과 性情(살며 얻은 기질, v247)의 합치/배반을 읽는다.
   // 率性之謂道(中庸) — 제 천성을 따랐는가 거슬렀는가는 道 주제의 핵심. 메커니즘 효과 0,
@@ -15031,11 +15031,11 @@
   function deriveNaturePath(sword) {
     if (!sword) return { key: 'none', name: '', line: '' };
     const temp = deriveTemperament(sword).key;  // gang/jeong/do/wa
-    if (temp === 'wa') return { key: 'wuwei', name: '無爲', line: '천성을 다투지 않고 무위(無爲)로 살았다.' };
+    if (temp === 'wa') return { key: 'wuwei', name: '무위', line: '천성을 다투지 않고 무위로 살았다.' };
     const affinity = { '直': 'gang', '曲': 'jeong', '重': 'jeong', '速': 'do' }[sword.form];
-    if (!affinity) return { key: 'none', name: '', line: '' };  // 形 미정 → 판정 보류
-    if (temp === affinity) return { key: 'follow', name: '率性', line: '타고난 形 그대로 나아간, 천성을 따른(率性) 검이었다.' };
-    return { key: 'defy', name: '逆性', line: '타고난 形을 거슬러 제 길을 연, 천성을 거스른(逆性) 검이었다.' };
+    if (!affinity) return { key: 'none', name: '', line: '' };  // 형 미정 → 판정 보류
+    if (temp === affinity) return { key: 'follow', name: '솔성', line: '타고난 형 그대로 나아간, 천성을 따른 검이었다.' };
+    return { key: 'defy', name: '역성', line: '타고난 형을 거슬러 제 길을 연, 천성을 거스른 검이었다.' };
   }
   // v248 遺言 — 봉인되는 검의 1인칭 마지막 말. 一代記(3인칭 서술)·一生詩(道 한정 시)와 달리
   // 검 자신의 목소리. 性情(v247) + 정점 성취에서 결정적 파생 (메커니즘 효과 0, 순수 narrative).
@@ -15678,8 +15678,8 @@
     if (np.key !== 'follow' && np.key !== 'defy') return;  // 뚜렷한 따름/거스름일 때만
     state.currentSword.naturePathSeen = true;
     const label = np.key === 'follow'
-      ? '타고난 形을 따른다 — 率性'
-      : '타고난 形을 거슬러 제 길을 연다 — 逆性';
+      ? '타고난 형을 따른다 — 솔성'
+      : '타고난 형을 거슬러 제 길을 연다 — 역성';
     announceInscription(np.name, label);
     if (typeof recordEvent === 'function') recordEvent(np.name + ' 발현');  // v371b — 생애 사건으로 일지에 남김
   }
