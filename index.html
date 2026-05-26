@@ -15111,6 +15111,12 @@
       '重': '무거운 검 ' + name + '은 산의 무게를 지고 태어났다.',
       '速': '빠른 검 ' + name + '은 빛처럼 빠르게 태어났다.',
     })[form] || '검 ' + name + '은 이름 없이 태어났다.');
+    // v371e 血統 — 융합(融劍 v92)으로 태어난 검은 두 선대의 혼을 잇는다. fusedFrom(보존됨)을
+    // 一代記 개막에 결합 — 합성검의 血統 origin이 서술에서 누락이던 갭. 보존 데이터 파생, 효과 0.
+    let fusionLine = '';
+    if (Array.isArray(sword.fusedFrom) && sword.fusedFrom.length === 2) {
+      fusionLine = '두 검 「' + sword.fusedFrom[0] + '」과 「' + sword.fusedFrom[1] + '」의 혼을 이어 태어났다.';
+    }
     // 2. 정점 성취
     let peak;
     if (ins.includes('道')) peak = '주인의 손에서 도(道)에 이르렀다.';
@@ -15167,7 +15173,7 @@
       const dn = DESTINIES.find(x => x.key === sword.destiny);
       if (dn) destinyLine = '타고난 천명 「' + dn.label + '」을 이루었다.';
     }
-    return formOpening + ' ' + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + (destinyLine ? destinyLine + ' ' : '') + ending;
+    return formOpening + ' ' + (fusionLine ? fusionLine + ' ' : '') + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + (destinyLine ? destinyLine + ' ' : '') + ending;
   }
 
   // === 一生詩 — 道 검 봉인 시 일생을 4행 시구로 응축 ===

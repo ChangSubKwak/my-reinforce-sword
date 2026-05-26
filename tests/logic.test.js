@@ -1546,3 +1546,14 @@ test('v371d generateBiography: 달성한 天命은 일대기에 줄로 나타나
   const noDestiny = fns.generateBiography(base);  // 하위호환: destiny 필드 없는 구 검
   assert.ok(!/천명 「/.test(noDestiny), '천명 필드 없는 구 검 안전');
 });
+
+// v371e 血統 — 융합으로 태어난 검의 부모 혈통이 一代記 개막에 결합되는지 (효과 0)
+test('v371e generateBiography: 융합검은 血統(부모 검명) 줄이 나타나고 비융합검은 안 나타남', () => {
+  const DESTINIES = extractConst('DESTINIES');
+  const fns = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { DESTINIES });
+  const base = { form: '直', level: 8, inscriptions: [], slainCount: 0, soul: 0, scars: 0, stars: {}, name: '자식검' };
+  const fused = fns.generateBiography(Object.assign({}, base, { fusedFrom: ['아비검', '어미검'] }));
+  assert.match(fused, /두 검 「아비검」과 「어미검」의 혼을 이어 태어났다/, '융합검 血統 결합');
+  const plain = fns.generateBiography(base);  // fusedFrom 없음
+  assert.ok(!/혼을 이어 태어났다/.test(plain), '비융합검은 血統 줄 없음');
+});
