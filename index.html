@@ -3279,9 +3279,9 @@
       <span id="auto-label">修練 (안전한 단계까지 자동 강화)</span>
     </label>
     <div id="resolve-row">
-      <button class="resolve-btn active" data-resolve="normal" aria-label="평상 — 변화 없음">平常</button>
-      <button class="resolve-btn focus-mode" data-resolve="focus" aria-label="일심 — 성공 +8%, 파괴 1.5배">一心</button>
-      <button class="resolve-btn guard-mode" data-resolve="guard" aria-label="보신 — 성공 -10%, 파괴 차단, 비용 1.5배">保身</button>
+      <button class="resolve-btn active" data-resolve="normal" aria-label="평상 — 변화 없음">평상</button>
+      <button class="resolve-btn focus-mode" data-resolve="focus" aria-label="일심 — 성공 +8%, 파괴 1.5배">일심</button>
+      <button class="resolve-btn guard-mode" data-resolve="guard" aria-label="보신 — 성공 -10%, 파괴 차단, 비용 1.5배">보신</button>
     </div>
     <div id="resolve-desc">마음을 비운다</div>
     <div id="sanctum-row">
@@ -10489,7 +10489,7 @@
     (function() { const wc = $('whet-check'); if (wc && wc.checked && !wc.disabled && (state.whetstones || 0) > 0) successLines.push(line('砥石 (이번 1회)', pct(0.25))); })();
     if (typeof soulEffects === 'function') { const v = soulEffects().successBonus; if (v) successLines.push(line('魂', pct(v))); }
     if (typeof guardianBonus === 'function') { const v = guardianBonus().successBonus; if (v) successLines.push(line('수호자 (守)', pct(v))); }
-    if (typeof getResolve === 'function') { const r = getResolve(); if (r.successAdd) successLines.push(line('覺悟 ' + r.label, pct(r.successAdd), r.successAdd < 0 ? 'var(--danger)' : null)); }
+    if (typeof getResolve === 'function') { const r = getResolve(); if (r.successAdd) successLines.push(line('각오 ' + r.label, pct(r.successAdd), r.successAdd < 0 ? 'var(--danger)' : null)); }
     if (typeof adversityReady !== 'undefined' && adversityReady) successLines.push(line('逆 (역경 발동)', pct(0.40), '#fff5c0'));
     if (typeof enhanceEcho !== 'undefined' && enhanceEcho && enhanceEcho.successBonus) successLines.push(line('잔향 (殘響)', pct(enhanceEcho.successBonus)));
     if (typeof resonanceBonus === 'function') {
@@ -10550,7 +10550,7 @@
         if (typeof wishDestroyReduce === 'function') { const v = wishDestroyReduce(); if (v) destroyLines.push(line('유언 (願)', reduce(v), 'var(--safe)')); }
         if (typeof solarDestroyReduce === 'function') { const v = solarDestroyReduce(); if (v) destroyLines.push(line('節氣 (冬至)', reduce(v), 'var(--safe)')); }
         const rsv = getResolve();
-        if (rsv.destroyMul !== 1) destroyLines.push(line('覺悟 ' + rsv.label + ' 배수', '×' + rsv.destroyMul, rsv.destroyMul > 1 ? 'var(--danger)' : 'var(--safe)'));
+        if (rsv.destroyMul !== 1) destroyLines.push(line('각오 ' + rsv.label + ' 배수', '×' + rsv.destroyMul, rsv.destroyMul > 1 ? 'var(--danger)' : 'var(--safe)'));
       }
       const finalD = effectiveDestroyChance(lv);
       destroyLines.push(line('실제 파괴 확률', pctPlain(finalD), finalD === 0 ? 'var(--safe)' : 'var(--danger)'));
@@ -10566,7 +10566,7 @@
       const f = getForm(); costMulLine('形 ' + ((f && f.name) || ''), (f && f.costMul) || 1);
       costMulLine('季節', getSeason().costMul);
       costMulLine('노쇠 (久/古)', getAgeEffect().costMul);
-      const rsv = getResolve(); costMulLine('覺悟 ' + rsv.label, rsv.costMul);
+      const rsv = getResolve(); costMulLine('각오 ' + rsv.label, rsv.costMul);
       if (typeof enhanceEcho !== 'undefined' && enhanceEcho && enhanceEcho.costMul) costMulLine('잔향 (殘響)', enhanceEcho.costMul);
       if (typeof blessingCostMul === 'function') costMulLine('축복 (千年松)', blessingCostMul());
       if (typeof sanctumCostMul === 'function') costMulLine('聖域', sanctumCostMul());
@@ -11894,9 +11894,9 @@
   // === v91 覺悟 — 강화 마음가짐 (휘발성, 새로고침 시 平常) ===
   // 원작 "다음 한 번만 더" 도박 충동에 *결정 차원*을 부여.
   const RESOLVE = {
-    normal: { key: 'normal', label: '平常', name: '평상', successAdd: 0,     destroyMul: 1,   downgradeMul: 1,   costMul: 1,   desc: '마음을 비운다 — 변화 없음' },
-    focus:  { key: 'focus',  label: '一心', name: '일심', successAdd: 0.08,  destroyMul: 1.5, downgradeMul: 1,   costMul: 1,   desc: '다음 한 번에 모든 것을 — 성공 +8% · 파괴 1.5배' },
-    guard:  { key: 'guard',  label: '保身', name: '보신', successAdd: -0.10, destroyMul: 0,   downgradeMul: 0.5, costMul: 1.5, desc: '부서짐을 허락하지 않는다 — 성공 -10% · 파괴 0 · 비용 1.5배' }
+    normal: { key: 'normal', label: '평상', name: '평상', successAdd: 0,     destroyMul: 1,   downgradeMul: 1,   costMul: 1,   desc: '마음을 비운다 — 변화 없음' },
+    focus:  { key: 'focus',  label: '일심', name: '일심', successAdd: 0.08,  destroyMul: 1.5, downgradeMul: 1,   costMul: 1,   desc: '다음 한 번에 모든 것을 — 성공 +8% · 파괴 1.5배' },
+    guard:  { key: 'guard',  label: '보신', name: '보신', successAdd: -0.10, destroyMul: 0,   downgradeMul: 0.5, costMul: 1.5, desc: '부서짐을 허락하지 않는다 — 성공 -10% · 파괴 0 · 비용 1.5배' }
   };
   let resolveMode = 'normal';
   function getResolve() { return RESOLVE[resolveMode] || RESOLVE.normal; }
