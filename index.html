@@ -4394,6 +4394,13 @@
       if (typeof state.firstWayReached !== 'boolean') state.firstWayReached = false;
       if (typeof state.endingShown !== 'boolean') state.endingShown = false;
       if (!state.shadowOriginsSlain || typeof state.shadowOriginsSlain !== 'object') state.shadowOriginsSlain = {};
+      // 한글화 3단계 — 학파 키 한자→음역 무손실 마이그레이션 (구 세이브의 처치수 보존, 斷魔 진척 유지)
+      { const M = { '夜流': '야류', '霧流': '무류', '骨流': '골류', '焰流': '염류' };
+        for (const oldK in M) { if (state.shadowOriginsSlain[oldK] != null) {
+          const nk = M[oldK];
+          state.shadowOriginsSlain[nk] = (state.shadowOriginsSlain[nk] || 0) + state.shadowOriginsSlain[oldK];
+          delete state.shadowOriginsSlain[oldK];
+        } } }
       if (!state.foesSlain || typeof state.foesSlain !== 'object') state.foesSlain = {};
       if (!Array.isArray(state.enshrined)) state.enshrined = [];  // v118 殿堂
       // v370m XSS 경계 방어 — 검의 사용자 텍스트(검명/血統/메모/寄言)는 회고·계보·詩集 등에서
@@ -12432,10 +12439,10 @@
 
   // === 敵流 — 그림자 학파 (4개) ===
   const SHADOW_ORIGINS = {
-    '夜流': { whisper: '밤에서 온 그림자' },
-    '霧流': { whisper: '안개 속에서 솟은 그림자' },
-    '骨流': { whisper: '뼈와 같이 마른 그림자' },
-    '焰流': { whisper: '꺼진 불에서 남은 그림자' },
+    '야류': { whisper: '밤에서 온 그림자' },
+    '무류': { whisper: '안개 속에서 솟은 그림자' },
+    '골류': { whisper: '뼈와 같이 마른 그림자' },
+    '염류': { whisper: '꺼진 불에서 남은 그림자' },
   };
   const ORIGIN_KEYS = Object.keys(SHADOW_ORIGINS);
 

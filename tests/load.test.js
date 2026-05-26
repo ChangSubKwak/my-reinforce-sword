@@ -224,3 +224,13 @@ test('save(): SAVE_KEY 사용', () => {
   assert.ok(m, 'save() 정의');
   assert.match(m[1], /SAVE_KEY/, 'save는 SAVE_KEY 사용');
 });
+
+// 한글화 3단계 — 학파 키 한자→음역 무손실 마이그레이션 (구 세이브 처치수 보존)
+test('normalizeState: 그림자 학파 키 夜流→야류 등 무손실 변환', () => {
+  const st = { shadowOriginsSlain: { '夜流': 3, '霧流': 1, '야류': 2 } };
+  const { normalizeState } = loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 });
+  normalizeState();
+  assert.strictEqual(st.shadowOriginsSlain['야류'], 5, '夜流(3)+기존 야류(2) 합산');
+  assert.strictEqual(st.shadowOriginsSlain['무류'], 1, '霧流→무류');
+  assert.ok(!('夜流' in st.shadowOriginsSlain) && !('霧流' in st.shadowOriginsSlain), '구 한자 키 제거');
+});
