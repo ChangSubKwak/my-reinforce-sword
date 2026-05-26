@@ -273,9 +273,9 @@ test('recordActivityDate: 120일 초과 시 가장 오래된 항목 정리', () 
     assert.strictEqual(mk('속', ['久', '道'], 5), '속道', '道가 久보다 우선(배열 순서)');
   });
   test('makeSwordName: 명문 없으면 강화도 한자', () => {
-    assert.strictEqual(mk('중', [], 7), '중七');
-    assert.strictEqual(mk('직', [], 0), '직零');
-    assert.strictEqual(mk('곡', [], 15), '곡十五');
+    assert.strictEqual(mk('중', [], 7), '중칠');
+    assert.strictEqual(mk('직', [], 0), '직영');
+    assert.strictEqual(mk('곡', [], 15), '곡십오');
   });
   test('makeSwordName: form 없으면 無 접두', () => {
     assert.strictEqual(mk(null, [], 3), '無三');
