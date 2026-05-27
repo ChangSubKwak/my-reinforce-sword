@@ -287,7 +287,7 @@
     box-shadow: inset 0 0 60px rgba(138,176,216,0.10);
   }
 
-  /* v151 雲水 — 떠도는 도사 random encounter */
+  /* v151 운수 — 떠도는 도사 random encounter */
   #wandering-monk {
     position: fixed;
     width: 22px;
@@ -484,7 +484,7 @@
     to   { transform: translateX(-50%) scale(1.04); }
   }
 
-  /* v162 真空 — 극도의 침묵 (메디테이션 10분+) */
+  /* v162 진공 — 극도의 침묵 (메디테이션 10분+) */
   body.true-emptiness #game header,
   body.true-emptiness #game footer,
   body.true-emptiness #log-wrap,
@@ -816,7 +816,7 @@
     to   { text-shadow: 0 0 10px rgba(192,57,43,0.85); }
   }
 
-  /* v125 連斬 — 슬레이 streak 카운터 (도전 모달 내부) */
+  /* v125 연참 — 슬레이 streak 카운터 (도전 모달 내부) */
   #slay-streak {
     position: absolute;
     top: 8px;
@@ -2012,7 +2012,7 @@
     100% { opacity: 0; transform: scale(0.96); }
   }
 
-  /* 一閃 — 도전 overlay */
+  /* 일섬 — 도전 overlay */
   #challenge {
     position: absolute;
     inset: 0;
@@ -2537,7 +2537,7 @@
   .form-card-kanji { font-size: 28px; color: var(--accent); letter-spacing: 6px; margin-bottom: 4px; }
   .form-card-name { font-size: 10px; color: var(--dim); letter-spacing: 2px; margin-bottom: 8px; }
   .form-card-effect { font-size: 9px; color: var(--dim); opacity: 0.75; letter-spacing: 1px; line-height: 1.6; }
-  /* v114 餘香 — 슬레이 직후 다음 강화에 남는 잔향 */
+  /* v114 여향 — 슬레이 직후 다음 강화에 남는 잔향 */
   #enhance-echo {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     padding: 6px 14px; margin: 0 auto 8px; max-width: 260px;
@@ -2580,7 +2580,7 @@
   #sword-voice.voice-hold    { color: var(--dim); opacity: 0.55; }
   #sword-voice.voice-slay    { color: #8ab0c8; opacity: 0.80; }
   #sword-voice.voice-destroy { color: var(--danger); opacity: 0.80; }
-  /* v111 刻痕 — 흉터 새김 */
+  /* v111 각흔 — 흉터 새김 */
   .scar-mark { stroke: rgba(180, 70, 50, 0.0); stroke-width: 1.4; stroke-linecap: round; transition: stroke rgba(0,0,0,0) 0s; }
   .scar-mark.visible { stroke: rgba(180, 70, 50, 0.65); filter: drop-shadow(0 0 1px rgba(192,57,43,0.5)); animation: scar-pulse 3s ease-in-out infinite alternate; }
   @keyframes scar-pulse { from { stroke-opacity: 0.65; } to { stroke-opacity: 0.35; } }
@@ -3070,7 +3070,7 @@
         <!-- v69 칼날 한자 새김 — 정점 명문 한자 -->
         <text id="mark-kanji" x="50" y="80" text-anchor="middle" font-size="10" fill="#fff5c0" opacity="0"
           style="filter: drop-shadow(0 0 4px #d4af37); font-family: 'Noto Serif KR', serif; font-weight: 700;"></text>
-        <!-- v111 刻痕 — 흉터 3개 (파괴 직전 회수할 때마다 새겨짐) -->
+        <!-- v111 각흔 — 흉터 3개 (파괴 직전 회수할 때마다 새겨짐) -->
         <line id="scar-1" class="scar-mark" x1="44" y1="52" x2="54" y2="59"/>
         <line id="scar-2" class="scar-mark" x1="46" y1="83" x2="56" y2="90"/>
         <line id="scar-3" class="scar-mark" x1="44" y1="114" x2="54" y2="121"/>
@@ -4151,16 +4151,16 @@
     scrollsAllRead: false,    // v124 고문서 — 모두 풀었는지
     rubbings: [],             // v136 탁본 — 의미있는 순간 포착 (최대 20)
     resonancesDiscovered: {}, // v138 雙銘 — 발견한 명문 쌍
-    metsumaoCharges: 0,       // v138 雙銘 — 滅魔 슬레이 ×1.5 남은 횟수
+    metsumaoCharges: 0,       // v138 雙銘 — 멸마 슬레이 ×1.5 남은 횟수
     hondoCharges: 0,          // v138 雙銘 — 본도 새 검 시작 영혼 +20 남은 횟수
     playerSeal: '',           // v140 篆刻 — 플레이어 인장 (1자)
     collectionMilestones: {}, // v145 명집 — 달성한 명문 수집 마일스톤
     shrineDonations: {},      // v149 신사 — 영구 헌사 잠금 해제
-    hiddenAchievements: {},   // v152 風月 — 숨겨진 조용한 성취
-    swordWish: null,          // v155 寒梅 — 현재 활성 유언 (강화형)
-    swordWishSlay: null,      // v155 寒梅 — 슬레이 보상 유언
-    records: {},              // v156 新記 — 개인 최고 기록
-    duelWins: {},             // v159 對局 — 봉인 검 대국 승리 카운트
+    hiddenAchievements: {},   // v152 풍월 — 숨겨진 조용한 성취
+    swordWish: null,          // v155 한매 — 현재 활성 유언 (강화형)
+    swordWishSlay: null,      // v155 한매 — 슬레이 보상 유언
+    records: {},              // v156 신기 — 개인 최고 기록
+    duelWins: {},             // v159 대국 — 봉인 검 대국 승리 카운트
     ultimateAchieved: false,  // v170 천추만대 — 모든 메타 완성 1회 표식
     ultimateAchievedAt: 0,    // v170 — 달성 시각
     totalPlayTimeMs: 0,       // v174 세월 — 누적 active play 시간 (ms)
@@ -4187,7 +4187,7 @@
     oracleResultIdx: null,      // v198 占 — 오늘 점 결과 인덱스
     visualTheme: '',            // v201 配 — 시각 테마 ('' = 古 / 'tsuki' / 'akatsuki' / 'yuki')
     lastPluckedDate: '',        // v208 염화 — 마지막 蘭 꽃 꺾은 날짜
-    userDiary: [],              // v210 自書 — 사용자 자유 일기 항목 배열
+    userDiary: [],              // v210 자서 — 사용자 자유 일기 항목 배열
     lastSenDate: '',            // v211 籤 — 마지막 댓가지 추첨 날짜
     lastSenResult: null,        // v211 籤 — 마지막 결과 객체
     lastWeekendGreeting: '',    // v212 休 — 마지막 주말 인사 날짜
@@ -4441,7 +4441,7 @@
         (Array.isArray(state.enshrined) ? state.enshrined : []).forEach(fixPS); }
       if (!state.foesSlain || typeof state.foesSlain !== 'object') state.foesSlain = {};
       if (!Array.isArray(state.enshrined)) state.enshrined = [];  // v118 전당
-      // v370m XSS 경계 방어 — 검의 사용자 텍스트(검명/血統/메모/寄言)는 회고·계보·詩集 등에서
+      // v370m XSS 경계 방어 — 검의 사용자 텍스트(검명/血統/메모/기언)는 회고·계보·詩集 등에서
       // innerHTML에 raw 삽입됨. 외부 백업/클라우드 import(cross-user)로 < > 포함 텍스트가 들어오면
       // 스크립트 실행 가능 → 경계에서 태그 문자 제거. import/load/cloud-restore 모두 normalizeState
       // 경유하므로 단일 지점 방어 (모든 렌더 site 일괄 보호).
@@ -4874,9 +4874,9 @@
   // === v123 계보 — 누적 검 생성 기반 4단계 위계 ===
   const GENERATIONS = [
     { key: 'g10',  threshold: 10,  name: '백련宗', label: '백 번 단련하는 종가', successBonus: 0.01 },
-    { key: 'g25',  threshold: 25,  name: '千鍛士', label: '천 번 두드린 장인',  sealMul: 1.05 },
+    { key: 'g25',  threshold: 25,  name: '천단사', label: '천 번 두드린 장인',  sealMul: 1.05 },
     { key: 'g50',  threshold: 50,  name: '萬代將', label: '만 대를 잇는 장수',  successBonus: 0.01 },
-    { key: 'g100', threshold: 100, name: '百代仙', label: '백 대의 신선',       slayMul: 1.10, autoInscription: '선' },
+    { key: 'g100', threshold: 100, name: '백대선', label: '백 대의 신선',       slayMul: 1.10, autoInscription: '선' },
   ];
   function getGenerationMilestones() {
     return GENERATIONS.filter(g => (state.swordGeneration || 0) >= g.threshold);
@@ -5398,7 +5398,7 @@
   let adversityReady = false;
   let lastOmenType = 'none'; // v102 驗: 전조 추적
   let successStreak = 0;    // v107 連: 연속 성공 횟수
-  let slayStreak = 0;       // v125 連斬: 연속 슬레이 횟수 (휘발성, 검 단위)
+  let slayStreak = 0;       // v125 연참: 연속 슬레이 횟수 (휘발성, 검 단위)
   // v127 氣 — 검의 기분 (휘발성, 검 단위)
   let currentMood = 'calm'; // 'calm' | 'joy' | 'rage'
   function setMood(mood) {
@@ -5461,7 +5461,7 @@
     return 1.0;
   }
   // v244 — 베기 실제 보상 단일 진원. 표시(베기 버튼·검귀/명적 컷씬)와 실제 지급이
-  // 連斬 streak 배수를 동일하게 반영해야 함 (streak는 베기 후에만 변하므로 표시=지급 시점 동일).
+  // 연참 streak 배수를 동일하게 반영해야 함 (streak는 베기 후에만 변하므로 표시=지급 시점 동일).
   function slayGrantAmount(base) { return Math.floor(base * slayStreakRewardBonus()); }
 
   function checkAdversity() {
@@ -5699,7 +5699,7 @@
     applyInscriptionVisual();
     renderSoul();
     renderWayProgress();
-    renderResonanceDisplay();  // v178 共鳴
+    renderResonanceDisplay();  // v178 공명
     syncWaterMirror();  // v182 水鏡
     applyMutationVisualToSword();  // v199 稟賦 — 검 mutation 시각 glow
     applyEngravingToSword();  // v203 字 — 사용자 한자 새김 override
@@ -5718,9 +5718,9 @@
     renderGuardianDisplay();
     renderDestiny();  // v93 천명
     renderAdversity();  // v96 厄運轉機
-    renderEnhanceEcho();  // v114 餘香
+    renderEnhanceEcho();  // v114 여향
     renderSevenStars();  // v116 칠성
-    renderWishIndicator();  // v155 寒梅
+    renderWishIndicator();  // v155 한매
     renderPathProgress();   // v165 行
     updateStageLantern();   // v166 灯火
     updateStageOrchid();    // v172 蘭
@@ -5760,7 +5760,7 @@
       const rrow = $('resolve-row'), rdesc = $('resolve-desc');
       if (rrow) rrow.style.display = 'none';
       if (rdesc) rdesc.style.display = 'none';
-      // v92 融劍 버튼 — 검 없고 봉인 검 2자루 이상이면 표시
+      // v92 융검 버튼 — 검 없고 봉인 검 2자루 이상이면 표시
       const bf = $('btn-fusion');
       if (bf) bf.style.display = ((state.sealedSwords || []).length >= 2) ? '' : 'none';
       renderDestiny();  // v93 천명 배너 숨김 (검 없을 때)
@@ -5770,7 +5770,7 @@
       return;
     }
     btnEnhance.dataset.mode = 'enhance';
-    // v92 融劍 버튼은 검 보유 중 숨김
+    // v92 융검 버튼은 검 보유 중 숨김
     const bfHide = $('btn-fusion');
     if (bfHide) bfHide.style.display = 'none';
 
@@ -5840,7 +5840,7 @@
     oddsSuccess.innerHTML = '성공률 ' + Math.round(showSuccess * 100) + '%' + freeNote +
       (breathStr ? '  <span style="color:#6a8a9a;font-size:10px">· ' + breathStr + '</span>' : '');
     // v121 결계: 파괴가 차단되면 그 확률이 하락으로 흡수되어 표시.
-    // v245b: 靈石/餘香影盾이 이미 파괴를 막으면 결계가 흡수할 파괴가 없음 — 실제 굴림과 동일 조건.
+    // v245b: 영석/여향影盾이 이미 파괴를 막으면 결계가 흡수할 파괴가 없음 — 실제 굴림과 동일 조건.
     const spiritCkR = $('spirit-check');
     const useSpiritR = spiritCkR && spiritCkR.checked && !spiritCkR.disabled && (state.spiritstones || 0) > 0;
     const echoBlockR = !!(enhanceEcho && enhanceEcho.destroyBlock);
@@ -6002,12 +6002,12 @@
     }
   }
 
-  // === v155 寒梅 — 高 lv 봉인 검의 유언이 다음 검에 (4 형 × 4 유언) ===
+  // === v155 한매 — 高 lv 봉인 검의 유언이 다음 검에 (4 형 × 4 유언) ===
   const SWORD_WISHES = {
-    '직': { key: '寒梅', label: '寒梅 — 차가운 매화의 약속', successBonus: 0.05,                  desc: '다음 검 첫 5강화 성공 +5%' },
-    '곡': { key: '流水', label: '流水 — 흐르는 물의 약속',     destroyReduce: 0.10,                desc: '다음 검 첫 5강화 파괴 -10%' },
-    '중': { key: '雷神', label: '雷神 — 천둥의 약속',         slayRewardMul: 1.2,                 desc: '다음 검 첫 5슬레이 보상 ×1.2' },
-    '속': { key: '風影', label: '風影 — 바람 그림자의 약속',   costMul: 0.9,                       desc: '다음 검 첫 5강화 비용 -10%' },
+    '직': { key: '한매', label: '한매 — 차가운 매화의 약속', successBonus: 0.05,                  desc: '다음 검 첫 5강화 성공 +5%' },
+    '곡': { key: '유수', label: '유수 — 흐르는 물의 약속',     destroyReduce: 0.10,                desc: '다음 검 첫 5강화 파괴 -10%' },
+    '중': { key: '뇌신', label: '뇌신 — 천둥의 약속',         slayRewardMul: 1.2,                 desc: '다음 검 첫 5슬레이 보상 ×1.2' },
+    '속': { key: '풍영', label: '풍영 — 바람 그림자의 약속',   costMul: 0.9,                       desc: '다음 검 첫 5강화 비용 -10%' },
   };
   function wishSuccessBonus() {
     return (state.swordWish && state.swordWish.charges > 0 && state.swordWish.successBonus) || 0;
@@ -6423,7 +6423,7 @@
     startGalleryAuto();
   }
 
-  // === v190 吾詩 — 사용자 자신의 5행 시 (자동 생성) ===
+  // === v190 오시 — 사용자 자신의 5행 시 (자동 생성) ===
   const POEM_LINES = {
     opening: [
       '한 자루의 검을 빚어',
@@ -6558,11 +6558,11 @@
     const a = document.createElement('a');
     const title = ((state.daoTitle && state.daoTitle.title) || '무명').replace(/\s+/g,'');
     a.href = url;
-    a.download = '吾詩_' + title + '_' + new Date().toISOString().slice(0,10) + '.svg';
+    a.download = '오시_' + title + '_' + new Date().toISOString().slice(0,10) + '.svg';
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-    log('吾詩 다운로드 — ' + title, 'success');
+    log('오시 다운로드 — ' + title, 'success');
   }
 
   // === v192 節 — 전통 명절 (元旦/端午/七夕/重陽) ===
@@ -6910,7 +6910,7 @@
   function startSwordDreams() {
     if (dreamTimer) return;
     const tick = () => {
-      // 명상 중에만 (완월 또는 真空)
+      // 명상 중에만 (완월 또는 진공)
       if (moonGazing || inTrueEmptiness) {
         if (Math.random() < 0.5) showSwordDream();
       }
@@ -6982,7 +6982,7 @@
   }
   // v240 — 강화 성공 확률 단일 진원. "지금 강화하면" 확률 [0,1].
   // 표시 odds·前兆 omen·점복 divination·실제 굴림이 동일 공식을 공유 → 거짓 예측 차단.
-  // 강화 직전 상태 기준(체크박스 砥·잔향·眞空 호흡부스트 포함, consume 전에 호출).
+  // 강화 직전 상태 기준(체크박스 砥·잔향·진공 호흡부스트 포함, consume 전에 호출).
   function successChanceNow() {
     const t = TABLE[state.level];
     if (!t) return 0;
@@ -8031,14 +8031,14 @@
     checkThreeRituals();  // v214 三禮
   }
 
-  // === v210 自書 — 사용자 자유 일기 ===
+  // === v210 자서 — 사용자 자유 일기 ===
   const DIARY_MAX = 50;
   function saveDiaryEntry() {
     const input = $('diary-input');
     if (!input) return;
     const text = input.value.trim();
     if (!text || text.length > 500) {
-      if (text.length > 500) log('自書 — 500자 이내로', 'warn');
+      if (text.length > 500) log('자서 — 500자 이내로', 'warn');
       return;
     }
     if (!state.userDiary || !Array.isArray(state.userDiary)) state.userDiary = [];
@@ -8052,7 +8052,7 @@
     save();
     input.value = '';
     renderDiaryList();
-    log('自書 — 한 줄 기록되었다', 'success');
+    log('자서 — 한 줄 기록되었다', 'success');
   }
   function deleteDiaryEntry(idx) {
     if (!state.userDiary || !state.userDiary[idx]) return;
@@ -8678,7 +8678,7 @@
 
   // === v228 設 — 접근성 설정 ===
   const SETTINGS_DEFS = [
-    { key:'particles',   label:'환경 입자', desc:'季韻·流星·먼지 입자', def:true },
+    { key:'particles',   label:'환경 입자', desc:'季韻·유성·먼지 입자', def:true },
     { key:'screenShake', label:'화면 흔들림', desc:'베기·파괴 시 흔들림', def:true },
     { key:'reduceMotion',label:'모션 감소', desc:'애니메이션 최소화 (저사양)', def:false },
     { key:'largeText',   label:'큰 글씨', desc:'전체 글자 크기 +15%', def:false },
@@ -9153,28 +9153,28 @@
 
   // === v188 사신 — 4신수 (다양한 플레이로 잠금 해제) ===
   const SACRED_BEASTS = [
-    { key:'genbu',  name:'玄武', dir:'北', dirKr:'북', element:'水', color:'#4a7a9a',
+    { key:'genbu',  name:'현무', dir:'北', dirKr:'북', element:'水', color:'#4a7a9a',
       condition: () => ((state.stats && state.stats.stalemate) || 0) >= 5,
       conditionDesc: '대치 5회',
       progress: () => ({ cur: (state.stats && state.stats.stalemate) || 0, max: 5 }),
       bonusDesc: '도전 보상 +5%',
       bonusKey: 'challengeRewardMul', bonusVal: 1.05,
       verse: '북방의 수호자가 강림하였다 — 양보가 길임을 알렸다' },
-    { key:'suzaku', name:'朱雀', dir:'南', dirKr:'남', element:'火', color:'#c04040',
+    { key:'suzaku', name:'주작', dir:'南', dirKr:'남', element:'火', color:'#c04040',
       condition: () => ((state.stats && state.stats.slainDemon) || 0) >= 3,
       conditionDesc: '검귀 3회 베기',
       progress: () => ({ cur: (state.stats && state.stats.slainDemon) || 0, max: 3 }),
       bonusDesc: '강화 성공 +1%',
       bonusKey: 'successBonus', bonusVal: 0.01,
       verse: '남방의 화염이 검의 길을 비춘다' },
-    { key:'seiryu', name:'青龍', dir:'東', dirKr:'동', element:'木', color:'#4a9a6a',
+    { key:'seiryu', name:'청룡', dir:'東', dirKr:'동', element:'木', color:'#4a9a6a',
       condition: () => ((state.sealedSwords || []).length) >= 10,
       conditionDesc: '봉인 10자루',
       progress: () => ({ cur: (state.sealedSwords || []).length, max: 10 }),
       bonusDesc: '봉인 보상 +3%',
       bonusKey: 'sealRewardMul', bonusVal: 1.03,
       verse: '동방의 용이 봉인의 길에 깃들었다' },
-    { key:'byakko', name:'白虎', dir:'西', dirKr:'서', element:'金', color:'#c8b8a8',
+    { key:'byakko', name:'백호', dir:'西', dirKr:'서', element:'金', color:'#c8b8a8',
       condition: () => ((state.stats && state.stats.wayReached) || 0) >= 3,
       conditionDesc: '도 3회 도달',
       progress: () => ({ cur: (state.stats && state.stats.wayReached) || 0, max: 3 }),
@@ -9481,7 +9481,7 @@
     });
   }
 
-  // === v180 劍名片 — 검명함 (identity card SVG) ===
+  // === v180 검명편 — 검명함 (identity card SVG) ===
   function buildMeishiSVG() {
     const W = 480, H = 320;
     const daoTitle = (state.daoTitle && state.daoTitle.title) || '無 名';
@@ -9588,14 +9588,14 @@
     const a = document.createElement('a');
     const title = ((state.daoTitle && state.daoTitle.title) || '무명').replace(/\s+/g,'');
     a.href = url;
-    a.download = '劍名片_' + title + '_' + (state.swordGeneration || 1) + '代.svg';
+    a.download = '검명편_' + title + '_' + (state.swordGeneration || 1) + '代.svg';
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-    log('劍名片 다운로드 — ' + title, 'success');
+    log('검명편 다운로드 — ' + title, 'success');
   }
 
-  // === v185 流星 — 무작위 유성 + 클릭 보상 ===
+  // === v185 유성 — 무작위 유성 + 클릭 보상 ===
   let meteorSessionCount = 0;
   const METEOR_SESSION_CAP = 3;
   function spawnMeteor() {
@@ -9668,7 +9668,7 @@
         }
       } catch(e) {}
       meteor.remove();
-      log('流星 잡았다 — ' + r.label, 'success');
+      log('유성 잡았다 — ' + r.label, 'success');
       save(); render();
     });
     meteor.animate([
@@ -9794,12 +9794,12 @@
     seasonalParticleTimer = setTimeout(tick, 5000);
   }
 
-  // === v178 共鳴 — 같은 형 봉인 검과의 공명 ===
+  // === v178 공명 — 같은 형 봉인 검과의 공명 ===
   function sameFormSealedCount(form) {
     if (!form) return 0;
-    // v358 — 共鳴은 형-수집 보너스. 전당(enshrined) 도 같은 형 검도 共鳴해야 함(같은 형의 도 검은
+    // v358 — 공명은 형-수집 보너스. 전당(enshrined) 도 같은 형 검도 공명해야 함(같은 형의 도 검은
     // 최고 등급). v350에서 流派(getFormCounts)는 enshrined 포함하므로, 같은 형-수집 보너스인
-    // 共鳴만 sealedSwords-only면 비일관. 두 컬렉션 합산으로 통일(balance-adjacent, 되돌릴 수 있음).
+    // 공명만 sealedSwords-only면 비일관. 두 컬렉션 합산으로 통일(balance-adjacent, 되돌릴 수 있음).
     return (state.sealedSwords || []).concat(state.enshrined || []).filter(s => s.form === form).length;
   }
   function resonanceBonus() {
@@ -9875,7 +9875,7 @@
     { key:'liqiu',   name:'立秋', month:8,  day:7,  verse:'가을 시작 · 거두어 봉인하라', sealMul:1.05 },
     { key:'qiufen',  name:'秋分', month:9,  day:23, verse:'결실의 균형 · 봉인이 무거워진다', sealMul:1.08 },
     { key:'lidong',  name:'立冬', month:11, day:7,  verse:'겨울 시작 · 회수의 시간이 늘어난다', rescueSec:1.0 },
-    { key:'dongzhi', name:'冬至', month:12, day:22, verse:'가장 긴 밤 · 침묵이 검을 지킨다', destroyReduce:0.02 },
+    { key:'dongzhi', name:'동지', month:12, day:22, verse:'가장 긴 밤 · 침묵이 검을 지킨다', destroyReduce:0.02 },
   ];
   function getCurrentSolarTerm() {
     const now = new Date();
@@ -10448,7 +10448,7 @@
       const done = SHRINE_DONATIONS.filter(d => state.shrineDonations[d.key]).length;
       total += (done / SHRINE_DONATIONS.length) * 10;
     }
-    // 風月 (5점)
+    // 풍월 (5점)
     if (state.hiddenAchievements && typeof HIDDEN_ACHIEVEMENTS !== 'undefined') {
       const done = HIDDEN_ACHIEVEMENTS.filter(a => state.hiddenAchievements[a.key]).length;
       total += (done / HIDDEN_ACHIEVEMENTS.length) * 5;
@@ -10536,12 +10536,12 @@
     if (typeof guardianBonus === 'function') { const v = guardianBonus().successBonus; if (v) successLines.push(line('수호자 (守)', pct(v))); }
     if (typeof getResolve === 'function') { const r = getResolve(); if (r.successAdd) successLines.push(line('각오 ' + r.label, pct(r.successAdd), r.successAdd < 0 ? 'var(--danger)' : null)); }
     if (typeof adversityReady !== 'undefined' && adversityReady) successLines.push(line('逆 (역경 발동)', pct(0.40), '#fff5c0'));
-    if (typeof enhanceEcho !== 'undefined' && enhanceEcho && enhanceEcho.successBonus) successLines.push(line('잔향 (殘響)', pct(enhanceEcho.successBonus)));
+    if (typeof enhanceEcho !== 'undefined' && enhanceEcho && enhanceEcho.successBonus) successLines.push(line('잔향 (잔향)', pct(enhanceEcho.successBonus)));
     if (typeof resonanceBonus === 'function') {
-      const v = resonanceBonus(); if (v) successLines.push(line('共鳴', pct(v)));
+      const v = resonanceBonus(); if (v) successLines.push(line('공명', pct(v)));
     }
     if (typeof beastSuccessBonus === 'function') {
-      const v = beastSuccessBonus(); if (v) successLines.push(line('사신 (朱雀)', pct(v)));
+      const v = beastSuccessBonus(); if (v) successLines.push(line('사신 (주작)', pct(v)));
     }
     if (typeof treasureGlobalBonus === 'function') {
       const v = treasureGlobalBonus(); if (v) successLines.push(line('칠보 원만', pct(v)));
@@ -10582,7 +10582,7 @@
         || (typeof enhanceEcho !== 'undefined' && enhanceEcho && enhanceEcho.destroyBlock)
         || (typeof sanctumBlocksDestroy === 'function' && sanctumBlocksDestroy());
       if (fullBlock) {
-        destroyLines.push(line('靈石 / 잔향 / 聖域 — 파괴 차단', '0%', 'var(--safe)'));
+        destroyLines.push(line('영석 / 잔향 / 성역 — 파괴 차단', '0%', 'var(--safe)'));
       } else {
         const f = getForm();
         const fdr = (f && f.destroyReduce) || 0;
@@ -10593,7 +10593,7 @@
         if (typeof getScarDestroyReduce === 'function') { const v = getScarDestroyReduce(); if (v) destroyLines.push(line('흉터 (傷)', reduce(v), 'var(--safe)')); }
         if (typeof weatherDestroyReduce === 'function') { const v = weatherDestroyReduce(); if (v) destroyLines.push(line('천후', reduce(v), 'var(--safe)')); }
         if (typeof wishDestroyReduce === 'function') { const v = wishDestroyReduce(); if (v) destroyLines.push(line('유언 (願)', reduce(v), 'var(--safe)')); }
-        if (typeof solarDestroyReduce === 'function') { const v = solarDestroyReduce(); if (v) destroyLines.push(line('절기 (冬至)', reduce(v), 'var(--safe)')); }
+        if (typeof solarDestroyReduce === 'function') { const v = solarDestroyReduce(); if (v) destroyLines.push(line('절기 (동지)', reduce(v), 'var(--safe)')); }
         const rsv = getResolve();
         if (rsv.destroyMul !== 1) destroyLines.push(line('각오 ' + rsv.label + ' 배수', '×' + rsv.destroyMul, rsv.destroyMul > 1 ? 'var(--danger)' : 'var(--safe)'));
       }
@@ -10602,7 +10602,7 @@
     }
     sections.push(section('파괴 확률 요인', destroyLines));
 
-    // 1c. 강화 비용 요인 (enhanceCost 거울 — form 重/계절/노쇠/保身/축복/聖域/유언/절기/주말/連)
+    // 1c. 강화 비용 요인 (enhanceCost 거울 — form 重/계절/노쇠/保身/축복/성역/유언/절기/주말/連)
     const costLines = [];
     if (state.hasSword && typeof enhanceCost === 'function' && TABLE[state.level] && TABLE[state.level].cost > 0) {
       const lv = state.level;
@@ -10612,9 +10612,9 @@
       costMulLine('계절', getSeason().costMul);
       costMulLine('노쇠 (久/古)', getAgeEffect().costMul);
       const rsv = getResolve(); costMulLine('각오 ' + rsv.label, rsv.costMul);
-      if (typeof enhanceEcho !== 'undefined' && enhanceEcho && enhanceEcho.costMul) costMulLine('잔향 (殘響)', enhanceEcho.costMul);
+      if (typeof enhanceEcho !== 'undefined' && enhanceEcho && enhanceEcho.costMul) costMulLine('잔향 (잔향)', enhanceEcho.costMul);
       if (typeof blessingCostMul === 'function') costMulLine('축복 (천년송)', blessingCostMul());
-      if (typeof sanctumCostMul === 'function') costMulLine('聖域', sanctumCostMul());
+      if (typeof sanctumCostMul === 'function') costMulLine('성역', sanctumCostMul());
       if (typeof wishCostMul === 'function') costMulLine('유언 (願)', wishCostMul());
       if (typeof solarCostMul === 'function') costMulLine('절기', solarCostMul());
       if (typeof weekendCostMul === 'function') costMulLine('주말 (休)', weekendCostMul());
@@ -10634,14 +10634,14 @@
         else sealLines.push(line(st.label, mul(st.mul), 'var(--accent)'));
       });
       const finalReward = (typeof sealRewardDisplay === 'function') ? sealRewardDisplay(state.level, ins, ins.includes('도')) : base;
-      if (finalReward !== base) sealLines.push(line('共鳴/잔향', '→ ' + fmtNum(finalReward) + ' 조각', 'var(--accent)'));
+      if (finalReward !== base) sealLines.push(line('공명/잔향', '→ ' + fmtNum(finalReward) + ' 조각', 'var(--accent)'));
       sealLines.push(line('실제 봉인 보상', fmtNum(finalReward) + ' 조각', 'var(--accent)'));
     }
     sections.push(section('봉인 보상 요인', sealLines));
 
     // 2. 활성 charges (1회용)
     const chargeLines = [];
-    if (state.metsumaoCharges > 0) chargeLines.push(line('滅魔 (다음 슬레이 ×1.5)', '×' + state.metsumaoCharges));
+    if (state.metsumaoCharges > 0) chargeLines.push(line('멸마 (다음 슬레이 ×1.5)', '×' + state.metsumaoCharges));
     if (state.hondoCharges > 0) chargeLines.push(line('본도 (다음 새 검 +20영혼)', '×' + state.hondoCharges));
     if (state.swordWish && state.swordWish.charges > 0) chargeLines.push(line(state.swordWish.key + ' (강화 유언)', '×' + state.swordWish.charges));
     if (state.swordWishSlay && state.swordWishSlay.charges > 0) chargeLines.push(line(state.swordWishSlay.key + ' (슬레이 유언)', '×' + state.swordWishSlay.charges));
@@ -10652,7 +10652,7 @@
     }
     if (typeof lightningBonusReady !== 'undefined' && lightningBonusReady) chargeLines.push(line('雷 (다음 강화 +10%)', '활성'));
     if (typeof dawnBonusCount !== 'undefined' && dawnBonusCount > 0) chargeLines.push(line('여명 (강화 +10%)', '×' + dawnBonusCount));
-    if (typeof pendingBreathBoost !== 'undefined' && pendingBreathBoost) chargeLines.push(line('眞空 보너스 (다음 호흡 ×2)', '활성'));
+    if (typeof pendingBreathBoost !== 'undefined' && pendingBreathBoost) chargeLines.push(line('진공 보너스 (다음 호흡 ×2)', '활성'));
     if (state.divinationStones > 0) chargeLines.push(line('점복 (전조 정확)', '×' + state.divinationStones));
     sections.push(section('활성 효과 (1회용 / 단기)', chargeLines));
 
@@ -10685,7 +10685,7 @@
       if (typeof successStreak !== 'undefined' && successStreak > 0) swordLines.push(line('강화 연', successStreak + '회'));
       if (typeof slayStreak !== 'undefined' && slayStreak > 0) swordLines.push(line('슬레이 연참', slayStreak + '회'));
       if (typeof failStreak !== 'undefined' && failStreak > 0) swordLines.push(line('실패 streak', failStreak + '회'));
-      if (typeof adversityReady !== 'undefined' && adversityReady) swordLines.push(line('逆轉 준비', '활성', '#fff5c0'));
+      if (typeof adversityReady !== 'undefined' && adversityReady) swordLines.push(line('역전 준비', '활성', '#fff5c0'));
       // UI 재설계 1단계 — 천명(destiny)을 검 정보 패널에 통합 (무대 배너 → 패널 단일화 준비)
       if (cs.destiny && typeof DESTINIES !== 'undefined') {
         const d = DESTINIES.find(x => x.key === cs.destiny);
@@ -10739,7 +10739,7 @@
           body: s.memo,
         });
       }
-      // 寄言 (도 검 + kigen 있음)
+      // 기언 (도 검 + kigen 있음)
       if (s.kigen) {
         pages.push({
           kind: 'kigen', sword: s,
@@ -10793,7 +10793,7 @@
     if (progress) {
       const counts = { name: 0, memo: 0, kigen: 0, verse: 0 };
       bunshuPages.forEach(p => counts[p.kind]++);
-      progress.textContent = '검명 ' + counts.name + '  ·  메모 ' + counts.memo + '  ·  寄言 ' + counts.kigen + '  ·  일생시 ' + counts.verse;
+      progress.textContent = '검명 ' + counts.name + '  ·  메모 ' + counts.memo + '  ·  기언 ' + counts.kigen + '  ·  일생시 ' + counts.verse;
     }
     $('bunshu-prev').disabled = bunshuIndex <= 0;
     $('bunshu-next').disabled = bunshuIndex >= bunshuPages.length - 1;
@@ -10873,7 +10873,7 @@
     return { idx, sword, wins: state.duelWins[idx] || 0 };
   }
 
-  // === v159 對局 — 봉인 검 2자루 자동 대결 ===
+  // === v159 대국 — 봉인 검 2자루 자동 대결 ===
   let duelSelected = [];  // 0~2개
   function duelPower(sword) {
     // 자료 기반 전투력 계산
@@ -11014,7 +11014,7 @@
             osc.start(now + i * 0.10); osc.stop(now + i * 0.10 + 1.1);
           });
         }
-        log('對局 — ' + (winner.name || '검') + ' 승리', 'success');
+        log('대국 — ' + (winner.name || '검') + ' 승리', 'success');
         $('duel-clear').disabled = false;
         setTimeout(() => $('duel-start').disabled = false, 500);
         renderDuelList();
@@ -11030,9 +11030,9 @@
     renderDuelList();
   }
 
-  // === v156 新記 — 개인 최고 기록 (7종) ===
+  // === v156 신기 — 개인 최고 기록 (7종) ===
   const RECORDS = [
-    { key: 'maxSlayStreak',    label: '최고 連斬',          unit: '회' },
+    { key: 'maxSlayStreak',    label: '최고 연참',          unit: '회' },
     { key: 'maxSwordLife',     label: '최장 검 일생',       unit: '강화' },
     { key: 'maxSealReward',    label: '최고 봉인 보상',     unit: '조각' },
     { key: 'maxSoul',          label: '최고 영혼',          unit: '魂' },
@@ -11059,7 +11059,7 @@
     const stage = $('stage');
     if (!stage) return;
     const el = document.createElement('div');
-    el.innerHTML = '新記 — ' + def.label + ' <span style="color:#fff5c0">' + value + def.unit + '</span> <span style="opacity:0.55;font-size:9px">(이전 ' + prev + def.unit + ')</span>';
+    el.innerHTML = '신기 — ' + def.label + ' <span style="color:#fff5c0">' + value + def.unit + '</span> <span style="opacity:0.55;font-size:9px">(이전 ' + prev + def.unit + ')</span>';
     el.style.cssText = 'position:absolute;top:30%;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:2px;color:var(--accent);text-shadow:0 0 6px rgba(212,175,55,0.5);pointer-events:none;z-index:30;white-space:nowrap;opacity:0;font-family:"Noto Serif KR", serif';
     stage.appendChild(el);
     el.animate([
@@ -11069,9 +11069,9 @@
       { opacity: 0, top: '28%' },
     ], { duration: 3500, easing: 'ease-in-out' });
     setTimeout(() => el.remove(), 3600);
-    log('🏆 新記 — ' + def.label + ' ' + value + def.unit, 'success');
+    log('🏆 신기 — ' + def.label + ' ' + value + def.unit, 'success');
   }
-  function renderShinkiSection() {  // v288 — 新記 html 반환 (記錄 모달 임베드용). 이전 이름 renderRecords가 劍士録 모달용 동명 함수(6986)를 가려 그 모달이 비어 있던 버그 수정.
+  function renderShinkiSection() {  // v288 — 신기 html 반환 (記錄 모달 임베드용). 이전 이름 renderRecords가 劍士録 모달용 동명 함수(6986)를 가려 그 모달이 비어 있던 버그 수정.
     const r = state.records || {};
     let html = '<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">' +
       '<div style="font-size:11px;color:var(--accent);letter-spacing:5px;margin-bottom:10px;text-align:center">新  記</div>';
@@ -11088,7 +11088,7 @@
     return html;
   }
 
-  // === v152 風月 — 숨겨진 조용한 성취 (sealed 검 데이터 자동 패턴 발견) ===
+  // === v152 풍월 — 숨겨진 조용한 성취 (sealed 검 데이터 자동 패턴 발견) ===
   const HIDDEN_ACHIEVEMENTS = [
     {
       key: 'shinjuu', kanji: '慎重', label: '신중의 검',
@@ -11132,8 +11132,8 @@
       if (a.check(sword)) {
         state.hiddenAchievements[a.key] = Date.now();
         setTimeout(() => {
-          announceInscription(a.kanji, '風月 — ' + a.label + ' — ' + a.desc);
-          log('🌸 風月 — ' + a.label + ' 발견', 'success');
+          announceInscription(a.kanji, '풍월 — ' + a.label + ' — ' + a.desc);
+          log('🌸 풍월 — ' + a.label + ' 발견', 'success');
         }, 800);
       }
     });
@@ -11409,7 +11409,7 @@
       onSeal: (state, reward) => Math.floor(reward * 2),
     },
     {
-      key: 'metsumao', pair: ['귀참', '단마'], name: '滅魔', label: '모든 마를 멸하다',
+      key: 'metsumao', pair: ['귀참', '단마'], name: '멸마', label: '모든 마를 멸하다',
       desc: '검귀와 단마가 함께 — 봉인 시 다음 5번 슬레이 ×1.5',
       onSealPersistent: (state) => { state.metsumaoCharges = 5; },
     },
@@ -11641,7 +11641,7 @@
     { key: '心', label: '본질',     hint: '영혼 67(本) 도달',  trigger: () => state.hasSword && (state.currentSword.soul || 0) >= 67 },
     { key: '銘', label: '기록',     hint: '명문 3개 새김 (메타 제외)', trigger: () => {
       if (!state.hasSword) return false;
-      const meta = new Set(['시조','달인','성','칠성','역전','先代','선']);
+      const meta = new Set(['시조','달인','성','칠성','역전','선대','선']);
       const real = (state.currentSword.inscriptions || []).filter(k => !meta.has(k));
       return real.length >= 3;
     }},
@@ -11696,7 +11696,7 @@
     }).join('');
   }
 
-  // === v114 餘香 — 슬레이 후 다음 강화에 남는 잔향 + v115 流逝 시간 제한 ===
+  // === v114 여향 — 슬레이 후 다음 강화에 남는 잔향 + v115 流逝 시간 제한 ===
   let enhanceEcho = null;  // 휘발성. 한 번 사용 후 소멸
   let enhanceEchoTimer = null;  // v115 流逝 — 잔향 수명 타이머
   let enhanceEchoDeadline = 0;  // 만료 timestamp (ms)
@@ -11705,7 +11705,7 @@
     demon:  { kanji: '神', label: '神髓 — 다음 강화 성공 +30%',  successBonus: 0.30, color: '#c0392b' },
     steel:  { kanji: '盾', label: '影盾 — 다음 강화 파괴 차단',  destroyBlock: true,  color: '#8ab0c8' },
     flee:   { kanji: '輕', label: '影絲 — 다음 강화 비용 절반',  costMul: 0.5,        color: '#a8c87a' },
-    named:  { kanji: '魂', label: '靈魂 — 다음 강화 영혼 +20',   soulBonus: 20,       color: '#fff5c0' },
+    named:  { kanji: '魂', label: '영혼 — 다음 강화 영혼 +20',   soulBonus: 20,       color: '#fff5c0' },
   };
   function setEnhanceEcho(typeKey, sourceRect) {
     const def = ECHO_TYPES[typeKey];
@@ -11718,11 +11718,11 @@
     // 슬레이 위치에서 강화 버튼으로 흐르는 잔향 한자
     spawnEchoKanji(def.kanji, def.color, sourceRect);
     setTimeout(() => render(), 600);
-    log('餘香 — ' + def.label + ' · 30초', 'success');
+    log('여향 — ' + def.label + ' · 30초', 'success');
   }
   function expireEnhanceEcho() {
     if (!enhanceEcho) return;
-    log('餘香 흩어졌다 — ' + (enhanceEcho.kanji || '?'), 'fail');
+    log('여향 흩어졌다 — ' + (enhanceEcho.kanji || '?'), 'fail');
     enhanceEcho = null;
     if (enhanceEchoTimer) { clearTimeout(enhanceEchoTimer); enhanceEchoTimer = null; }
     enhanceEchoDeadline = 0;
@@ -11873,7 +11873,7 @@
       el.textContent = '';
     }, 2800);
   }
-  // === v112 祖靈 — 봉인/탄생 시 조상 명문 영혼 이펙트 ===
+  // === v112 조령 — 봉인/탄생 시 조상 명문 영혼 이펙트 ===
   function spawnAncestorGatherKanji() {
     // 선대 봉인 검들의 핵심 명문 1~2개씩 수집 — 최신 3자루만
     const skip = new Set(['시조', '달인', '성', '백련', '초인']);
@@ -11975,7 +11975,7 @@
     // v122 점복
     const divCheck = $('divination-check');
     const useDivination = divCheck && divCheck.checked && !divCheck.disabled && (state.divinationStones || 0) > 0;
-    // 餘香 destroyBlock은 spirit과 동일 효과 — OR 처리 (영석/잔향 둘 다 차단)
+    // 여향 destroyBlock은 spirit과 동일 효과 — OR 처리 (영석/잔향 둘 다 차단)
     const echoDestroyBlock = !!(enhanceEcho && enhanceEcho.destroyBlock);
     const echoSoulBonus = (enhanceEcho && enhanceEcho.soulBonus) || 0;
     const successChance = successChanceNow();  // v240 단일 진원 — 잔향/砥/호흡부스트 consume 전 포착
@@ -12003,7 +12003,7 @@
     consumeMatsu();  // v119 천년송 카운트 소모
     consumeDawnBonus();  // v126 여명 — 보너스 카운트 소모
     consumeLightningBonus();  // v147 雷 — 다음 강화 +10% 1회 소모
-    consumeWishEnhance();  // v155 寒梅 — 유언 강화 카운트 1 소모
+    consumeWishEnhance();  // v155 한매 — 유언 강화 카운트 1 소모
     checkEraTransition(prevAttempts);  // v120 기원 — 새 시대 진입 감지
     maybeForceSanctumOff();  // v121 결계 — 비용 차감 후 조각 부족 시 자동 해제
 
@@ -12011,9 +12011,9 @@
     if (!state.currentSword.form) decideForm();
 
     // 주사위 — 성공 임계는 successChance(consume 전 포착) 단일 진원 사용 (v240)
-    if (pendingBreathBoost) { pendingBreathBoost = false; log('眞空 보너스 — 호흡 ×2 적용', 'success'); }  // 호흡 ×2는 successChance에 이미 반영
+    if (pendingBreathBoost) { pendingBreathBoost = false; log('진공 보너스 — 호흡 ×2 적용', 'success'); }  // 호흡 ×2는 successChance에 이미 반영
     addSoul(1); // 강화 시도 자체로 혼 +1
-    if (echoSoulBonus > 0) addSoul(echoSoulBonus); // v114 餘香 靈魂 보너스
+    if (echoSoulBonus > 0) addSoul(echoSoulBonus); // v114 여향 영혼 보너스
     lastEnhanceTime = Date.now(); // 호흡 리셋
     const adversityDestroyReduce = adversityReady ? 0.12 : 0;
     // v122 점복: 잠긴 롤이 있으면 그것을 사용 (omen이 100% 정확)
@@ -12056,7 +12056,7 @@
       }
       // 조각이 검에 흘러드는 빛줄 (4방향)
       spawnMergeRays();
-      // v178 共鳴 — 같은 형 봉인 검의 광선 (random ~ 1/4 빈도)
+      // v178 공명 — 같은 형 봉인 검의 광선 (random ~ 1/4 빈도)
       if (Math.random() < 0.28) spawnResonanceRays();
       // v182 水鏡 — 강화 성공 시 물결 ripple
       spawnWaterRipple();
@@ -12096,7 +12096,7 @@
       // v136 탁본 — 의미있는 마일스톤 포착
       if (state.level === 10) captureRubbing('first10');
       if (state.level === MAX_LEVEL && !state.firstWayReached) captureRubbing('firstWay');
-      // v156 新記 — 도 도달 시 강화 시도 수 (최단 도 도달 기록)
+      // v156 신기 — 도 도달 시 강화 시도 수 (최단 도 도달 기록)
       if (state.level === MAX_LEVEL) {
         updateRecord('minWayAttempts', state.currentSword.enhanceAttempts || 0);
       }
@@ -12141,11 +12141,11 @@
       const failRoll = (useDivination && divinationLockedFailRoll !== null)
         ? divinationLockedFailRoll
         : Math.random();
-      // 영석/餘香影盾/결계(v121): 파괴 차단 / 유파 + 수호자 + 흉터(v111) 보너스도 destroy 감소 / v91 覺悟 배율 / v96 역경전기 감소
-      // v343 — solarDestroyReduce() 누락 수정: 표시(effectiveDestroyChance)·破 breakdown(절기 冬至 -2%)이
+      // 영석/여향影盾/결계(v121): 파괴 차단 / 유파 + 수호자 + 흉터(v111) 보너스도 destroy 감소 / v91 覺悟 배율 / v96 역경전기 감소
+      // v343 — solarDestroyReduce() 누락 수정: 표시(effectiveDestroyChance)·破 breakdown(절기 동지 -2%)이
       // 약속하던 절기 파괴 감소를 실제 굴림이 무시했다(display≠actual). v263이 헬퍼엔 넣었으나 이
       // 인라인 사본을 못 고침. 단, 헬퍼 직접 호출은 불가 — 헬퍼가 state.spiritstones를 live 재계산하는데
-      // 여기선 useSpirit 캡처 후 이미 차감됨 → 靈石이 파괴를 못 막는 회귀가 됨. 그래서 항만 추가.
+      // 여기선 useSpirit 캡처 후 이미 차감됨 → 영석이 파괴를 못 막는 회귀가 됨. 그래서 항만 추가.
       const effectiveDestroy = (useSpirit || echoDestroyBlock || sanctumBlocksDestroy()) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce() - weatherDestroyReduce() - wishDestroyReduce() - solarDestroyReduce()) * rsv.destroyMul);
       // v121 결계: 파괴 차단 시 원래 destroy 확률을 downgrade로 흡수 (단순 안전이 아닌 비용 부과형 보호)
       const sanctumDestroyAbsorbed = sanctumBlocksDestroy() && !useSpirit && !echoDestroyBlock
@@ -12226,7 +12226,7 @@
         if (successStreak >= 3) log('연 ' + successStreak + '회 streak 종료 — 유지', 'fail');
         clearStreak();
         failStreak++; checkAdversity(); resolveOmen('hold');  // v102
-        // v111 刻痕: 방지권이 파괴 roll을 막아낸 경우 흉터 새김
+        // v111 각흔: 방지권이 파괴 roll을 막아낸 경우 흉터 새김
         const protectedFromDestroy = useProtect && failRoll < (useSpirit ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce) * rsv.destroyMul));
         if (useProtect) {
           if (protectedFromDestroy) {
@@ -12289,7 +12289,7 @@
     // v219 賭 — 회수 도박 버튼 노출
     const gambleBtn = $('rescue-gamble');
     if (gambleBtn) gambleBtn.style.display = 'block';
-    const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec + beastRescueSec() + solarRescueSec(); // 속류 + 冬 + 수호자 + 사신 白虎 + 절기 立冬
+    const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec + beastRescueSec() + solarRescueSec(); // 속류 + 冬 + 수호자 + 사신 백호 + 절기 立冬
     let timeLeft = totalSec;
     rescueTimer.classList.remove('urgent');  // v284 — 새 윈도우는 평상 색으로 시작
     rescueTimer.textContent = timeLeft.toFixed(1) + '초 안에  ·  +' + shardReward + ' 조각';
@@ -12385,7 +12385,7 @@
     setTimeout(() => el.remove(), 3100);
   }
 
-  // === v111 刻痕 — 흉터 시스템 ===
+  // === v111 각흔 — 흉터 시스템 ===
   function getScarDestroyReduce() {
     return (state.currentSword && state.currentSword.scars || 0) * 0.01;
   }
@@ -12413,7 +12413,7 @@
     if (n === 3 && state.hasSword) {
       setTimeout(() => checkInscriptions(), 300);
     }
-    log('刻痕 · ' + n + '  — 파괴의 충격이 검에 새겨졌다 (파괴 확률 -' + n + '%)', 'info');
+    log('각흔 · ' + n + '  — 파괴의 충격이 검에 새겨졌다 (파괴 확률 -' + n + '%)', 'info');
     checkStars();  // v116 칠성
     save();
   }
@@ -12455,7 +12455,7 @@
     const sealed = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => s.verse && Array.isArray(s.verse));
     if (sealed.length === 0) return;
     // v371c 守魂 — 수호자(지정한 도 검)가 있으면 그가 시련을 지켜보며 속삭인다. 守(v52)는 그동안
-    // 패시브 stat로만 존재했으나, 一閃(도전) 때 제 목소리를 얻는다 (守+一閃 whisper 융합, 점수 0).
+    // 패시브 stat로만 존재했으나, 일섬(도전) 때 제 목소리를 얻는다 (守+일섬 whisper 융합, 점수 0).
     let ancestor, isGuardian = false;
     const guardian = (typeof getGuardian === 'function') ? getGuardian() : null;
     if (guardian && Array.isArray(guardian.verse) && guardian.verse.length) {
@@ -12500,7 +12500,7 @@
     return '흉험한';
   }
 
-  // === 一閃 — 도전 (휘발성, 저장 안 함) ===
+  // === 일섬 — 도전 (휘발성, 저장 안 함) ===
   const CHALLENGE_BASE_CHANCE = 0.13;
   const CHALLENGE_LEVEL_BONUS = 0.018;
   const CHALLENGE_MAX_CHANCE = 0.45;
@@ -12600,7 +12600,7 @@
     if (sMul !== 1) reward = Math.floor(reward * sMul);
     const gMul = guardianBonus().rewardMul;
     if (gMul !== 1) reward = Math.floor(reward * gMul);
-    // v261 사신 玄武 — 도전 보상 +5% (이름 있는 적도 도전)
+    // v261 사신 현무 — 도전 보상 +5% (이름 있는 적도 도전)
     const beastChMul = beastChallengeMul();
     if (beastChMul !== 1) reward = Math.floor(reward * beastChMul);
     // v263 절기 夏至 — 도전 보상 +10%
@@ -12632,7 +12632,7 @@
     showChallenge();
   }
 
-  // === v129 形相剋 — 형 × 그림자 상성 시스템 ===
+  // === v129 形상극 — 형 × 그림자 상성 시스템 ===
   // 각 형마다 1 강함 (+25% 보상) + 1 약함 (-15% 보상)
   const FORM_AFFINITY = {
     '직': { favored: 'normal', weakness: 'demon' },  // 곧음 — 평범에 강, 검귀에 약
@@ -12660,8 +12660,8 @@
     const a = getAffinity(form, shadowKey);
     // v349 — 배수를 상수에서 직접 보간 (하드코딩 '×1.25'/'×0.85'가 affinityRewardMul의
     // AFFINITY_*_MUL과 drift하던 위험 제거 — 砥 라벨·레시피 비용류 단일 진원 규율).
-    if (a === 'favored') return { text: '相剋 — 이 검에 강함 (×' + AFFINITY_FAVORED_MUL + ' 보상)', color: '#c8e6a0' };
-    if (a === 'weakness') return { text: '相剋 — 이 검에 약함 (×' + AFFINITY_WEAKNESS_MUL + ' 보상)', color: '#e6a0a0' };
+    if (a === 'favored') return { text: '상극 — 이 검에 강함 (×' + AFFINITY_FAVORED_MUL + ' 보상)', color: '#c8e6a0' };
+    if (a === 'weakness') return { text: '상극 — 이 검에 약함 (×' + AFFINITY_WEAKNESS_MUL + ' 보상)', color: '#e6a0a0' };
     return null;
   }
 
@@ -12700,7 +12700,7 @@
     if (sMul !== 1) reward = Math.floor(reward * sMul);
     const gMul = guardianBonus().rewardMul;
     if (gMul !== 1) reward = Math.floor(reward * gMul);
-    // v261 사신 玄武 — 도전 보상 +5%
+    // v261 사신 현무 — 도전 보상 +5%
     const beastChMul = beastChallengeMul();
     if (beastChMul !== 1) reward = Math.floor(reward * beastChMul);
     // v263 절기 夏至 — 도전 보상 +10%
@@ -12712,11 +12712,11 @@
     // v127 氣 — 검의 기분 슬레이 보상 보너스
     const moodMul = moodSlayRewardMul();
     if (moodMul !== 1) reward = Math.floor(reward * moodMul);
-    // v129 形相剋 — 형 × 그림자 상성
+    // v129 形상극 — 형 × 그림자 상성
     const currentForm = state.hasSword && state.currentSword && state.currentSword.form;
     const affMul = affinityRewardMul(currentForm, type.key);
     if (affMul !== 1) reward = Math.floor(reward * affMul);
-    // v138 雙銘 — 滅魔 charge 활성 시 슬레이 ×1.5
+    // v138 雙銘 — 멸마 charge 활성 시 슬레이 ×1.5
     if (state.metsumaoCharges > 0) {
       reward = Math.floor(reward * 1.5);
       state.metsumaoCharges--;
@@ -12730,7 +12730,7 @@
     // v153 朝夕 — 夜 슬레이 ×1.02 (밤의 그림자 보상)
     const todMul = todSlayRewardBonus();
     if (todMul !== 1) reward = Math.floor(reward * todMul);
-    // v155 寒梅 — 雷神 유언 슬레이 보상 ×1.2 (5회)
+    // v155 한매 — 뇌신 유언 슬레이 보상 ×1.2 (5회)
     const wishSlayM = wishSlayRewardMul();
     if (wishSlayM !== 1) { reward = Math.floor(reward * wishSlayM); consumeWishSlay(); }
     // v212 休 — 주말 도전 보상 ×1.05
@@ -13178,7 +13178,7 @@
   }
   setTimeout(() => startAmbientPhrases(), 5000);
 
-  // === v151 雲水 — 떠도는 도사 random encounter ===
+  // === v151 운수 — 떠도는 도사 random encounter ===
   let wanderingMonkEl = null;
   let wanderingMonkTimer = null;
   function spawnWanderingMonk() {
@@ -13231,7 +13231,7 @@
       osc.connect(g); g.connect(ctx.destination);
       osc.start(now); osc.stop(now + 0.15);
     }
-    log('雲水 — 떠도는 도사가 보였다', 'info');
+    log('운수 — 떠도는 도사가 보였다', 'info');
     // 15초 후 자동 사라짐
     wanderingMonkTimer = setTimeout(() => dismissMonk(), 15000);
   }
@@ -13270,7 +13270,7 @@
       state.divinationStones += 1;
       gift = '점복 +1';
     }
-    log('雲水 — 도사가 「' + gift + '」을(를) 주었다', 'success');
+    log('운수 — 도사가 「' + gift + '」을(를) 주었다', 'success');
     setTimeout(() => announceInscription('운', '떠도는 도사의 선물 — ' + gift), 300);
     setTimeout(() => joyAt('stage', '#d4af37'), 200);  // v167 喜
     // 종 음 (감사)
@@ -13499,7 +13499,7 @@
   let meditationStartTime = 0;
   let trueEmptyStarInterval = null;
   let trueEmptyBellInterval = null;
-  let pendingBreathBoost = false;  // v162: 真空 종료 시 다음 강화 호흡 보너스 ×2
+  let pendingBreathBoost = false;  // v162: 진공 종료 시 다음 강화 호흡 보너스 ×2
   let preMeditationDronePitch = 1.0;
   function touchUserAction() {
     const now = Date.now();
@@ -13552,11 +13552,11 @@
     }
     // v154 沈黙 — 명상 종료 시 지혜 schedule 정지
     stopSilenceWisdom();
-    // v162 真空 — 真空 모드면 종료 + 호흡 보너스 예약
+    // v162 진공 — 진공 모드면 종료 + 호흡 보너스 예약
     if (inTrueEmptiness) {
       exitTrueEmptiness();
       pendingBreathBoost = true;
-      log('真空 종료 — 다음 강화 호흡 보너스 ×2', 'success');
+      log('진공 종료 — 다음 강화 호흡 보너스 ×2', 'success');
     }
     meditationStartTime = 0;
   }
@@ -13583,7 +13583,7 @@
     setTimeout(playTrueEmptyBell, 5000);  // 처음 5초 후 한 번
     startMeditationMelody();  // v223 韻致
     startSwordDreams();  // v231 劍夢
-    log('真空 — 깊은 침묵에 들었다', 'info');
+    log('진공 — 깊은 침묵에 들었다', 'info');
   }
   function exitTrueEmptiness() {
     inTrueEmptiness = false;
@@ -13713,7 +13713,7 @@
     shadowStrength.textContent = shadowTier(challenge.strength) + ' ' + (challenge.origin ? challenge.origin + ' ' : '') + t.name + ' · 강도 +' + challenge.strength;  // v251 影格
     // 베기 버튼에 보상 표시
     const slayRewardLabel = $('slay-reward-label');
-    if (slayRewardLabel) slayRewardLabel.textContent = '+' + fmtNum(slayGrantAmount(challenge.reward)) + ' 조각';  // v244 連斬 반영
+    if (slayRewardLabel) slayRewardLabel.textContent = '+' + fmtNum(slayGrantAmount(challenge.reward)) + ' 조각';  // v244 연참 반영
     const verdict = state.level >= challenge.strength
       ? '<span style="color:var(--safe)">충분히 강하다 — 한 번에 베어진다</span>'
       : '<span style="color:var(--danger)">검이 약하다 — 흔들릴 수 있다</span>'
@@ -13739,7 +13739,7 @@
           '</div>' +
         '</div>' +
       '</div>';
-    // v129 形相剋 — 형 × 그림자 상성 표시
+    // v129 形상극 — 형 × 그림자 상성 표시
     const currentSwordForm = state.hasSword && state.currentSword && state.currentSword.form;
     const affLbl = affinityLabel(currentSwordForm, t.key);
     const affBlock = affLbl
@@ -13781,7 +13781,7 @@
     log('그림자가 인내심을 잃고 떠났다', 'fail');
     inscribeQueue.push({ key: '逝', label: '그림자가 흩어졌다 — 결단의 시간을 놓쳤다' });
     if (!inscribeRunning) runInscribeQueue();
-    clearSlayStreak();  // v125 連斬 — 자발 후퇴도 리셋
+    clearSlayStreak();  // v125 연참 — 자발 후퇴도 리셋
     endChallenge();
     save();
     render();
@@ -13854,17 +13854,17 @@
         setTimeout(() => screenShake(false), 180);
       }
       challengeSword.classList.add('strike');
-      // v125 連斬 — streak에 따른 보상 배율 적용 (이전 streak 기준). v244 단일 진원.
+      // v125 연참 — streak에 따른 보상 배율 적용 (이전 streak 기준). v244 단일 진원.
       const slayBonusMul = slayStreakRewardBonus();
       const finalReward = slayGrantAmount(c.reward);
       state.shards += finalReward;
       state.totalSlain++;
       state.currentSword.slainCount++;
       addSoul(6); // 베기 성공 +6
-      // v125 連斬 — 슬레이 streak 증가 + 단계별 보너스
+      // v125 연참 — 슬레이 streak 증가 + 단계별 보너스
       slayStreak++;
       updateRecord('maxSlayStreak', slayStreak);  // v156
-      const newTierLabel = slayStreak === 3 ? '連斬 三' : slayStreak === 5 ? '連斬 五' : slayStreak === 7 ? '連斬 七' : null;
+      const newTierLabel = slayStreak === 3 ? '연참 三' : slayStreak === 5 ? '연참 五' : slayStreak === 7 ? '연참 七' : null;
       if (newTierLabel) {
         const tierMsg = slayStreak === 3 ? '세 번 이어졌다 — 검의 흐름이 살아난다' :
                         slayStreak === 5 ? '다섯 번 — 보호권 +1' :
@@ -13874,10 +13874,10 @@
         if (slayStreak === 7) { state.whetstones++; setTimeout(() => joyAt('btn-enhance', '#a8e0a0'), 250); }
       }
       if (slayStreak === 10) {
-        // 連一閃 명문 + 카운터 리셋
+        // 連일섬 명문 + 카운터 리셋
         if (!state.currentSword.inscriptions.includes('연일섬')) {
           state.currentSword.inscriptions.push('연일섬');
-          setTimeout(() => announceInscription('연일섬', '열 번의 一閃이 검에 새겨졌다'), 500);
+          setTimeout(() => announceInscription('연일섬', '열 번의 일섬이 검에 새겨졌다'), 500);
         }
         clearSlayStreak();
       } else {
@@ -13887,8 +13887,8 @@
       const slayShadowType = c.namedFoeKey ? 'named' : (c.type && c.type.key) || 'normal';
       showSwordVoice('slay', state.level, slayShadowType);
       captureRubbing('firstSlay');  // v136 탁본 — 첫 슬레이
-      // v34 一閃 결과 페이드 (의식) — v125 streak bonus 반영
-      inscribeQueue.push({ key: '斬', label: shadowTier(c.strength) + ' ' + c.type.name + ' · 조각 +' + fmtNum(finalReward) + (slayBonusMul > 1 ? ' (連斬 ×' + slayBonusMul.toFixed(2) + ')' : '') });  // v251b 影格 — 적의 위세 반영
+      // v34 일섬 결과 페이드 (의식) — v125 streak bonus 반영
+      inscribeQueue.push({ key: '斬', label: shadowTier(c.strength) + ' ' + c.type.name + ' · 조각 +' + fmtNum(finalReward) + (slayBonusMul > 1 ? ' (연참 ×' + slayBonusMul.toFixed(2) + ')' : '') });  // v251b 影格 — 적의 위세 반영
       if (!inscribeRunning) runInscribeQueue();
       // 통계: type별 격파 수
       recordHourActivity();  // v195 時計
@@ -13957,7 +13957,7 @@
       log(c.type.name + ' 베어냄 +' + fmtNum(finalReward) + ' 조각', 'success');
       recordEvent(c.type.name + ' 베어냄 +' + finalReward);
       burstParticles(c.type.isDemon ? '#c0392b' : '#d4af37', c.type.isDemon ? 30 : 18);
-      // v114 餘香 — 슬레이 타입별 다음 강화 잔향 (검귀/이름있는적은 위에서 처리, 여기서는 일반/逃影/鋼影)
+      // v114 여향 — 슬레이 타입별 다음 강화 잔향 (검귀/이름있는적은 위에서 처리, 여기서는 일반/逃影/鋼影)
       const shadowEl = $('shadow-form');
       const sRect = shadowEl ? shadowEl.getBoundingClientRect() : null;
       let echoKey = null;
@@ -13980,7 +13980,7 @@
       setTimeout(() => { endChallenge(); save(); render(); }, 900);
     } else {
       // 베기 실패 — 검 흔들림
-      clearSlayStreak();  // v125 連斬 — 실패도 streak 리셋
+      clearSlayStreak();  // v125 연참 — 실패도 streak 리셋
       const guardCost = shakeGuardCost(c.strength);  // v245 단일 진원
       const hasGuard = state.protections >= guardCost;
       challengeEl.classList.remove('active');
@@ -14016,7 +14016,7 @@
     bumpStat('fled');
     log(cost ? ('도망 (조각 -' + cost + ')') : '바람처럼 도망', 'fail');
     setTimeout(() => showConsolation('flee'), 600);  // v143 慰
-    clearSlayStreak();  // v125 連斬 — 도망 시 리셋
+    clearSlayStreak();  // v125 연참 — 도망 시 리셋
     endChallenge();
     save();
     render();
@@ -14130,7 +14130,7 @@
       check: () => (state.currentSword.enhanceAttempts || 0) >= 30 },
     { key: 'soul67',    label: '본심의 천명', desc: '이 검의 혼을 67까지 깨워라',     reward: { shards: 120 },       rewardLabel: '조각 +120',
       check: () => (state.currentSword.soul || 0) >= 67 },
-    { key: 'foe',       label: '宿敵의 천명', desc: '이 검으로 이름 있는 적을 베어내라', reward: { spiritstones: 1, shards: 80 }, rewardLabel: '靈石 +1 · 조각 +80',
+    { key: 'foe',       label: '宿敵의 천명', desc: '이 검으로 이름 있는 적을 베어내라', reward: { spiritstones: 1, shards: 80 }, rewardLabel: '영석 +1 · 조각 +80',
       check: () => (state.currentSword.inscriptions || []).some(k => ['풍참','월참','인참','제참','용참'].indexOf(k) >= 0) },
   ];
   function assignDestiny() {
@@ -14318,7 +14318,7 @@
       '속': '도전 도망 무료',
     };
     const formKr = { '직': '곧은 검', '곡': '굽은 검', '중': '무거운 검', '속': '빠른 검' };
-    // v129 形相剋 — 상성 표기
+    // v129 形상극 — 상성 표기
     const affName = { 'normal': '普通', 'flee': '逃影', 'steel': '鋼影', 'demon': '검귀' };
     const formAff = {};
     Object.keys(FORM_AFFINITY).forEach(f => {
@@ -14374,7 +14374,7 @@
       const isTranscendent = ins.includes('본') || ins.includes('도');
       swordWrap.classList.toggle('transcendent', isTranscendent);
     }
-    // v111 刻痕 — 흉터 마크 표시 (scars 수에 따라 1~3개)
+    // v111 각흔 — 흉터 마크 표시 (scars 수에 따라 1~3개)
     const scars = (state.hasSword && state.currentSword && state.currentSword.scars) || 0;
     for (let i = 1; i <= 3; i++) {
       const el = $('scar-' + i);
@@ -15133,8 +15133,8 @@
     });
     if (follow + defy < 3) return { key: 'none', line: '' };
     if (follow > defy * 1.5) return { key: 'follow', line: '그대의 검들은 대개 타고난 形을 따랐다 — 솔성의 길.' };
-    if (defy > follow * 1.5) return { key: 'defy', line: '그대의 검들은 자주 천성을 거슬렀다 — 逆性의 길.' };
-    return { key: 'balanced', line: '솔성과 逆性이 그대의 검들 안에 고루 깃들었다.' };
+    if (defy > follow * 1.5) return { key: 'defy', line: '그대의 검들은 자주 천성을 거슬렀다 — 역성의 길.' };
+    return { key: 'balanced', line: '솔성과 역성이 그대의 검들 안에 고루 깃들었다.' };
   }
   function deriveJourney(sword) {
     const h = (sword && sword.levelHistory) || [];
@@ -15165,7 +15165,7 @@
       '중': '무거운 검 ' + name + '은 산의 무게를 지고 태어났다.',
       '속': '빠른 검 ' + name + '은 빛처럼 빠르게 태어났다.',
     })[form] || '검 ' + name + '은 이름 없이 태어났다.');
-    // v371e 血統 — 융합(融劍 v92)으로 태어난 검은 두 선대의 혼을 잇는다. fusedFrom(보존됨)을
+    // v371e 血統 — 융합(융검 v92)으로 태어난 검은 두 선대의 혼을 잇는다. fusedFrom(보존됨)을
     // 一代記 개막에 결합 — 합성검의 血統 origin이 서술에서 누락이던 갭. 보존 데이터 파생, 효과 0.
     let fusionLine = '';
     if (Array.isArray(sword.fusedFrom) && sword.fusedFrom.length === 2) {
@@ -15526,7 +15526,7 @@
       scars: state.currentSword.scars || 0,
       stars: Object.assign({}, state.currentSword.stars || {}),
       enshrinedAt: Date.now(),
-      kigen: (userKigen && userKigen.trim()) ? userKigen.trim() : null,  // v158 寄言
+      kigen: (userKigen && userKigen.trim()) ? userKigen.trim() : null,  // v158 기언
       playerSeal: state.currentSword.playerSeal || state.playerSeal || '',  // v344 篆刻 — doSeal과 동기 (전당 검도 인장 보존)
       bornTod: state.currentSword.bornTod || null,  // v344 時生 — 빚어진 시각 보존 (회고·一代記)
       fusedFrom: state.currentSword.fusedFrom || null,  // v344 血統 — 융합 혈통 보존
@@ -15542,7 +15542,7 @@
     log('🏛 전당 — ' + swordName + ' 박물관에 영구 진열되었다 (강화 성공 +1.5%)', 'success');
     recordEvent('전당 진열 ' + swordName);
     captureRubbing('firstEnshrine', { level: lv, form, inscriptions: ins.slice(), soul: state.currentSword.soul || 0 });  // v136
-    // v152 風月 — 전당 진열 시에도 숨겨진 성취 검사
+    // v152 풍월 — 전당 진열 시에도 숨겨진 성취 검사
     const justEnshrined = state.enshrined[state.enshrined.length - 1];
     checkHiddenAchievements(justEnshrined);
     SFX.ritual();
@@ -15690,7 +15690,7 @@
     { key: '상',   label: '세 번 무너지기 직전 살아남은 검', verse: '상처가 검을 더 단단하게 만들었다',   trigger: () => (state.currentSword.scars || 0) >= 3 },
     { key: '칠성', label: '북두칠성이 깃든 검',              verse: '일곱 별이 한 검에 모였다',           trigger: () => false },
     { key: '선',   label: '백 대를 잇는 신선의 검',          verse: '백 대의 계보가 한 검에 흐른다',     trigger: () => false },
-    { key: '연일섬', label: '열 번의 一閃을 한 검에 새긴 자', verse: '열 번이 한 흐름이 되었다',           trigger: () => false },
+    { key: '연일섬', label: '열 번의 일섬을 한 검에 새긴 자', verse: '열 번이 한 흐름이 되었다',           trigger: () => false },
   ];
 
   function grantInscription(key) {
@@ -15804,7 +15804,7 @@
   }
   // v342 — 결계(sanctum) 흡수 파괴 확률 단일 진원. 표시(downgrade 흡수분)와 실제 굴림이 공유.
   // effectiveDestroyChance와 달리 sanctum 차단 시의 '흡수량'이라 sanctum 조건에서 0 반환하지 않음
-  // (호출부가 sanctum 활성·靈石·echo 미사용을 게이팅). 흡수량은 계절/천후/소망 감소항을
+  // (호출부가 sanctum 활성·영석·echo 미사용을 게이팅). 흡수량은 계절/천후/소망 감소항을
   // 의도적으로 미적용 — 두 인라인 사본을 하나로 묶어 향후 감소항 추가 시 드리프트 방지.
   function sanctumAbsorbedDestroy(lv) {
     const t = TABLE[lv];
@@ -16044,7 +16044,7 @@
     step('도 (정점)', 1.5, (isWay || ins.includes('도')));
     step('유파 중류', schoolSealMul());
     step('계절', getSeason().sealMul);
-    step('사신 青龍', beastSealMul());  // v261
+    step('사신 청룡', beastSealMul());  // v261
     step('절기', solarSealMul());       // v263
     if (ins.includes('고')) step('노쇠 古', 1.10);
     else if (ins.includes('구')) step('노쇠 久', 1.05);
@@ -16072,9 +16072,9 @@
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
     state.level = startLv;
     failStreak = 0; adversityReady = false; clearOmen(); clearStreak();
-    clearSlayStreak();  // v125 連斬 — 새 검 시 리셋
+    clearSlayStreak();  // v125 연참 — 새 검 시 리셋
     clearMood();  // v127 氣 — 새 검 시 平静
-    enhanceEcho = null;  // v114 餘香: 잔향은 검 단위로 휘발
+    enhanceEcho = null;  // v114 여향: 잔향은 검 단위로 휘발
     if (sanctumActive) setSanctum(false);  // v121 결계: 새 검 시 해제
     if (swordVoiceTimer) { clearTimeout(swordVoiceTimer); swordVoiceTimer = null; }
     const voiceEl = $('sword-voice'); if (voiceEl) { voiceEl.className = ''; voiceEl.textContent = ''; }
@@ -16091,7 +16091,7 @@
     // v149 신사 — 護 헌사: 새 검 탄생 시 시작 보호권 +1
     if (shrineHas('d2')) state.protections += 1;
     state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0, protectsUsed: 0, stars: {}, playerSeal: state.playerSeal || '', bornTod: getTimeOfDay().name, naturePathSeen: false };  // v252 時生 — 빚어진 시각(朝/晝/夕/夜)
-    // v16 始祖 / v21 達人·聖: 도 도달 횟수에 따른 메타 명문 + 시작 魂
+    // v16 始祖 / v21 달인·聖: 도 도달 횟수에 따른 메타 명문 + 시작 魂
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (state.firstWayReached) {
       state.currentSword.inscriptions.push('시조');
@@ -16123,7 +16123,7 @@
     }
     if (state.level > state.bestLevel) state.bestLevel = state.level;
     checkInscriptions();
-    // v66 선대 강기 빛 모임 — 始祖/達人/聖 보유자에게 시각적 의식
+    // v66 선대 강기 빛 모임 — 始祖/달인/聖 보유자에게 시각적 의식
     const newIns = state.currentSword.inscriptions || [];
     let rayCount = 0;
     if (newIns.includes('시조')) rayCount += 15;
@@ -16132,7 +16132,7 @@
     if (rayCount > 0) {
       setTimeout(() => spawnLegacyRays(rayCount), 100);
     }
-    // v112 祖靈: 새 검 탄생 시 선대 명문들이 사방에서 검으로 모여듦 (선대 검이 1개 이상일 때)
+    // v112 조령: 새 검 탄생 시 선대 명문들이 사방에서 검으로 모여듦 (선대 검이 1개 이상일 때)
     if (state.sealedSwords.length >= 2) {
       setTimeout(() => spawnAncestorGatherKanji(), 300);
     }
@@ -16147,7 +16147,7 @@
       setTimeout(() => SFX.formMotif(state.currentSword.form, 0.85), 850);
     }
     if (startLv > 0) {
-      setTimeout(() => announceInscription('先代 ·  +' + startLv, '선대의 강기로 ' + startLv + '강에서 시작한다'), 500);
+      setTimeout(() => announceInscription('선대 ·  +' + startLv, '선대의 강기로 ' + startLv + '강에서 시작한다'), 500);
     }
     // v93 천명 — 새 검에 일생 목표 부여
     assignDestiny();
@@ -16164,7 +16164,7 @@
     setTimeout(() => checkGenerationMilestone(prevGen), 800);
     // v124 고문서 — 세대/형 관련 스크롤 체크
     setTimeout(() => checkScrolls(), 1100);
-    // v158 寄言 — 25% 확률로 과거 도 검의 편지가 도착
+    // v158 기언 — 25% 확률로 과거 도 검의 편지가 도착
     setTimeout(() => maybeShowKigen(), 1800);
     // v175 回憶 — 매 10代마다 첫 검 회상
     if ((state.swordGeneration || 0) > 0 && (state.swordGeneration || 0) % 10 === 0) {
@@ -16199,13 +16199,13 @@
       { opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 1, offset: 0.8 }, { opacity: 0 }
     ], { duration: 6500, easing: 'ease-in-out' });
     setTimeout(() => el.remove(), 6600);
-    log('寄言 — 「' + (source.name || '지난 검') + '」의 편지가 도착했다', 'success');
+    log('기언 — 「' + (source.name || '지난 검') + '」의 편지가 도착했다', 'success');
   }
   const NEWSWORD_COST = 50;
 
-  // === v92 融劍 — 검 합성 (봉인 검 2자루 → 형·명문·혼 계승) ===
+  // === v92 융검 — 검 합성 (봉인 검 2자루 → 형·명문·혼 계승) ===
   const FUSION_COST = 60;
-  // 계승 명문 우선순위 (메타 명문 始祖/達人/聖 제외 — newSword가 자동 부여)
+  // 계승 명문 우선순위 (메타 명문 始祖/달인/聖 제외 — newSword가 자동 부여)
   const FUSION_PRIORITY = ['도','용참','제참','귀참','인참','월참','풍참','단마','본','각성','강체','백련','회마','초인','고','구'];
   let fusionSelected = [];
   function fusionPreview() {
@@ -16255,9 +16255,9 @@
     $('fusion-modal').classList.remove('active');
     SFX.forge();
     spawnLegacyRays(24);
-    log('融劍 — ' + nameA + ' + ' + nameB + ' → 새 검 (형·명문·혼 계승)', 'success');
+    log('융검 — ' + nameA + ' + ' + nameB + ' → 새 검 (형·명문·혼 계승)', 'success');
     setTimeout(() => maybeMaster('firstFusion'), 2200);  // v181 老師
-    recordEvent('融劍 ' + nameA + ' + ' + nameB);
+    recordEvent('융검 ' + nameA + ' + ' + nameB);
     if (p.inscription) {
       setTimeout(() => announceInscription(p.inscription, '두 검의 유산이 깃들었다'), 500);
     }
@@ -16430,7 +16430,7 @@
     tryBlessing('sealBefore');
     // v242 단일 진원 — 표시 버튼/명명 미리보기와 동일한 결정적 배수 (base 1~7)
     let reward = sealRewardBase(lv, ins, isWay);
-    // v138 雙銘 — 명문 쌍 공명 (천명 ×2 보상 배수 + 滅魔/본도 지속 효과·발견기록)
+    // v138 雙銘 — 명문 쌍 공명 (천명 ×2 보상 배수 + 멸마/본도 지속 효과·발견기록)
     const resResult = applyResonancesAtSeal(ins, reward);
     reward = resResult.reward;
     // v119 기연 — 은하 활성 시 봉인 보상 ×2
@@ -16463,7 +16463,7 @@
       scars: state.currentSword.scars || 0,
       stars: Object.assign({}, state.currentSword.stars || {}),
       playerSeal: state.currentSword.playerSeal || state.playerSeal || '',  // v140 篆刻
-      kigen: (userKigen && userKigen.trim()) ? userKigen.trim() : null,  // v158 寄言
+      kigen: (userKigen && userKigen.trim()) ? userKigen.trim() : null,  // v158 기언
       bornTod: state.currentSword.bornTod || null,  // v252 時生 — 빚어진 시각
       fusedFrom: state.currentSword.fusedFrom || null,  // v255 血統 — 융합 혈통
     });
@@ -16502,14 +16502,14 @@
     if (lv >= 10) captureRubbing('firstSeal10', { level: lv, form, inscriptions: ins.slice(), soul: state.currentSword.soul || 0 });
     // v145 명집 — 명문 수집 마일스톤 검사
     checkCollectionMilestones();
-    // v152 風月 — 숨겨진 성취 검사 (방금 push한 sealedSwords 마지막 항목)
+    // v152 풍월 — 숨겨진 성취 검사 (방금 push한 sealedSwords 마지막 항목)
     const justSealed = state.sealedSwords[state.sealedSwords.length - 1];
     checkHiddenAchievements(justSealed);
     // v170 천추만대 — 모든 메타 완성 검사 (지연 시작으로 다른 보상 announce 후)
     setTimeout(() => checkUltimateAchievement(), 2400);
-    // v155 寒梅 — lv13+ 봉인 시 유언이 다음 검에
+    // v155 한매 — lv13+ 봉인 시 유언이 다음 검에
     setSwordWishFromSeal(form, lv);
-    // v156 新記 — 봉인 시 4 기록 갱신
+    // v156 신기 — 봉인 시 4 기록 갱신
     updateRecord('maxSealReward', reward);
     updateRecord('maxSoul', justSealed.soul || 0);
     updateRecord('maxSwordLife', justSealed.enhanceAttempts || 0);  // v353 — 형제 호출(soul/slainCount)처럼 captured justSealed 사용. 기존 state.currentSword는 newSword() 전이라 우연히 맞았으나 재정렬 시 새 검 0을 기록할 fragility 제거
@@ -16591,7 +16591,7 @@
       swordWrap.classList.remove('shake', 'flash', 'merge', 'appear');
       void swordWrap.offsetWidth;
       swordWrap.classList.add('dissolve');
-      // v112 祖靈 — 봉인된 검의 명문이 영혼처럼 위로 떠오름
+      // v112 조령 — 봉인된 검의 명문이 영혼처럼 위로 떠오름
       spawnSealedSpiritKanji(ins, form);
       setTimeout(() => {
         swordWrap.classList.remove('dissolve');
@@ -16668,7 +16668,7 @@
     const showEnshrine = isWay && canEnshrineMore();
     if (enshrineBtn) enshrineBtn.style.display = showEnshrine ? 'block' : 'none';
     if (enshrineHint) enshrineHint.style.display = showEnshrine ? 'block' : 'none';
-    // v158 寄言 — 도 검만 textarea 보임
+    // v158 기언 — 도 검만 textarea 보임
     const kigenInput = $('kigen-input');
     if (kigenInput) {
       kigenInput.style.display = isWay ? 'block' : 'none';
@@ -16991,14 +16991,14 @@
         ((s.beads || 0) > 0 ? '<div><span style="color:var(--dim)">염주</span> <span style="color:var(--accent);margin-left:6px">' + (s.beads || 0) + '</span></div>' : '') +  // v317 — v314 보존된 염주 수를 회고에 표시
       '</div>' +
       (s.omenTotal >= 5 ? '<div style="text-align:center;color:var(--dim);font-size:10px;padding:4px 0;letter-spacing:2px">전조 적중률 ' + (s.omenHits || 0) + '/' + s.omenTotal + ' (' + Math.round((s.omenHits || 0) / s.omenTotal * 100) + '%)</div>' : '') +
-      (s.scars > 0 ? '<div style="text-align:center;color:rgba(180,70,50,0.8);font-size:10px;padding:4px 0;letter-spacing:3px">刻痕 ' + '●'.repeat(s.scars) + '○'.repeat(3 - s.scars) + '  · 파괴 직전 ' + s.scars + '번 살아남았다</div>' : '') +
+      (s.scars > 0 ? '<div style="text-align:center;color:rgba(180,70,50,0.8);font-size:10px;padding:4px 0;letter-spacing:3px">각흔 ' + '●'.repeat(s.scars) + '○'.repeat(3 - s.scars) + '  · 파괴 직전 ' + s.scars + '번 살아남았다</div>' : '') +
       (function() {
         // v163 투장 — 회고 모달 배지
         const idx0 = index - 1;
         const wins = (state.duelWins && state.duelWins[idx0]) || 0;
         const isChamp = getChampionSwordIdx() === idx0;
         if (wins === 0) return '';
-        return '<div style="text-align:center;font-size:10px;padding:6px 0;letter-spacing:3px;color:' + (isChamp ? '#fff5c0' : 'var(--dim)') + (isChamp ? ';text-shadow:0 0 4px rgba(255,245,192,0.4)' : '') + '">' + (isChamp ? '🏆 투장 ' : '') + '對局 ' + wins + '승</div>';
+        return '<div style="text-align:center;font-size:10px;padding:6px 0;letter-spacing:3px;color:' + (isChamp ? '#fff5c0' : 'var(--dim)') + (isChamp ? ';text-shadow:0 0 4px rgba(255,245,192,0.4)' : '') + '">' + (isChamp ? '🏆 투장 ' : '') + '대국 ' + wins + '승</div>';
       })() +
       (s.stars ? (function() {
         const lit = STARS.filter(st => s.stars[st.key]).length;
@@ -17810,7 +17810,7 @@
     $('shrine-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
-  // v159 對局 모달
+  // v159 대국 모달
   $('btn-duel').addEventListener('click', () => {
     clearDuelSelection();
     $('duel-modal').classList.add('active');
@@ -17834,7 +17834,7 @@
     $('menu-drop').classList.remove('open');
     enterMoonGaze();
   });
-  // v180 劍名片
+  // v180 검명편
   if ($('btn-meishi')) $('btn-meishi').addEventListener('click', () => {
     $('menu-drop').classList.remove('open');
     showMeishi();
@@ -17864,7 +17864,7 @@
     renderTreasureModal();
     $('treasure-modal').classList.add('active');
   });
-  // v190 吾詩
+  // v190 오시
   if ($('btn-userpoem')) $('btn-userpoem').addEventListener('click', () => {
     $('menu-drop').classList.remove('open');
     renderUserPoem();
@@ -17946,7 +17946,7 @@
     showEngraveModal();
   });
   if ($('engrave-confirm')) $('engrave-confirm').addEventListener('click', confirmEngrave);
-  // v210 自書
+  // v210 자서
   if ($('btn-diary')) $('btn-diary').addEventListener('click', () => {
     $('menu-drop').classList.remove('open');
     openDiary();
@@ -18210,7 +18210,7 @@
     if (progress) {
       const allFound = found === total;
       progress.innerHTML = '발 견  ' + found + ' / ' + total +
-        (allFound ? '  ·  <span style="color:#fff5c0;text-shadow:0 0 6px rgba(255,245,192,0.6)">기연盡知 — 모든 축복을 보았다</span>' : '');
+        (allFound ? '  ·  <span style="color:#fff5c0;text-shadow:0 0 6px rgba(255,245,192,0.6)">기연진지 — 모든 축복을 보았다</span>' : '');
     }
     const list = $('blessings-list');
     if (!list) return;
@@ -18453,7 +18453,7 @@
     if ((s.slainDemon || 0) >= 3) personas.push({ name: '귀살자 (鬼殺者)', desc: '검귀를 거듭 베어낸 자' });
     if ((s.sealed || 0) >= 10) personas.push({ name: '봉인가 (封印家)', desc: '10자루 이상 봉인한 자' });
     if ((s.wayReached || 0) >= 1) personas.push({ name: '도의 추구자', desc: '최고 단계에 이른 적이 있다' });
-    if ((s.wayReached || 0) >= 5) personas.push({ name: '달인 (達人)', desc: '도를 다섯 번 지났다' });
+    if ((s.wayReached || 0) >= 5) personas.push({ name: '달인 (달인)', desc: '도를 다섯 번 지났다' });
     if ((s.rescued || 0) >= 5) personas.push({ name: '구원자 (救援者)', desc: '검의 파편을 거듭 회수' });
     if ((state.totalDestroyed || 0) >= 10) personas.push({ name: '도박꾼 (賭博者)', desc: '많은 검을 잃었지만 계속 도전한다' });
     if ((s.fled || 0) >= 10) personas.push({ name: '바람의 검 (風劍)', desc: '도전에서 자주 물러난다' });
@@ -18477,18 +18477,18 @@
     // 우선순위 — 가장 희귀/높은 성취가 우선
     if (state.ultimateAchieved) return '천추만대 — 영원한 검선';
     if (gen >= 100 && enshrines >= 3 && ways >= 15) return '百代도仙 — 백 대를 잇는 검선';
-    if (gen >= 100) return '百代仙 — 백 대를 잇는 자';
+    if (gen >= 100) return '백대선 — 백 대를 잇는 자';
     if (ways >= 15) return '십오도사 — 열다섯 길의 사범';
     if (ways >= 10 && enshrines >= 2) return '전당의 검선 — 둘을 영구 진열한 자';
     if (ways >= 10) return '십도사 — 열 길의 사범';
     if (foes >= 5) return '五帝를 멸한 자';
-    if (blessingsFound >= 6) return '기연盡知 — 모든 인연을 본 자';
+    if (blessingsFound >= 6) return '기연진지 — 모든 인연을 본 자';
     if (fourW) return '四도의 검사';
     if (ways >= 5) return '오도사 — 다섯 길의 사범';
     if (origins >= 4) return '斷魔者 — 모든 어둠을 베다';
     if (ways >= 3) return '三도의 검수';
     if (ways >= 1) return '도를 본 자';
-    if (gen >= 25) return '千鍛士 — 천 번 두드린 장인';
+    if (gen >= 25) return '천단사 — 천 번 두드린 장인';
     if (gen >= 10) return '백련宗 — 백 번 단련하는 자';
     if (s.sealed >= 5) return '검의 길에 든 검사';
     if (s.sealed >= 1) return '봉인을 아는 자';
@@ -18640,8 +18640,8 @@
         const t = collectionNatureTendency((state.sealedSwords || []).concat(state.enshrined || []));
         return t.line ? '<div style="color:#a8c0d8;font-size:10.5px;letter-spacing:1.5px;padding:8px 0;line-height:1.6;font-style:italic">솔성 — ' + t.line + '</div>' : '';
       })() +
-      renderShinkiSection() +  // v156 新記 (v288 rename)
-      renderHiddenAchievements();  // v152 風月
+      renderShinkiSection() +  // v156 신기 (v288 rename)
+      renderHiddenAchievements();  // v152 풍월
   }
   // 초기 라벨 반영
   if (muted) { const mb = $('btn-mute'); if (mb) mb.textContent = '소 리  켜 기'; }
@@ -18727,7 +18727,7 @@
     });
   });
 
-  // v92 融劍 — 검 합성
+  // v92 융검 — 검 합성
   function toggleFusionSelect(idx) {
     const pos = fusionSelected.indexOf(idx);
     if (pos >= 0) {
@@ -19061,7 +19061,7 @@
   applySolarTerm();    // v177 절기 — 현재 절기 적용 + 진입 시 페이드
   setInterval(applySolarTerm, 60 * 60 * 1000);  // 매시간 절기 재확인 (자정 경계)
   startSeasonalParticles();  // v179 季韻 — 환경 입자 spawner
-  startMeteorSchedule();     // v185 流星 — 무작위 유성 spawner
+  startMeteorSchedule();     // v185 유성 — 무작위 유성 spawner
   checkDailyStreak();        // v191 練日 — 연속 일자 체크
   renderStreakMark();        // v191 練日 — 우상단 표식 초기 렌더
   checkFestival();           // v192 節 — 명절 체크
