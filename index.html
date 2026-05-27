@@ -2745,6 +2745,12 @@
   #sword-wrap.adversity-glow svg {
     filter: drop-shadow(0 0 14px rgba(212,175,55,0.5)) drop-shadow(0 0 6px rgba(180,70,70,0.35));
   }
+  /* UI 재설계 1b — 무대 극단순화: 항상-켜진 배너를 「검 정보」(현세) 패널로 일원화.
+     reversible: body.stage-minimal 클래스만 제거하면 원복. render 로직 불변(요소는 DOM 유지). */
+  body.stage-minimal #destiny-banner,
+  body.stage-minimal #adversity-banner,
+  body.stage-minimal #mood-mark,
+  body.stage-minimal #guardian-display { display: none !important; }
 </style>
 </head>
 <body>
@@ -19055,6 +19061,7 @@
 
   // === 시작 ===
   load();
+  document.body.classList.add('stage-minimal');  // UI 재설계 1b — 무대 배너를 검 정보 패널로 일원화 (reversible)
   ensureDailyTrial();  // v94 천시 — 오늘의 도전 초기화/갱신
   applyVisualTheme(state.visualTheme || '');  // v201 配 — 저장된 테마 복원
   applySettings();  // v228 設 — 접근성 설정 복원
