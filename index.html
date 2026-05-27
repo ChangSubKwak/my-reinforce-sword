@@ -4427,6 +4427,9 @@
       { const BM = { '千年松':'천년송','龍鱗':'용린','銀河':'은하','涅槃':'열반','玉露':'옥로','神巫':'신무' };
         if (state.blessingsDiscovered && typeof state.blessingsDiscovered === 'object') {
           for (const ok in BM) { if (state.blessingsDiscovered[ok] != null) { if (state.blessingsDiscovered[BM[ok]] == null) state.blessingsDiscovered[BM[ok]] = state.blessingsDiscovered[ok]; delete state.blessingsDiscovered[ok]; } } } }
+      // 한글화 — 字(칼날 새김) 저장값 한자→한글 음역 (현재검 engraving, 개인 선택의 음 보존)
+      { const EM = { '義':'의','仁':'인','禮':'예','智':'지','信':'신','龍':'용','虎':'호','鳳':'봉','鶴':'학','風':'풍','月':'월','心':'심' };
+        if (state.currentSword && EM[state.currentSword.engraving]) state.currentSword.engraving = EM[state.currentSword.engraving]; }
       if (!state.foesSlain || typeof state.foesSlain !== 'object') state.foesSlain = {};
       if (!Array.isArray(state.enshrined)) state.enshrined = [];  // v118 殿堂
       // v370m XSS 경계 방어 — 검의 사용자 텍스트(검명/血統/메모/寄言)는 회고·계보·詩集 등에서
@@ -8459,9 +8462,9 @@
 
   // === v203 字 — 검 칼날 한자 새김 (사용자 선택) ===
   const ENGRAVE_HANJI = {
-    '五常': ['義','仁','禮','智','信'],
-    '四靈': ['龍','虎','鳳','鶴'],
-    '元素': ['風','月','心'],
+    '오상': ['의','인','예','지','신'],
+    '사령': ['용','호','봉','학'],
+    '원소': ['풍','월','심'],
   };
   let engraveTempPick = '';
   function getSwordEngraving() {
