@@ -10686,6 +10686,11 @@
       if (typeof slayStreak !== 'undefined' && slayStreak > 0) swordLines.push(line('슬레이 連斬', slayStreak + '회'));
       if (typeof failStreak !== 'undefined' && failStreak > 0) swordLines.push(line('실패 streak', failStreak + '회'));
       if (typeof adversityReady !== 'undefined' && adversityReady) swordLines.push(line('逆轉 준비', '활성', '#fff5c0'));
+      // UI 재설계 1단계 — 천명(destiny)을 검 정보 패널에 통합 (무대 배너 → 패널 단일화 준비)
+      if (cs.destiny && typeof DESTINIES !== 'undefined') {
+        const d = DESTINIES.find(x => x.key === cs.destiny);
+        if (d) swordLines.push(line('천명', cs.destinyFulfilled ? d.label + ' · 달성' : d.label, cs.destinyFulfilled ? '#fff5c0' : null));
+      }
     } else {
       swordLines.push(line('상태', '검 없음', 'var(--dim)'));
     }
