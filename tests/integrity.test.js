@@ -81,9 +81,9 @@ test('최상위 함수 이름 중복 없음 (동명 함수 shadowing 방지 — 
   assert.deepStrictEqual(dups, [], '중복 최상위 함수 선언(뒤 정의가 앞을 가림): ' + dups.join(', '));
 });
 
-test('玉露 축복은 실패한 강화에만 환급 (성공 fall-through 회귀 방지, v285)', () => {
-  // 玉露 발동이 enhanceFailed 가드 안에 있어야 함 — 공통 정리부에 있어 성공에도 환급되던 버그 방지.
-  assert.match(js, /enhanceFailed && gyokuro && Math\.random\(\) < gyokuro\.chance/, '玉露는 enhanceFailed 가드 필요');
+test('옥로 축복은 실패한 강화에만 환급 (성공 fall-through 회귀 방지, v285)', () => {
+  // 옥로 발동이 enhanceFailed 가드 안에 있어야 함 — 공통 정리부에 있어 성공에도 환급되던 버그 방지.
+  assert.match(js, /enhanceFailed && gyokuro && Math\.random\(\) < gyokuro\.chance/, '옥로는 enhanceFailed 가드 필요');
   assert.match(js, /const enhanceFailed = !\(roll < successChance\)/, 'enhanceFailed = 비성공 정의');
 });
 

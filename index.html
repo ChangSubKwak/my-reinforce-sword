@@ -4423,6 +4423,10 @@
         fixTod(state.currentSword);
         (Array.isArray(state.sealedSwords) ? state.sealedSwords : []).forEach(fixTod);
         (Array.isArray(state.enshrined) ? state.enshrined : []).forEach(fixTod); }
+      // 한글화 — 奇緣(축복) 발견 키 한자→한글 마이그레이션 (blessingsDiscovered 무손실)
+      { const BM = { '千年松':'천년송','龍鱗':'용린','銀河':'은하','涅槃':'열반','玉露':'옥로','神巫':'신무' };
+        if (state.blessingsDiscovered && typeof state.blessingsDiscovered === 'object') {
+          for (const ok in BM) { if (state.blessingsDiscovered[ok] != null) { if (state.blessingsDiscovered[BM[ok]] == null) state.blessingsDiscovered[BM[ok]] = state.blessingsDiscovered[ok]; delete state.blessingsDiscovered[ok]; } } } }
       if (!state.foesSlain || typeof state.foesSlain !== 'object') state.foesSlain = {};
       if (!Array.isArray(state.enshrined)) state.enshrined = [];  // v118 殿堂
       // v370m XSS 경계 방어 — 검의 사용자 텍스트(검명/血統/메모/寄言)는 회고·계보·詩集 등에서
@@ -10597,7 +10601,7 @@
       costMulLine('노쇠 (久/古)', getAgeEffect().costMul);
       const rsv = getResolve(); costMulLine('각오 ' + rsv.label, rsv.costMul);
       if (typeof enhanceEcho !== 'undefined' && enhanceEcho && enhanceEcho.costMul) costMulLine('잔향 (殘響)', enhanceEcho.costMul);
-      if (typeof blessingCostMul === 'function') costMulLine('축복 (千年松)', blessingCostMul());
+      if (typeof blessingCostMul === 'function') costMulLine('축복 (천년송)', blessingCostMul());
       if (typeof sanctumCostMul === 'function') costMulLine('聖域', sanctumCostMul());
       if (typeof wishCostMul === 'function') costMulLine('유언 (願)', wishCostMul());
       if (typeof solarCostMul === 'function') costMulLine('節氣', solarCostMul());
@@ -10630,9 +10634,9 @@
     if (state.swordWish && state.swordWish.charges > 0) chargeLines.push(line(state.swordWish.key + ' (강화 유언)', '×' + state.swordWish.charges));
     if (state.swordWishSlay && state.swordWishSlay.charges > 0) chargeLines.push(line(state.swordWishSlay.key + ' (슬레이 유언)', '×' + state.swordWishSlay.charges));
     if (typeof blessingState !== 'undefined') {
-      if (blessingState.matsuCount > 0) chargeLines.push(line('千年松 (비용 -50%)', '×' + blessingState.matsuCount));
-      if (blessingState.ginhaActive) chargeLines.push(line('銀河 (다음 봉인 ×2)', '활성'));
-      if (blessingState.sinmuPending) chargeLines.push(line('神巫 (다음 검 축복)', '예약'));
+      if (blessingState.matsuCount > 0) chargeLines.push(line('천년송 (비용 -50%)', '×' + blessingState.matsuCount));
+      if (blessingState.ginhaActive) chargeLines.push(line('은하 (다음 봉인 ×2)', '활성'));
+      if (blessingState.sinmuPending) chargeLines.push(line('신무 (다음 검 축복)', '예약'));
     }
     if (typeof lightningBonusReady !== 'undefined' && lightningBonusReady) chargeLines.push(line('雷 (다음 강화 +10%)', '활성'));
     if (typeof dawnBonusCount !== 'undefined' && dawnBonusCount > 0) chargeLines.push(line('黎明 (강화 +10%)', '×' + dawnBonusCount));
@@ -11979,7 +11983,7 @@
     checkEgg11_11();
     recordRapidAction();
     if (((state.stats && state.stats.enhanceAttempts) || 0) === 100) setTimeout(() => maybeMaster('hundredEnhance'), 1500);  // v181 老師
-    consumeMatsu();  // v119 千年松 카운트 소모
+    consumeMatsu();  // v119 천년송 카운트 소모
     consumeDawnBonus();  // v126 黎明 — 보너스 카운트 소모
     consumeLightningBonus();  // v147 雷 — 다음 강화 +10% 1회 소모
     consumeWishEnhance();  // v155 寒梅 — 유언 강화 카운트 1 소모
@@ -12086,8 +12090,8 @@
       // 강화 성공 → 일대기 점검 (百鍊·剛體·도)
       checkInscriptions();
       checkStars();  // v116 七星
-      setTimeout(() => tryBlessing('enhanceSuccess'), 250);  // v119 龍鱗
-      setTimeout(() => tryBlessing('enhance'), 280);  // v119 千年松 등
+      setTimeout(() => tryBlessing('enhanceSuccess'), 250);  // v119 용린
+      setTimeout(() => tryBlessing('enhance'), 280);  // v119 천년송 등
       setTimeout(() => checkScrolls(), 400);  // v124 古文書
       recordLevelHistory();
       // v84 정말 최종 강화 (+MAX_LEVEL=15 도달) 시 엔딩 발동 — 한 번만
@@ -12132,16 +12136,16 @@
         : 0;
       const effectiveDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul) + sanctumDestroyAbsorbed;
       if (failRoll < effectiveDestroy && !useProtect) {
-        // v119 涅槃 — 파괴 직전 1% 확률로 유지로 변환
-        const nirvana = BLESSINGS.find(b => b.key === '涅槃');
+        // v119 열반 — 파괴 직전 1% 확률로 유지로 변환
+        const nirvana = BLESSINGS.find(b => b.key === '열반');
         if (nirvana && Math.random() < nirvana.chance) {
-          const first = recordBlessing('涅槃');
+          const first = recordBlessing('열반');
           showBlessing(nirvana, first);
-          log('奇緣 — 涅槃 · 파괴를 넘어 살아남았다', 'success');
+          log('奇緣 — 열반 · 파괴를 넘어 살아남았다', 'success');
           failStreak++; checkAdversity(); resolveOmen('hold');
           showSwordVoice('hold', state.level);
           SFX.enhanceFail();
-          // 涅槃은 유지로 변환 — 분기 종료
+          // 열반은 유지로 변환 — 분기 종료
           checkInscriptions();
           checkStars();
           protectCheck.checked = false;
@@ -12232,17 +12236,17 @@
     checkInscriptions();
     checkStars();  // v116 七星
     updateMoodFromState();  // v127 氣 — 기분 갱신 (failStreak 기준)
-    // v119 奇緣 — 玉露 (실패 시 환급) + 千年松 (일반 강화 이벤트)
-    // v285 — 玉露는 desc/주석대로 '실패한 강화'에만 환급 (성공 시엔 발동 X). roll<successChance가 성공.
+    // v119 奇緣 — 옥로 (실패 시 환급) + 천년송 (일반 강화 이벤트)
+    // v285 — 옥로는 desc/주석대로 '실패한 강화'에만 환급 (성공 시엔 발동 X). roll<successChance가 성공.
     const enhanceFailed = !(roll < successChance);
-    const gyokuro = BLESSINGS.find(b => b.key === '玉露');
+    const gyokuro = BLESSINGS.find(b => b.key === '옥로');
     if (enhanceFailed && gyokuro && Math.random() < gyokuro.chance) {
-      const first = recordBlessing('玉露');
+      const first = recordBlessing('옥로');
       showBlessing(gyokuro, first);
       state.shards += actualCost;
-      log('奇緣 — 玉露 · 비용 환급 +' + actualCost, 'success');
+      log('奇緣 — 옥로 · 비용 환급 +' + actualCost, 'success');
     }
-    setTimeout(() => tryBlessing('enhance'), 280);  // 千年松 등 일반 강화 후 이벤트
+    setTimeout(() => tryBlessing('enhance'), 280);  // 천년송 등 일반 강화 후 이벤트
     recordLevelHistory();
     checkDestiny();  // v93 天命 — 강화 시도(횟수) 후 운명 점검
     save();
@@ -15363,13 +15367,13 @@
   // === v119 奇緣 — 6종 희귀 축복 (낮은 확률 발동, 1회 보너스 + 영구 발견 기록) ===
   const BLESSINGS = [
     {
-      key: '千年松', label: '천 년 솔', desc: '시간이 검에 깃들었다 · 다음 3강화 비용 -50%',
+      key: '천년송', label: '천 년 솔', desc: '시간이 검에 깃들었다 · 다음 3강화 비용 -50%',
       // 강화 직후 (성공/실패 무관) 0.5%
       hook: 'enhance', chance: 0.005,
       effect: () => { blessingState.matsuCount = 3; },
     },
     {
-      key: '龍鱗', label: '용 비늘', desc: '용이 검에 깃들었다 · 즉시 +1 추가 강화',
+      key: '용린', label: '용 비늘', desc: '용이 검에 깃들었다 · 즉시 +1 추가 강화',
       hook: 'enhanceSuccess', chance: 0.003,
       effect: () => {
         if (state.level < MAX_LEVEL) {
@@ -15384,24 +15388,24 @@
       },
     },
     {
-      key: '銀河', label: '은 하수', desc: '은하수가 떠올랐다 · 봉인 보상 ×2',
+      key: '은하', label: '은 하수', desc: '은하수가 떠올랐다 · 봉인 보상 ×2',
       // 봉인 직전 1% (보상 계산 전)
       hook: 'sealBefore', chance: 0.01,
       effect: () => { blessingState.ginhaActive = true; },
     },
     {
-      key: '涅槃', label: '열반', desc: '파괴를 넘어 살아남았다 · 파괴 → 유지',
+      key: '열반', label: '열반', desc: '파괴를 넘어 살아남았다 · 파괴 → 유지',
       // 파괴 직전 1%
       hook: 'destroyAbout', chance: 0.01,
       effect: () => { /* 즉시 처리 — 호출자가 분기 변경 */ },
     },
     {
-      key: '玉露', label: '옥 이슬', desc: '검이 마음을 보았다 · 실패한 강화 비용 환급',
+      key: '옥로', label: '옥 이슬', desc: '검이 마음을 보았다 · 실패한 강화 비용 환급',
       hook: 'enhanceFail', chance: 0.01,
       effect: () => { /* 호출자가 즉시 환급 */ },
     },
     {
-      key: '神巫', label: '신 무녀', desc: '신의 사자가 다음 검을 축복했다 · 새 검에 각성 + 시작 영혼 +30',
+      key: '신무', label: '신 무녀', desc: '신의 사자가 다음 검을 축복했다 · 새 검에 각성 + 시작 영혼 +30',
       hook: 'sealAfter', chance: 0.003,
       effect: () => { blessingState.sinmuPending = true; },
     },
@@ -16008,7 +16012,7 @@
     return Math.floor(Math.pow(level, 1.65) * 3) + level;
   }
   // v242 — 봉인 보상 단일 진원. 표시 버튼·다음보상·명명 미리보기·실제 grant(doSeal)가
-  // 동일 결정적 배수를 공유 → 라벨이 실제 금액과 일치. 銀河(ginha ×2, 휘발성 소비) +
+  // 동일 결정적 배수를 공유 → 라벨이 실제 금액과 일치. 은하(ginha ×2, 휘발성 소비) +
   // 雙銘 지속효과는 doSeal에서만 적용 (휘발성/부작용이라 미리보기에서 제외).
   function sealRewardBase(lv, ins, isWay, opts) {
     ins = ins || [];
@@ -16130,14 +16134,14 @@
     }
     // v93 天命 — 새 검에 일생 목표 부여
     assignDestiny();
-    // v119 奇緣 — 神巫 활성 시 다음 검에 覺 + 영혼 +30
+    // v119 奇緣 — 신무 활성 시 다음 검에 覺 + 영혼 +30
     if (blessingState.sinmuPending) {
       blessingState.sinmuPending = false;
       if (!state.currentSword.inscriptions.includes('각성')) state.currentSword.inscriptions.push('각성');
       state.currentSword.soul = Math.max(state.currentSword.soul || 0, 34);  // 覺 단계 진입
-      setTimeout(() => announceInscription('神巫의 축복', '이 검은 깨어남으로 시작한다'), 700);
+      setTimeout(() => announceInscription('신무의 축복', '이 검은 깨어남으로 시작한다'), 700);
     }
-    // 봉인 직후 일반 sealAfter 이벤트 (神巫 등)
+    // 봉인 직후 일반 sealAfter 이벤트 (신무 등)
     setTimeout(() => tryBlessing('sealAfter'), 1500);
     // v123 系譜 — 세대 마일스톤 체크 (탄생 후 약간 지연)
     setTimeout(() => checkGenerationMilestone(prevGen), 800);
@@ -16405,14 +16409,14 @@
   function doSeal(form, ins, lv, isWay, swordName, userMemo, userKigen) {
     // v229 劍鳴 — 봉인 시 검 작별 음 (낮게)
     playSwordSignature({ form: form, level: lv, inscriptions: ins, soul: (state.currentSword && state.currentSword.soul) || 0 }, 1.0, 0.75);
-    // v119 奇緣 — 銀河 시도 (보상 계산 전)
+    // v119 奇緣 — 은하 시도 (보상 계산 전)
     tryBlessing('sealBefore');
     // v242 단일 진원 — 표시 버튼/명명 미리보기와 동일한 결정적 배수 (base 1~7)
     let reward = sealRewardBase(lv, ins, isWay);
     // v138 雙銘 — 명문 쌍 공명 (天命 ×2 보상 배수 + 滅魔/본도 지속 효과·발견기록)
     const resResult = applyResonancesAtSeal(ins, reward);
     reward = resResult.reward;
-    // v119 奇緣 — 銀河 활성 시 봉인 보상 ×2
+    // v119 奇緣 — 은하 활성 시 봉인 보상 ×2
     if (blessingState.ginhaActive) { reward = Math.floor(reward * 2); blessingState.ginhaActive = false; }
     const schoolsBefore = getActiveSchools();
     // v106 合: 마스터리 단계 — 봉인 전 상태

@@ -278,3 +278,12 @@ test('normalizeState: bornTod 朝/夜 → 아침/밤 (時生 저장 키)', () =>
   assert.strictEqual(st.sealedSwords[0].bornTod, '밤', '夜→밤');
   assert.strictEqual(st.sealedSwords[1].bornTod, '낮', '이미 한글이면 유지');
 });
+
+// 한글화 — 奇緣(축복) 발견 키 마이그레이션
+test('normalizeState: blessingsDiscovered 涅槃→열반 등 (奇緣 발견 보존)', () => {
+  const st = { blessingsDiscovered: { '涅槃': 123, '銀河': 456, '열반': 789 } };
+  loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 }).normalizeState();
+  assert.strictEqual(st.blessingsDiscovered['열반'], 789, '이미 한글이면 유지(덮어쓰기 주의)');
+  assert.strictEqual(st.blessingsDiscovered['은하'], 456, '銀河→은하');
+  assert.ok(!('涅槃' in st.blessingsDiscovered) && !('銀河' in st.blessingsDiscovered), '구 한자 키 제거');
+});
