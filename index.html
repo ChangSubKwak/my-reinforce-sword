@@ -4497,10 +4497,10 @@
   // === 季節 — 누적 강화 시도 기반 시간감 + 미세 효과 ===
   function getSeason() {
     const n = (state.stats && state.stats.enhanceAttempts) || 0;
-    if (n >= 400) return { key: 'winter', name: '冬', costMul: 1.00, challengeMul: 1.00, sealMul: 1.00, rescueSec: 1.0 };
-    if (n >= 150) return { key: 'autumn', name: '秋', costMul: 1.00, challengeMul: 1.00, sealMul: 1.05, rescueSec: 0 };
-    if (n >= 50) return { key: 'summer', name: '夏', costMul: 1.00, challengeMul: 1.05, sealMul: 1.00, rescueSec: 0 };
-    return { key: 'spring', name: '春', costMul: 0.95, challengeMul: 1.00, sealMul: 1.00, rescueSec: 0 };
+    if (n >= 400) return { key: 'winter', name: '동', costMul: 1.00, challengeMul: 1.00, sealMul: 1.00, rescueSec: 1.0 };
+    if (n >= 150) return { key: 'autumn', name: '추', costMul: 1.00, challengeMul: 1.00, sealMul: 1.05, rescueSec: 0 };
+    if (n >= 50) return { key: 'summer', name: '하', costMul: 1.00, challengeMul: 1.05, sealMul: 1.00, rescueSec: 0 };
+    return { key: 'spring', name: '춘', costMul: 0.95, challengeMul: 1.00, sealMul: 1.00, rescueSec: 0 };
   }
 
   // === 久/古 — 검의 노쇠 효과 ===
@@ -5283,7 +5283,7 @@
       swordWrap.classList.add('omen-destroy');
     } else {
       el.className = 'omen-h';
-      el.textContent = '平';
+      el.textContent = '평';
     }
     void el.offsetWidth;
     el.classList.add('visible');
@@ -5392,7 +5392,7 @@
     if (el) {
       el.classList.remove('mood-calm', 'mood-joy', 'mood-rage');
       el.classList.add('mood-' + mood);
-      el.textContent = mood === 'joy' ? '喜' : mood === 'rage' ? '怒' : '静';
+      el.textContent = mood === 'joy' ? '희' : mood === 'rage' ? '노' : '정';
       // 평정 상태는 살짝 숨김 (오버랩 방지)
       el.style.opacity = mood === 'calm' ? '0.4' : '';
     }
@@ -10648,7 +10648,7 @@
     if (typeof getCurrentSolarTerm === 'function') { const st = getCurrentSolarTerm(); const se = (typeof solarTermEffect === 'function') ? solarTermEffect(st) : ''; timeLines.push(line('節氣', st.name + (se ? ' · ' + se : ''), 'var(--dim)')); }
     if (typeof getTimeOfDay === 'function') timeLines.push(line('朝夕', getTimeOfDay().name + ' (' + getTimeOfDay().label + ')'));
     if (typeof weatherActive !== 'undefined' && weatherActive) {
-      timeLines.push(line('天候', weatherActive === 'rain' ? '雨' : '風'));
+      timeLines.push(line('天候', weatherActive === 'rain' ? '비' : '바람'));
     }
     sections.push(section('시간 / 환경', timeLines));
 
@@ -10665,7 +10665,7 @@
       const stars = cs.stars ? Object.keys(cs.stars).length : 0;
       if (stars > 0) swordLines.push(line('칠성', stars + ' / 7'));
       if (cs.inscriptions && cs.inscriptions.length) swordLines.push(line('명문', cs.inscriptions.length + ' 종'));
-      if (typeof currentMood !== 'undefined') swordLines.push(line('기분 (氣)', currentMood === 'joy' ? '喜' : currentMood === 'rage' ? '怒' : '静'));
+      if (typeof currentMood !== 'undefined') swordLines.push(line('기분 (氣)', currentMood === 'joy' ? '희' : currentMood === 'rage' ? '노' : '정'));
       if (typeof successStreak !== 'undefined' && successStreak > 0) swordLines.push(line('강화 連', successStreak + '회'));
       if (typeof slayStreak !== 'undefined' && slayStreak > 0) swordLines.push(line('슬레이 連斬', slayStreak + '회'));
       if (typeof failStreak !== 'undefined' && failStreak > 0) swordLines.push(line('실패 streak', failStreak + '회'));
@@ -13346,7 +13346,7 @@
     const duration = type === 'rain' ? 30000 : type === 'wind' ? 25000 : 0;
     weatherEndAt = Date.now() + duration;
     if (mark) {
-      mark.textContent = type === 'rain' ? '雨' : type === 'wind' ? '風' : '';
+      mark.textContent = type === 'rain' ? '비' : type === 'wind' ? '바람' : '';
     }
     if (type === 'rain') {
       // 빗방울 spawner
