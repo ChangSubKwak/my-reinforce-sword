@@ -9481,14 +9481,14 @@
     const formCounts = { '직':0, '곡':0, '중':0, '속':0 };
     (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });  // v359 — 殿堂 검도 형 분포에 (display undercount)
     // 메타 인장 결정
-    let seal = '初';
-    if (state.ultimateAchieved) seal = '極';
+    let seal = '초';
+    if (state.ultimateAchieved) seal = '극';
     else if (wayCount >= 10) seal = '성';
-    else if (wayCount >= 5) seal = '達';
-    else if (wayCount >= 1) seal = '祖';
-    else if (sealed >= 10) seal = '修';
-    else if (sealed >= 3) seal = '行';
-    const sealColor = (seal === '極') ? '#fff5c0' : (seal === '성' ? '#fff8d8' : (seal === '達' ? '#d4af37' : '#a8a098'));
+    else if (wayCount >= 5) seal = '달';
+    else if (wayCount >= 1) seal = '조';
+    else if (sealed >= 10) seal = '수';
+    else if (sealed >= 3) seal = '행';
+    const sealColor = (seal === '극') ? '#fff5c0' : (seal === '성' ? '#fff8d8' : (seal === '달' ? '#d4af37' : '#a8a098'));
     // 名片 SVG
     const formBar = (label, n, color, x, y) => {
       const max = Math.max(...Object.values(formCounts), 5);
@@ -12523,7 +12523,7 @@
 
   // v184 夜叉 — 밤 시간 한정 특수 그림자
   const YAKSHA_TYPE = {
-    key: 'yaksha', name: '夜叉', weight: 0,  // 별도 룰
+    key: 'yaksha', name: '야차', weight: 0,  // 별도 룰
     strengthMul: 1.0, rewardMul: 3.0, strengthAdd: 1,
     desc: '밤의 그림자 — 보상 ×3, 첫 처치 시 야차참 영구 명문',
     isYaksha: true,
@@ -12555,11 +12555,11 @@
   // === v90 名 — 이름 있는 적 (Named Foes) ===
   // 강화도 마일스톤마다 1회성 등장. 베면 영구 명문 + 대량 조각 + 컬렉션 등재.
   const NAMED_FOES = [
-    { key: 'blackwind',  name: '黑風', trigger: 5,  strength: 6,  reward: 80,   inscription: '풍참', desc: '검은 바람의 그림자' },
-    { key: 'silvermoon', name: '銀月', trigger: 8,  strength: 10, reward: 180,  inscription: '월참', desc: '달의 한기를 두른 자' },
-    { key: 'thousand',   name: '千刃', trigger: 11, strength: 13, reward: 350,  inscription: '인참', desc: '천 개의 칼날을 가진 자' },
-    { key: 'demonemp',   name: '鬼帝', trigger: 13, strength: 16, reward: 700,  inscription: '제참', desc: '귀신을 다스리는 자' },
-    { key: 'dragon',     name: '龍',   trigger: 15, strength: 18, reward: 1500, inscription: '용참', desc: '하늘의 그림자' }
+    { key: 'blackwind',  name: '흑풍', trigger: 5,  strength: 6,  reward: 80,   inscription: '풍참', desc: '검은 바람의 그림자' },
+    { key: 'silvermoon', name: '은월', trigger: 8,  strength: 10, reward: 180,  inscription: '월참', desc: '달의 한기를 두른 자' },
+    { key: 'thousand',   name: '천인', trigger: 11, strength: 13, reward: 350,  inscription: '인참', desc: '천 개의 칼날을 가진 자' },
+    { key: 'demonemp',   name: '귀제', trigger: 13, strength: 16, reward: 700,  inscription: '제참', desc: '귀신을 다스리는 자' },
+    { key: 'dragon',     name: '용',   trigger: 15, strength: 18, reward: 1500, inscription: '용참', desc: '하늘의 그림자' }
   ];
   function pendingNamedFoe() {
     if (!state.foesSlain) state.foesSlain = {};
@@ -15326,10 +15326,10 @@
 
   // v106 合 — 유파 마스터리 4단계
   const MASTERY_TIERS = [
-    { name: '入門', min: 3,  mul: 1.0 },
-    { name: '師範', min: 6,  mul: 1.5 },
-    { name: '宗師', min: 10, mul: 2.0 },
-    { name: '超越', min: 15, mul: 2.5 },
+    { name: '입문', min: 3,  mul: 1.0 },
+    { name: '사범', min: 6,  mul: 1.5 },
+    { name: '종사', min: 10, mul: 2.0 },
+    { name: '초월', min: 15, mul: 2.5 },
   ];
   function getSchoolMastery(form) {
     const count = (getFormCounts()[form] || 0);
