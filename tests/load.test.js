@@ -205,7 +205,7 @@ test('normalizeState() 동작 검증: stats 병합이 기존 값 보존 + 신규
 test('normalizeState() 동작 검증: 정상 데이터는 건드리지 않음 (멱등·비파괴)', () => {
   const good = {
     sealedSwords: [{ form: '직' }], enshrined: [{ form: '곡' }],
-    currentSword: { enhanceAttempts: 5, slainCount: 2, inscriptions: ['道'], soul: 50, form: '중' },
+    currentSword: { enhanceAttempts: 5, slainCount: 2, inscriptions: ['도'], soul: 50, form: '중' },
     whetstones: 3, hourActivity: new Array(24).fill(0), stats: { enhanceSuccess: 9 },
   };
   good.hourActivity[5] = 11;
@@ -213,7 +213,7 @@ test('normalizeState() 동작 검증: 정상 데이터는 건드리지 않음 (�
   normalizeState();
   assert.strictEqual(good.sealedSwords.length, 1, 'sealedSwords 보존');
   assert.strictEqual(good.currentSword.soul, 50, 'soul 보존');
-  assert.deepStrictEqual(good.currentSword.inscriptions, ['道'], 'inscriptions 보존');
+  assert.deepStrictEqual(good.currentSword.inscriptions, ['도'], 'inscriptions 보존');
   assert.strictEqual(good.whetstones, 3, 'whetstones 보존');
   assert.strictEqual(good.hourActivity[5], 11, '유효 길이-24 hourActivity 값 보존');
   assert.strictEqual(good.stats.enhanceSuccess, 9, 'stats 기존값 보존');
@@ -247,10 +247,10 @@ test('normalizeState: 형 키 直/曲/重/速 → 직/곡/중/속 마이그레�
 
 // 한글화 10단계 — 명명된 적 격파 명문 키 마이그레이션 (inscriptions 배열)
 test('normalizeState: 명문 키 鬼斬/龍斬/斷魔 → 귀참/용참/단마 (무손실)', () => {
-  const st = { currentSword: { inscriptions: ['鬼斬', '본'] }, sealedSwords: [{ inscriptions: ['龍斬', '道'] }], enshrined: [{ inscriptions: ['斷魔'] }], heritageInscription: '夜叉斬' };
+  const st = { currentSword: { inscriptions: ['鬼斬', '본'] }, sealedSwords: [{ inscriptions: ['龍斬', '도'] }], enshrined: [{ inscriptions: ['斷魔'] }], heritageInscription: '夜叉斬' };
   loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 }).normalizeState();
   assert.deepStrictEqual(st.currentSword.inscriptions, ['귀참', '본'], '鬼斬→귀참, 미마이그레이션 키(本) 보존');
-  assert.deepStrictEqual(st.sealedSwords[0].inscriptions, ['용참', '道'], '龍斬→용참');
+  assert.deepStrictEqual(st.sealedSwords[0].inscriptions, ['용참', '도'], '龍斬→용참');
   assert.deepStrictEqual(st.enshrined[0].inscriptions, ['단마'], '斷魔→단마');
   assert.strictEqual(st.heritageInscription, '야차참', '전수 명문 夜叉斬→야차참');
 });
@@ -260,4 +260,12 @@ test('normalizeState: 명문 키 覺→각성, 刻→각인(충돌분리), 本�
   const st = { currentSword: { inscriptions: ['覺', '刻', '本', '七星', '聖'] } };
   loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 }).normalizeState();
   assert.deepStrictEqual(st.currentSword.inscriptions, ['각성', '각인', '본', '칠성', '성'], '覺/刻 충돌 없이 분리 변환');
+});
+
+// 한글화 10단계(C) — 道/四道 명문 키 마이그레이션 (이스케이프 키, 정점 식별)
+test('normalizeState: 명문 키 道→도, 四道→사도 (구 세이브 정점 보존)', () => {
+  const st = { currentSword: { inscriptions: ['道', '본'] }, sealedSwords: [{ inscriptions: ['四道', '도'] }] };
+  loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 }).normalizeState();
+  assert.deepStrictEqual(st.currentSword.inscriptions, ['도', '본'], '道→도');
+  assert.deepStrictEqual(st.sealedSwords[0].inscriptions, ['사도', '도'], '四道→사도, 기존 도 보존');
 });

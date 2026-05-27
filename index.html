@@ -4409,7 +4409,8 @@
         (Array.isArray(state.enshrined) ? state.enshrined : []).forEach(fixForm); }
       // 한글화 10단계 — 명문 키(명명된 적 격파·斷魔) 한자→음역 마이그레이션 (inscriptions 배열 무손실)
       { const IM = { '鬼斬':'귀참','龍斬':'용참','帝斬':'제참','刃斬':'인참','月斬':'월참','風斬':'풍참','夜叉斬':'야차참','斷魔':'단마',
-          '覺':'각성','刻':'각인','本':'본','剛體':'강체','百鍊':'백련','回魔':'회마','初刃':'초인','始祖':'시조','達人':'달인','聖':'성','久':'구','古':'고','讀劍':'독검','傷':'상','七星':'칠성','仙':'선','連一閃':'연일섬','精進':'정진' };
+          '覺':'각성','刻':'각인','本':'본','剛體':'강체','百鍊':'백련','回魔':'회마','初刃':'초인','始祖':'시조','達人':'달인','聖':'성','久':'구','古':'고','讀劍':'독검','傷':'상','七星':'칠성','仙':'선','連一閃':'연일섬','精進':'정진',
+          '道':'도','四道':'사도' };  // 명문 정점 키 마이그레이션(이 줄의 한자 키는 표시 패스 대상 아님 — 타깃 치환만)
         const mapIns = a => Array.isArray(a) ? a.map(k => IM[k] || k) : a;
         if (state.currentSword) state.currentSword.inscriptions = mapIns(state.currentSword.inscriptions);
         (Array.isArray(state.sealedSwords) ? state.sealedSwords : []).forEach(s => { if (s) s.inscriptions = mapIns(s.inscriptions); });
@@ -4727,7 +4728,7 @@
       unlock: () => (state.sealedSwords || []).concat(state.enshrined || []).some(s => (s.inscriptions || []).includes('본')),  // v352 — 殿堂 검도
     },
     {
-      key: 'dou', kanji: '道', title: '도',
+      key: 'dou', kanji: '도', title: '도',
       lines: [
         '도는 끝이 아니다.',
         '새 시작의 다른 이름이다.',
@@ -6192,7 +6193,7 @@
   // === v181 老師 — 큰 마일스톤에서 스승의 가르침 ===
   const MASTER_TEACHINGS = {
     hundredEnhance: { kanji:'器', verse:'그릇이 깊어지면 물도 깊다 — 너의 검도 그렇다' },
-    fiveWays:       { kanji:'道', verse:'길은 보는 것이 아니라 걸어서 안다' },
+    fiveWays:       { kanji:'도', verse:'길은 보는 것이 아니라 걸어서 안다' },
     thirtyGens:     { kanji:'流', verse:'강이 끊이지 않는 까닭 — 흐르기 때문이다' },
     firstSpring:    { kanji:'萌', verse:'봄에 칼을 뽑지 마라 — 잎이 먼저 나야 한다' },
     firstSummer:    { kanji:'炎', verse:'여름의 그림자는 깊다 — 그러나 검도 깊어진다' },
@@ -6339,7 +6340,7 @@
     }
     galleryIdx = ((i % sealed.length) + sealed.length) % sealed.length;
     const s = sealed[galleryIdx];
-    const isWay = (s.inscriptions || []).indexOf('道') >= 0;
+    const isWay = (s.inscriptions || []).indexOf('도') >= 0;
     const formLabel = { '직':'직','곡':'곡','중':'중','속':'속' }[s.form] || '無';
     const sealSvg = '<svg viewBox="0 0 100 200" width="100" height="200" xmlns="http://www.w3.org/2000/svg"><g>' + buildSwordBody(s.level || 0, s.form, '') + '</g></svg>';
     const ins = (s.inscriptions || []).join(' · ') || '無';
@@ -6376,7 +6377,7 @@
       const sealed = state.sealedSwords || [];
       if (sealed.length <= 1) return;
       const current = sealed[galleryIdx];
-      const isWay = current && (current.inscriptions || []).indexOf('道') >= 0;
+      const isWay = current && (current.inscriptions || []).indexOf('도') >= 0;
       const delay = isWay ? 8000 : 5000;
       galleryTimer = setTimeout(() => {
         if (!galleryPaused && $('gallery-modal').classList.contains('active')) {
@@ -7237,7 +7238,7 @@
       const sCard = (label, val, color) => '<div style="text-align:center;padding:10px 4px;border:1px solid ' + (color || '#444') + ';border-radius:2px;background:rgba(15,15,22,0.5)"><div style="font-size:22px;color:' + (color || '#e8e6dd') + ';font-weight:200;letter-spacing:0">' + val + '</div><div style="font-size:9px;letter-spacing:3px;color:#888;margin-top:4px">' + label + '</div></div>';
       html += sCard('代', swordGen, '#d4af37');
       html += sCard('封', sealed, '#a8c0e8');
-      html += sCard('道', ways, '#fff5c0');
+      html += sCard('도', ways, '#fff5c0');
       html += sCard('斬', totalSlain, '#c04040');
       html += '</div>';
       html += '<div style="font-size:11px;color:rgba(168,184,200,0.7);letter-spacing:3px;font-style:italic;margin-top:24px">이 책은 당신의 검의 길에 대한 것이다.</div>';
@@ -7265,7 +7266,7 @@
     } else if (bookPageIdx === 2) {
       // 卷三 — 道
       html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">卷  三  ─  道</div>';
-      const wayswords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).indexOf('道') >= 0);  // v359 — 殿堂 道 검도 劍士録에 (display undercount 수정)
+      const wayswords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).indexOf('도') >= 0);  // v359 — 殿堂 道 검도 劍士録에 (display undercount 수정)
       if (wayswords.length === 0) {
         html += '<div style="text-align:center;padding:30px;color:#888;font-style:italic;font-size:11px;letter-spacing:3px">아직 도에 닿지 않았다 — +15까지 검을 강화하라</div>';
       } else {
@@ -7601,7 +7602,7 @@
     }
     let html = '';
     sealed.forEach((s, i) => {
-      const isWay = (s.inscriptions || []).indexOf('道') >= 0;
+      const isWay = (s.inscriptions || []).indexOf('도') >= 0;
       const svg = '<svg viewBox="0 0 100 200" width="28" height="56"><g>' + buildSwordBody(s.level || 0, s.form, '') + '</g></svg>';
       html += '<div id="concert-sword-' + i + '" style="text-align:center;padding:6px 2px;border:1px solid ' + (isWay ? 'rgba(212,175,55,0.3)' : '#2a2a32') + ';border-radius:2px;transition:all 0.3s;background:rgba(15,15,22,0.4)">';
       html += svg;
@@ -7740,7 +7741,7 @@
     }
     let html = '<div style="font-size:9px;letter-spacing:3px;color:#888;margin-bottom:8px">손님 검 ' + guests.length + '</div>';
     guests.forEach((s, idx) => {
-      const isWay = (s.inscriptions || []).indexOf('道') >= 0;
+      const isWay = (s.inscriptions || []).indexOf('도') >= 0;
       const svg = '<svg viewBox="0 0 100 200" width="30" height="60" style="flex-shrink:0"><g>' + buildSwordBody(s.level || 0, s.form, '') + '</g></svg>';
       html += '<div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid rgba(212,175,55,0.1)">';
       html += svg;
@@ -7767,7 +7768,7 @@
   function buildSwordCompareColumn(s, idx) {
     if (!s) return '<div style="text-align:center;padding:40px 0;color:#888;font-style:italic;font-size:10px;letter-spacing:3px">선택 안 됨</div>';
     const ins = (s.inscriptions || []);
-    const isWay = ins.indexOf('道') >= 0;
+    const isWay = ins.indexOf('도') >= 0;
     const formLabel = ({ '직':'강직','곡':'유연','중':'무거움','속':'빠름' })[s.form] || '無';
     const svg = '<svg viewBox="0 0 100 200" width="60" height="120" xmlns="http://www.w3.org/2000/svg"><g>' + buildSwordBody(s.level || 0, s.form, '') + '</g></svg>';
     let html = '<div style="text-align:center;padding:8px">';
@@ -7793,7 +7794,7 @@
     const ins = (s.inscriptions || []);
     const slain = s.slainCount || 0;
     const enhanceN = s.enhanceAttempts || 0;
-    if (ins.indexOf('道') >= 0) return '도의 검';
+    if (ins.indexOf('도') >= 0) return '도의 검';
     if (ins.indexOf('용참') >= 0) return '용을 벤 검';  // v370l 名 정점 무훈 — 비교에서도 고유 정체성
     if (ins.indexOf('귀참') >= 0 || slain >= 10) return '전투의 검';
     if (ins.indexOf('야차참') >= 0) return '밤의 검';
@@ -8113,7 +8114,7 @@
     // 8) 봉인 가능 + 보상 충분
     if (state.hasSword && state.level >= 7 && (typeof sealRewardDisplay === 'function')) {
       const insNow = (state.currentSword && state.currentSword.inscriptions) || [];
-      const r = sealRewardDisplay(state.level, insNow, insNow.includes('道'));  // v242 단일 진원
+      const r = sealRewardDisplay(state.level, insNow, insNow.includes('도'));  // v242 단일 진원
       if (r >= 100) return { text: '봉인 보상 ' + fmtNum(r) + ' 조각 — 거두기 좋은 때', tone: 'tip' };
     }
     // 9) 조각 충분 + 새 검 안 빚을 때 (skip — 검 보유)
@@ -9283,7 +9284,7 @@
     '天': ['天','日','月','星','風','雨'],
     '地': ['山','水','石','江','海','土'],
     '人': ['心','志','義','勇','靜','誠'],
-    '道': ['道','虛','無','寂','禪','空'],
+    '도': ['도','虛','無','寂','禪','空'],
   };
   let sealEditing = [];  // [c1, c2] during editing
   function renderSealPalette() {
@@ -9392,7 +9393,7 @@
       const baseY = 0.10 + hashPos(i, 2) * 0.78;
       const lv = Math.max(0, Math.min(15, s.level || 0));
       const size = 2.0 + (lv / 15) * 5.5;  // 2~7.5
-      const isWay = (s.inscriptions || []).indexOf('道') >= 0;
+      const isWay = (s.inscriptions || []).indexOf('도') >= 0;
       return {
         i, x: baseX * W, y: baseY * H,
         size: isWay ? size * 1.5 : size,
@@ -10482,7 +10483,7 @@
       const v = generationSuccessBonus(); if (v) successLines.push(line('系譜 (' + (state.swordGeneration||0) + '代)', pct(v)));
     }
     if (typeof fourWaySuccessBonus === 'function') {
-      const v = fourWaySuccessBonus(); if (v) successLines.push(line('四道', pct(v)));
+      const v = fourWaySuccessBonus(); if (v) successLines.push(line('사도', pct(v)));
     }
     if (typeof enshrineSuccessBonus === 'function') {
       const v = enshrineSuccessBonus(); if (v) successLines.push(line('殿堂 (' + (state.enshrined||[]).length + ')', pct(v)));
@@ -10604,12 +10605,12 @@
     if (state.hasSword && typeof sealRewardBase === 'function' && state.level >= (typeof SEAL_MIN_LEVEL !== 'undefined' ? SEAL_MIN_LEVEL : 3)) {
       const ins = (state.currentSword && state.currentSword.inscriptions) || [];
       const steps = [];
-      const base = sealRewardBase(state.level, ins, ins.includes('道'), { steps });
+      const base = sealRewardBase(state.level, ins, ins.includes('도'), { steps });
       steps.forEach((st, i) => {
         if (i === 0) sealLines.push(line(st.label, fmtNum(st.base) + ' 조각', 'var(--dim)'));
         else sealLines.push(line(st.label, mul(st.mul), 'var(--accent)'));
       });
-      const finalReward = (typeof sealRewardDisplay === 'function') ? sealRewardDisplay(state.level, ins, ins.includes('道')) : base;
+      const finalReward = (typeof sealRewardDisplay === 'function') ? sealRewardDisplay(state.level, ins, ins.includes('도')) : base;
       if (finalReward !== base) sealLines.push(line('共鳴/잔향', '→ ' + fmtNum(finalReward) + ' 조각', 'var(--accent)'));
       sealLines.push(line('실제 봉인 보상', fmtNum(finalReward) + ' 조각', 'var(--accent)'));
     }
@@ -10861,7 +10862,7 @@
     p += stars * 3;
     p += scars * 2;  // 흉터는 *경험*
     // 명문 보너스
-    if (ins.includes('道')) p += 30;
+    if (ins.includes('도')) p += 30;
     if (ins.includes('귀참')) p += 15;
     if (ins.includes('단마')) p += 12;
     if (ins.includes('본')) p += 10;
@@ -11092,7 +11093,7 @@
     {
       key: 'kessai', kanji: '潔齋', label: '깨끗한 일생',
       desc: '+15 도달 + 흉터 없이 봉인',
-      check: (sword) => (sword.inscriptions || []).includes('道') && (sword.scars || 0) === 0,
+      check: (sword) => (sword.inscriptions || []).includes('도') && (sword.scars || 0) === 0,
     },
   ];
   function checkHiddenAchievements(sword) {
@@ -11289,7 +11290,7 @@
       const sword = recent[recent.length - 1 - i];
       const name = sword.name || '';
       const firstChar = name.length > 0 ? name.substring(0, 1) : (sword.form || '?');
-      const isWay = (sword.inscriptions || []).includes('道');
+      const isWay = (sword.inscriptions || []).includes('도');
       const el = document.createElement('div');
       el.textContent = firstChar;
       // 원형 배치 (회수 윈도우 주변)
@@ -11375,7 +11376,7 @@
   // === v138 雙銘 — 명문 쌍 공명 (paired inscription resonance) ===
   const PAIRED_RESONANCES = [
     {
-      key: 'tianming', pair: ['道', '칠성'], name: '天命', label: '하늘의 명',
+      key: 'tianming', pair: ['도', '칠성'], name: '天命', label: '하늘의 명',
       desc: '도와 별이 한 검에 — 봉인 보상 ×2',
       onSeal: (state, reward) => Math.floor(reward * 2),
     },
@@ -11385,7 +11386,7 @@
       onSealPersistent: (state) => { state.metsumaoCharges = 5; },
     },
     {
-      key: 'hondo', pair: ['본', '道'], name: '本道', label: '본질과 도가 하나',
+      key: 'hondo', pair: ['본', '도'], name: '本道', label: '본질과 도가 하나',
       desc: '본과 도의 만남 — 다음 3 새 검 시작 영혼 +20',
       onSealPersistent: (state) => { state.hondoCharges = 3; },
     },
@@ -11616,7 +11617,7 @@
       const real = (state.currentSword.inscriptions || []).filter(k => !meta.has(k));
       return real.length >= 3;
     }},
-    { key: '道', label: '극점',     hint: '+15 도달',          trigger: () => state.hasSword && state.level >= MAX_LEVEL },
+    { key: '도', label: '극점',     hint: '+15 도달',          trigger: () => state.hasSword && state.level >= MAX_LEVEL },
   ];
   function awardStar(key) {
     if (!state.hasSword || !state.currentSword) return;
@@ -14324,14 +14325,14 @@
     const wayEl = $('mark-way');
     const demonEl = $('mark-demon');
     const honestEl = $('mark-honest');
-    if (wayEl) wayEl.setAttribute('opacity', ins.includes('道') ? '0.85' : '0');
+    if (wayEl) wayEl.setAttribute('opacity', ins.includes('도') ? '0.85' : '0');
     if (demonEl) demonEl.setAttribute('opacity', ins.includes('귀참') ? '0.9' : '0');
     if (honestEl) honestEl.setAttribute('opacity', ins.includes('본') ? '0.7' : '0');
     // v69 정점 명문 한자를 칼날 중앙에 직접 새김 (우선순위)
     const kanjiEl = $('mark-kanji');
     if (kanjiEl) {
       let kanji = '', color = '#fff5c0';
-      if (ins.includes('道')) { kanji = '道'; color = '#fff5c0'; }
+      if (ins.includes('도')) { kanji = '도'; color = '#fff5c0'; }
       else if (ins.includes('귀참')) { kanji = '鬼'; color = '#ff8060'; }
       else if (ins.includes('본')) { kanji = '본'; color = '#a0c0d0'; }
       else if (ins.includes('성')) { kanji = '성'; color = '#fff5c0'; }
@@ -14342,7 +14343,7 @@
     }
     // 本 또는 道 명문 보유 시 검 전체에 호흡 발산
     if (swordWrap) {
-      const isTranscendent = ins.includes('본') || ins.includes('道');
+      const isTranscendent = ins.includes('본') || ins.includes('도');
       swordWrap.classList.toggle('transcendent', isTranscendent);
     }
     // v111 刻痕 — 흉터 마크 표시 (scars 수에 따라 1~3개)
@@ -15016,7 +15017,7 @@
     const s = state.sealedSwords[idx];
     if (!s) return null;
     // 道 검만 수호자 가능
-    if (!s.inscriptions || !s.inscriptions.includes('道')) return null;
+    if (!s.inscriptions || !s.inscriptions.includes('도')) return null;
     return s;
   }
   function guardianBonus() {
@@ -15063,7 +15064,7 @@
   function generateLastWords(sword) {
     if (!sword) return '';
     const ins = sword.inscriptions || [];
-    if (ins.includes('道')) return '나는 도를 보았다. 그것으로 족하다.';
+    if (ins.includes('도')) return '나는 도를 보았다. 그것으로 족하다.';
     if (ins.includes('용참')) return '용을 베었으니, 여한이 없다.';  // v370j 名 정점 무훈 — 검의 1인칭 회한
     // v371f 久/古(노쇠, v18) — 오래 산 검의 작별은 그 긴 생을 비춘다. 遺言이 무시하던 정체성 결합.
     // 정점(道/龍斬) 아래, 性情 위 우선순위(검명 NAME_SUFFIX와 동일하게 久/古는 낮으나 존재). 효과 0.
@@ -15144,7 +15145,7 @@
     }
     // 2. 정점 성취
     let peak;
-    if (ins.includes('道')) peak = '주인의 손에서 도에 이르렀다.';
+    if (ins.includes('도')) peak = '주인의 손에서 도에 이르렀다.';
     else if (lv >= 10) peak = '검은 +' + lv + '강의 영역에 닿았다.';
     else if (lv >= 5) peak = '검은 +' + lv + '강의 단계까지 단련되었다.';
     else peak = '검은 짧은 생을 살았으나 첫 빛을 보았다.';
@@ -15182,7 +15183,7 @@
       ending = '결국 殿堂에 영구 진열되어 후세를 비추게 되었다.';
     } else if (allStarsLit) {
       ending = '七星을 모두 채우고 봉인되었다 — 흠 없는 일생.';
-    } else if (ins.includes('道')) {
+    } else if (ins.includes('도')) {
       ending = '도의 검사로서 봉인되었다.';
     } else if (lv >= 10) {
       ending = '높은 단계에서 봉인되어 후일 다시 만나길 기약했다.';
@@ -15550,7 +15551,7 @@
     const counts = { '직': 0, '곡': 0, '중': 0, '속': 0 };
     const all = (state.sealedSwords || []).concat(state.enshrined || []);
     for (const s of all) {
-      if (s.form && (s.inscriptions || []).includes('道')) {
+      if (s.form && (s.inscriptions || []).includes('도')) {
         counts[s.form] = (counts[s.form] || 0) + 1;
       }
     }
@@ -15586,7 +15587,7 @@
   // 우선순위: 道 > 鬼斬 > 本 > 剛體 > 覺 > 강화도 숫자
   // 형이 있으면 prefix, 없으면 無
   const NAME_SUFFIX = [
-    { key: '道',   word: '道' },
+    { key: '도',   word: '도' },
     { key: '귀참', word: '마' },
     { key: '야차참', word: '야' },
     { key: '본',   word: '본' },
@@ -15617,7 +15618,7 @@
   function deriveNameOrigin(form, inscriptions, level) {
     inscriptions = inscriptions || [];
     const reason = {
-      '道': '도에 이르러', '귀참': '검귀를 베어', '야차참': '야차를 베어',
+      '도': '도에 이르러', '귀참': '검귀를 베어', '야차참': '야차를 베어',
       '본': '본질을 깨달아', '강체': '강체를 이루어', '각성': '혼이 깨어나',
       '고': '오랜 세월을 견뎌', '구': '긴 단련을 거쳐',
     };
@@ -15634,7 +15635,7 @@
     { key: '백련', label: '10번 강화한 검',                verse: '많은 두들김이 검을 키웠다',         trigger: () => state.currentSword.enhanceAttempts >= 10 },
     { key: '강체', label: '+10 단계에 도달',               verse: '검의 몸이 단단해졌다',              trigger: () => state.level >= 10 },
     { key: '회마', label: '그림자를 5번 베어냈다',         verse: '검이 어둠을 거듭 물리쳤다',         trigger: () => state.currentSword.slainCount >= 5 },
-    { key: '道',   label: '최고 단계 +15 도달',            verse: '검과 사람이 하나의 길이 되었다',     trigger: () => state.level >= MAX_LEVEL },
+    { key: '도',   label: '최고 단계 +15 도달',            verse: '검과 사람이 하나의 길이 되었다',     trigger: () => state.level >= MAX_LEVEL },
     { key: '귀참', label: '검귀를 베어냈다',               verse: '검귀의 피가 칼끝에 묻었다',         trigger: () => false },
     { key: '야차참', label: '밤의 야차를 베어냈다',          verse: '달빛 아래 검이 그림자를 갈랐다',     trigger: () => false },
     { key: '月蝕',  label: '월식의 순간에 검을 쥐었다',       verse: '달이 가려진 30초의 천문이 검에 깃들었다', trigger: () => false },
@@ -15681,7 +15682,7 @@
       if (ins.includes(def.key)) continue;
       if (def.trigger()) {
         ins.push(def.key);
-        if (def.key === '道') applyAmbientMode('way');
+        if (def.key === '도') applyAmbientMode('way');
         announceInscription(def.key, def.label);
       }
     }
@@ -15824,7 +15825,7 @@
     }
     const ins = state.currentSword.inscriptions || [];
     const form = state.currentSword.form;
-    const reward = sealRewardDisplay(state.level, ins, ins.includes('道'));  // v242 단일 진원
+    const reward = sealRewardDisplay(state.level, ins, ins.includes('도'));  // v242 단일 진원
     const autoName = makeSwordName(form, ins, state.level);
     btn.disabled = false;
     // 팔기 시 자동 검명도 함께 — 검 정체성 미리 보기
@@ -15834,8 +15835,8 @@
     let extraHint = '';
     if (nextLv <= MAX_LEVEL && TABLE[state.level] && TABLE[state.level].destroy > 0) {
       const nextIns = ins.slice();
-      if (nextLv >= MAX_LEVEL && !nextIns.includes('道')) nextIns.push('道');
-      const nextReward = sealRewardDisplay(nextLv, nextIns, nextIns.includes('道'));  // v242 단일 진원
+      if (nextLv >= MAX_LEVEL && !nextIns.includes('도')) nextIns.push('도');
+      const nextReward = sealRewardDisplay(nextLv, nextIns, nextIns.includes('도'));  // v242 단일 진원
       const diff = nextReward - reward;
       // v235 欲 — 더 키울 보상 Δ + 파괴 위험을 함께 (욕심 vs 위험)
       const risk = Math.round(effectiveDestroyChance(state.level) * 100);
@@ -16012,7 +16013,7 @@
       reward = Math.floor(reward * mul);  // mul===1이어도 floor 유지(기존 동작)
       if (steps && mul !== 1) steps.push({ label: label, mul: mul });
     };
-    step('道 (정점)', 1.5, (isWay || ins.includes('道')));
+    step('道 (정점)', 1.5, (isWay || ins.includes('도')));
     step('유파 중류', schoolSealMul());
     step('季節', getSeason().sealMul);
     step('四神 青龍', beastSealMul());  // v261
@@ -16177,7 +16178,7 @@
   // === v92 融劍 — 검 합성 (봉인 검 2자루 → 형·명문·혼 계승) ===
   const FUSION_COST = 60;
   // 계승 명문 우선순위 (메타 명문 始祖/達人/聖 제외 — newSword가 자동 부여)
-  const FUSION_PRIORITY = ['道','용참','제참','귀참','인참','월참','풍참','단마','본','각성','강체','백련','회마','초인','고','구'];
+  const FUSION_PRIORITY = ['도','용참','제참','귀참','인참','월참','풍참','단마','본','각성','강체','백련','회마','초인','고','구'];
   let fusionSelected = [];
   function fusionPreview() {
     // 현재 선택된 2검으로 생성될 검의 미리보기 — { form, inscription, soul, startLevel } 또는 null
@@ -16337,7 +16338,7 @@
     const recentSwords = sealed.slice(-6).reverse();
     $('gameover-swords').innerHTML = recentSwords.map(sw => {
       const n = sw.name || makeSwordName(sw);
-      const isWay = (sw.inscriptions || []).includes('道');
+      const isWay = (sw.inscriptions || []).includes('도');
       return '<span class="go-sword-name' + (isWay ? ' way' : '') + '">' + n + '</span>';
     }).join('');
 
@@ -16379,7 +16380,7 @@
     const lv = state.level;
     const ins = (state.currentSword.inscriptions || []).slice();
     const form = state.currentSword.form || null;
-    const isWay = ins.includes('道');
+    const isWay = ins.includes('도');
     const autoName = makeSwordName(form, ins, lv);
     // v24 in-app 명명 의식: +5 이상 또는 道이면 모달, 그 외 자동
     if (lv >= 5 || isWay) {
@@ -16488,7 +16489,7 @@
     // v117 四道 — 이 봉인으로 4형 道 모두 달성 시 큰 의식
     if (!fourWaysBefore && hasFourWays()) {
       setTimeout(() => {
-        announceInscription('四道', '네 길의 검사가 되었다 — 모든 새 검 시작 영혼 +50, 강화 성공 +3%');
+        announceInscription('사도', '네 길의 검사가 되었다 — 모든 새 검 시작 영혼 +50, 강화 성공 +3%');
         burstParticles('#fff5c0', 80);
         setTimeout(() => burstParticles('#d4af37', 40), 200);
         setTimeout(() => burstParticles('#a0c0d0', 30), 400);
@@ -16589,7 +16590,7 @@
     const pMarkWay = $('preview-mark-way');
     const pMarkDemon = $('preview-mark-demon');
     const pMarkHonest = $('preview-mark-honest');
-    if (pMarkWay) pMarkWay.setAttribute('opacity', ins.includes('道') ? '0.85' : '0');
+    if (pMarkWay) pMarkWay.setAttribute('opacity', ins.includes('도') ? '0.85' : '0');
     if (pMarkDemon) pMarkDemon.setAttribute('opacity', ins.includes('귀참') ? '0.9' : '0');
     if (pMarkHonest) pMarkHonest.setAttribute('opacity', ins.includes('본') ? '0.7' : '0');
     // v70 명명 미리 보기에도 한자 새김
@@ -16635,7 +16636,7 @@
     const enshrineBtn = $('name-enshrine');
     const enshrineHint = $('name-enshrine-hint');
     // v118 殿堂 — 道 검 && 진열 cap 미달일 때만 표시
-    const isWay = ins.includes('道');
+    const isWay = ins.includes('도');
     const showEnshrine = isWay && canEnshrineMore();
     if (enshrineBtn) enshrineBtn.style.display = showEnshrine ? 'block' : 'none';
     if (enshrineHint) enshrineHint.style.display = showEnshrine ? 'block' : 'none';
@@ -16678,7 +16679,7 @@
     const overlay = $('ending-overlay');
     if (!overlay) return;
     // 봉인 검 중 道 명문 보유한 것들의 검명 cascade
-    const daoSwords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).includes('道'));  // v352 — 殿堂 道 검도 엔딩 行列에
+    const daoSwords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).includes('도'));  // v352 — 殿堂 道 검도 엔딩 行列에
     const cascadeNames = daoSwords.slice(-12).reverse(); // 최근 12개
     const cascade = $('ending-cascade');
     if (cascade) {
@@ -16839,7 +16840,7 @@
   }
 
   function getPrimaryKanji(ins) {
-    if (ins.includes('道')) return { k: '道', c: '#fff5c0' };
+    if (ins.includes('도')) return { k: '도', c: '#fff5c0' };
     if (ins.includes('귀참')) return { k: '귀', c: '#ff8060' };
     if (ins.includes('본')) return { k: '본', c: '#a0c0d0' };
     if (ins.includes('성')) return { k: '성', c: '#fff5c0' };
@@ -16851,7 +16852,7 @@
     // 검 SVG (form + level 기반) + 명문 마크 + v69 한자 새김
     const ins = s.inscriptions || [];
     const body = buildSwordBody(s.level || 0, s.form, s.playerSeal || '');
-    const wayOpacity = ins.includes('道') ? '0.85' : '0';
+    const wayOpacity = ins.includes('도') ? '0.85' : '0';
     const demonOpacity = ins.includes('귀참') ? '0.9' : '0';
     const honestOpacity = ins.includes('본') ? '0.7' : '0';
     const kanji = getPrimaryKanji(ins);
@@ -16878,7 +16879,7 @@
     $('detail-name').textContent = s.name || ('검 #' + index);
     // 검 회고 모달 — 수호자 지정 가능 여부 + 현재 상태
     const idx0 = index - 1;
-    const isWay = ins.includes('道');
+    const isWay = ins.includes('도');
     const isGuardian = state.guardianIdx === idx0;
     let guardianBlock = '';
     if (isWay) {
@@ -17014,7 +17015,7 @@
     // 필터 버튼 렌더
     if (filterEl && sealed.length > 0) {
       const counts = getFormCounts();
-      const wayCount = sealed.filter(s => (s.inscriptions || []).includes('道')).length;
+      const wayCount = sealed.filter(s => (s.inscriptions || []).includes('도')).length;
       // v254 性情 필터 — 봉인 검을 기질로도 분류
       const tc = { '剛': 0, '靜': 0, '賭': 0, '和': 0 };
       sealed.forEach(s => { tc[deriveTemperament(s).name]++; });
@@ -17024,7 +17025,7 @@
         { key: '곡', label: '곡', count: counts['곡'] || 0 },
         { key: '중', label: '중', count: counts['중'] || 0 },
         { key: '속', label: '속', count: counts['속'] || 0 },
-        { key: '道', label: '道', count: wayCount },
+        { key: '도', label: '도', count: wayCount },
         { key: '剛', label: '剛', count: tc['剛'] },
         { key: '靜', label: '靜', count: tc['靜'] },
         { key: '賭', label: '賭', count: tc['賭'] },
@@ -17072,7 +17073,7 @@
       let filtered = sealed.map((s, originalIdx) => ({s, originalIdx}))
         .filter(({s}) => {
           if (legacyFilter === 'all') return true;
-          if (legacyFilter === '道') return (s.inscriptions || []).includes('道');
+          if (legacyFilter === '도') return (s.inscriptions || []).includes('도');
           if (legacyFilter === '剛' || legacyFilter === '靜' || legacyFilter === '賭' || legacyFilter === '和') return deriveTemperament(s).name === legacyFilter;  // v254 性情 필터
           return s.form === legacyFilter;
         });
@@ -17097,10 +17098,10 @@
       list.classList.add('gallery-mode');
       const items = filtered.map(({s, originalIdx}) => {
         const ins = (s.inscriptions || []);
-        const hasWay = ins.includes('道');
+        const hasWay = ins.includes('도');
         const name = s.name || makeSwordName(s.form, ins, s.level);
         const soulStr = (typeof s.soul === 'number' && s.soul > 0) ? s.soul : '';
-        const keyIns = ins.filter(k => ['道','귀참','본','각성','단마','逆轉'].includes(k));
+        const keyIns = ins.filter(k => ['도','귀참','본','각성','단마','逆轉'].includes(k));
         // v163 鬪將 — 챔피언 표시
         const champIdx = getChampionSwordIdx();
         const isChampion = (champIdx === originalIdx);
@@ -17111,7 +17112,7 @@
           '<div class="lc-name">' + name + '</div>' +
           '<div class="lc-meta">+' + (s.level || 0) + (soulStr ? ' · 魂' + soulStr : '') + ' · ' + deriveTemperament(s).name + '</div>' +  // v247b 性情
           '<div class="lc-badges">' + keyIns.slice(0,3).map(k =>
-            '<span class="lc-badge' + (k === '道' ? ' way' : '') + '">' + k + '</span>'
+            '<span class="lc-badge' + (k === '도' ? ' way' : '') + '">' + k + '</span>'
           ).join('') + '</div>' +
           (s.memo ? '<div class="lc-memo">' + s.memo + '</div>' : '') +
           (s.scars > 0 ? '<div style="font-size:8px;color:rgba(180,70,50,0.7);letter-spacing:2px;margin-top:2px">' + '각인'.repeat(s.scars) + '</div>' : '') +
@@ -17639,7 +17640,7 @@
         : '';
       const defs = document.querySelector('#sword-svg defs').outerHTML;
       // 명문 마크 (정점)
-      const wayMark = ins.includes('道') ? '<line x1="50" y1="20" x2="50" y2="138" stroke="#fff5c0" stroke-width="1.6" opacity="0.85" style="filter: drop-shadow(0 0 3px #d4af37);"/>' : '';
+      const wayMark = ins.includes('도') ? '<line x1="50" y1="20" x2="50" y2="138" stroke="#fff5c0" stroke-width="1.6" opacity="0.85" style="filter: drop-shadow(0 0 3px #d4af37);"/>' : '';
       const demonMark = ins.includes('귀참') ? '<circle cx="50" cy="22" r="1.8" fill="#c0392b" opacity="0.9"/>' : '';
       const honestMark = ins.includes('본') ? '<polygon points="50,12 51.5,14 50,16 48.5,14" fill="#6a8a9a" opacity="0.7"/>' : '';
       const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200" width="200" height="400">' +
@@ -18311,7 +18312,7 @@
       '백련': '한 검으로 10번 강화 시도',
       '강체': '+10 단계 도달',
       '회마': '그림자를 5번 베어내기',
-      '道': '최고 단계 +' + MAX_LEVEL + ' 도달',
+      '도': '최고 단계 +' + MAX_LEVEL + ' 도달',
       '귀참': '검귀 (드문 그림자) 베어내기',
       '각성': '魂 게이지 ' + SOUL_AWAKEN + ' 도달',
       '본': '魂 게이지 ' + SOUL_TRUE + ' 도달',
@@ -18932,7 +18933,7 @@
   // v86 닉네임 자동 제안 — 사용자 道 검 중 가장 강한 것
   function suggestNickname() {
     // 우선순위 1: 道 검 중 가장 강화도 높은 검명 (v362 — 殿堂 道 검도 포함, 가장 영예로운 검)
-    const daoSwords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).includes('道'));
+    const daoSwords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).includes('도'));
     if (daoSwords.length > 0) {
       const best = daoSwords.slice().sort((a, b) => (b.level || 0) - (a.level || 0))[0];
       return best.name || makeSwordName(best.form, best.inscriptions || [], best.level);

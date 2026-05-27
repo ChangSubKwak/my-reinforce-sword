@@ -737,7 +737,7 @@ test('merged-collection: 形/道 집계·필터가 sealedSwords-only면 안 됨 
   assert.deepStrictEqual(formOnly, [], 'sealedSwords-only 形 집계(enshrined 누락 회귀): ' + formOnly.join(' || '));
   const daoOnly = js.match(/state\.sealedSwords \|\| \[\]\)\.filter\([^)]*['"道]/g) || [];
   // 道 = 道. filter에서 道 검 거르는데 enshrined 미합산이면 회귀.
-  const daoBad = daoOnly.filter(s => s.indexOf('道') >= 0);
+  const daoBad = daoOnly.filter(s => s.indexOf('도') >= 0);
   assert.deepStrictEqual(daoBad, [], 'sealedSwords-only 道 필터(enshrined 누락 회귀): ' + daoBad.join(' || '));
 });
 

@@ -9,7 +9,7 @@ const { loadFunctions } = require('./harness');
 const codeFns = loadFunctions(['encodeSwordCode', 'decodeSwordCode']);
 
 test('encodeSwordCode: CK1 prefix + base64', () => {
-  const code = codeFns.encodeSwordCode({ name: '直道', form: '직', level: 15, inscriptions: ['道'], soul: 80 });
+  const code = codeFns.encodeSwordCode({ name: '直道', form: '직', level: 15, inscriptions: ['도'], soul: 80 });
   assert.match(code, /^CK1/, 'CK1 prefix가 있어야 함');
   assert.ok(code.length > 3, '본문이 있어야 함');
 });
