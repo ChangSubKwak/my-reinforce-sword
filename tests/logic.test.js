@@ -747,8 +747,8 @@ function playerTitle(st) {
 }
 test('generatePlayerTitle: 최고 성취 우선 (ultimate > 道15 > ...)', () => {
   assert.match(playerTitle({ ultimateAchieved: true, stats: { wayReached: 15 } }), /千秋萬代/, 'ultimate 최우선');
-  assert.match(playerTitle({ stats: { wayReached: 15 } }), /十五道師/, '道 15');
-  assert.match(playerTitle({ stats: { wayReached: 1 } }), /道를 본 자/, '道 1회');
+  assert.match(playerTitle({ stats: { wayReached: 15 } }), /십오도사/, '道 15');
+  assert.match(playerTitle({ stats: { wayReached: 1 } }), /도를 본 자/, '道 1회');
 });
 test('generatePlayerTitle: 무성취도 항상 칭호 반환 (빈 문자열 아님)', () => {
   const t = playerTitle({ stats: {} });

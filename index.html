@@ -117,7 +117,7 @@
   body.season-summer { background: radial-gradient(ellipse at 50% 30%, #322a1d 0%, #221b14 80%); }
   body.season-autumn { background: radial-gradient(ellipse at 50% 30%, #3a2a1c 0%, #221710 80%); }
   body.season-winter { background: radial-gradient(ellipse at 50% 30%, #232a30 0%, #161a1f 80%); }
-  /* v80 道 도달 카운터 (우측 상단, season-mark 옆) */
+  /* v80 도 도달 카운터 (우측 상단, season-mark 옆) */
   #way-counter {
     position: fixed;
     top: 14px;
@@ -703,7 +703,7 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
   }
-  /* v62 道 도달 시 stage 황금 빛 */
+  /* v62 도 도달 시 stage 황금 빛 */
   #stage.way-flash {
     animation: way-flash 5s forwards;
   }
@@ -977,7 +977,7 @@
     filter: drop-shadow(0 0 25px rgba(255, 230, 150, 1)) drop-shadow(0 0 50px rgba(212, 175, 55, 0.7));
     animation: divine 2s infinite alternate;
   }
-  /* v39 정점 검 — 本/道 명문 검의 발산 */
+  /* v39 정점 검 — 本/도 명문 검의 발산 */
   #sword-wrap.transcendent {
     animation: transcendent-breathe 3.5s infinite ease-in-out;
   }
@@ -1338,7 +1338,7 @@
   @keyframes fadein { to { opacity: 1; } }
   @keyframes fadeout { to { opacity: 0; } }
 
-  /* v57 道 진행 점 — 검 아래 15단계 진행 표시 */
+  /* v57 도 진행 점 — 검 아래 15단계 진행 표시 */
   #way-progress {
     position: absolute;
     bottom: -68px;
@@ -1431,7 +1431,7 @@
   #soul-stage-label.wake { color: #6a8a9a; }
   #soul-stage-label.true { color: var(--accent); text-shadow: 0 0 8px rgba(212, 175, 55, 0.6); }
 
-  /* 道魂 — 봉인된 검의 시구가 떠오른다 */
+  /* 도혼 — 봉인된 검의 시구가 떠오른다 */
   #ancestor-whisper {
     position: fixed;
     top: 80px;
@@ -1569,7 +1569,7 @@
     text-shadow: 0 0 12px rgba(212, 175, 55, 0.8);
   }
 
-  /* v84 聖 엔딩 — 道 10번 봉인 시 풀스크린 컷씬 */
+  /* v84 聖 엔딩 — 도 10번 봉인 시 풀스크린 컷씬 */
   #ending-overlay {
     position: fixed;
     inset: 0;
@@ -1864,7 +1864,7 @@
   }
   #gameover-fullreset:hover { border-color: var(--dim); color: var(--fg); }
 
-  /* 儀式 — 道 검 봉인 컷씬 */
+  /* 儀式 — 도 검 봉인 컷씬 */
   #ritual-overlay {
     position: fixed;
     inset: 0;
@@ -3376,14 +3376,14 @@
     <input id="memo-input" aria-label="한 마디 메모 (선택)" type="text" maxlength="24" placeholder="한 마디를 새기다 (선택 · 24자)"
       style="width:100%;padding:8px;background:transparent;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:2px;text-align:center;margin-bottom:14px;outline:none;opacity:0.7;"
       autocomplete="off">
-    <!-- v158 기언 — 道 검에만 보이는 후일 편지 (textarea) -->
-    <textarea id="kigen-input" aria-label="후일의 검사에게 남길 말 (기언, 선택)" maxlength="80" placeholder="후일의 검사에게 한 줄 (선택 · 道 검만 · 80자)"
+    <!-- v158 기언 — 도 검에만 보이는 후일 편지 (textarea) -->
+    <textarea id="kigen-input" aria-label="후일의 검사에게 남길 말 (기언, 선택)" maxlength="80" placeholder="후일의 검사에게 한 줄 (선택 · 도 검만 · 80자)"
       style="display:none;width:100%;padding:8px;background:transparent;border:1px solid rgba(212,175,55,0.3);color:var(--accent);font-family:inherit;font-size:11px;letter-spacing:2px;text-align:center;margin-bottom:14px;outline:none;opacity:0.8;resize:none;height:60px;"></textarea>
     <div class="modal-actions">
       <button class="modal-close" id="name-cancel">자 동 이 름</button>
       <button class="modal-close primary" id="name-confirm">이 름 새 김 · 팔 기</button>
     </div>
-    <!-- v118 전당 — 道 검 한정 박물관 진열 (조각 보상 없이 영구 진열 + +1.5% 성공) -->
+    <!-- v118 전당 — 도 검 한정 박물관 진열 (조각 보상 없이 영구 진열 + +1.5% 성공) -->
     <button class="modal-close" id="name-enshrine" style="display:none;width:100%;margin:10px 0 0;border:1px solid #fff5c0;color:#fff5c0;background:transparent;font-family:inherit;font-size:12px;letter-spacing:5px;padding:12px 0;cursor:pointer;text-shadow:0 0 6px rgba(255,245,192,0.4)">🏛 전당  에  영 구  진 열</button>
     <p id="name-enshrine-hint" style="display:none;color:var(--dim);font-size:10px;letter-spacing:2px;margin-top:6px;text-align:center;line-height:1.6">조각 보상 없음. 영구 진열되며 모든 미래 검에 강화 성공 +1.5%</p>
   </div>
@@ -3398,7 +3398,7 @@
   </div>
 </div>
 
-<!-- 詩集 모달 — 道 검 일생시 모음 -->
+<!-- 詩集 모달 — 도 검 일생시 모음 -->
 <div class="modal" id="anthology-modal">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mtitle-3" style="max-width: 420px;">
     <h2 id="mtitle-3">검의 노래</h2>
@@ -3677,7 +3677,7 @@
     <p id="constellation-desc">봉인된 검들이 밤하늘에 별이 되었다 — 같은 형끼리 별자리를 이룬다</p>
     <div id="constellation-canvas" style="width:100%;background:radial-gradient(ellipse,#06070f 0%,#03030a 100%);border:1px solid #1a1f2e;border-radius:2px;position:relative;overflow:hidden"></div>
     <div style="margin-top:8px;font-size:9px;letter-spacing:3px;color:rgba(168,168,168,0.55);text-align:center">
-      直 푸른별 · 曲 분홍별 · 重 황금별 · 速 청록별 — 道 큰 발광 · 같은 형 라인 연결
+      直 푸른별 · 曲 분홍별 · 重 황금별 · 速 청록별 — 도 큰 발광 · 같은 형 라인 연결
     </div>
     <button class="modal-close" data-close>닫 기</button>
   </div>
@@ -3842,7 +3842,7 @@
   </div>
 </div>
 
-<!-- v118 전당 모달 — 박물관 진열된 道 검 -->
+<!-- v118 전당 모달 — 박물관 진열된 도 검 -->
 <div class="modal" id="enshrined-modal">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mtitle-33" style="max-width: 460px;">
     <h2 id="mtitle-33">전당</h2>
@@ -4031,14 +4031,14 @@
   <div id="gameover-journey"></div>
   <div id="gameover-swords"></div>
   <div id="gameover-msg">
-    <span style="color:var(--dim);font-size:11px">조각·도구는 초기화 · 봉인된 검과 道 기록은 영원히 보존</span>
+    <span style="color:var(--dim);font-size:11px">조각·도구는 초기화 · 봉인된 검과 도 기록은 영원히 보존</span>
   </div>
   <div id="gameover-stats"></div>
   <button id="gameover-restart">다 시  검 을  들 다</button>
   <button id="gameover-fullreset">전 체  초 기 화 (계보까지 지움)</button>
 </div>
 
-<!-- 儀式 — 道 검 봉인 컷씬 -->
+<!-- 儀式 — 도 검 봉인 컷씬 -->
 <div id="ritual-overlay">
   <div id="ritual-form"></div>
   <div id="ritual-title"></div>
@@ -4046,7 +4046,7 @@
   <div id="ritual-end">— 검은 잠들다 —</div>
 </div>
 
-<!-- 道魂 — 봉인된 검의 시구 페이드 -->
+<!-- 도혼 — 봉인된 검의 시구 페이드 -->
 <div id="ancestor-whisper">
   <div class="who" id="whisper-who"></div>
   <div id="whisper-line"></div>
@@ -4143,7 +4143,7 @@
     totalDestroyed: 0,
     totalSlain: 0,
     sealedSwords: [],
-    enshrined: [],  // v118 殿堂 — 박물관에 모셔진 道 검 (최대 3)
+    enshrined: [],  // v118 殿堂 — 박물관에 모셔진 도 검 (최대 3)
     blessingsDiscovered: {},  // v119 奇緣 — 발견한 축복 영구 기록
     swordGeneration: 0,       // v123 系譜 — 누적 검 생성 횟수
     generationMilestones: {}, // v123 系譜 — 달성한 위계 마일스톤
@@ -4152,7 +4152,7 @@
     rubbings: [],             // v136 拓本 — 의미있는 순간 포착 (최대 20)
     resonancesDiscovered: {}, // v138 雙銘 — 발견한 명문 쌍
     metsumaoCharges: 0,       // v138 雙銘 — 滅魔 슬레이 ×1.5 남은 횟수
-    hondoCharges: 0,          // v138 雙銘 — 本道 새 검 시작 영혼 +20 남은 횟수
+    hondoCharges: 0,          // v138 雙銘 — 본도 새 검 시작 영혼 +20 남은 횟수
     playerSeal: '',           // v140 篆刻 — 플레이어 인장 (1자)
     collectionMilestones: {}, // v145 銘集 — 달성한 명문 수집 마일스톤
     shrineDonations: {},      // v149 神祠 — 영구 헌사 잠금 해제
@@ -4168,7 +4168,7 @@
     whetstones: 0,
     spiritstones: 0,
     divinationStones: 0,  // v122 占卜 — 정확한 전조
-    firstWayReached: false,  // v16 始祖 — 첫 道 도달 시 true, 영구
+    firstWayReached: false,  // v16 始祖 — 첫 도 도달 시 true, 영구
     lastSolarTerm: null,  // v177 節氣 — 마지막 발견된 절기 key
     stalematePending: false,  // v183 對峙 — 직전 對峙 후 다음 그림자 type 미리 보임 플래그
     userSeal: [],  // v187 印 — 사용자 한자 2자 인장 (e.g. ['天','心'])
@@ -4197,14 +4197,14 @@
     activityByDate: {},         // v217 暦 — 일자별 활동 카운트 {YYYY-MM-DD: count}
     gambleStats: { win: 0, lose: 0 },  // v219 賭 — 회수 도박 성공/실패
     recordMaxSealReward: 0,     // v224 劍士録 — 최대 봉인 보상
-    recordFirstWayGen: 0,       // v224 劍士録 — 첫 道 도달 대수
-    eternityPoints: 0,          // v225 無極 — 道 봉인마다 누적 永劫
+    recordFirstWayGen: 0,       // v224 劍士録 — 첫 도 도달 대수
+    eternityPoints: 0,          // v225 無極 — 도 봉인마다 누적 永劫
     guestSwords: [],            // v227 客劍 — import한 손님 검 (감상용, 최대 30)
     settings: {},               // v228 設 — 접근성 설정 {particles, screenShake, reduceMotion, largeText}
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
-    heritageInscription: null,  // v33 — 道 검 봉인 후 다음 검에 전수될 명문 (1개)
+    heritageInscription: null,  // v33 — 도 검 봉인 후 다음 검에 전수될 명문 (1개)
     guardianIdx: null,  // v52 — 수호자로 지정된 봉인 검의 인덱스 (선택적)
     recentLog: [],  // v75 — 최근 액션 기록 (최대 10건, 최신순)
     milestonesShown: {},  // v35 — 한 번씩만 표시되는 안내
@@ -4509,13 +4509,13 @@
     if (!el) return;
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (ways > 0) {
-      // v117 四道 — 4형 道 진척도 또는 완성 표시
+      // v117 四도 — 4형 도 진척도 또는 완성 표시
       const wc = getWayFormCounts();
       const lit = ['직','곡','중','속'].filter(f => wc[f] > 0).length;
       const fourWayLabel = hasFourWays()
-        ? '<span style="color:#fff5c0;text-shadow:0 0 8px rgba(255,245,192,0.7);margin-left:8px;letter-spacing:2px">四道</span>'
-        : (lit > 0 ? '<span style="color:var(--dim);margin-left:8px;font-size:9px;letter-spacing:2px">四道 ' + lit + '/4</span>' : '');
-      el.innerHTML = '道 × ' + ways + fourWayLabel;
+        ? '<span style="color:#fff5c0;text-shadow:0 0 8px rgba(255,245,192,0.7);margin-left:8px;letter-spacing:2px">四도</span>'
+        : (lit > 0 ? '<span style="color:var(--dim);margin-left:8px;font-size:9px;letter-spacing:2px">四도 ' + lit + '/4</span>' : '');
+      el.innerHTML = '도 × ' + ways + fourWayLabel;
       el.classList.add('active');
     } else {
       el.classList.remove('active');
@@ -5115,7 +5115,7 @@
       chord([1200, 1568], 0.22, 'triangle', 0.4);  // D6-G6 차임
       setTimeout(() => tone(1976, 0.3, 'triangle', 0.18), 80);
     },
-    // 道 의식: 5화음 + 저음 풀
+    // 도 의식: 5화음 + 저음 풀
     ritual:         () => {
       chord([130, 196, 261, 330, 392], 2.5, 'sine', 0.7); // C3 메이저 펜타토닉
       setTimeout(() => chord([196, 261, 330, 392, 523], 2.2, 'sine', 0.55), 250);
@@ -5198,7 +5198,7 @@
     if (!state.hasSword || state.level >= MAX_LEVEL) return 0;
     const d = TABLE[state.level].destroy;
     const dg = TABLE[state.level].downgrade;
-    if (d >= 0.85) return 1000;      // +13~+14 道 직전
+    if (d >= 0.85) return 1000;      // +13~+14 도 직전
     if (d >= 0.55) return 850;       // +10~+12
     if (d >= 0.20) return 700;       // +7~+9
     if (d >= 0.05) return 500;       // +5~+6
@@ -5668,7 +5668,7 @@
     statDestroyed.textContent = fmtNum(state.totalDestroyed);
     // v341 — 탭 제목에 진행 상태 반영 (최소화/멀티탭 시 진척 확인)
     try {
-      document.title = (!state.hasSword ? '검을 빚어라' : state.level >= MAX_LEVEL ? '道 — 최고의 검' : '검 +' + state.level) + ' · 강화의 도';
+      document.title = (!state.hasSword ? '검을 빚어라' : state.level >= MAX_LEVEL ? '도 — 최고의 검' : '검 +' + state.level) + ' · 강화의 도';
     } catch (e) {}
     renderInscriptions();
     applyFormVisual();
@@ -5752,7 +5752,7 @@
     if (bfHide) bfHide.style.display = 'none';
 
     swordSvg.style.opacity = 1;
-    // v45 단계별 한자 이름 + v57 道까지 거리
+    // v45 단계별 한자 이름 + v57 도까지 거리
     const tierName = state.level === 0 ? '시작'
                    : state.level <= 2 ? '초기'
                    : state.level <= 5 ? '수련'
@@ -5780,7 +5780,7 @@
 
     if (lv >= MAX_LEVEL) {
       btnEnhance.disabled = true;
-      btnEnhance.textContent = '도 (道)';
+      btnEnhance.textContent = '도 (도)';
       oddsSuccess.textContent = '극한에 이르렀다';
       oddsFail.textContent = '';
       oddsCost.textContent = '';
@@ -6347,14 +6347,14 @@
     const verse = s.verse ? (Array.isArray(s.verse) ? s.verse.join(' / ') : s.verse) : '';
     let html = '<div style="margin-bottom:14px">' + sealSvg + '</div>';
     html += '<div style="font-size:21px;letter-spacing:5px;color:' + (isWay ? '#fff5c0' : '#e8e6dd') + ';margin-bottom:6px;font-family:\'Noto Serif KR\',serif">' + (s.name || '無名') + '</div>';
-    html += '<div style="font-size:10px;letter-spacing:5px;color:#888;margin-bottom:14px">+' + (s.level || 0) + ' · ' + formLabel + (isWay ? ' · 道' : '') + '</div>';
+    html += '<div style="font-size:10px;letter-spacing:5px;color:#888;margin-bottom:14px">+' + (s.level || 0) + ' · ' + formLabel + (isWay ? ' · 도' : '') + '</div>';
     html += '<div style="font-size:11px;letter-spacing:3px;color:var(--accent);margin-bottom:8px;font-family:\'Noto Serif KR\',serif">' + ins + '</div>';
     if (verse) html += '<div style="font-size:11px;letter-spacing:2px;color:rgba(168,184,200,0.75);font-style:italic;line-height:1.7;margin-top:10px;max-width:380px;margin-left:auto;margin-right:auto">' + verse + '</div>';
     if (isWay) {
       html = '<div style="position:absolute;inset:14px;border:1px solid rgba(212,175,55,0.4);border-radius:2px;pointer-events:none"></div>' + html;
     }
     $('gallery-content').innerHTML = html;
-    $('gallery-counter').textContent = (galleryIdx + 1) + ' / ' + sealed.length + (isWay ? ' · 道' : '');
+    $('gallery-counter').textContent = (galleryIdx + 1) + ' / ' + sealed.length + (isWay ? ' · 도' : '');
     // 검 entrance anim
     const content = $('gallery-content').firstElementChild;
     if (content && content.tagName !== 'DIV' || ($('gallery-content').children[0] && $('gallery-content').children[0].tagName === 'DIV')) {
@@ -6641,7 +6641,7 @@
     if (state.eclipseSeenAt) return;       // 영구 1회
     if (eclipseActive) return;
     const ways = (state.stats && state.stats.wayReached) || 0;
-    if (ways < 1) return;                  // 첫 道 도달 후만
+    if (ways < 1) return;                  // 첫 도 도달 후만
     if (challenge || rescueWindow || moonGazing) return;
     if (Math.random() < 0.005) {           // 0.5% per check
       startEclipse();
@@ -6780,7 +6780,7 @@
     html += row('성공률', successRate + '%', '#88c8a8');
     html += row('베기', diff.slain, '#c04040');
     html += row('봉인', diff.sealed, '#a8c0e8');
-    if (diff.wayReached > 0) html += row('道 도달', diff.wayReached, '#fff5c0');
+    if (diff.wayReached > 0) html += row('도 도달', diff.wayReached, '#fff5c0');
     if (diff.stalemate > 0) html += row('對峙', diff.stalemate, '#5878b8');
     if (diff.treasures > 0) html += row('七寶 발견', diff.treasures, '#d4684a');
     if (diff.swordGen > 0) html += row('代 변화', '+' + diff.swordGen, '#88e8c0');
@@ -6853,7 +6853,7 @@
       const bro = sealed[Math.floor(Math.random() * sealed.length)];
       pool.push('봉인된 형제 「' + (bro.name || '無名') + '」이 꿈에 나타난다');
     }
-    // 道
+    // 도
     if (lv >= MAX_LEVEL) pool.push('도에 닿은 꿈 — 이미 그곳에 있다');
     else if (lv >= 11) pool.push('도에 닿는 꿈 — 손끝에 닿을 듯하다');
     else if (lv >= 5) pool.push('더 높은 곳을 향한 꿈을 꾼다');
@@ -6942,7 +6942,7 @@
     if (meditationMelodyTimer) { clearTimeout(meditationMelodyTimer); meditationMelodyTimer = null; }
   }
 
-  // === v225 無極 — 道 봉인마다 永劫 누적 (끝없는 길) ===
+  // === v225 無極 — 도 봉인마다 永劫 누적 (끝없는 길) ===
   const ETERNITY_CAP = 25;
   function eternityBonus() {
     return Math.min(0.05, (state.eternityPoints || 0) * 0.002);
@@ -7048,7 +7048,7 @@
       if ((s.beads || 0) > maxBeads) maxBeads = s.beads;
       if ((s.soul || 0) > maxSoul) maxSoul = s.soul;
     });
-    // 최단 道 — 첫 道 도달 대수 (state.firstWayGen 추적 or 추정)
+    // 최단 도 — 첫 도 도달 대수 (state.firstWayGen 추적 or 추정)
     return {
       bestLevel: state.bestLevel || 0,
       maxSlain, maxEnhance, maxBeads, maxSoul,
@@ -7075,7 +7075,7 @@
       { label:'최고 연속 일자', val: r.bestStreak + '일', color:'#c8a0e8' },
       { label:'누적 검 (代)', val: r.totalGen, color:'#a8a098' },
     ];
-    if (r.firstWayGen > 0) rows.push({ label:'첫 道 도달 (代)', val: r.firstWayGen + '代', color:'#fff5c0' });
+    if (r.firstWayGen > 0) rows.push({ label:'첫 도 도달 (代)', val: r.firstWayGen + '代', color:'#fff5c0' });
     let html = '';
     rows.forEach(row => {
       html += '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:9px 4px;border-bottom:1px solid rgba(212,175,55,0.1)">';
@@ -7108,7 +7108,7 @@
     const map = {
       '戰 — 전투 (베기)': '당신은 전투의 검사 — 그림자를 두려워하지 않는다',
       '避 — 회피 (도망)': '당신은 바람의 검사 — 싸움보다 흐름을 택한다',
-      '和 — 평화 (對峙)': '당신은 道의 검사 — 무력 없이 길을 연다',
+      '和 — 평화 (對峙)': '당신은 도의 검사 — 무력 없이 길을 연다',
       '賭 — 도박 (회수)': '당신은 도박의 검사 — 운명에 모든 것을 건다',
     };
     // 균형 체크
@@ -7169,9 +7169,9 @@
     // 秘 이스터에그
     const eggsN = state.discoveredEggs ? Object.keys(state.discoveredEggs).length : 0;
     cats.push({ name:'秘', cur: eggsN, max: 3, color:'#c8a0e8' });
-    // 道 도달
+    // 도 도달
     const ways = (state.stats && state.stats.wayReached) || 0;
-    cats.push({ name:'道 (10회 목표)', cur: Math.min(ways, 10), max: 10, color:'#fff5c0' });
+    cats.push({ name:'도 (10회 목표)', cur: Math.min(ways, 10), max: 10, color:'#fff5c0' });
     // 千秋萬代
     cats.push({ name:'千秋萬代', cur: state.ultimateAchieved ? 1 : 0, max: 1, color:'#fff5c0' });
     // 月蝕
@@ -7264,9 +7264,9 @@
         }
       }
     } else if (bookPageIdx === 2) {
-      // 卷三 — 道
-      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">卷  三  ─  道</div>';
-      const wayswords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).indexOf('도') >= 0);  // v359 — 殿堂 道 검도 劍士録에 (display undercount 수정)
+      // 卷三 — 도
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">卷  三  ─  도</div>';
+      const wayswords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).indexOf('도') >= 0);  // v359 — 殿堂 도 검도 劍士録에 (display undercount 수정)
       if (wayswords.length === 0) {
         html += '<div style="text-align:center;padding:30px;color:#888;font-style:italic;font-size:11px;letter-spacing:3px">아직 도에 닿지 않았다 — +15까지 검을 강화하라</div>';
       } else {
@@ -8171,7 +8171,7 @@
     }
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (ways < 1) {
-      log('拈花 — 蘭이 아직 피지 않았다 (道 1회 도달 필요)', 'warn');
+      log('拈花 — 蘭이 아직 피지 않았다 (도 1회 도달 필요)', 'warn');
       return;
     }
     state.lastPluckedDate = todayStr3();  // v245h 로컬 날짜
@@ -9153,7 +9153,7 @@
       verse: '동방의 용이 봉인의 길에 깃들었다' },
     { key:'byakko', name:'白虎', dir:'西', dirKr:'서', element:'金', color:'#c8b8a8',
       condition: () => ((state.stats && state.stats.wayReached) || 0) >= 3,
-      conditionDesc: '道 3회 도달',
+      conditionDesc: '도 3회 도달',
       progress: () => ({ cur: (state.stats && state.stats.wayReached) || 0, max: 3 }),
       bonusDesc: '회수 +0.5초',
       bonusKey: 'rescueSec', bonusVal: 0.5,
@@ -9439,9 +9439,9 @@
       }
       // 본체
       svg += '<circle cx="' + s.x.toFixed(1) + '" cy="' + s.y.toFixed(1) + '" r="' + r.toFixed(1) + '" fill="' + (s.isWay ? '#fff5c0' : s.color) + '" data-idx="' + s.i + '" data-name="' + s.name.replace(/"/g, '') + '" data-lv="' + s.level + '" data-form="' + (s.form||'') + '" style="cursor:pointer">' +
-             '<title>' + s.name + ' · +' + s.level + ' · ' + (s.form || '無') + (s.isWay ? ' · 道' : '') + '</title>' +
+             '<title>' + s.name + ' · +' + s.level + ' · ' + (s.form || '無') + (s.isWay ? ' · 도' : '') + '</title>' +
              '</circle>';
-      // 道 별은 깜빡임 애니
+      // 도 별은 깜빡임 애니
       if (s.isWay) {
         svg += '<circle cx="' + s.x.toFixed(1) + '" cy="' + s.y.toFixed(1) + '" r="' + (r * 0.6).toFixed(1) + '" fill="#ffffff"><animate attributeName="opacity" values="0.4;1;0.4" dur="2.5s" repeatCount="indefinite"/></circle>';
       }
@@ -9510,7 +9510,7 @@
   <!-- title -->
   <text x="22" y="32" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="6" fill="#888" opacity="0.7">劍  名  片</text>
 
-  <!-- 道號 (큰 글자) -->
+  <!-- 도號 (큰 글자) -->
   <text x="${W/2}" y="78" font-family="Noto Serif KR, serif" font-size="32" font-weight="200" letter-spacing="6" fill="#fff5c0" text-anchor="middle" filter="url(#meishi-glow)">${daoTitle}</text>
   <text x="${W/2}" y="78" font-family="Noto Serif KR, serif" font-size="32" font-weight="200" letter-spacing="6" fill="#fff5c0" text-anchor="middle">${daoTitle}</text>
   <text x="${W/2}" y="98" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="4" fill="#a8a098" text-anchor="middle" font-style="italic">${daoSubtitle}</text>
@@ -9526,10 +9526,10 @@
   <text x="50" y="158" font-family="Noto Serif KR, serif" font-size="13" fill="#e8e6dd">${swordGen} 代</text>
   <text x="${W-30}" y="158" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888" text-anchor="end">歲 月  ${playTime}</text>
 
-  <!-- 봉인 / 道 / 名 row -->
+  <!-- 봉인 / 도 / 名 row -->
   <text x="30" y="183" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">封</text>
   <text x="50" y="183" font-family="Noto Serif KR, serif" font-size="14" fill="#e8e6dd">${sealed}</text>
-  <text x="100" y="183" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">道</text>
+  <text x="100" y="183" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">도</text>
   <text x="120" y="183" font-family="Noto Serif KR, serif" font-size="14" fill="#d4af37">${wayCount}</text>
   <text x="170" y="183" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">名</text>
   <text x="190" y="183" font-family="Noto Serif KR, serif" font-size="14" fill="#c0883a">${namedSlain}</text>
@@ -9774,7 +9774,7 @@
   // === v178 共鳴 — 같은 형 봉인 검과의 공명 ===
   function sameFormSealedCount(form) {
     if (!form) return 0;
-    // v358 — 共鳴은 형-수집 보너스. 殿堂(enshrined) 도 같은 형 검도 共鳴해야 함(같은 형의 道 검은
+    // v358 — 共鳴은 형-수집 보너스. 殿堂(enshrined) 도 같은 형 검도 共鳴해야 함(같은 형의 도 검은
     // 최고 등급). v350에서 流派(getFormCounts)는 enshrined 포함하므로, 같은 형-수집 보너스인
     // 共鳴만 sealedSwords-only면 비일관. 두 컬렉션 합산으로 통일(balance-adjacent, 되돌릴 수 있음).
     return (state.sealedSwords || []).concat(state.enshrined || []).filter(s => s.form === form).length;
@@ -10084,7 +10084,7 @@
   // 매 분 체크
   setInterval(checkHourlyBell, 60000);
 
-  // === v172 蘭 — 무대 우하단 난초 (道 도달에 따라 성장 / 형별 색) ===
+  // === v172 蘭 — 무대 우하단 난초 (도 도달에 따라 성장 / 형별 색) ===
   function getDominantForm() {
     const counts = { '직': 0, '곡': 0, '중': 0, '속': 0 };
     const all = [].concat(state.sealedSwords || [], state.enshrined || []);
@@ -10243,7 +10243,7 @@
     log('🌟 千秋萬代 — 모든 길을 보았다. 영원한 검선', 'success');
   }
 
-  // === v169 道師 — 사용자 상태 분석 후 짧은 조언 ===
+  // === v169 도사 — 사용자 상태 분석 후 짧은 조언 ===
   const ADVISOR_SUGGESTIONS = [
     {
       key: 'a_shards',
@@ -10296,7 +10296,7 @@
   }
   function showAdvisorMessage(msg) {
     const el = document.createElement('div');
-    el.textContent = '道師 — ' + msg;
+    el.textContent = '도사 — ' + msg;
     el.style.cssText = 'position:fixed;top:90px;right:18px;font-size:11px;letter-spacing:2px;color:#a8c0d8;text-shadow:0 0 6px rgba(168,192,216,0.4);background:rgba(20,30,45,0.85);border-left:2px solid #a8c0d8;padding:8px 14px;pointer-events:none;z-index:1300;max-width:280px;line-height:1.7;opacity:0;font-family:"Noto Serif KR", serif;border-radius:2px;';
     document.body.appendChild(el);
     el.animate([
@@ -10306,7 +10306,7 @@
       { opacity: 0, transform: 'translateY(-8px)' },
     ], { duration: 7000, easing: 'ease-in-out' });
     setTimeout(() => el.remove(), 7100);
-    log('道師 — ' + msg, 'info');
+    log('도사 — ' + msg, 'info');
   }
   // 매 2분 체크
   setInterval(checkAdvisor, 2 * 60 * 1000);
@@ -10430,14 +10430,14 @@
       const done = HIDDEN_ACHIEVEMENTS.filter(a => state.hiddenAchievements[a.key]).length;
       total += (done / HIDDEN_ACHIEVEMENTS.length) * 5;
     }
-    // 4道 완성 (10점)
+    // 4도 완성 (10점)
     if (typeof hasFourWays === 'function' && hasFourWays()) total += 10;
     else if (typeof getWayFormCounts === 'function') {
       const wc = getWayFormCounts();
       const formsWithWay = ['직','곡','중','속'].filter(f => wc[f] > 0).length;
       total += (formsWithWay / 4) * 10;
     }
-    // 道 누적 (10점) — min(wayReached, 10)
+    // 도 누적 (10점) — min(wayReached, 10)
     const ways = (state.stats && state.stats.wayReached) || 0;
     total += Math.min(ways, 10);
     // 100代 (5점)
@@ -10619,7 +10619,7 @@
     // 2. 활성 charges (1회용)
     const chargeLines = [];
     if (state.metsumaoCharges > 0) chargeLines.push(line('滅魔 (다음 슬레이 ×1.5)', '×' + state.metsumaoCharges));
-    if (state.hondoCharges > 0) chargeLines.push(line('本道 (다음 새 검 +20영혼)', '×' + state.hondoCharges));
+    if (state.hondoCharges > 0) chargeLines.push(line('본도 (다음 새 검 +20영혼)', '×' + state.hondoCharges));
     if (state.swordWish && state.swordWish.charges > 0) chargeLines.push(line(state.swordWish.key + ' (강화 유언)', '×' + state.swordWish.charges));
     if (state.swordWishSlay && state.swordWishSlay.charges > 0) chargeLines.push(line(state.swordWishSlay.key + ' (슬레이 유언)', '×' + state.swordWishSlay.charges));
     if (typeof blessingState !== 'undefined') {
@@ -10711,7 +10711,7 @@
           body: s.memo,
         });
       }
-      // 寄言 (道 검 + kigen 있음)
+      // 寄言 (도 검 + kigen 있음)
       if (s.kigen) {
         pages.push({
           kind: 'kigen', sword: s,
@@ -10720,7 +10720,7 @@
           body: s.kigen,
         });
       }
-      // 일생시 (verse 4행, 道 검만)
+      // 일생시 (verse 4행, 도 검만)
       if (s.verse && Array.isArray(s.verse) && s.verse.length >= 4) {
         pages.push({
           kind: 'verse', sword: s,
@@ -10738,7 +10738,7 @@
     const progress = $('bunshu-progress');
     if (!page) return;
     if (bunshuPages.length === 0) {
-      page.innerHTML = '<div style="text-align:center;color:var(--dim);font-size:11px;letter-spacing:2px;line-height:1.8">— 아직 새긴 글 없다 —<br><span style="font-size:9px;opacity:0.7">검에 메모하거나 道에 이르면 채워진다</span></div>';
+      page.innerHTML = '<div style="text-align:center;color:var(--dim);font-size:11px;letter-spacing:2px;line-height:1.8">— 아직 새긴 글 없다 —<br><span style="font-size:9px;opacity:0.7">검에 메모하거나 도에 이르면 채워진다</span></div>';
       if (counter) counter.textContent = '0 / 0';
       if (progress) progress.textContent = '내가 새긴 글';
       $('bunshu-prev').disabled = true;
@@ -11010,7 +11010,7 @@
     { key: 'maxSoul',          label: '최고 영혼',          unit: '魂' },
     { key: 'maxSlainPerSword', label: '한 검 최다 슬레이',  unit: '회' },
     { key: 'maxSuccessStreak', label: '최고 강화 連 streak', unit: '회' },
-    { key: 'minWayAttempts',   label: '최단 道 도달',       unit: '강화', isMin: true },  // 작을수록 좋음
+    { key: 'minWayAttempts',   label: '최단 도 도달',       unit: '강화', isMin: true },  // 작을수록 좋음
   ];
   function updateRecord(key, value) {
     if (!state.records) state.records = {};
@@ -11166,7 +11166,7 @@
     }
   }
 
-  // === v150 道至 — 첫 道 도달 거대 의식 ===
+  // === v150 도至 — 첫 도 도달 거대 의식 ===
   function playFirstWayCeremony() {
     // 1) 화면 황금 파동 (3.5초)
     const wave = document.createElement('div');
@@ -11180,9 +11180,9 @@
     ], { duration: 4500, easing: 'ease-in-out' });
     setTimeout(() => wave.remove(), 4600);
 
-    // 2) 거대 한자 "道至" 페이드 (4초)
+    // 2) 거대 한자 "도至" 페이드 (4초)
     const k = document.createElement('div');
-    k.textContent = '道至';
+    k.textContent = '도至';
     k.style.cssText = 'position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) scale(0.3);font-size:120px;font-family:"Noto Serif KR",serif;color:#fff5c0;text-shadow:0 0 40px rgba(255,245,192,1.0),0 0 20px rgba(212,175,55,1.0);pointer-events:none;z-index:1500;letter-spacing:24px;opacity:0;';
     document.body.appendChild(k);
     k.animate([
@@ -11195,7 +11195,7 @@
 
     // 3) 부제
     const lbl = document.createElement('div');
-    lbl.innerHTML = '道를 본 자<br><span style="font-size:13px;letter-spacing:4px;opacity:0.85">새로운 시작 — 검의 길이 무한히 열린다</span>';
+    lbl.innerHTML = '도를 본 자<br><span style="font-size:13px;letter-spacing:4px;opacity:0.85">새로운 시작 — 검의 길이 무한히 열린다</span>';
     lbl.style.cssText = 'position:fixed;top:calc(38% + 100px);left:50%;transform:translateX(-50%);font-size:16px;letter-spacing:6px;color:#fff5c0;text-shadow:0 0 10px rgba(212,175,55,0.7);pointer-events:none;z-index:1500;opacity:0;text-align:center;line-height:2.2;';
     document.body.appendChild(lbl);
     lbl.animate([
@@ -11269,7 +11269,7 @@
     setTimeout(() => burstParticles('#d4af37', 60), 300);
     setTimeout(() => burstParticles('#a8c0e0', 40), 600);
     setTimeout(() => burstParticles('#fff5c0', 40), 900);
-    log('道至 — 새로운 시작. 검의 길이 열렸다', 'success');
+    log('도至 — 새로운 시작. 검의 길이 열렸다', 'success');
   }
 
   // === v144 招魂 — 검 파괴 시 봉인된 선대 검들이 목격 ===
@@ -11277,7 +11277,7 @@
     // 선대 검들의 이름 첫 글자 수집 (sealedSwords + enshrined)
     const ancestors = [].concat(state.sealedSwords || [], state.enshrined || []);
     if (ancestors.length === 0) return;
-    // 道 검 우선 + 최근 검 우선 (최근 7자루)
+    // 도 검 우선 + 최근 검 우선 (최근 7자루)
     const recent = ancestors.slice(-7);
     const stage = $('stage');
     if (!stage) return;
@@ -11386,7 +11386,7 @@
       onSealPersistent: (state) => { state.metsumaoCharges = 5; },
     },
     {
-      key: 'hondo', pair: ['본', '도'], name: '本道', label: '본질과 도가 하나',
+      key: 'hondo', pair: ['본', '도'], name: '본도', label: '본질과 도가 하나',
       desc: '본과 도의 만남 — 다음 3 새 검 시작 영혼 +20',
       onSealPersistent: (state) => { state.hondoCharges = 3; },
     },
@@ -11416,7 +11416,7 @@
   // === v136 拓本 — 의미있는 순간 포착 ===
   const RUBBING_REASONS = {
     'first10':        '첫 +10 도달',
-    'firstWay':       '첫 道(+15) 도달',
+    'firstWay':       '첫 도(+15) 도달',
     'firstSeal3':     '첫 봉인 (+3)',
     'firstSeal10':    '첫 봉인 +10',
     'firstSlay':      '첫 그림자 베어냄',
@@ -11426,7 +11426,7 @@
     'firstSeven':     '첫 七星 달성',
     'firstFusion':    '첫 검 융합',
     'first100Gen':    '100代 도달',
-    'first4Way':      '四道 달성',
+    'first4Way':      '四도 달성',
   };
   const RUBBING_MAX = 20;
   function captureRubbing(reasonKey, extraData) {
@@ -11464,7 +11464,7 @@
     if (!list) return;
     const rubbings = state.rubbings || [];
     if (progress) {
-      // v141 道號 — 호 + 拓本 진척도
+      // v141 도號 — 호 + 拓本 진척도
       progress.innerHTML = '<div style="color:#fff5c0;letter-spacing:3px;margin-bottom:6px;text-shadow:0 0 6px rgba(212,175,55,0.4)">' + generatePlayerTitle() + '</div>' +
         '<div style="opacity:0.7">拓本  ' + rubbings.length + ' / ' + RUBBING_MAX + '</div>';
     }
@@ -11767,7 +11767,7 @@
       ['파괴의 문이 열렸다', '위험해질수록 빛난다', '그래도 더'],  // lv 5-6
       ['한계가 가까워진다', '한 걸음이 전부다', '끝이 보인다'],   // lv 7-9
       ['이미 보통의 검이 아니다', '경계를 넘었다', '신의 영역'],  // lv 10-12
-      ['道가 보인다', '마지막 단계', '거의 다 왔다'],             // lv 13-14
+      ['도가 보인다', '마지막 단계', '거의 다 왔다'],             // lv 13-14
     ],
     hold: [
       ['다시', '멈추지 않는다', '또 한 번'],
@@ -11775,7 +11775,7 @@
       ['검이 거부한다', '아직 아니다', '준비가 필요하다'],
       ['강함이 부족하다', '더 담금질해야 한다', '인내'],
       ['한계가 벽이 된다', '이 이상은...', '극한에서 저항한다'],
-      ['道가 거부한다', '마지막 시련', '조금만 더'],
+      ['도가 거부한다', '마지막 시련', '조금만 더'],
     ],
     destroy: [
       '다시 시작이다',
@@ -12032,13 +12032,13 @@
       if (Math.random() < 0.28) spawnResonanceRays();
       // v182 水鏡 — 강화 성공 시 물결 ripple
       spawnWaterRipple();
-      // v60 강화도별 파티클 양 증가 — 道 도달 시 압도적
+      // v60 강화도별 파티클 양 증가 — 도 도달 시 압도적
       let particleCount = 12 + lv * 2;
       if (state.level >= MAX_LEVEL) particleCount = 80;
       else if (state.level >= 13) particleCount = 60;
       else if (state.level >= 10) particleCount = 40;
       burstParticles('#d4af37', particleCount);
-      // 道 도달 시 추가 빛 광선 (다른 색) + stage 황금 빛
+      // 도 도달 시 추가 빛 광선 (다른 색) + stage 황금 빛
       if (state.level >= MAX_LEVEL) {
         setTimeout(() => burstParticles('#fff5c0', 50), 80);
         setTimeout(() => burstParticles('#ff8c40', 30), 160);
@@ -12068,7 +12068,7 @@
       // v136 拓本 — 의미있는 마일스톤 포착
       if (state.level === 10) captureRubbing('first10');
       if (state.level === MAX_LEVEL && !state.firstWayReached) captureRubbing('firstWay');
-      // v156 新記 — 道 도달 시 강화 시도 수 (최단 道 도달 기록)
+      // v156 新記 — 도 도달 시 강화 시도 수 (최단 도 도달 기록)
       if (state.level === MAX_LEVEL) {
         updateRecord('minWayAttempts', state.currentSword.enhanceAttempts || 0);
       }
@@ -12076,7 +12076,7 @@
       log('+' + state.level + ' 성공', 'success');
       showSwordVoice('success', state.level);  // v113 劍聲
       updateMoodFromState();  // v127 氣 — 기분 갱신 (success 후 successStreak 기준)
-      // 강화 성공 → 일대기 점검 (百鍊·剛體·道)
+      // 강화 성공 → 일대기 점검 (百鍊·剛體·도)
       checkInscriptions();
       checkStars();  // v116 七星
       setTimeout(() => tryBlessing('enhanceSuccess'), 250);  // v119 龍鱗
@@ -12086,7 +12086,7 @@
       // v84 정말 최종 강화 (+MAX_LEVEL=15 도달) 시 엔딩 발동 — 한 번만
       if (state.level >= MAX_LEVEL && !state.endingShown) {
         state.endingShown = true;
-        // 道 명문 페이드 (1.3s) + 시각 효과 + 5초 stage 황금 빛 후 엔딩 시작
+        // 도 명문 페이드 (1.3s) + 시각 효과 + 5초 stage 황금 빛 후 엔딩 시작
         setTimeout(() => playEnding(), 6500);
       }
       // 그림자가 비칠 수 있다
@@ -12420,13 +12420,13 @@
     if (rescueWindow && rescueWindow.gamble) rescueWindow.gamble();
   });
 
-  // === 道魂 — 봉인된 道 검이 후세에 시구를 전한다 ===
+  // === 도혼 — 봉인된 도 검이 후세에 시구를 전한다 ===
   function whisperFromAncestor(currentForm) {
-    // v369 — 殿堂 道 검도 후세에 시구를 전함. 殿堂 검은 가장 영예로운 道 검인데 기존엔
-    // sealedSwords만 봐서 안 속삭였음 — v359(劍士録 道 목록)·merged-collection류 표시 누락. 순수 narrative.
+    // v369 — 殿堂 도 검도 후세에 시구를 전함. 殿堂 검은 가장 영예로운 도 검인데 기존엔
+    // sealedSwords만 봐서 안 속삭였음 — v359(劍士録 도 목록)·merged-collection류 표시 누락. 순수 narrative.
     const sealed = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => s.verse && Array.isArray(s.verse));
     if (sealed.length === 0) return;
-    // v371c 守魂 — 수호자(지정한 道 검)가 있으면 그가 시련을 지켜보며 속삭인다. 守(v52)는 그동안
+    // v371c 守魂 — 수호자(지정한 도 검)가 있으면 그가 시련을 지켜보며 속삭인다. 守(v52)는 그동안
     // 패시브 stat로만 존재했으나, 一閃(도전) 때 제 목소리를 얻는다 (守+一閃 whisper 융합, 점수 0).
     let ancestor, isGuardian = false;
     const guardian = (typeof getGuardian === 'function') ? getGuardian() : null;
@@ -12714,7 +12714,7 @@
     bumpDaily('challenge', 1);  // v94 天時
     maybeMilestone('firstChallenge', '그림자', '그림자가 나타났습니다 — 베거나 도망치세요');
     SFX.challengeAppear();
-    // v26 道魂: 1.2초 후 봉인된 道 검의 시구 한 줄 페이드
+    // v26 도혼: 1.2초 후 봉인된 도 검의 시구 한 줄 페이드
     setTimeout(() => {
       if (challenge) whisperFromAncestor(state.currentSword.form);
     }, 1200);
@@ -14341,7 +14341,7 @@
       kanjiEl.setAttribute('fill', color);
       kanjiEl.setAttribute('opacity', kanji ? '0.9' : '0');
     }
-    // 本 또는 道 명문 보유 시 검 전체에 호흡 발산
+    // 本 또는 도 명문 보유 시 검 전체에 호흡 발산
     if (swordWrap) {
       const isTranscendent = ins.includes('본') || ins.includes('도');
       swordWrap.classList.toggle('transcendent', isTranscendent);
@@ -15016,7 +15016,7 @@
     if (idx === null || idx === undefined) return null;
     const s = state.sealedSwords[idx];
     if (!s) return null;
-    // 道 검만 수호자 가능
+    // 도 검만 수호자 가능
     if (!s.inscriptions || !s.inscriptions.includes('도')) return null;
     return s;
   }
@@ -15047,7 +15047,7 @@
     return { key: 'do', name: '도', line: '위험을 무릅쓰고 높이 오르는 기질을 품었다.' };
   }
   // v370 率性 — 形(타고난 천성, v6)과 性情(살며 얻은 기질, v247)의 합치/배반을 읽는다.
-  // 率性之謂道(中庸) — 제 천성을 따랐는가 거슬렀는가는 道 주제의 핵심. 메커니즘 효과 0,
+  // 率性之謂도(中庸) — 제 천성을 따랐는가 거슬렀는가는 도 주제의 핵심. 메커니즘 효과 0,
   // 두 기존 정체성 축의 synthesis(섬이 아닌 순수 융합) + 기존 데이터 파생(무상태·하위호환).
   // 形별 천성 친화: 直→剛(나아감) / 曲·重→靜(견딤) / 速→賭(무릅씀).
   function deriveNaturePath(sword) {
@@ -15059,7 +15059,7 @@
     if (temp === affinity) return { key: 'follow', name: '솔성', line: '타고난 형 그대로 나아간, 천성을 따른 검이었다.' };
     return { key: 'defy', name: '역성', line: '타고난 형을 거슬러 제 길을 연, 천성을 거스른 검이었다.' };
   }
-  // v248 遺言 — 봉인되는 검의 1인칭 마지막 말. 一代記(3인칭 서술)·一生詩(道 한정 시)와 달리
+  // v248 遺言 — 봉인되는 검의 1인칭 마지막 말. 一代記(3인칭 서술)·一生詩(도 한정 시)와 달리
   // 검 자신의 목소리. 性情(v247) + 정점 성취에서 결정적 파생 (메커니즘 효과 0, 순수 narrative).
   function generateLastWords(sword) {
     if (!sword) return '';
@@ -15067,7 +15067,7 @@
     if (ins.includes('도')) return '나는 도를 보았다. 그것으로 족하다.';
     if (ins.includes('용참')) return '용을 베었으니, 여한이 없다.';  // v370j 名 정점 무훈 — 검의 1인칭 회한
     // v371f 久/古(노쇠, v18) — 오래 산 검의 작별은 그 긴 생을 비춘다. 遺言이 무시하던 정체성 결합.
-    // 정점(道/龍斬) 아래, 性情 위 우선순위(검명 NAME_SUFFIX와 동일하게 久/古는 낮으나 존재). 효과 0.
+    // 정점(도/龍斬) 아래, 性情 위 우선순위(검명 NAME_SUFFIX와 동일하게 久/古는 낮으나 존재). 효과 0.
     if (ins.includes('고')) return '오랜 세월을 보았다. 이제 쉬어도 좋으리.';
     if (ins.includes('구')) return '긴 생이었다. 천천히 칼을 거둔다.';
     const byTemp = {
@@ -15202,7 +15202,7 @@
     return formOpening + ' ' + (fusionLine ? fusionLine + ' ' : '') + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + (destinyLine ? destinyLine + ' ' : '') + ending;
   }
 
-  // === 一生詩 — 道 검 봉인 시 일생을 4행 시구로 응축 ===
+  // === 一生詩 — 도 검 봉인 시 일생을 4행 시구로 응축 ===
   function generateVerse(form, inscriptions, level, slainCount, reward, soul) {
     const formLine = ({
       '직': '강직의 검 한 자루',
@@ -15211,7 +15211,7 @@
       '속': '바람의 검 한 자루',
     })[form] || '이름 없는 검 한 자루';
 
-    // v370i — 名(명명된 적) 격파를 一生詩(道 검 시)에도 결합. 龍을 벤 道 검의 시가 그
+    // v370i — 名(명명된 적) 격파를 一生詩(도 검 시)에도 결합. 龍을 벤 도 검의 시가 그
     // 정점 무훈을 노래하지 않던 누락 (v370h 一代記과 동일 시스템, 시 surface에도 적용).
     const FOE_VERSE = { '용참': '용을 베어 하늘마저 가르고', '제참': '귀제를 쓰러뜨리고', '인참': '천 개의 칼날을 가르며', '월참': '은월을 베고', '풍참': '흑풍을 잠재우고' };
     const foeV = ['용참', '제참', '인참', '월참', '풍참'].find(k => inscriptions.includes(k));
@@ -15340,7 +15340,7 @@
   function getFormCounts() {
     const counts = {};
     // v350 — 봉인 + 殿堂 모두 집계. getFormCounts만 sealedSwords-only였던 outlier로,
-    // 道 검을 殿堂에 진열하면 流派(유파) 진척에서 빠지던 버그 — 四道(getWayFormCounts)와
+    // 도 검을 殿堂에 진열하면 流派(유파) 진척에서 빠지던 버그 — 四도(getWayFormCounts)와
     // 다른 ~10개 집계 지점은 두 컬렉션을 합산함. enshrine은 봉인의 한 형태이므로 같이 센다.
     const all = (state.sealedSwords || []).concat(state.enshrined || []);
     for (const s of all) {
@@ -15369,7 +15369,7 @@
           state.level++;
           if (state.level > state.bestLevel) state.bestLevel = state.level;
           if (state.level >= MAX_LEVEL) {
-            // 道 도달 트리거 처리는 일반 enhance 분기에 위임 — 여기서는 그냥 레벨만
+            // 도 도달 트리거 처리는 일반 enhance 분기에 위임 — 여기서는 그냥 레벨만
             checkInscriptions();
           }
           checkStars();
@@ -15468,7 +15468,7 @@
     if (blessingState.matsuCount > 0) blessingState.matsuCount--;
   }
 
-  // === v118 殿堂 — 道 검을 봉인 대신 박물관에 영구 진열 ===
+  // === v118 殿堂 — 도 검을 봉인 대신 박물관에 영구 진열 ===
   const ENSHRINE_CAP = 3;
   function enshrineCount() {
     return (state.enshrined || []).length;
@@ -15504,7 +15504,7 @@
       fusedFrom: state.currentSword.fusedFrom || null,  // v344 血統 — 융합 혈통 보존
     });
     bumpStat('wayReached');
-    grantEternity();  // v225 無極 — 道 검 殿堂도 永劫 +1
+    grantEternity();  // v225 無極 — 도 검 殿堂도 永劫 +1
     if (!state.firstWayReached) {
       state.firstWayReached = true;
       if (!state.recordFirstWayGen) state.recordFirstWayGen = state.swordGeneration || 1;  // v224 劍士録
@@ -15546,7 +15546,7 @@
     updateForgeButtons();
   }
 
-  // === v117 四道 — 4형의 道(+15) 검을 모두 봉인하면 영구 패시브 ===
+  // === v117 四도 — 4형의 도(+15) 검을 모두 봉인하면 영구 패시브 ===
   function getWayFormCounts() {
     const counts = { '직': 0, '곡': 0, '중': 0, '속': 0 };
     const all = (state.sealedSwords || []).concat(state.enshrined || []);
@@ -15584,7 +15584,7 @@
   }
 
   // === 銘名 — 봉인 시 검의 비명 ===
-  // 우선순위: 道 > 鬼斬 > 本 > 剛體 > 覺 > 강화도 숫자
+  // 우선순위: 도 > 鬼斬 > 本 > 剛體 > 覺 > 강화도 숫자
   // 형이 있으면 prefix, 없으면 無
   const NAME_SUFFIX = [
     { key: '도',   word: '도' },
@@ -16013,7 +16013,7 @@
       reward = Math.floor(reward * mul);  // mul===1이어도 floor 유지(기존 동작)
       if (steps && mul !== 1) steps.push({ label: label, mul: mul });
     };
-    step('道 (정점)', 1.5, (isWay || ins.includes('도')));
+    step('도 (정점)', 1.5, (isWay || ins.includes('도')));
     step('유파 중류', schoolSealMul());
     step('季節', getSeason().sealMul);
     step('四神 青龍', beastSealMul());  // v261
@@ -16055,7 +16055,7 @@
     swordWrap.classList.remove('resolve-focus', 'resolve-guard');
     setAmbientLevel(startLv); applyAmbientMode('idle');
     let startSoul = trialStartSoulBonus() + shrineStartSoul();  // v149 神祠 영혼
-    // v138 雙銘 — 本道 charge 활성 시 시작 영혼 +20 (한 번 소모)
+    // v138 雙銘 — 본도 charge 활성 시 시작 영혼 +20 (한 번 소모)
     if (state.hondoCharges > 0) {
       startSoul += 20;
       state.hondoCharges--;
@@ -16063,7 +16063,7 @@
     // v149 神祠 — 護 헌사: 새 검 탄생 시 시작 보호권 +1
     if (shrineHas('d2')) state.protections += 1;
     state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: startSoul, startLevel: state.level, levelHistory: [state.level], foesEncountered: {}, scars: 0, protectsUsed: 0, stars: {}, playerSeal: state.playerSeal || '', bornTod: getTimeOfDay().name, naturePathSeen: false };  // v252 時生 — 빚어진 시각(朝/晝/夕/夜)
-    // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
+    // v16 始祖 / v21 達人·聖: 도 도달 횟수에 따른 메타 명문 + 시작 魂
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (state.firstWayReached) {
       state.currentSword.inscriptions.push('시조');
@@ -16077,7 +16077,7 @@
       state.currentSword.inscriptions.push('성');
       state.currentSword.soul = Math.max(state.currentSword.soul, 30);
     }
-    // v117 四道 — 4형의 道 검 모두 보유 시 영구 시작 영혼 +50
+    // v117 四도 — 4형의 도 검 모두 보유 시 영구 시작 영혼 +50
     if (hasFourWays()) {
       state.currentSword.soul = Math.max(state.currentSword.soul, fourWayStartSoul());
     }
@@ -16136,7 +16136,7 @@
     setTimeout(() => checkGenerationMilestone(prevGen), 800);
     // v124 古文書 — 세대/형 관련 스크롤 체크
     setTimeout(() => checkScrolls(), 1100);
-    // v158 寄言 — 25% 확률로 과거 道 검의 편지가 도착
+    // v158 寄言 — 25% 확률로 과거 도 검의 편지가 도착
     setTimeout(() => maybeShowKigen(), 1800);
     // v175 回憶 — 매 10代마다 첫 검 회상
     if ((state.swordGeneration || 0) > 0 && (state.swordGeneration || 0) % 10 === 0) {
@@ -16323,18 +16323,18 @@
     const sealed = state.sealedSwords || [];
     const ways = (s.wayReached || 0);
 
-    // 여정 요약 (봉인 수·道 기반 맞춤)
+    // 여정 요약 (봉인 수·도 기반 맞춤)
     let journeyText = '';
-    if (ways >= 10) journeyText = '道에 ' + ways + '번 닿았다. 검선의 경지를 보았다.';
-    else if (ways >= 5) journeyText = '道에 ' + ways + '번 도달했다. 긴 여정이었다.';
-    else if (ways >= 1) journeyText = '道를 ' + ways + '번 걸었다. 검의 본질을 잠시 보았다.';
+    if (ways >= 10) journeyText = '도에 ' + ways + '번 닿았다. 검선의 경지를 보았다.';
+    else if (ways >= 5) journeyText = '도에 ' + ways + '번 도달했다. 긴 여정이었다.';
+    else if (ways >= 1) journeyText = '도를 ' + ways + '번 걸었다. 검의 본질을 잠시 보았다.';
     else if (sealed.length >= 10) journeyText = sealed.length + '자루의 검이 역사에 남았다.';
     else if (sealed.length >= 3) journeyText = sealed.length + '자루의 검을 팔았다. 여기까지였다.';
     else if (sealed.length >= 1) journeyText = '첫 걸음이었다. 검 한 자루가 기억된다.';
     else journeyText = '아직 시작에 불과하다. 다시 일어서라.';
     $('gameover-journey').textContent = journeyText;
 
-    // 봉인 검 이름 (최근 6자루 — 道 검 강조)
+    // 봉인 검 이름 (최근 6자루 — 도 검 강조)
     const recentSwords = sealed.slice(-6).reverse();
     $('gameover-swords').innerHTML = recentSwords.map(sw => {
       const n = sw.name || makeSwordName(sw);
@@ -16345,7 +16345,7 @@
     // 통계
     $('gameover-stats').innerHTML =
       '<div><span class="label">팔린 검</span>' + sealed.length + '</div>' +
-      '<div><span class="label">道 도달</span>' + ways + '</div>' +
+      '<div><span class="label">도 도달</span>' + ways + '</div>' +
       '<div><span class="label">베어낸 그림자</span>' + (state.totalSlain || 0) + '</div>' +
       '<div><span class="label">검 파괴</span>' + (state.totalDestroyed || 0) + '</div>';
 
@@ -16382,7 +16382,7 @@
     const form = state.currentSword.form || null;
     const isWay = ins.includes('도');
     const autoName = makeSwordName(form, ins, lv);
-    // v24 in-app 명명 의식: +5 이상 또는 道이면 모달, 그 외 자동
+    // v24 in-app 명명 의식: +5 이상 또는 도이면 모달, 그 외 자동
     if (lv >= 5 || isWay) {
       // 미리 보기: 회수 조각, 시구 — v242 단일 진원 (실제 grant와 동일 배수)
       const preReward = sealRewardDisplay(lv, ins, isWay);
@@ -16402,7 +16402,7 @@
     tryBlessing('sealBefore');
     // v242 단일 진원 — 표시 버튼/명명 미리보기와 동일한 결정적 배수 (base 1~7)
     let reward = sealRewardBase(lv, ins, isWay);
-    // v138 雙銘 — 명문 쌍 공명 (天命 ×2 보상 배수 + 滅魔/本道 지속 효과·발견기록)
+    // v138 雙銘 — 명문 쌍 공명 (天命 ×2 보상 배수 + 滅魔/본도 지속 효과·발견기록)
     const resResult = applyResonancesAtSeal(ins, reward);
     reward = resResult.reward;
     // v119 奇緣 — 銀河 활성 시 봉인 보상 ×2
@@ -16417,7 +16417,7 @@
       : null;
     // v89 시련의 혼 — 봉인 직전 잠금 상태 기록
     const trialsBefore = TRIALS.filter(t => trialUnlocked(t.key)).map(t => t.key);
-    // v117 四道 — 봉인 전 4道 상태 추적
+    // v117 四도 — 봉인 전 4도 상태 추적
     const fourWaysBefore = hasFourWays();
     state.sealedSwords.push({
       level: lv, inscriptions: ins, form,
@@ -16486,7 +16486,7 @@
     updateRecord('maxSoul', justSealed.soul || 0);
     updateRecord('maxSwordLife', justSealed.enhanceAttempts || 0);  // v353 — 형제 호출(soul/slainCount)처럼 captured justSealed 사용. 기존 state.currentSword는 newSword() 전이라 우연히 맞았으나 재정렬 시 새 검 0을 기록할 fragility 제거
     updateRecord('maxSlainPerSword', justSealed.slainCount || 0);
-    // v117 四道 — 이 봉인으로 4형 道 모두 달성 시 큰 의식
+    // v117 四도 — 이 봉인으로 4형 도 모두 달성 시 큰 의식
     if (!fourWaysBefore && hasFourWays()) {
       setTimeout(() => {
         announceInscription('사도', '네 길의 검사가 되었다 — 모든 새 검 시작 영혼 +50, 강화 성공 +3%');
@@ -16494,7 +16494,7 @@
         setTimeout(() => burstParticles('#d4af37', 40), 200);
         setTimeout(() => burstParticles('#a0c0d0', 30), 400);
         SFX.ritual();
-        log('🌟 四道 — 네 길을 모두 걸었다', 'success');
+        log('🌟 四도 — 네 길을 모두 걸었다', 'success');
       }, 1200);
       captureRubbing('first4Way', { level: lv, form, inscriptions: ins.slice(), soul: state.currentSword.soul || 0 });  // v136
     }
@@ -16523,14 +16523,14 @@
       if (!state.firstWayReached) {
         state.firstWayReached = true;
         setTimeout(() => announceInscription('시조', '첫 도 달성 — 선조의 길이 열렸다'), 5800);
-        // v150 道至 — 첫 道 도달 거대 의식 (표준 ritual 후)
+        // v150 도至 — 첫 도 도달 거대 의식 (표준 ritual 후)
         setTimeout(() => playFirstWayCeremony(), 6400);
       }
       const ways = (state.stats && state.stats.wayReached) || 0;
       if (ways === 5) setTimeout(() => announceInscription('달인', '도 5번 달성 — 달인의 경지'), 6200);
       if (ways === 10) setTimeout(() => announceInscription('성', '도 10번 달성 — 성인의 경지'), 6600);
       // v84 엔딩은 봉인이 아닌 *최종 강화 +15 도달* 시점에 발동 (enhance 분기에서 처리)
-      // v83 道 도달 시 로그인된 사용자에게 점수 등록 안내
+      // v83 도 도달 시 로그인된 사용자에게 점수 등록 안내
       if (sbClient) {
         sbGetUser().then(user => {
           if (user) {
@@ -16538,7 +16538,7 @@
           }
         }).catch(() => {});
       }
-      // v33 傳授: 道 검 봉인 시 희귀 명문 1개 다음 검에 전수
+      // v33 傳授: 도 검 봉인 시 희귀 명문 1개 다음 검에 전수
       const heritageOrder = ['단마', '귀참', '고', '구'];
       const heritage = heritageOrder.find(k => ins.includes(k));
       if (heritage) {
@@ -16547,7 +16547,7 @@
       } else {
         state.heritageInscription = null;
       }
-      // 道 봉인은 의식 컷씬(5.5초)이 가려줘서 swap 자연스러움
+      // 도 봉인은 의식 컷씬(5.5초)이 가려줘서 swap 자연스러움
       newSword();
       save();
       render();
@@ -16635,12 +16635,12 @@
     const cancelBtn = $('name-cancel');
     const enshrineBtn = $('name-enshrine');
     const enshrineHint = $('name-enshrine-hint');
-    // v118 殿堂 — 道 검 && 진열 cap 미달일 때만 표시
+    // v118 殿堂 — 도 검 && 진열 cap 미달일 때만 표시
     const isWay = ins.includes('도');
     const showEnshrine = isWay && canEnshrineMore();
     if (enshrineBtn) enshrineBtn.style.display = showEnshrine ? 'block' : 'none';
     if (enshrineHint) enshrineHint.style.display = showEnshrine ? 'block' : 'none';
-    // v158 寄言 — 道 검만 textarea 보임
+    // v158 寄言 — 도 검만 textarea 보임
     const kigenInput = $('kigen-input');
     if (kigenInput) {
       kigenInput.style.display = isWay ? 'block' : 'none';
@@ -16674,12 +16674,12 @@
     input.addEventListener('keydown', onKey);
   }
 
-  // === v84 聖 엔딩 — 道 10번 봉인 시 컷씬 ===
+  // === v84 聖 엔딩 — 도 10번 봉인 시 컷씬 ===
   function playEnding() {
     const overlay = $('ending-overlay');
     if (!overlay) return;
-    // 봉인 검 중 道 명문 보유한 것들의 검명 cascade
-    const daoSwords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).includes('도'));  // v352 — 殿堂 道 검도 엔딩 行列에
+    // 봉인 검 중 도 명문 보유한 것들의 검명 cascade
+    const daoSwords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).includes('도'));  // v352 — 殿堂 도 검도 엔딩 行列에
     const cascadeNames = daoSwords.slice(-12).reverse(); // 최근 12개
     const cascade = $('ending-cascade');
     if (cascade) {
@@ -16726,14 +16726,14 @@
     log('🌟 聖에 이르다 — 그대는 도달했다', 'success');
   }
 
-  // === 儀式 — 道 검 봉인 컷씬 (v15부터 一生詩 표시) ===
+  // === 儀式 — 도 검 봉인 컷씬 (v15부터 一生詩 표시) ===
   function playRitual(form, inscriptions, level, reward) {
     const ritualEl = $('ritual-overlay');
     const formEl = $('ritual-form');
     const titleEl = $('ritual-title');
     const verseEl = $('ritual-verse');
     formEl.textContent = makeSwordName(form, inscriptions, level);
-    titleEl.textContent = '+' + level + ' · 道';
+    titleEl.textContent = '+' + level + ' · 도';
     const slainHere = state.currentSword.slainCount || 0;
     const verse = generateVerse(form, inscriptions, level, slainHere, reward, state.currentSword.soul || 0);
     verseEl.innerHTML =
@@ -17006,7 +17006,7 @@
   }
 
   // === 계보 (v33 필터 + v32 클릭 + v59 정렬) ===
-  let legacyFilter = 'all'; // all / 直 / 曲 / 重 / 速 / 道
+  let legacyFilter = 'all'; // all / 直 / 曲 / 重 / 速 / 도
   let legacySort = 'recent'; // recent / level-desc / level-asc / inscriptions
   function renderLegacy() {
     const list = $('legacy-list');
@@ -17131,7 +17131,7 @@
     });
     const active = getActiveSchools();
     const counts = getFormCounts();
-    // v253 序 — 계보 머리글: 道號 + 컬렉션 규모로 검사의 길을 한 줄로 (정체성 종합)
+    // v253 序 — 계보 머리글: 도號 + 컬렉션 규모로 검사의 길을 한 줄로 (정체성 종합)
     const sealedCount = (state.sealedSwords || []).length;
     let summary = '';
     if (sealedCount > 0 && typeof generatePlayerTitle === 'function') {
@@ -17263,7 +17263,7 @@
   // 점수: 처치 수 + 봉인 검 × 100 + 최고 강화 × 10
   function progressScore(s) {
     if (!s || typeof s !== 'object') return -1;
-    // v357 — 殿堂(enshrined) 검도 봉인검과 동등 가치(×100). 누락 시 道 검을 진열한(매각 대신)
+    // v357 — 殿堂(enshrined) 검도 봉인검과 동등 가치(×100). 누락 시 도 검을 진열한(매각 대신)
     // 세이브가 동기화 우열 판정에서 과소평가되어 더 진행된 로컬이 클라우드에 덮여 손실될 수
     // 있었음 (v350 merged-collection류, 단 여기선 진행 손실 직결이라 더 중요).
     return (s.totalSlain || 0)
@@ -17568,7 +17568,7 @@
       myRankBox.innerHTML = '<span style="color:var(--dim);font-size:11px">내 순위</span> ' +
         '<span style="color:var(--accent);font-size:16px">#' + myRank.rank + '</span>' +
         '<span style="color:var(--dim);font-size:11px"> / ' + myRank.total + '명</span>' +
-        (inTop ? '' : '<div style="font-size:10px;color:var(--dim);margin-top:4px">道 ' + (Number(myRank.mine.way_reached) || 0) + ' · 최고 +' + (Number(myRank.mine.best_level) || 0) + ' · 베어냄 ' + (Number(myRank.mine.total_slain) || 0) + '</div>');
+        (inTop ? '' : '<div style="font-size:10px;color:var(--dim);margin-top:4px">도 ' + (Number(myRank.mine.way_reached) || 0) + ' · 최고 +' + (Number(myRank.mine.best_level) || 0) + ' · 베어냄 ' + (Number(myRank.mine.total_slain) || 0) + '</div>');
     } else if (myRankBox) {
       myRankBox.style.display = 'none';
     }
@@ -17576,7 +17576,7 @@
     const myNick = myRank && myRank.mine && myRank.mine.nickname;
     $('lb-list').innerHTML =
       '<div style="display:grid;grid-template-columns:30px 1fr 50px 50px 50px;gap:6px;padding:6px 4px;border-bottom:1px solid var(--line);color:var(--dim);font-size:10px;letter-spacing:2px">' +
-        '<span>#</span><span>검사</span><span style="text-align:right">道</span><span style="text-align:right">최고</span><span style="text-align:right">베어냄</span>' +
+        '<span>#</span><span>검사</span><span style="text-align:right">도</span><span style="text-align:right">최고</span><span style="text-align:right">베어냄</span>' +
       '</div>' +
       r.data.map((row, i) => {
         const nickname = row.nickname || '이름없음';
@@ -18213,7 +18213,7 @@
     const list = $('enshrined-list');
     if (!list) return;
     if (enshrined.length === 0) {
-      list.innerHTML = '<p class="modal-empty">— 진열된 검 없음 —<br><br><span style="font-size:10px;opacity:0.7">道(+15)에 이른 검을 봉인 대신 진열하세요</span></p>';
+      list.innerHTML = '<p class="modal-empty">— 진열된 검 없음 —<br><br><span style="font-size:10px;opacity:0.7">도(+15)에 이른 검을 봉인 대신 진열하세요</span></p>';
       return;
     }
     list.innerHTML = enshrined.map((s, i) => {
@@ -18316,7 +18316,7 @@
       '귀참': '검귀 (드문 그림자) 베어내기',
       '각성': '魂 게이지 ' + SOUL_AWAKEN + ' 도달',
       '본': '魂 게이지 ' + SOUL_TRUE + ' 도달',
-      '시조': '첫 道 도달 — 모든 새 검에 자동',
+      '시조': '첫 도 도달 — 모든 새 검에 자동',
       '달인': '도 5번 도달 — 모든 새 검에 자동',
       '성': '도 10번 도달 — 모든 새 검에 자동',
       '단마': '4종류 그림자(夜/霧/骨/焰) 모두 베어내기',
@@ -18377,7 +18377,7 @@
   function renderAnthology() {
     const list = $('anthology-list');
     // v370e — 殿堂(enshrined) 검의 一生詩·遺言도 포함. 詩集은 모든 검의 시·말의 정전인데
-    // 가장 고운 시를 남길 道 검을 殿堂에 진열하면 詩集에서 사라지던 누락 — v369(whisper가
+    // 가장 고운 시를 남길 도 검을 殿堂에 진열하면 詩集에서 사라지던 누락 — v369(whisper가
     // enshrined verse 합산)과 일관. 풀은 disjoint(enshrine은 이동이라 중복 없음).
     const sealed = (state.sealedSwords || []).concat(state.enshrined || []);
     if (sealed.length === 0) {
@@ -18388,7 +18388,7 @@
     const daoCount = sealed.filter(s => s.verse && Array.isArray(s.verse)).length;
     let html = '<div style="text-align:center;color:var(--dim);font-size:10px;letter-spacing:2px;padding:2px 0 10px">' +
       sealed.length + '자루의 검 · 一生詩 ' + daoCount + ' · 遺言 ' + Math.min(20, sealed.length) + '</div>';
-    // 一生詩 — 道에 이른 검 (최근 순)
+    // 一生詩 — 도에 이른 검 (최근 순)
     const dao = sealed.filter(s => s.verse && Array.isArray(s.verse));
     if (dao.length > 0) {
       html += '<div style="text-align:center;color:var(--accent);letter-spacing:6px;font-size:12px;padding:8px 0 4px;opacity:0.7">一 生 詩</div>';
@@ -18399,7 +18399,7 @@
         return '<div style="padding:18px 8px;border-bottom:1px solid var(--line);text-align:center">' +
           '<div style="color:var(--accent);letter-spacing:6px;font-size:18px;margin-bottom:14px">' + name + '</div>' +
           '<div style="color:var(--fg);font-size:13px;line-height:2.2;letter-spacing:3px;opacity:0.9">' + verseHtml + '</div>' +
-          '<div style="color:var(--dim);font-size:10px;margin-top:10px;letter-spacing:2px">— 道 #' + i + ' —</div>' +
+          '<div style="color:var(--dim);font-size:10px;margin-top:10px;letter-spacing:2px">— 도 #' + i + ' —</div>' +
           '</div>';
       }).join('');
     }
@@ -18436,7 +18436,7 @@
     return personas;
   }
 
-  // === v141 道號 — 사용자 누적 성취 기반 자동 호 생성 ===
+  // === v141 도號 — 사용자 누적 성취 기반 자동 호 생성 ===
   function generatePlayerTitle() {
     const s = state.stats || {};
     const ways = s.wayReached || 0;
@@ -18448,18 +18448,18 @@
     const blessingsFound = state.blessingsDiscovered ? Object.keys(state.blessingsDiscovered).length : 0;
     // 우선순위 — 가장 희귀/높은 성취가 우선
     if (state.ultimateAchieved) return '千秋萬代 — 영원한 검선';
-    if (gen >= 100 && enshrines >= 3 && ways >= 15) return '百代道仙 — 백 대를 잇는 검선';
+    if (gen >= 100 && enshrines >= 3 && ways >= 15) return '百代도仙 — 백 대를 잇는 검선';
     if (gen >= 100) return '百代仙 — 백 대를 잇는 자';
-    if (ways >= 15) return '十五道師 — 열다섯 길의 사범';
+    if (ways >= 15) return '십오도사 — 열다섯 길의 사범';
     if (ways >= 10 && enshrines >= 2) return '殿堂의 검선 — 둘을 영구 진열한 자';
-    if (ways >= 10) return '十道師 — 열 길의 사범';
+    if (ways >= 10) return '십도사 — 열 길의 사범';
     if (foes >= 5) return '五帝를 멸한 자';
     if (blessingsFound >= 6) return '奇緣盡知 — 모든 인연을 본 자';
-    if (fourW) return '四道의 검사';
-    if (ways >= 5) return '五道師 — 다섯 길의 사범';
+    if (fourW) return '四도의 검사';
+    if (ways >= 5) return '오도사 — 다섯 길의 사범';
     if (origins >= 4) return '斷魔者 — 모든 어둠을 베다';
-    if (ways >= 3) return '三道의 검수';
-    if (ways >= 1) return '道를 본 자';
+    if (ways >= 3) return '三도의 검수';
+    if (ways >= 1) return '도를 본 자';
     if (gen >= 25) return '千鍛士 — 천 번 두드린 장인';
     if (gen >= 10) return '百鍊宗 — 백 번 단련하는 자';
     if (s.sealed >= 5) return '검의 길에 든 검사';
@@ -18472,7 +18472,7 @@
   function renderStats() {
     const s = state.stats || {};
     const rate = s.enhanceAttempts > 0 ? Math.round((s.enhanceSuccess / s.enhanceAttempts) * 100) : 0;
-    // v141 道號 — 호 표시
+    // v141 도號 — 호 표시
     const titleEl = $('stats-title');
     if (titleEl) titleEl.textContent = generatePlayerTitle();
     const row = (label, val, color) => '<div style="display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px solid var(--line)"><span style="color:var(--dim);letter-spacing:2px">' + label + '</span><span style="color:' + (color || 'var(--accent)') + ';letter-spacing:3px">' + val + '</span></div>';
@@ -18512,7 +18512,7 @@
 
     // v72 검명 컬렉션 — 4 form × 7 suffix
     const forms = ['직', '곡', '중', '속'];
-    const suffixes = NAME_SUFFIX.map(s => s.word); // 道/魔/本/剛/覺/古/久
+    const suffixes = NAME_SUFFIX.map(s => s.word); // 도/魔/本/剛/覺/古/久
     const collectedNames = new Set();
     (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => {  // v351 — 殿堂 검명도 컬렉션 집계
       // 자동 검명 재계산 (form + 정점 명문)
@@ -18930,9 +18930,9 @@
     } catch (e) { return { data: [], error: e.message }; }
   }
 
-  // v86 닉네임 자동 제안 — 사용자 道 검 중 가장 강한 것
+  // v86 닉네임 자동 제안 — 사용자 도 검 중 가장 강한 것
   function suggestNickname() {
-    // 우선순위 1: 道 검 중 가장 강화도 높은 검명 (v362 — 殿堂 道 검도 포함, 가장 영예로운 검)
+    // 우선순위 1: 도 검 중 가장 강화도 높은 검명 (v362 — 殿堂 도 검도 포함, 가장 영예로운 검)
     const daoSwords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).includes('도'));
     if (daoSwords.length > 0) {
       const best = daoSwords.slice().sort((a, b) => (b.level || 0) - (a.level || 0))[0];
