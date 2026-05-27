@@ -277,9 +277,9 @@ test('recordActivityDate: 120일 초과 시 가장 오래된 항목 정리', () 
     assert.strictEqual(mk('직', [], 0), '직영');
     assert.strictEqual(mk('곡', [], 15), '곡십오');
   });
-  test('makeSwordName: form 없으면 無 접두', () => {
-    assert.strictEqual(mk(null, [], 3), '無삼');
-    assert.strictEqual(mk(undefined, ['본'], 9), '無본');
+  test('makeSwordName: form 없으면 무 접두', () => {
+    assert.strictEqual(mk(null, [], 3), '무삼');
+    assert.strictEqual(mk(undefined, ['본'], 9), '무본');
   });
   test('makeSwordName: 결정적 (같은 입력 같은 검명)', () => {
     assert.strictEqual(mk('중', ['강체'], 12), mk('중', ['강체'], 12));
@@ -936,7 +936,7 @@ test('리더보드 닉네임·손님 검 이름이 escapeHtml로 렌더됨 (XSS 
   // 리더보드 닉네임
   assert.match(js, /escapeHtml\(nickname\)/, '리더보드 닉네임 이스케이프');
   // 손님 검 이름
-  assert.match(js, /escapeHtml\(s\.name \|\| '無名'\)/, '손님 검 이름 이스케이프');
+  assert.match(js, /escapeHtml\(s\.name \|\| '무명'\)/, '손님 검 이름 이스케이프');
 });
 
 test('리더보드 숫자 필드가 Number()로 강제됨 (v276 — 문자열 주입 차단)', () => {

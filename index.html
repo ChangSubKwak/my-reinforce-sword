@@ -6364,12 +6364,12 @@
     galleryIdx = ((i % sealed.length) + sealed.length) % sealed.length;
     const s = sealed[galleryIdx];
     const isWay = (s.inscriptions || []).indexOf('도') >= 0;
-    const formLabel = { '직':'직','곡':'곡','중':'중','속':'속' }[s.form] || '無';
+    const formLabel = { '직':'직','곡':'곡','중':'중','속':'속' }[s.form] || '없음';
     const sealSvg = '<svg viewBox="0 0 100 200" width="100" height="200" xmlns="http://www.w3.org/2000/svg"><g>' + buildSwordBody(s.level || 0, s.form, '') + '</g></svg>';
-    const ins = (s.inscriptions || []).join(' · ') || '無';
+    const ins = (s.inscriptions || []).join(' · ') || '없음';
     const verse = s.verse ? (Array.isArray(s.verse) ? s.verse.join(' / ') : s.verse) : '';
     let html = '<div style="margin-bottom:14px">' + sealSvg + '</div>';
-    html += '<div style="font-size:21px;letter-spacing:5px;color:' + (isWay ? '#fff5c0' : '#e8e6dd') + ';margin-bottom:6px;font-family:\'Noto Serif KR\',serif">' + (s.name || '無名') + '</div>';
+    html += '<div style="font-size:21px;letter-spacing:5px;color:' + (isWay ? '#fff5c0' : '#e8e6dd') + ';margin-bottom:6px;font-family:\'Noto Serif KR\',serif">' + (s.name || '무명') + '</div>';
     html += '<div style="font-size:10px;letter-spacing:5px;color:#888;margin-bottom:14px">+' + (s.level || 0) + ' · ' + formLabel + (isWay ? ' · 도' : '') + '</div>';
     html += '<div style="font-size:11px;letter-spacing:3px;color:var(--accent);margin-bottom:8px;font-family:\'Noto Serif KR\',serif">' + ins + '</div>';
     if (verse) html += '<div style="font-size:11px;letter-spacing:2px;color:rgba(168,184,200,0.75);font-style:italic;line-height:1.7;margin-top:10px;max-width:380px;margin-left:auto;margin-right:auto">' + verse + '</div>';
@@ -6519,7 +6519,7 @@
   function buildUserPoemSVG() {
     const W = 460, H = 600;
     const lines = composeUserPoem();
-    const daoTitle = (state.daoTitle && state.daoTitle.title) || '無名';
+    const daoTitle = (state.daoTitle && state.daoTitle.title) || '무명';
     let svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
     svg += '<defs><radialGradient id="poem-bg" cx="50%" cy="40%"><stop offset="0%" stop-color="#15151c"/><stop offset="100%" stop-color="#08080c"/></radialGradient></defs>';
     svg += '<rect width="' + W + '" height="' + H + '" fill="url(#poem-bg)"/>';
@@ -6556,7 +6556,7 @@
     const blob = new Blob([svg], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const title = ((state.daoTitle && state.daoTitle.title) || '無名').replace(/\s+/g,'');
+    const title = ((state.daoTitle && state.daoTitle.title) || '무명').replace(/\s+/g,'');
     a.href = url;
     a.download = '吾詩_' + title + '_' + new Date().toISOString().slice(0,10) + '.svg';
     document.body.appendChild(a);
@@ -6874,7 +6874,7 @@
     // 봉인 형제
     if (sealed.length >= 1) {
       const bro = sealed[Math.floor(Math.random() * sealed.length)];
-      pool.push('봉인된 형제 「' + (bro.name || '無名') + '」이 꿈에 나타난다');
+      pool.push('봉인된 형제 「' + (bro.name || '무명') + '」이 꿈에 나타난다');
     }
     // 도
     if (lv >= MAX_LEVEL) pool.push('도에 닿은 꿈 — 이미 그곳에 있다');
@@ -7296,7 +7296,7 @@
         html += '<div style="font-size:13px;color:#fff5c0;letter-spacing:4px;text-align:center;margin-bottom:18px">' + wayswords.length + '회 도 도달 — 정점의 검</div>';
         wayswords.slice(0, 6).forEach(s => {
           html += '<div style="margin:8px 0;padding:8px 12px;border-left:2px solid #d4af37;background:rgba(212,175,55,0.06)">';
-          html += '<div style="font-size:13px;color:#fff5c0;letter-spacing:3px">' + (s.name || '無名') + '</div>';
+          html += '<div style="font-size:13px;color:#fff5c0;letter-spacing:3px">' + (s.name || '무명') + '</div>';
           if (s.verse) {
             const v = Array.isArray(s.verse) ? s.verse[0] : s.verse;
             html += '<div style="font-size:10px;color:rgba(168,184,200,0.75);font-style:italic;margin-top:4px;letter-spacing:1px">' + v + '</div>';
@@ -7629,7 +7629,7 @@
       const svg = '<svg viewBox="0 0 100 200" width="28" height="56"><g>' + buildSwordBody(s.level || 0, s.form, '') + '</g></svg>';
       html += '<div id="concert-sword-' + i + '" style="text-align:center;padding:6px 2px;border:1px solid ' + (isWay ? 'rgba(212,175,55,0.3)' : '#2a2a32') + ';border-radius:2px;transition:all 0.3s;background:rgba(15,15,22,0.4)">';
       html += svg;
-      html += '<div style="font-size:8px;color:' + (isWay ? '#fff5c0' : '#888') + ';letter-spacing:1px;margin-top:2px">' + (s.name || '無名').slice(0, 4) + '</div>';
+      html += '<div style="font-size:8px;color:' + (isWay ? '#fff5c0' : '#888') + ';letter-spacing:1px;margin-top:2px">' + (s.name || '무명').slice(0, 4) + '</div>';
       html += '</div>';
     });
     wrap.innerHTML = html;
@@ -7680,7 +7680,7 @@
   // === v227 客劍 — 검 공유 코드 ===
   function encodeSwordCode(s) {
     const compact = {
-      n: s.name || '無名',
+      n: s.name || '무명',
       f: s.form || '',
       l: s.level || 0,
       i: (s.inscriptions || []).slice(0, 12),
@@ -7699,7 +7699,7 @@
       const c = JSON.parse(json);
       if (typeof c.l !== 'number' || !Array.isArray(c.i)) return null;
       return {
-        name: String(c.n || '無名').slice(0, 24),
+        name: String(c.n || '무명').slice(0, 24),
         form: ['직','곡','중','속'].indexOf(c.f) >= 0 ? c.f : '',
         level: Math.max(0, Math.min(15, c.l | 0)),
         inscriptions: c.i.slice(0, 12).map(String),
@@ -7719,7 +7719,7 @@
         sel.innerHTML = '<option value="-1">봉인된 검 없음</option>';
         $('guest-export-code').value = '';
       } else {
-        sel.innerHTML = sealed.map((s, i) => '<option value="' + i + '">' + (s.name || '無名') + ' (+' + (s.level||0) + ')</option>').join('');
+        sel.innerHTML = sealed.map((s, i) => '<option value="' + i + '">' + (s.name || '무명') + ' (+' + (s.level||0) + ')</option>').join('');
         sel.value = '0';
         updateExportCode();
       }
@@ -7769,8 +7769,8 @@
       html += '<div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid rgba(212,175,55,0.1)">';
       html += svg;
       html += '<div style="flex:1">';
-      html += '<div style="font-size:12px;color:' + (isWay ? '#fff5c0' : '#e8e6dd') + ';letter-spacing:3px">' + escapeHtml(s.name || '無名') + '</div>';
-      html += '<div style="font-size:9px;color:#888;letter-spacing:2px;margin-top:2px">+' + (Number(s.level) || 0) + ' · ' + escapeHtml(s.form||'無') + ' · 魂 ' + (Number(s.soul) || 0) + '</div>';
+      html += '<div style="font-size:12px;color:' + (isWay ? '#fff5c0' : '#e8e6dd') + ';letter-spacing:3px">' + escapeHtml(s.name || '무명') + '</div>';
+      html += '<div style="font-size:9px;color:#888;letter-spacing:2px;margin-top:2px">+' + (Number(s.level) || 0) + ' · ' + escapeHtml(s.form||'없음') + ' · 魂 ' + (Number(s.soul) || 0) + '</div>';
       if ((s.inscriptions||[]).length) html += '<div style="font-size:9px;color:var(--accent);letter-spacing:1px;margin-top:2px">' + escapeHtml(s.inscriptions.join(' · ')) + '</div>';
       html += '</div>';
       html += '<button data-guest-del="' + idx + '" style="background:transparent;color:#666;border:none;font-family:inherit;font-size:11px;cursor:pointer;padding:0;letter-spacing:0">×</button>';
@@ -7792,12 +7792,12 @@
     if (!s) return '<div style="text-align:center;padding:40px 0;color:#888;font-style:italic;font-size:10px;letter-spacing:3px">선택 안 됨</div>';
     const ins = (s.inscriptions || []);
     const isWay = ins.indexOf('도') >= 0;
-    const formLabel = ({ '직':'강직','곡':'유연','중':'무거움','속':'빠름' })[s.form] || '無';
+    const formLabel = ({ '직':'강직','곡':'유연','중':'무거움','속':'빠름' })[s.form] || '없음';
     const svg = '<svg viewBox="0 0 100 200" width="60" height="120" xmlns="http://www.w3.org/2000/svg"><g>' + buildSwordBody(s.level || 0, s.form, '') + '</g></svg>';
     let html = '<div style="text-align:center;padding:8px">';
     html += '<div style="margin:0 auto">' + svg + '</div>';
-    html += '<div style="font-size:14px;color:' + (isWay ? '#fff5c0' : '#e8e6dd') + ';letter-spacing:4px;margin:8px 0">' + (s.name || '無名') + '</div>';
-    html += '<div style="font-size:10px;color:#888;letter-spacing:3px">+' + (s.level || 0) + ' · ' + (s.form || '無') + ' (' + formLabel + ')</div>';
+    html += '<div style="font-size:14px;color:' + (isWay ? '#fff5c0' : '#e8e6dd') + ';letter-spacing:4px;margin:8px 0">' + (s.name || '무명') + '</div>';
+    html += '<div style="font-size:10px;color:#888;letter-spacing:3px">+' + (s.level || 0) + ' · ' + (s.form || '없음') + ' (' + formLabel + ')</div>';
     if (s.soul) html += '<div style="font-size:9px;color:#a8c0d8;letter-spacing:3px;margin-top:4px">魂 ' + s.soul + '</div>';
     if (s.slainCount) html += '<div style="font-size:9px;color:#c08858;letter-spacing:3px;margin-top:2px">斬 ' + s.slainCount + '</div>';
     if (s.enhanceAttempts) html += '<div style="font-size:9px;color:#888;letter-spacing:3px;margin-top:2px">강화 ' + s.enhanceAttempts + '회</div>';
@@ -7863,7 +7863,7 @@
       return;
     }
     aSel.disabled = bSel.disabled = false;
-    const opts = sealed.map((s, i) => '<option value="' + i + '">' + (s.name || '無名') + ' (+' + (s.level||0) + (s.form ? ' ' + s.form : '') + ')</option>').join('');
+    const opts = sealed.map((s, i) => '<option value="' + i + '">' + (s.name || '무명') + ' (+' + (s.level||0) + (s.form ? ' ' + s.form : '') + ')</option>').join('');
     aSel.innerHTML = opts;
     bSel.innerHTML = opts;
     aSel.value = '0';
@@ -9423,7 +9423,7 @@
         color: formColor[s.form] || '#a8a098',
         isWay,
         form: s.form,
-        name: s.name || '無名',
+        name: s.name || '무명',
         level: lv,
       };
     });
@@ -9462,7 +9462,7 @@
       }
       // 본체
       svg += '<circle cx="' + s.x.toFixed(1) + '" cy="' + s.y.toFixed(1) + '" r="' + r.toFixed(1) + '" fill="' + (s.isWay ? '#fff5c0' : s.color) + '" data-idx="' + s.i + '" data-name="' + s.name.replace(/"/g, '') + '" data-lv="' + s.level + '" data-form="' + (s.form||'') + '" style="cursor:pointer">' +
-             '<title>' + s.name + ' · +' + s.level + ' · ' + (s.form || '無') + (s.isWay ? ' · 도' : '') + '</title>' +
+             '<title>' + s.name + ' · +' + s.level + ' · ' + (s.form || '없음') + (s.isWay ? ' · 도' : '') + '</title>' +
              '</circle>';
       // 도 별은 깜빡임 애니
       if (s.isWay) {
@@ -9586,7 +9586,7 @@
     const blob = new Blob([svg], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const title = ((state.daoTitle && state.daoTitle.title) || '無名').replace(/\s+/g,'');
+    const title = ((state.daoTitle && state.daoTitle.title) || '무명').replace(/\s+/g,'');
     a.href = url;
     a.download = '劍名片_' + title + '_' + (state.swordGeneration || 1) + '代.svg';
     document.body.appendChild(a);
@@ -10034,7 +10034,7 @@
     const el = document.createElement('div');
     el.innerHTML = '<div style="font-size:9px;color:rgba(168,184,200,0.7);letter-spacing:3px;margin-bottom:4px">回 憶</div>' +
                     '<div style="font-size:11px;color:rgba(212,175,55,0.85);letter-spacing:3px;line-height:1.7">첫 검 <span style="color:#fff5c0">' + firstName + '</span></div>' +
-                    '<div style="font-size:9px;color:rgba(168,184,200,0.6);letter-spacing:2px;margin-top:3px">+' + firstLevel + ' · ' + (first.form || '無') + ' · 그 후 ' + gen + '代</div>';
+                    '<div style="font-size:9px;color:rgba(168,184,200,0.6);letter-spacing:2px;margin-top:3px">+' + firstLevel + ' · ' + (first.form || '없음') + ' · 그 후 ' + gen + '代</div>';
     el.style.cssText = 'position:absolute;top:24%;left:50%;transform:translateX(-50%);pointer-events:none;z-index:30;text-align:center;opacity:0;font-family:"Noto Serif KR", serif;font-style:italic;padding:10px;background:rgba(20,30,45,0.4);border-radius:2px;';
     stage.appendChild(el);
     el.animate([
@@ -10672,7 +10672,7 @@
     const swordLines = [];
     if (state.hasSword && state.currentSword) {
       const cs = state.currentSword;
-      swordLines.push(line('형', cs.form || '無'));
+      swordLines.push(line('형', cs.form || '없음'));
       if (typeof deriveTemperament === 'function') { const tmp = deriveTemperament(cs); if (tmp.key !== 'wa') swordLines.push(line('性情 (기질)', tmp.name)); }
       if (typeof deriveNaturePath === 'function') { const npv = deriveNaturePath(cs); if (npv.name) swordLines.push(line('率性 (천성)', npv.name)); }  // v370f — 현재 검 라이브 천성 따름/거스름
       swordLines.push(line('강화도', '+' + state.level));
@@ -10728,7 +10728,7 @@
         kind: 'name', sword: s,
         kanji: '名', label: '검명',
         title: swordName,
-        body: '+' + (s.level || 0) + '  ·  ' + (s.form || '無'),
+        body: '+' + (s.level || 0) + '  ·  ' + (s.form || '없음'),
       });
       // 메모 (有刻 검)
       if (s.memo) {
@@ -10912,7 +10912,7 @@
       const wins = (state.duelWins && state.duelWins[i]) || 0;
       return '<div class="duel-pick' + (isSelected ? ' selected' : '') + '" data-idx="' + i + '" style="padding:6px;border:1px solid ' + (isSelected ? 'var(--accent)' : 'var(--line)') + ';cursor:pointer;text-align:center;font-size:10px;background:' + (isSelected ? 'rgba(212,175,55,0.08)' : 'transparent') + '">' +
         '<div style="font-size:9px;color:var(--accent);letter-spacing:2px">' + (s.name || '검') + '</div>' +
-        '<div style="font-size:8px;color:var(--dim);margin-top:2px">+' + s.level + ' · ' + (s.form || '無') + '</div>' +
+        '<div style="font-size:8px;color:var(--dim);margin-top:2px">+' + s.level + ' · ' + (s.form || '없음') + '</div>' +
         (ins ? '<div style="font-size:8px;color:var(--dim);margin-top:1px;opacity:0.75">' + ins + '</div>' : '') +
         (wins > 0 ? '<div style="font-size:8px;color:#fff5c0;margin-top:2px">勝 ' + wins + '</div>' : '') +
       '</div>';
@@ -11505,12 +11505,12 @@
     list.innerHTML = sorted.map(r => {
       const date = new Date(r.timestamp);
       const dateStr = date.getFullYear() + '.' + String(date.getMonth() + 1).padStart(2, '0') + '.' + String(date.getDate()).padStart(2, '0');
-      const insStr = (r.inscriptions && r.inscriptions.length) ? r.inscriptions.slice(0, 4).join(' · ') : '無';
+      const insStr = (r.inscriptions && r.inscriptions.length) ? r.inscriptions.slice(0, 4).join(' · ') : '없음';
       return '<div style="display:flex;align-items:center;gap:12px;padding:10px;border:1px solid rgba(212,175,55,0.2);border-radius:2px;margin-bottom:8px;background:rgba(212,175,55,0.03)">' +
         '<svg viewBox="0 0 100 200" width="28" height="56" style="flex-shrink:0"><g>' + buildSwordBody(r.level || 0, r.form, '') + '</g></svg>' +
         '<div style="flex:1">' +
           '<div style="color:var(--accent);letter-spacing:3px;font-size:11px">' + r.reasonLabel + '</div>' +
-          '<div style="color:var(--fg);font-size:10px;margin-top:3px;letter-spacing:2px;opacity:0.85">' + (r.form || '無') + '  ·  +' + r.level + '  ·  魂' + r.soul + (r.generation ? '  ·  ' + r.generation + '代' : '') + '</div>' +
+          '<div style="color:var(--fg);font-size:10px;margin-top:3px;letter-spacing:2px;opacity:0.85">' + (r.form || '없음') + '  ·  +' + r.level + '  ·  魂' + r.soul + (r.generation ? '  ·  ' + r.generation + '代' : '') + '</div>' +
           '<div style="color:var(--dim);font-size:9px;margin-top:3px;letter-spacing:1px">' + insStr + '</div>' +
           '<div style="color:var(--dim);font-size:9px;margin-top:2px;opacity:0.6">' + dateStr + '</div>' +
         '</div>' +
@@ -15635,7 +15635,7 @@
     return att + '번 두드려 +' + level + '에 이르렀다';
   }
   function makeSwordName(form, inscriptions, level) {
-    const prefix = form || '無';
+    const prefix = form || '무';
     for (const def of NAME_SUFFIX) {
       if (inscriptions.includes(def.key)) return prefix + def.word;
     }
@@ -16903,7 +16903,7 @@
 
   function showSwordDetail(s, index) {
     const ins = s.inscriptions || [];
-    const formLabel = ({ '직': '강직', '곡': '유연', '중': '무거움', '속': '빠름' })[s.form] || '無';
+    const formLabel = ({ '직': '강직', '곡': '유연', '중': '무거움', '속': '빠름' })[s.form] || '없음';
     $('detail-name').textContent = s.name || ('검 #' + index);
     // 검 회고 모달 — 수호자 지정 가능 여부 + 현재 상태
     const idx0 = index - 1;
@@ -16959,7 +16959,7 @@
       (deriveJourney(s) ? '<div style="text-align:center;color:#a8c0d8;font-size:10px;letter-spacing:2px;margin:-6px 0 10px;font-style:italic;opacity:0.85">波瀾 — ' + deriveJourney(s) + '</div>' : '') +
       '<div style="text-align:center;color:var(--dim);font-size:11px;margin-bottom:14px;letter-spacing:3px">검 #' + index + '</div>' +
       '<div style="display:flex;justify-content:space-around;padding:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:14px;font-size:11px">' +
-        '<div><span style="color:var(--dim)">형</span> <span style="color:var(--accent);margin-left:6px">' + (s.form || '無') + '</span> <span style="color:var(--dim);font-size:10px">(' + formLabel + ')</span></div>' +
+        '<div><span style="color:var(--dim)">형</span> <span style="color:var(--accent);margin-left:6px">' + (s.form || '없음') + '</span> <span style="color:var(--dim);font-size:10px">(' + formLabel + ')</span></div>' +
         '<div><span style="color:var(--dim)">강화도</span> <span style="color:var(--accent);margin-left:6px">+' + s.level + '</span></div>' +
         '<div style="color:var(--dim);font-size:10px;font-style:italic;letter-spacing:1px;margin:2px 0 4px">' + deriveNameOrigin(s.form, s.inscriptions || [], s.level) + '</div>' +
         (deriveForging(s.enhanceAttempts, s.level) ? '<div style="color:var(--dim);font-size:10px;font-style:italic;letter-spacing:1px;margin:0 0 4px">' + deriveForging(s.enhanceAttempts, s.level) + '</div>' : '') +
@@ -18033,7 +18033,7 @@
         time: r.timestamp,
         kanji: '拓',
         label: r.reasonLabel,
-        sub: (r.form || '無') + ' +' + r.level + (r.inscriptions && r.inscriptions[0] ? ' · ' + r.inscriptions[0] : ''),
+        sub: (r.form || '없음') + ' +' + r.level + (r.inscriptions && r.inscriptions[0] ? ' · ' + r.inscriptions[0] : ''),
         color: '#d4af37',
       });
     });
@@ -18128,7 +18128,7 @@
           time: s.enshrinedAt,
           kanji: '殿',
           label: '殿堂 진열 — ' + (s.name || '검'),
-          sub: (s.form || '無') + ' +' + s.level,
+          sub: (s.form || '없음') + ' +' + s.level,
           color: '#fff5c0',
         });
       }
@@ -18252,7 +18252,7 @@
         '<svg viewBox="0 0 100 200" width="32" height="64" style="flex-shrink:0"><g>' + buildSwordBody(s.level, s.form, s.playerSeal || '') + '</g></svg>' +
         '<div style="flex:1">' +
           '<div style="color:#fff5c0;letter-spacing:5px;font-size:14px;text-shadow:0 0 6px rgba(255,245,192,0.5)">' + (s.name || '검 #' + (i + 1)) + '</div>' +
-          '<div style="color:var(--dim);font-size:10px;margin-top:3px;letter-spacing:2px">' + (s.form || '無') + '  ·  +' + s.level + '  ·  魂' + (s.soul || 0) + '</div>' +
+          '<div style="color:var(--dim);font-size:10px;margin-top:3px;letter-spacing:2px">' + (s.form || '없음') + '  ·  +' + s.level + '  ·  魂' + (s.soul || 0) + '</div>' +
           (insStr ? '<div style="color:var(--accent);font-size:10px;margin-top:3px;letter-spacing:3px;opacity:0.85">' + insStr + '</div>' : '') +
           (date ? '<div style="color:var(--dim);font-size:9px;margin-top:3px;opacity:0.6">' + date + ' 진열</div>' : '') +
         '</div>' +
