@@ -15,13 +15,13 @@ test('encodeSwordCode: CK1 prefix + base64', () => {
 });
 
 test('round-trip: 인코딩 후 디코딩하면 원본 보존', () => {
-  const orig = { name: '曲魔', form: '곡', level: 12, inscriptions: ['귀참', '本'], soul: 67, verse: ['행1', '행2'], beads: 36 };
+  const orig = { name: '曲魔', form: '곡', level: 12, inscriptions: ['귀참', '본'], soul: 67, verse: ['행1', '행2'], beads: 36 };
   const code = codeFns.encodeSwordCode(orig);
   const back = codeFns.decodeSwordCode(code);
   assert.strictEqual(back.name, '曲魔');
   assert.strictEqual(back.form, '곡');
   assert.strictEqual(back.level, 12);
-  assert.deepStrictEqual(back.inscriptions, ['귀참', '本']);
+  assert.deepStrictEqual(back.inscriptions, ['귀참', '본']);
   assert.strictEqual(back.soul, 67);
   assert.strictEqual(back.beads, 36);
   assert.strictEqual(back.isGuest, true);

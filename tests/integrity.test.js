@@ -459,7 +459,7 @@ test('sealRewardBase는 모든 결정적 봉인 배수 포함 (道·school·seas
   const m = js.match(/function sealRewardBase\([^)]*\)\s*\{([\s\S]*?)\n  \}/);
   assert.ok(m, 'sealRewardBase 본문');
   const body = m[1];
-  ['schoolSealMul', 'getSeason', "includes('古')", "includes('久')", "includes('七星')", 'generationSealMul', '1.5']
+  ['schoolSealMul', 'getSeason', "includes('고')", "includes('구')", "includes('칠성')", 'generationSealMul', '1.5']
     .forEach(tok => assert.ok(body.includes(tok), tok + ' 포함되어야 함'));
 });
 

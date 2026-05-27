@@ -53,24 +53,24 @@ test('sealRewardBase: 道 ×1.5 적용', () => {
 
 test('sealRewardBase: 古(×1.10)와 久(×1.05)는 배타적, 古 우선', () => {
   const base = sealBaseFns.sealReward(10);
-  assert.strictEqual(sealBaseFns.sealRewardBase(10, ['古', '久'], false), Math.floor(base * 1.10));
-  assert.strictEqual(sealBaseFns.sealRewardBase(10, ['久'], false), Math.floor(base * 1.05));
+  assert.strictEqual(sealBaseFns.sealRewardBase(10, ['고', '구'], false), Math.floor(base * 1.10));
+  assert.strictEqual(sealBaseFns.sealRewardBase(10, ['구'], false), Math.floor(base * 1.05));
 });
 
 test('sealRewardBase: 七星 ×1.5 중첩', () => {
   const base = sealBaseFns.sealReward(12);
-  assert.strictEqual(sealBaseFns.sealRewardBase(12, ['七星'], false), Math.floor(base * 1.5));
+  assert.strictEqual(sealBaseFns.sealRewardBase(12, ['칠성'], false), Math.floor(base * 1.5));
 });
 
 test('sealRewardBase: opts.steps 방출 — 분해 표시 단일 진원 (v274)', () => {
   // 분해 표시가 별도 하드코딩 없이 sealRewardBase 자체 단계를 쓰도록 보장.
   const steps = [];
-  const r = sealBaseFns.sealRewardBase(15, ['道', '七星'], true, { steps });
+  const r = sealBaseFns.sealRewardBase(15, ['道', '칠성'], true, { steps });
   assert.ok(steps.length >= 3, '단계 ≥3 (기본+道+七星)');
   assert.strictEqual(steps[0].base, sealBaseFns.sealReward(15), 'steps[0]은 기본 sealReward');
   assert.ok(steps.some(s => s.mul === 1.5), '道/七星 ×1.5 단계 존재');
   // steps 없이 호출하면 동일 결과 (방출이 계산을 바꾸지 않음)
-  assert.strictEqual(r, sealBaseFns.sealRewardBase(15, ['道', '七星'], true), 'steps 유무가 결과 불변');
+  assert.strictEqual(r, sealBaseFns.sealRewardBase(15, ['道', '칠성'], true), 'steps 유무가 결과 불변');
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -235,9 +235,9 @@ test('getAgeEffect: 古(×1.10)·久(×1.05)·무명(×1), 古 우선', () => {
   }).getAgeEffect();
   const eq = (a, c, s) => { assert.strictEqual(a.costMul, c); assert.strictEqual(a.sealMul, s); };
   eq(age([]), 1, 1);
-  eq(age(['久']), 1.05, 1.05);
-  eq(age(['古']), 1.10, 1.10);
-  eq(age(['久', '古']), 1.10, 1.10);  // 古 우선
+  eq(age(['구']), 1.05, 1.05);
+  eq(age(['고']), 1.10, 1.10);
+  eq(age(['구', '고']), 1.10, 1.10);  // 古 우선
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -269,8 +269,8 @@ test('recordActivityDate: 120일 초과 시 가장 오래된 항목 정리', () 
   // 형은 한글화(7단계) 완료, 접미 명문/숫자 한자는 후속 단계 — 현재는 혼합 출력이 정상
   test('makeSwordName: 정점 명문 우선순위 (道 > 鬼斬 > 本 > ...)', () => {
     assert.strictEqual(mk('직', ['道'], 15), '직道');
-    assert.strictEqual(mk('곡', ['귀참', '本'], 10), '곡마', '鬼斬이 本보다 우선');
-    assert.strictEqual(mk('속', ['久', '道'], 5), '속道', '道가 久보다 우선(배열 순서)');
+    assert.strictEqual(mk('곡', ['귀참', '본'], 10), '곡마', '鬼斬이 本보다 우선');
+    assert.strictEqual(mk('속', ['구', '道'], 5), '속道', '道가 久보다 우선(배열 순서)');
   });
   test('makeSwordName: 명문 없으면 강화도 한자', () => {
     assert.strictEqual(mk('중', [], 7), '중칠');
@@ -279,10 +279,10 @@ test('recordActivityDate: 120일 초과 시 가장 오래된 항목 정리', () 
   });
   test('makeSwordName: form 없으면 無 접두', () => {
     assert.strictEqual(mk(null, [], 3), '無삼');
-    assert.strictEqual(mk(undefined, ['本'], 9), '無本');
+    assert.strictEqual(mk(undefined, ['본'], 9), '無본');
   });
   test('makeSwordName: 결정적 (같은 입력 같은 검명)', () => {
-    assert.strictEqual(mk('중', ['剛體'], 12), mk('중', ['剛體'], 12));
+    assert.strictEqual(mk('중', ['강체'], 12), mk('중', ['강체'], 12));
   });
 })();
 
@@ -424,7 +424,7 @@ test('successChanceNow: [0,1] 클램프', () => {
       START_BONUS_CAP: 6, START_BONUS_DIVISOR: 25, trialStartLevelBonus: () => 0, MAX_LEVEL: 15,
     }).fusionPreview();
   }
-  const A = { level: 5, form: '직', soul: 10, inscriptions: ['本'] };
+  const A = { level: 5, form: '직', soul: 10, inscriptions: ['본'] };
   const B = { level: 10, form: '곡', soul: 15, inscriptions: ['道'] };
 
   test('fusionPreview: 강한 검(높은 강화도)의 형 계승', () => {
@@ -694,8 +694,8 @@ test('generateVerse: 4행 반환 + 형/닫음 행', () => {
   assert.strictEqual(v[3], '+15 의 길로 마무리되다', '닫음 행');
 });
 test('generateVerse: 명문 행 우선순위 (鬼斬+本 > 本 > 무명)', () => {
-  assert.strictEqual(verse('곡', ['귀참', '本'], 12, 3)[1], '본질을 깨우고 검귀의 피를 받아');
-  assert.strictEqual(verse('곡', ['本'], 12, 3)[1], '본질에 이르러');
+  assert.strictEqual(verse('곡', ['귀참', '본'], 12, 3)[1], '본질을 깨우고 검귀의 피를 받아');
+  assert.strictEqual(verse('곡', ['본'], 12, 3)[1], '본질에 이르러');
   assert.strictEqual(verse('곡', [], 12, 3)[1], '조용히 단련되어', '무명');
 });
 test('generateVerse: 名(명명된 적) 격파 행 — 龍斬은 鬼斬보다 우선 (v370i)', () => {
@@ -763,13 +763,13 @@ test('generatePlayerTitle: 무성취도 항상 칭호 반환 (빈 문자열 아�
   const detect = loadFunctions(['detectResonances'], { PAIRED_RESONANCES }).detectResonances;
   const keys = ins => detect(ins).map(r => r.key);
   test('detectResonances: 쌍이 모두 있을 때만 공명', () => {
-    assert.deepStrictEqual(keys(['道', '七星']), ['tianming'], '天命 쌍');
+    assert.deepStrictEqual(keys(['道', '칠성']), ['tianming'], '天命 쌍');
     assert.deepStrictEqual(keys(['귀참', '단마']), ['metsumao'], '滅魔 쌍');
     assert.deepStrictEqual(keys(['道']), [], '쌍 미완성 → 공명 없음');
     assert.deepStrictEqual(keys([]), [], '명문 없음');
   });
   test('detectResonances: 여러 쌍 동시 감지', () => {
-    const k = keys(['道', '七星', '귀참', '단마']);
+    const k = keys(['道', '칠성', '귀참', '단마']);
     assert.ok(k.includes('tianming') && k.includes('metsumao'), '두 공명 모두');
   });
   test('detectResonances: onSeal 보상 배수 순수성 (天命 ×2)', () => {
@@ -834,7 +834,7 @@ test('swordSignatureFreqs: 3음 반환', () => {
 });
 
 test('swordSignatureFreqs: 결정적 — 같은 검 같은 소리', () => {
-  const s = { level: 10, form: '곡', inscriptions: ['道', '本'], soul: 67 };
+  const s = { level: 10, form: '곡', inscriptions: ['道', '본'], soul: 67 };
   const a = sigFns.swordSignatureFreqs(s);
   const b = sigFns.swordSignatureFreqs(s);
   assert.deepStrictEqual(a, b);
@@ -848,7 +848,7 @@ test('swordSignatureFreqs: 다른 검은 다른 소리 (대체로)', () => {
 
 test('swordSignatureFreqs: 모든 음이 펜타토닉 스케일 내', () => {
   for (let lv = 0; lv <= 15; lv++) {
-    const f = sigFns.swordSignatureFreqs({ level: lv, form: '중', inscriptions: ['久'], soul: lv * 6 });
+    const f = sigFns.swordSignatureFreqs({ level: lv, form: '중', inscriptions: ['구'], soul: lv * 6 });
     f.forEach(freq => assert.ok(SIGNATURE_SCALE.includes(freq), `freq ${freq} 스케일 내`));
   }
 });
@@ -1107,8 +1107,8 @@ test('deriveNameOrigin: 이름의 유래 서사 (makeSwordName 우선순위 거�
   const NS = extractConst('NAME_SUFFIX');
   const f = (ins, lv) => loadFunctions(['deriveNameOrigin'], { NAME_SUFFIX: NS }).deriveNameOrigin('직', ins, lv);
   assert.match(f(['道'], 15), /도에 이르러 道의 이름을 얻었다/);
-  assert.match(f(['귀참', '本'], 12), /마의 이름을 얻었다/, '鬼斬이 本보다 우선');
-  assert.match(f(['本'], 10), /본질을 깨달아 本의 이름을 얻었다/);
+  assert.match(f(['귀참', '본'], 12), /마의 이름을 얻었다/, '鬼斬이 本보다 우선');
+  assert.match(f(['본'], 10), /본질을 깨달아 본의 이름을 얻었다/);
   assert.match(f([], 7), /강화 \+7의 자취로 이름을 얻었다/, '명문 없으면 강화도');
 });
 
@@ -1143,7 +1143,7 @@ test('HIDDEN_ACHIEVEMENTS 慎重/無欲 + protectsUsed 보존 (v315)', () => {
 
 test('encodeSwordCode→decodeSwordCode 라운드트립 — 공유 코드 무결성', () => {
   const { encodeSwordCode, decodeSwordCode } = loadFunctions(['encodeSwordCode', 'decodeSwordCode']);
-  const sword = { name: '直道劍', form: '직', level: 12, inscriptions: ['道', '本'], soul: 67, verse: ['첫 행', '둘째 행'], beads: 40 };
+  const sword = { name: '直道劍', form: '직', level: 12, inscriptions: ['道', '본'], soul: 67, verse: ['첫 행', '둘째 행'], beads: 40 };
   const code = encodeSwordCode(sword);
   assert.match(code, /^CK1/, 'CK1 접두사');
   const r = decodeSwordCode(code);
@@ -1151,7 +1151,7 @@ test('encodeSwordCode→decodeSwordCode 라운드트립 — 공유 코드 무결
   assert.strictEqual(r.name, '直道劍');
   assert.strictEqual(r.form, '직');
   assert.strictEqual(r.level, 12);
-  assert.strictEqual(JSON.stringify(r.inscriptions), JSON.stringify(['道', '本']), '명문 라운드트립');
+  assert.strictEqual(JSON.stringify(r.inscriptions), JSON.stringify(['道', '본']), '명문 라운드트립');
   assert.strictEqual(r.soul, 67);
   assert.strictEqual(JSON.stringify(r.verse), JSON.stringify(['첫 행', '둘째 행']), '시구 join/split 라운드트립');
   assert.strictEqual(r.beads, 40, 'beads 라운드트립');
@@ -1562,11 +1562,11 @@ test('v371e generateBiography: 융합검은 血統(부모 검명) 줄이 나타�
 // v371f 久/古 — 오래 산 검의 遺言이 longevity를 반영하는지 (道/龍斬 > 古 > 久 > 性情, 효과 0)
 test('v371f generateLastWords: 古/久 노쇠 검의 작별 + 우선순위', () => {
   const fns = loadFunctions(['generateLastWords', 'deriveTemperament']);
-  assert.match(fns.generateLastWords({ inscriptions: ['古'], level: 5 }), /오랜 세월을 보았다/, '古 작별');
-  assert.match(fns.generateLastWords({ inscriptions: ['久'], level: 5 }), /긴 생이었다/, '久 작별');
+  assert.match(fns.generateLastWords({ inscriptions: ['고'], level: 5 }), /오랜 세월을 보았다/, '古 작별');
+  assert.match(fns.generateLastWords({ inscriptions: ['구'], level: 5 }), /긴 생이었다/, '久 작별');
   // 정점(道/龍斬)이 노쇠보다 우선
-  assert.match(fns.generateLastWords({ inscriptions: ['道', '古'], level: 5 }), /도를 보았다/, '道가 古보다 우선');
-  assert.match(fns.generateLastWords({ inscriptions: ['용참', '古'], level: 5 }), /용을 베었으니/, '龍斬이 古보다 우선');
+  assert.match(fns.generateLastWords({ inscriptions: ['道', '고'], level: 5 }), /도를 보았다/, '道가 古보다 우선');
+  assert.match(fns.generateLastWords({ inscriptions: ['용참', '고'], level: 5 }), /용을 베었으니/, '龍斬이 古보다 우선');
   // 노쇠 없으면 기존 性情 경로 (구 검 하위호환)
   assert.ok(fns.generateLastWords({ inscriptions: [], level: 5 }).length > 0, '노쇠 없는 검도 작별 존재');
 });

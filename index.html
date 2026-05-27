@@ -4018,7 +4018,7 @@
 
 <!-- v84 聖 엔딩 -->
 <div id="ending-overlay">
-  <div id="ending-kanji" class="ending-phase">聖</div>
+  <div id="ending-kanji" class="ending-phase">성</div>
   <div id="ending-cascade"></div>
   <div id="ending-stats"></div>
   <div id="ending-verse">검의 길에 끝은 없으나<br>그대는 이미 도달했다</div>
@@ -4408,7 +4408,8 @@
         (Array.isArray(state.sealedSwords) ? state.sealedSwords : []).forEach(fixForm);
         (Array.isArray(state.enshrined) ? state.enshrined : []).forEach(fixForm); }
       // 한글화 10단계 — 명문 키(명명된 적 격파·斷魔) 한자→음역 마이그레이션 (inscriptions 배열 무손실)
-      { const IM = { '鬼斬':'귀참','龍斬':'용참','帝斬':'제참','刃斬':'인참','月斬':'월참','風斬':'풍참','夜叉斬':'야차참','斷魔':'단마' };
+      { const IM = { '鬼斬':'귀참','龍斬':'용참','帝斬':'제참','刃斬':'인참','月斬':'월참','風斬':'풍참','夜叉斬':'야차참','斷魔':'단마',
+          '覺':'각성','刻':'각인','本':'본','剛體':'강체','百鍊':'백련','回魔':'회마','初刃':'초인','始祖':'시조','達人':'달인','聖':'성','久':'구','古':'고','讀劍':'독검','傷':'상','七星':'칠성','仙':'선','連一閃':'연일섬','精進':'정진' };
         const mapIns = a => Array.isArray(a) ? a.map(k => IM[k] || k) : a;
         if (state.currentSword) state.currentSword.inscriptions = mapIns(state.currentSword.inscriptions);
         (Array.isArray(state.sealedSwords) ? state.sealedSwords : []).forEach(s => { if (s) s.inscriptions = mapIns(s.inscriptions); });
@@ -4498,8 +4499,8 @@
   function getAgeEffect() {
     if (!state.hasSword || !state.currentSword.inscriptions) return { costMul: 1, sealMul: 1 };
     const ins = state.currentSword.inscriptions;
-    if (ins.includes('古')) return { costMul: 1.10, sealMul: 1.10 };
-    if (ins.includes('久')) return { costMul: 1.05, sealMul: 1.05 };
+    if (ins.includes('고')) return { costMul: 1.10, sealMul: 1.10 };
+    if (ins.includes('구')) return { costMul: 1.05, sealMul: 1.05 };
     return { costMul: 1, sealMul: 1 };
   }
   function renderWayCounter() {
@@ -4723,7 +4724,7 @@
         '사용할수록 깊어진다.',
         '평범에서 깨움으로, 깨움에서 본질로.',
       ],
-      unlock: () => (state.sealedSwords || []).concat(state.enshrined || []).some(s => (s.inscriptions || []).includes('本')),  // v352 — 殿堂 검도
+      unlock: () => (state.sealedSwords || []).concat(state.enshrined || []).some(s => (s.inscriptions || []).includes('본')),  // v352 — 殿堂 검도
     },
     {
       key: 'dou', kanji: '道', title: '도',
@@ -4744,7 +4745,7 @@
       unlock: () => state.blessingsDiscovered && Object.keys(state.blessingsDiscovered).length >= 1,
     },
     {
-      key: 'sen', kanji: '仙', title: '신선',
+      key: 'sen', kanji: '선', title: '신선',
       lines: [
         '백 대를 잇는 자는 검사가 아니다.',
         '검과 사람의 경계가 흐려진다.',
@@ -4851,7 +4852,7 @@
     { key: 'g10',  threshold: 10,  name: '百鍊宗', label: '백 번 단련하는 종가', successBonus: 0.01 },
     { key: 'g25',  threshold: 25,  name: '千鍛士', label: '천 번 두드린 장인',  sealMul: 1.05 },
     { key: 'g50',  threshold: 50,  name: '萬代將', label: '만 대를 잇는 장수',  successBonus: 0.01 },
-    { key: 'g100', threshold: 100, name: '百代仙', label: '백 대의 신선',       slayMul: 1.10, autoInscription: '仙' },
+    { key: 'g100', threshold: 100, name: '百代仙', label: '백 대의 신선',       slayMul: 1.10, autoInscription: '선' },
   ];
   function getGenerationMilestones() {
     return GENERATIONS.filter(g => (state.swordGeneration || 0) >= g.threshold);
@@ -7796,8 +7797,8 @@
     if (ins.indexOf('용참') >= 0) return '용을 벤 검';  // v370l 名 정점 무훈 — 비교에서도 고유 정체성
     if (ins.indexOf('귀참') >= 0 || slain >= 10) return '전투의 검';
     if (ins.indexOf('야차참') >= 0) return '밤의 검';
-    if (ins.indexOf('精進') >= 0 || enhanceN >= 50) return '수행의 검';
-    if (ins.indexOf('始祖') >= 0) return '선조의 검';
+    if (ins.indexOf('정진') >= 0 || enhanceN >= 50) return '수행의 검';
+    if (ins.indexOf('시조') >= 0) return '선조의 검';
     if ((s.soul || 0) >= 67) return '본질의 검';
     if ((s.soul || 0) >= 34) return '깨어난 검';
     if (slain === 0) return '평화의 검';
@@ -8241,11 +8242,11 @@
       reward: () => { if (state.hasSword) addSoul(5); return '영혼 +5'; } },
     { min: 120, kanji:'住', label:'한 자리에 2시간 머무름',
       reward: () => { state.spiritstones = (state.spiritstones || 0) + 1; return '靈 +1'; } },
-    { min: 180, kanji:'精進', label:'정진 — 3시간',
+    { min: 180, kanji:'정진', label:'정진 — 3시간',
       reward: () => {
         if (state.hasSword && state.currentSword) {
           if (!state.currentSword.inscriptions) state.currentSword.inscriptions = [];
-          if (state.currentSword.inscriptions.indexOf('精進') < 0) state.currentSword.inscriptions.push('精進');
+          if (state.currentSword.inscriptions.indexOf('정진') < 0) state.currentSword.inscriptions.push('정진');
         }
         return '精進 명문 (현재 검)';
       } },
@@ -8696,7 +8697,7 @@
 
   // === v201 配 — 4 시각 테마 (古/月/晨/雪) ===
   const VISUAL_THEMES = [
-    { key:'',         name:'古', label:'고풍 — 황금 다크', bg:'#1f1a14', accent:'#e8c454' },
+    { key:'',         name:'고', label:'고풍 — 황금 다크', bg:'#1f1a14', accent:'#e8c454' },
     { key:'tsuki',    name:'月', label:'달빛 — 푸른 밤',   bg:'#0a0e1a', accent:'#c8d8e8' },
     { key:'akatsuki', name:'晨', label:'새벽 — 따뜻한 빛', bg:'#1c100a', accent:'#f8c890' },
     { key:'yuki',     name:'雪', label:'눈 — 은빛 차분',   bg:'#0d0e12', accent:'#d8e0e8' },
@@ -9474,12 +9475,12 @@
     // 메타 인장 결정
     let seal = '初';
     if (state.ultimateAchieved) seal = '極';
-    else if (wayCount >= 10) seal = '聖';
+    else if (wayCount >= 10) seal = '성';
     else if (wayCount >= 5) seal = '達';
     else if (wayCount >= 1) seal = '祖';
     else if (sealed >= 10) seal = '修';
     else if (sealed >= 3) seal = '行';
-    const sealColor = (seal === '極') ? '#fff5c0' : (seal === '聖' ? '#fff8d8' : (seal === '達' ? '#d4af37' : '#a8a098'));
+    const sealColor = (seal === '極') ? '#fff5c0' : (seal === '성' ? '#fff8d8' : (seal === '達' ? '#d4af37' : '#a8a098'));
     // 名片 SVG
     const formBar = (label, n, color, x, y) => {
       const max = Math.max(...Object.values(formCounts), 5);
@@ -10654,7 +10655,7 @@
       swordLines.push(line('영혼', (cs.soul || 0) + ' / 100'));
       if (cs.scars) swordLines.push(line('흉터', cs.scars + ' / 3'));
       const stars = cs.stars ? Object.keys(cs.stars).length : 0;
-      if (stars > 0) swordLines.push(line('七星', stars + ' / 7'));
+      if (stars > 0) swordLines.push(line('칠성', stars + ' / 7'));
       if (cs.inscriptions && cs.inscriptions.length) swordLines.push(line('명문', cs.inscriptions.length + ' 종'));
       if (typeof currentMood !== 'undefined') swordLines.push(line('기분 (氣)', currentMood === 'joy' ? '喜' : currentMood === 'rage' ? '怒' : '静'));
       if (typeof successStreak !== 'undefined' && successStreak > 0) swordLines.push(line('강화 連', successStreak + '회'));
@@ -10704,7 +10705,7 @@
       if (s.memo) {
         pages.push({
           kind: 'memo', sword: s,
-          kanji: '刻', label: '한 마디',
+          kanji: '각인', label: '한 마디',
           title: swordName,
           body: s.memo,
         });
@@ -10863,9 +10864,9 @@
     if (ins.includes('道')) p += 30;
     if (ins.includes('귀참')) p += 15;
     if (ins.includes('단마')) p += 12;
-    if (ins.includes('本')) p += 10;
-    if (ins.includes('七星')) p += 25;
-    if (ins.includes('仙')) p += 20;
+    if (ins.includes('본')) p += 10;
+    if (ins.includes('칠성')) p += 25;
+    if (ins.includes('선')) p += 20;
     return p;
   }
   function renderDuelList() {
@@ -11374,7 +11375,7 @@
   // === v138 雙銘 — 명문 쌍 공명 (paired inscription resonance) ===
   const PAIRED_RESONANCES = [
     {
-      key: 'tianming', pair: ['道', '七星'], name: '天命', label: '하늘의 명',
+      key: 'tianming', pair: ['道', '칠성'], name: '天命', label: '하늘의 명',
       desc: '도와 별이 한 검에 — 봉인 보상 ×2',
       onSeal: (state, reward) => Math.floor(reward * 2),
     },
@@ -11384,7 +11385,7 @@
       onSealPersistent: (state) => { state.metsumaoCharges = 5; },
     },
     {
-      key: 'hondo', pair: ['本', '道'], name: '本道', label: '본질과 도가 하나',
+      key: 'hondo', pair: ['본', '道'], name: '本道', label: '본질과 도가 하나',
       desc: '본과 도의 만남 — 다음 3 새 검 시작 영혼 +20',
       onSealPersistent: (state) => { state.hondoCharges = 3; },
     },
@@ -11489,7 +11490,7 @@
   }
 
   // === v135 鍛 — 티어 전환 의식 + 高險 성공 의식 ===
-  const TIER_NAMES = ['', '初', '練', '剛', '靈', '聖'];  // tier 1~5
+  const TIER_NAMES = ['', '初', '練', '剛', '靈', '성'];  // tier 1~5
   const TIER_LABELS = ['', '단검 — 첫 단련', '사벨 — 정련된 강철', '양손검 — 영혼이 깃들다', '마법사검 — 신묘한 검', '신검 — 도의 영역'];
   function playTierTransition(tier) {
     if (tier < 2 || tier > 5) return;
@@ -11607,11 +11608,11 @@
     { key: '始', label: '시작',     hint: '+5 도달',           trigger: () => state.hasSword && state.level >= 5 },
     { key: '戰', label: '전투',     hint: '그림자 3 베어내기', trigger: () => state.hasSword && (state.currentSword.slainCount || 0) >= 3 },
     { key: '護', label: '수호',     hint: '방지권 3회 사용',   trigger: () => state.hasSword && (state.currentSword.protectsUsed || 0) >= 3 },
-    { key: '刻', label: '시련',     hint: '흉터 1개 새김',     trigger: () => state.hasSword && (state.currentSword.scars || 0) >= 1 },
+    { key: '각인', label: '시련',     hint: '흉터 1개 새김',     trigger: () => state.hasSword && (state.currentSword.scars || 0) >= 1 },
     { key: '心', label: '본질',     hint: '영혼 67(本) 도달',  trigger: () => state.hasSword && (state.currentSword.soul || 0) >= 67 },
     { key: '銘', label: '기록',     hint: '명문 3개 새김 (메타 제외)', trigger: () => {
       if (!state.hasSword) return false;
-      const meta = new Set(['始祖','達人','聖','七星','逆轉','先代','仙']);
+      const meta = new Set(['시조','달인','성','칠성','逆轉','先代','선']);
       const real = (state.currentSword.inscriptions || []).filter(k => !meta.has(k));
       return real.length >= 3;
     }},
@@ -11628,10 +11629,10 @@
     }
     // 7별 모두 채워졌는지 검사 → 七星 명문
     const allLit = STARS.every(s => state.currentSword.stars[s.key]);
-    if (allLit && !state.currentSword.inscriptions.includes('七星')) {
-      state.currentSword.inscriptions.push('七星');
+    if (allLit && !state.currentSword.inscriptions.includes('칠성')) {
+      state.currentSword.inscriptions.push('칠성');
       setTimeout(() => {
-        announceInscription('七星', '북두칠성이 검에 깃들었다 — 봉인 보상 ×1.5');
+        announceInscription('칠성', '북두칠성이 검에 깃들었다 — 봉인 보상 ×1.5');
         // 七星 도달 의식 — 큰 빛 파티클
         burstParticles('#fff5c0', 60);
         setTimeout(() => burstParticles('#d4af37', 30), 200);
@@ -11846,7 +11847,7 @@
   // === v112 祖靈 — 봉인/탄생 시 조상 명문 영혼 이펙트 ===
   function spawnAncestorGatherKanji() {
     // 선대 봉인 검들의 핵심 명문 1~2개씩 수집 — 최신 3자루만
-    const skip = new Set(['始祖', '達人', '聖', '百鍊', '初刃']);
+    const skip = new Set(['시조', '달인', '성', '백련', '초인']);
     const pool = [];
     const recent = state.sealedSwords.slice(-3);
     recent.forEach(s => {
@@ -11879,7 +11880,7 @@
     });
   }
   function spawnSealedSpiritKanji(ins, form) {
-    const skip = new Set(['始祖', '達人', '聖']);
+    const skip = new Set(['시조', '달인', '성']);
     const interesting = (ins || []).filter(k => !skip.has(k));
     if (interesting.length === 0) return;
     const rect = swordWrap.getBoundingClientRect();
@@ -13845,9 +13846,9 @@
       }
       if (slayStreak === 10) {
         // 連一閃 명문 + 카운터 리셋
-        if (!state.currentSword.inscriptions.includes('連一閃')) {
-          state.currentSword.inscriptions.push('連一閃');
-          setTimeout(() => announceInscription('連一閃', '열 번의 一閃이 검에 새겨졌다'), 500);
+        if (!state.currentSword.inscriptions.includes('연일섬')) {
+          state.currentSword.inscriptions.push('연일섬');
+          setTimeout(() => announceInscription('연일섬', '열 번의 一閃이 검에 새겨졌다'), 500);
         }
         clearSlayStreak();
       } else {
@@ -14077,8 +14078,8 @@
     const after = Math.min(SOUL_MAX, before + amount);
     state.currentSword.soul = after;
     // 단계 진입 시 명문 자동 부여
-    if (before < SOUL_AWAKEN && after >= SOUL_AWAKEN) { grantInscription('覺'); setTimeout(() => joyAt('soul-bar', '#a8c0e8'), 300); }
-    if (before < SOUL_TRUE && after >= SOUL_TRUE) { grantInscription('本'); setTimeout(() => joyAt('soul-bar', '#c8a0e8'), 300); }
+    if (before < SOUL_AWAKEN && after >= SOUL_AWAKEN) { grantInscription('각성'); setTimeout(() => joyAt('soul-bar', '#a8c0e8'), 300); }
+    if (before < SOUL_TRUE && after >= SOUL_TRUE) { grantInscription('본'); setTimeout(() => joyAt('soul-bar', '#c8a0e8'), 300); }
     checkDestiny();  // v93 혼 기반 천명
     checkStars();  // v116 七星 — 心 별 (本 도달)
   }
@@ -14098,7 +14099,7 @@
       check: () => (state.currentSword.inscriptions || []).includes('귀참') },
     { key: 'enhance30', label: '百鍊의 천명', desc: '이 검으로 서른 번 강화하라',     reward: { whetstones: 3 },     rewardLabel: '숫돌 +3',
       check: () => (state.currentSword.enhanceAttempts || 0) >= 30 },
-    { key: 'soul67',    label: '本心의 천명', desc: '이 검의 혼을 67까지 깨워라',     reward: { shards: 120 },       rewardLabel: '조각 +120',
+    { key: 'soul67',    label: '본심의 천명', desc: '이 검의 혼을 67까지 깨워라',     reward: { shards: 120 },       rewardLabel: '조각 +120',
       check: () => (state.currentSword.soul || 0) >= 67 },
     { key: 'foe',       label: '宿敵의 천명', desc: '이 검으로 이름 있는 적을 베어내라', reward: { spiritstones: 1, shards: 80 }, rewardLabel: '靈石 +1 · 조각 +80',
       check: () => (state.currentSword.inscriptions || []).some(k => ['풍참','월참','인참','제참','용참'].indexOf(k) >= 0) },
@@ -14325,15 +14326,15 @@
     const honestEl = $('mark-honest');
     if (wayEl) wayEl.setAttribute('opacity', ins.includes('道') ? '0.85' : '0');
     if (demonEl) demonEl.setAttribute('opacity', ins.includes('귀참') ? '0.9' : '0');
-    if (honestEl) honestEl.setAttribute('opacity', ins.includes('本') ? '0.7' : '0');
+    if (honestEl) honestEl.setAttribute('opacity', ins.includes('본') ? '0.7' : '0');
     // v69 정점 명문 한자를 칼날 중앙에 직접 새김 (우선순위)
     const kanjiEl = $('mark-kanji');
     if (kanjiEl) {
       let kanji = '', color = '#fff5c0';
       if (ins.includes('道')) { kanji = '道'; color = '#fff5c0'; }
       else if (ins.includes('귀참')) { kanji = '鬼'; color = '#ff8060'; }
-      else if (ins.includes('本')) { kanji = '本'; color = '#a0c0d0'; }
-      else if (ins.includes('聖')) { kanji = '聖'; color = '#fff5c0'; }
+      else if (ins.includes('본')) { kanji = '본'; color = '#a0c0d0'; }
+      else if (ins.includes('성')) { kanji = '성'; color = '#fff5c0'; }
       else if (ins.includes('단마')) { kanji = '斷'; color = '#fff5c0'; }
       kanjiEl.textContent = kanji;
       kanjiEl.setAttribute('fill', color);
@@ -14341,7 +14342,7 @@
     }
     // 本 또는 道 명문 보유 시 검 전체에 호흡 발산
     if (swordWrap) {
-      const isTranscendent = ins.includes('本') || ins.includes('道');
+      const isTranscendent = ins.includes('본') || ins.includes('道');
       swordWrap.classList.toggle('transcendent', isTranscendent);
     }
     // v111 刻痕 — 흉터 마크 표시 (scars 수에 따라 1~3개)
@@ -15066,8 +15067,8 @@
     if (ins.includes('용참')) return '용을 베었으니, 여한이 없다.';  // v370j 名 정점 무훈 — 검의 1인칭 회한
     // v371f 久/古(노쇠, v18) — 오래 산 검의 작별은 그 긴 생을 비춘다. 遺言이 무시하던 정체성 결합.
     // 정점(道/龍斬) 아래, 性情 위 우선순위(검명 NAME_SUFFIX와 동일하게 久/古는 낮으나 존재). 효과 0.
-    if (ins.includes('古')) return '오랜 세월을 보았다. 이제 쉬어도 좋으리.';
-    if (ins.includes('久')) return '긴 생이었다. 천천히 칼을 거둔다.';
+    if (ins.includes('고')) return '오랜 세월을 보았다. 이제 쉬어도 좋으리.';
+    if (ins.includes('구')) return '긴 생이었다. 천천히 칼을 거둔다.';
     const byTemp = {
       gang: ['더 벨 그림자가 남았으나, 이제 칼을 거둔다.', '나아감을 멈추지 않았다 — 그것이 나의 길이었다.'],
       jeong: ['부서지지 않았으니, 그것으로 충분하다.', '지켜냈다. 흉터는 자랑이 아니라 증거다.'],
@@ -15161,11 +15162,11 @@
     else if (foeKill) notes.push(FOE_NARR[foeKill]);  // 그 외 명명된 적 (帝/刃/月/風)
     else if (slain >= 5) notes.push(slain + '의 그림자를 베어냈고');
     else if (slain >= 1) notes.push('그림자 ' + slain + '을 베어냈고');
-    if (ins.includes('本')) notes.push('본질을 깨우쳤다');
-    else if (ins.includes('覺')) notes.push('영혼이 깨어났다');
+    if (ins.includes('본')) notes.push('본질을 깨우쳤다');
+    else if (ins.includes('각성')) notes.push('영혼이 깨어났다');
     else if (scars >= 3) notes.push('세 번의 흉터를 안았다');
     else if (scars >= 1) notes.push(scars + '개의 흉터를 받아들였다');
-    else if (ins.includes('七星')) notes.push('일곱 별이 한 검에 모였다');
+    else if (ins.includes('칠성')) notes.push('일곱 별이 한 검에 모였다');
     else if (soul >= 67) notes.push('깊은 영혼을 품었다');
     if (notes.length === 0) {
       notable = '검은 평범한 한 생을 살았다.';
@@ -15216,7 +15217,7 @@
     let insLine;
     if (inscriptions.includes('용참')) {
       insLine = FOE_VERSE['용참'];  // 정점 무훈 — 鬼斬보다 위
-    } else if (inscriptions.includes('귀참') && inscriptions.includes('本')) {
+    } else if (inscriptions.includes('귀참') && inscriptions.includes('본')) {
       insLine = '본질을 깨우고 검귀의 피를 받아';
     } else if (inscriptions.includes('귀참')) {
       insLine = '검귀의 그림자를 베고';
@@ -15224,13 +15225,13 @@
       insLine = '밤의 야차를 베어내고';  // v370k 특수 그림자 — 鬼斬 아래
     } else if (foeV) {
       insLine = FOE_VERSE[foeV];  // 그 외 명명된 적 (帝/刃/月/風)
-    } else if (inscriptions.includes('本')) {
+    } else if (inscriptions.includes('본')) {
       insLine = '본질에 이르러';
-    } else if (inscriptions.includes('剛體')) {
+    } else if (inscriptions.includes('강체')) {
       insLine = '강철의 몸으로 단련되어';
-    } else if (inscriptions.includes('覺')) {
+    } else if (inscriptions.includes('각성')) {
       insLine = '깨어나 빛을 보았으며';
-    } else if (inscriptions.includes('百鍊')) {
+    } else if (inscriptions.includes('백련')) {
       insLine = '백 번 두들기고';
     } else {
       insLine = '조용히 단련되어';
@@ -15392,7 +15393,7 @@
       effect: () => { /* 호출자가 즉시 환급 */ },
     },
     {
-      key: '神巫', label: '신 무녀', desc: '신의 사자가 다음 검을 축복했다 · 새 검에 覺 + 시작 영혼 +30',
+      key: '神巫', label: '신 무녀', desc: '신의 사자가 다음 검을 축복했다 · 새 검에 각성 + 시작 영혼 +30',
       hook: 'sealAfter', chance: 0.003,
       effect: () => { blessingState.sinmuPending = true; },
     },
@@ -15506,7 +15507,7 @@
     if (!state.firstWayReached) {
       state.firstWayReached = true;
       if (!state.recordFirstWayGen) state.recordFirstWayGen = state.swordGeneration || 1;  // v224 劍士録
-      setTimeout(() => announceInscription('始祖', '첫 도 달성 — 선조의 길이 열렸다'), 5800);
+      setTimeout(() => announceInscription('시조', '첫 도 달성 — 선조의 길이 열렸다'), 5800);
     }
     if (((state.stats && state.stats.wayReached) || 0) === 5) setTimeout(() => maybeMaster('fiveWays'), 6800);  // v181 老師
     log('🏛 殿堂 — ' + swordName + ' 박물관에 영구 진열되었다 (강화 성공 +1.5%)', 'success');
@@ -15588,11 +15589,11 @@
     { key: '道',   word: '道' },
     { key: '귀참', word: '마' },
     { key: '야차참', word: '야' },
-    { key: '本',   word: '本' },
-    { key: '剛體', word: '剛' },
-    { key: '覺',   word: '覺' },
-    { key: '古',   word: '古' },
-    { key: '久',   word: '久' },
+    { key: '본',   word: '본' },
+    { key: '강체', word: '강' },
+    { key: '각성',   word: '각' },
+    { key: '고',   word: '고' },
+    { key: '구',   word: '구' },
   ];
   const NUM_KANJI = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구', '십', '십일', '십이', '십삼', '십사', '십오'];
 
@@ -15617,8 +15618,8 @@
     inscriptions = inscriptions || [];
     const reason = {
       '道': '도에 이르러', '귀참': '검귀를 베어', '야차참': '야차를 베어',
-      '本': '본질을 깨달아', '剛體': '강체를 이루어', '覺': '혼이 깨어나',
-      '古': '오랜 세월을 견뎌', '久': '긴 단련을 거쳐',
+      '본': '본질을 깨달아', '강체': '강체를 이루어', '각성': '혼이 깨어나',
+      '고': '오랜 세월을 견뎌', '구': '긴 단련을 거쳐',
     };
     for (const def of NAME_SUFFIX) {
       if (inscriptions.includes(def.key)) return (reason[def.key] || '') + ' ' + def.word + '의 이름을 얻었다';
@@ -15629,10 +15630,10 @@
   // === 銘 — 검의 명문 (일대기) ===
   // 각 명문: trigger(검 상태 + state) → 조건, label/sub → 표시 텍스트
   const INSCRIPTIONS = [
-    { key: '初刃', label: '첫 그림자를 베어냈다',          verse: '검이 처음으로 어둠을 갈랐다',     trigger: () => state.currentSword.slainCount >= 1 },
-    { key: '百鍊', label: '10번 강화한 검',                verse: '많은 두들김이 검을 키웠다',         trigger: () => state.currentSword.enhanceAttempts >= 10 },
-    { key: '剛體', label: '+10 단계에 도달',               verse: '검의 몸이 단단해졌다',              trigger: () => state.level >= 10 },
-    { key: '回魔', label: '그림자를 5번 베어냈다',         verse: '검이 어둠을 거듭 물리쳤다',         trigger: () => state.currentSword.slainCount >= 5 },
+    { key: '초인', label: '첫 그림자를 베어냈다',          verse: '검이 처음으로 어둠을 갈랐다',     trigger: () => state.currentSword.slainCount >= 1 },
+    { key: '백련', label: '10번 강화한 검',                verse: '많은 두들김이 검을 키웠다',         trigger: () => state.currentSword.enhanceAttempts >= 10 },
+    { key: '강체', label: '+10 단계에 도달',               verse: '검의 몸이 단단해졌다',              trigger: () => state.level >= 10 },
+    { key: '회마', label: '그림자를 5번 베어냈다',         verse: '검이 어둠을 거듭 물리쳤다',         trigger: () => state.currentSword.slainCount >= 5 },
     { key: '道',   label: '최고 단계 +15 도달',            verse: '검과 사람이 하나의 길이 되었다',     trigger: () => state.level >= MAX_LEVEL },
     { key: '귀참', label: '검귀를 베어냈다',               verse: '검귀의 피가 칼끝에 묻었다',         trigger: () => false },
     { key: '야차참', label: '밤의 야차를 베어냈다',          verse: '달빛 아래 검이 그림자를 갈랐다',     trigger: () => false },
@@ -15640,7 +15641,7 @@
     { key: '朔',   label: '연속 강화 성공 36회',              verse: '새 달이 시작된다',                  trigger: () => false },
     { key: '半',   label: '연속 강화 성공 72회',              verse: '달이 반쯤 차올랐다',                trigger: () => false },
     { key: '圓',   label: '연속 강화 성공 108회',             verse: '둥글게 닫힌 길',                    trigger: () => false },
-    { key: '精進', label: '한 세션 3시간 정진',                verse: '머무름이 길의 일부였다',             trigger: () => false },
+    { key: '정진', label: '한 세션 3시간 정진',                verse: '머무름이 길의 일부였다',             trigger: () => false },
     { key: '雙',   label: '11:11 강화의 우연',                  verse: '두 개의 1이 검과 만났다',           trigger: () => false },
     { key: '子',   label: '자정에 검을 봉인했다',               verse: '새 날의 첫 순간이 검에 깃들었다',   trigger: () => false },
     { key: '流',   label: '한 호흡에 다섯 액션 흐름',           verse: '검과 사용자가 한 강이 되었다',       trigger: () => false },
@@ -15648,19 +15649,19 @@
     { key: '端午',  label: '단오에 검을 단련한 날',           verse: '창포 향이 검의 결에 스며들었다',     trigger: () => false },
     { key: '七夕',  label: '칠석에 검을 단련한 날',           verse: '은하수의 다리가 검 위에 펼쳐졌다',   trigger: () => false },
     { key: '重陽',  label: '중양에 검을 단련한 날',           verse: '두 번 겹친 양기가 검에 깃들었다',     trigger: () => false },
-    { key: '覺',   label: '검이 깨어났다',                  verse: '검의 의식이 처음으로 열렸다',       trigger: () => false },
-    { key: '本',   label: '본질에 이르렀다',               verse: '검의 본질이 검 안에 머물렀다',       trigger: () => false },
-    { key: '始祖', label: '선조의 흔적이 깃들었다',         verse: '선조의 길이 새 검에 흐른다',         trigger: () => false },
-    { key: '達人', label: '도 5번 달성',                verse: '다섯 길의 흔적이 검에 깃들었다',     trigger: () => false },
-    { key: '聖',   label: '도 10번 달성',               verse: '검은 성인의 무게를 가진다',         trigger: () => false },
+    { key: '각성',   label: '검이 깨어났다',                  verse: '검의 의식이 처음으로 열렸다',       trigger: () => false },
+    { key: '본',   label: '본질에 이르렀다',               verse: '검의 본질이 검 안에 머물렀다',       trigger: () => false },
+    { key: '시조', label: '선조의 흔적이 깃들었다',         verse: '선조의 길이 새 검에 흐른다',         trigger: () => false },
+    { key: '달인', label: '도 5번 달성',                verse: '다섯 길의 흔적이 검에 깃들었다',     trigger: () => false },
+    { key: '성',   label: '도 10번 달성',               verse: '검은 성인의 무게를 가진다',         trigger: () => false },
     { key: '단마', label: '네 종류 그림자 모두 베어냈다',   verse: '검이 모든 어둠을 알아본다',         trigger: () => false },
-    { key: '久',   label: '50번 강화한 오랜 검',            verse: '검에 세월의 빛이 깃들었다',         trigger: () => state.currentSword.enhanceAttempts >= 50 },
-    { key: '古',   label: '100번 강화한 아주 오랜 검',      verse: '검은 잊혀진 시대를 기억한다',       trigger: () => state.currentSword.enhanceAttempts >= 100 },
-    { key: '讀劍', label: '전조를 능숙하게 읽는 검',        verse: '검과 사람이 같은 하늘을 보았다',     trigger: () => (state.currentSword.omenTotal || 0) >= 10 && (state.currentSword.omenHits || 0) / (state.currentSword.omenTotal || 1) >= 0.8 },
-    { key: '傷',   label: '세 번 무너지기 직전 살아남은 검', verse: '상처가 검을 더 단단하게 만들었다',   trigger: () => (state.currentSword.scars || 0) >= 3 },
-    { key: '七星', label: '북두칠성이 깃든 검',              verse: '일곱 별이 한 검에 모였다',           trigger: () => false },
-    { key: '仙',   label: '백 대를 잇는 신선의 검',          verse: '백 대의 계보가 한 검에 흐른다',     trigger: () => false },
-    { key: '連一閃', label: '열 번의 一閃을 한 검에 새긴 자', verse: '열 번이 한 흐름이 되었다',           trigger: () => false },
+    { key: '구',   label: '50번 강화한 오랜 검',            verse: '검에 세월의 빛이 깃들었다',         trigger: () => state.currentSword.enhanceAttempts >= 50 },
+    { key: '고',   label: '100번 강화한 아주 오랜 검',      verse: '검은 잊혀진 시대를 기억한다',       trigger: () => state.currentSword.enhanceAttempts >= 100 },
+    { key: '독검', label: '전조를 능숙하게 읽는 검',        verse: '검과 사람이 같은 하늘을 보았다',     trigger: () => (state.currentSword.omenTotal || 0) >= 10 && (state.currentSword.omenHits || 0) / (state.currentSword.omenTotal || 1) >= 0.8 },
+    { key: '상',   label: '세 번 무너지기 직전 살아남은 검', verse: '상처가 검을 더 단단하게 만들었다',   trigger: () => (state.currentSword.scars || 0) >= 3 },
+    { key: '칠성', label: '북두칠성이 깃든 검',              verse: '일곱 별이 한 검에 모였다',           trigger: () => false },
+    { key: '선',   label: '백 대를 잇는 신선의 검',          verse: '백 대의 계보가 한 검에 흐른다',     trigger: () => false },
+    { key: '연일섬', label: '열 번의 一閃을 한 검에 새긴 자', verse: '열 번이 한 흐름이 되었다',           trigger: () => false },
   ];
 
   function grantInscription(key) {
@@ -15904,7 +15905,7 @@
     // v245i — 다음 단계까지 남은 게이지 노출 (覺/本 도달 정보 → 베기/강화 페이싱 결정)
     if (stage === 'true') label.textContent = '本 · ' + soul;
     else if (stage === 'wake') label.textContent = '覺 · ' + soul + '  ·  本까지 ' + (SOUL_TRUE - soul);
-    else label.textContent = soul > 0 ? ('魂 ' + soul + '  ·  覺까지 ' + (SOUL_AWAKEN - soul)) : '';
+    else label.textContent = soul > 0 ? ('魂 ' + soul + '  ·  각성까지 ' + (SOUL_AWAKEN - soul)) : '';
     // v226 魂光 — 영혼 단계에 따른 검 발산
     if (swordSvg) {
       swordSvg.classList.remove('soul-wake', 'soul-true');
@@ -16016,9 +16017,9 @@
     step('季節', getSeason().sealMul);
     step('四神 青龍', beastSealMul());  // v261
     step('節氣', solarSealMul());       // v263
-    if (ins.includes('古')) step('노쇠 古', 1.10);
-    else if (ins.includes('久')) step('노쇠 久', 1.05);
-    if (ins.includes('七星')) step('七星', 1.5);  // v116
+    if (ins.includes('고')) step('노쇠 古', 1.10);
+    else if (ins.includes('구')) step('노쇠 久', 1.05);
+    if (ins.includes('칠성')) step('칠성', 1.5);  // v116
     step('系譜', generationSealMul());  // v123
     return reward;
   }
@@ -16064,15 +16065,15 @@
     // v16 始祖 / v21 達人·聖: 道 도달 횟수에 따른 메타 명문 + 시작 魂
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (state.firstWayReached) {
-      state.currentSword.inscriptions.push('始祖');
+      state.currentSword.inscriptions.push('시조');
       state.currentSword.soul = Math.max(state.currentSword.soul, 10);
     }
     if (ways >= 5) {
-      state.currentSword.inscriptions.push('達人');
+      state.currentSword.inscriptions.push('달인');
       state.currentSword.soul = Math.max(state.currentSword.soul, 20);
     }
     if (ways >= 10) {
-      state.currentSword.inscriptions.push('聖');
+      state.currentSword.inscriptions.push('성');
       state.currentSword.soul = Math.max(state.currentSword.soul, 30);
     }
     // v117 四道 — 4형의 道 검 모두 보유 시 영구 시작 영혼 +50
@@ -16096,9 +16097,9 @@
     // v66 선대 강기 빛 모임 — 始祖/達人/聖 보유자에게 시각적 의식
     const newIns = state.currentSword.inscriptions || [];
     let rayCount = 0;
-    if (newIns.includes('始祖')) rayCount += 15;
-    if (newIns.includes('達人')) rayCount += 15;
-    if (newIns.includes('聖')) rayCount += 20;
+    if (newIns.includes('시조')) rayCount += 15;
+    if (newIns.includes('달인')) rayCount += 15;
+    if (newIns.includes('성')) rayCount += 20;
     if (rayCount > 0) {
       setTimeout(() => spawnLegacyRays(rayCount), 100);
     }
@@ -16124,7 +16125,7 @@
     // v119 奇緣 — 神巫 활성 시 다음 검에 覺 + 영혼 +30
     if (blessingState.sinmuPending) {
       blessingState.sinmuPending = false;
-      if (!state.currentSword.inscriptions.includes('覺')) state.currentSword.inscriptions.push('覺');
+      if (!state.currentSword.inscriptions.includes('각성')) state.currentSword.inscriptions.push('각성');
       state.currentSword.soul = Math.max(state.currentSword.soul || 0, 34);  // 覺 단계 진입
       setTimeout(() => announceInscription('神巫의 축복', '이 검은 깨어남으로 시작한다'), 700);
     }
@@ -16176,7 +16177,7 @@
   // === v92 融劍 — 검 합성 (봉인 검 2자루 → 형·명문·혼 계승) ===
   const FUSION_COST = 60;
   // 계승 명문 우선순위 (메타 명문 始祖/達人/聖 제외 — newSword가 자동 부여)
-  const FUSION_PRIORITY = ['道','용참','제참','귀참','인참','월참','풍참','단마','本','覺','剛體','百鍊','回魔','初刃','古','久'];
+  const FUSION_PRIORITY = ['道','용참','제참','귀참','인참','월참','풍참','단마','본','각성','강체','백련','회마','초인','고','구'];
   let fusionSelected = [];
   function fusionPreview() {
     // 현재 선택된 2검으로 생성될 검의 미리보기 — { form, inscription, soul, startLevel } 또는 null
@@ -16462,7 +16463,7 @@
     });
     state.shards += reward;
     // v116 七星: 7별 채운 검 봉인 시 보호권 +1 보너스
-    if (ins.includes('七星')) {
+    if (ins.includes('칠성')) {
       state.protections++;
       setTimeout(() => log('七星 봉인 보너스 — 보호권 +1', 'success'), 800);
       captureRubbing('firstSeven', { level: lv, form, inscriptions: ins.slice(), soul: state.currentSword.soul || 0 });  // v136 拓本
@@ -16520,13 +16521,13 @@
       playRitual(form, ins, lv, reward);
       if (!state.firstWayReached) {
         state.firstWayReached = true;
-        setTimeout(() => announceInscription('始祖', '첫 도 달성 — 선조의 길이 열렸다'), 5800);
+        setTimeout(() => announceInscription('시조', '첫 도 달성 — 선조의 길이 열렸다'), 5800);
         // v150 道至 — 첫 道 도달 거대 의식 (표준 ritual 후)
         setTimeout(() => playFirstWayCeremony(), 6400);
       }
       const ways = (state.stats && state.stats.wayReached) || 0;
-      if (ways === 5) setTimeout(() => announceInscription('達人', '도 5번 달성 — 달인의 경지'), 6200);
-      if (ways === 10) setTimeout(() => announceInscription('聖', '도 10번 달성 — 성인의 경지'), 6600);
+      if (ways === 5) setTimeout(() => announceInscription('달인', '도 5번 달성 — 달인의 경지'), 6200);
+      if (ways === 10) setTimeout(() => announceInscription('성', '도 10번 달성 — 성인의 경지'), 6600);
       // v84 엔딩은 봉인이 아닌 *최종 강화 +15 도달* 시점에 발동 (enhance 분기에서 처리)
       // v83 道 도달 시 로그인된 사용자에게 점수 등록 안내
       if (sbClient) {
@@ -16537,7 +16538,7 @@
         }).catch(() => {});
       }
       // v33 傳授: 道 검 봉인 시 희귀 명문 1개 다음 검에 전수
-      const heritageOrder = ['단마', '귀참', '古', '久'];
+      const heritageOrder = ['단마', '귀참', '고', '구'];
       const heritage = heritageOrder.find(k => ins.includes(k));
       if (heritage) {
         state.heritageInscription = heritage;
@@ -16590,7 +16591,7 @@
     const pMarkHonest = $('preview-mark-honest');
     if (pMarkWay) pMarkWay.setAttribute('opacity', ins.includes('道') ? '0.85' : '0');
     if (pMarkDemon) pMarkDemon.setAttribute('opacity', ins.includes('귀참') ? '0.9' : '0');
-    if (pMarkHonest) pMarkHonest.setAttribute('opacity', ins.includes('本') ? '0.7' : '0');
+    if (pMarkHonest) pMarkHonest.setAttribute('opacity', ins.includes('본') ? '0.7' : '0');
     // v70 명명 미리 보기에도 한자 새김
     const pKanji = $('preview-mark-kanji');
     if (pKanji) {
@@ -16840,8 +16841,8 @@
   function getPrimaryKanji(ins) {
     if (ins.includes('道')) return { k: '道', c: '#fff5c0' };
     if (ins.includes('귀참')) return { k: '귀', c: '#ff8060' };
-    if (ins.includes('本')) return { k: '本', c: '#a0c0d0' };
-    if (ins.includes('聖')) return { k: '聖', c: '#fff5c0' };
+    if (ins.includes('본')) return { k: '본', c: '#a0c0d0' };
+    if (ins.includes('성')) return { k: '성', c: '#fff5c0' };
     if (ins.includes('단마')) return { k: '단', c: '#fff5c0' };
     return null;
   }
@@ -16852,7 +16853,7 @@
     const body = buildSwordBody(s.level || 0, s.form, s.playerSeal || '');
     const wayOpacity = ins.includes('道') ? '0.85' : '0';
     const demonOpacity = ins.includes('귀참') ? '0.9' : '0';
-    const honestOpacity = ins.includes('本') ? '0.7' : '0';
+    const honestOpacity = ins.includes('본') ? '0.7' : '0';
     const kanji = getPrimaryKanji(ins);
     const kanjiSVG = kanji
       ? '<text x="50" y="80" text-anchor="middle" font-size="10" fill="' + kanji.c + '" opacity="0.9" style="filter: drop-shadow(0 0 4px #d4af37); font-family: \'Noto Serif KR\', serif; font-weight: 700;">' + kanji.k + '</text>'
@@ -17099,7 +17100,7 @@
         const hasWay = ins.includes('道');
         const name = s.name || makeSwordName(s.form, ins, s.level);
         const soulStr = (typeof s.soul === 'number' && s.soul > 0) ? s.soul : '';
-        const keyIns = ins.filter(k => ['道','귀참','本','覺','단마','逆轉'].includes(k));
+        const keyIns = ins.filter(k => ['道','귀참','본','각성','단마','逆轉'].includes(k));
         // v163 鬪將 — 챔피언 표시
         const champIdx = getChampionSwordIdx();
         const isChampion = (champIdx === originalIdx);
@@ -17113,7 +17114,7 @@
             '<span class="lc-badge' + (k === '道' ? ' way' : '') + '">' + k + '</span>'
           ).join('') + '</div>' +
           (s.memo ? '<div class="lc-memo">' + s.memo + '</div>' : '') +
-          (s.scars > 0 ? '<div style="font-size:8px;color:rgba(180,70,50,0.7);letter-spacing:2px;margin-top:2px">' + '刻'.repeat(s.scars) + '</div>' : '') +
+          (s.scars > 0 ? '<div style="font-size:8px;color:rgba(180,70,50,0.7);letter-spacing:2px;margin-top:2px">' + '각인'.repeat(s.scars) + '</div>' : '') +
           (wins > 0 ? '<div style="font-size:8px;color:rgba(255,245,192,0.7);letter-spacing:2px;margin-top:2px">勝 ' + wins + '</div>' : '') +
           '</div>';
       });
@@ -17640,7 +17641,7 @@
       // 명문 마크 (정점)
       const wayMark = ins.includes('道') ? '<line x1="50" y1="20" x2="50" y2="138" stroke="#fff5c0" stroke-width="1.6" opacity="0.85" style="filter: drop-shadow(0 0 3px #d4af37);"/>' : '';
       const demonMark = ins.includes('귀참') ? '<circle cx="50" cy="22" r="1.8" fill="#c0392b" opacity="0.9"/>' : '';
-      const honestMark = ins.includes('本') ? '<polygon points="50,12 51.5,14 50,16 48.5,14" fill="#6a8a9a" opacity="0.7"/>' : '';
+      const honestMark = ins.includes('본') ? '<polygon points="50,12 51.5,14 50,16 48.5,14" fill="#6a8a9a" opacity="0.7"/>' : '';
       const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200" width="200" height="400">' +
         defs +
         '<rect width="100" height="200" fill="#1f1a14"/>' +
@@ -18306,20 +18307,20 @@
   function renderCodex() {
     // 명문별 획득 조건 텍스트
     const conditions = {
-      '初刃': '그림자를 한 번 베어내기',
-      '百鍊': '한 검으로 10번 강화 시도',
-      '剛體': '+10 단계 도달',
-      '回魔': '그림자를 5번 베어내기',
+      '초인': '그림자를 한 번 베어내기',
+      '백련': '한 검으로 10번 강화 시도',
+      '강체': '+10 단계 도달',
+      '회마': '그림자를 5번 베어내기',
       '道': '최고 단계 +' + MAX_LEVEL + ' 도달',
       '귀참': '검귀 (드문 그림자) 베어내기',
-      '覺': '魂 게이지 ' + SOUL_AWAKEN + ' 도달',
-      '本': '魂 게이지 ' + SOUL_TRUE + ' 도달',
-      '始祖': '첫 道 도달 — 모든 새 검에 자동',
-      '達人': '도 5번 도달 — 모든 새 검에 자동',
-      '聖': '도 10번 도달 — 모든 새 검에 자동',
+      '각성': '魂 게이지 ' + SOUL_AWAKEN + ' 도달',
+      '본': '魂 게이지 ' + SOUL_TRUE + ' 도달',
+      '시조': '첫 道 도달 — 모든 새 검에 자동',
+      '달인': '도 5번 도달 — 모든 새 검에 자동',
+      '성': '도 10번 도달 — 모든 새 검에 자동',
       '단마': '4종류 그림자(夜/霧/骨/焰) 모두 베어내기',
-      '久': '한 검으로 50번 강화 시도',
-      '古': '한 검으로 100번 강화 시도',
+      '구': '한 검으로 50번 강화 시도',
+      '고': '한 검으로 100번 강화 시도',
     };
     // 검사: 현재 검 / 봉인 검 중 어디에 새겨졌는지
     const currentIns = (state.hasSword && state.currentSword.inscriptions) || [];
