@@ -269,7 +269,7 @@ test('recordActivityDate: 120일 초과 시 가장 오래된 항목 정리', () 
   // 형은 한글화(7단계) 완료, 접미 명문/숫자 한자는 후속 단계 — 현재는 혼합 출력이 정상
   test('makeSwordName: 정점 명문 우선순위 (道 > 鬼斬 > 本 > ...)', () => {
     assert.strictEqual(mk('직', ['道'], 15), '직道');
-    assert.strictEqual(mk('곡', ['鬼斬', '本'], 10), '곡魔', '鬼斬이 本보다 우선');
+    assert.strictEqual(mk('곡', ['귀참', '本'], 10), '곡마', '鬼斬이 本보다 우선');
     assert.strictEqual(mk('속', ['久', '道'], 5), '속道', '道가 久보다 우선(배열 순서)');
   });
   test('makeSwordName: 명문 없으면 강화도 한자', () => {
@@ -571,8 +571,8 @@ test('generateLastWords: 道 검은 전용 유언', () => {
   assert.strictEqual(lw({ inscriptions: ['道'], slainCount: 5, level: 15 }), '나는 도를 보았다. 그것으로 족하다.');
 });
 test('generateLastWords: 龍斬(용 격파) 전용 1인칭 유언, 단 道가 우선 (v370j)', () => {
-  assert.strictEqual(lw({ inscriptions: ['龍斬'], slainCount: 5, level: 15 }), '용을 베었으니, 여한이 없다.');
-  assert.strictEqual(lw({ inscriptions: ['道', '龍斬'], level: 15 }), '나는 도를 보았다. 그것으로 족하다.', '道가 龍斬보다 우선');
+  assert.strictEqual(lw({ inscriptions: ['용참'], slainCount: 5, level: 15 }), '용을 베었으니, 여한이 없다.');
+  assert.strictEqual(lw({ inscriptions: ['道', '용참'], level: 15 }), '나는 도를 보았다. 그것으로 족하다.', '道가 龍斬보다 우선');
 });
 test('generateLastWords: 性情별 유언 (剛/靜/賭/和)', () => {
   assert.ok(lw({ slainCount: 5, level: 5 }).length > 0, '剛 유언');
@@ -619,11 +619,11 @@ test('deriveJourney: 데이터 부족(<2) 또는 없음 → 빈 문자열', () =
 test('makeComparePersona: 검 비교 정체성 라벨 우선순위 (道 > 龍斬 > 전투 > 밤 ...)', () => {
   const mp = loadFunctions(['makeComparePersona']).makeComparePersona;
   assert.strictEqual(mp({ inscriptions: ['道'] }), '도의 검');
-  assert.strictEqual(mp({ inscriptions: ['龍斬'] }), '용을 벤 검', 'v370l 龍斬 → 고유 라벨');
-  assert.strictEqual(mp({ inscriptions: ['道', '龍斬'] }), '도의 검', '道가 龍斬보다 우선');
-  assert.strictEqual(mp({ inscriptions: ['龍斬', '鬼斬'] }), '용을 벤 검', '龍斬이 전투보다 우선');
-  assert.strictEqual(mp({ inscriptions: ['鬼斬'] }), '전투의 검');
-  assert.strictEqual(mp({ inscriptions: ['夜叉斬'] }), '밤의 검');
+  assert.strictEqual(mp({ inscriptions: ['용참'] }), '용을 벤 검', 'v370l 龍斬 → 고유 라벨');
+  assert.strictEqual(mp({ inscriptions: ['道', '용참'] }), '도의 검', '道가 龍斬보다 우선');
+  assert.strictEqual(mp({ inscriptions: ['용참', '귀참'] }), '용을 벤 검', '龍斬이 전투보다 우선');
+  assert.strictEqual(mp({ inscriptions: ['귀참'] }), '전투의 검');
+  assert.strictEqual(mp({ inscriptions: ['야차참'] }), '밤의 검');
   assert.strictEqual(mp({ inscriptions: [], slainCount: 0 }), '평화의 검', '무전투 → 평화');
   assert.strictEqual(mp(null), '', 'null 안전');
 });
@@ -668,18 +668,18 @@ test('generateBiography 통합: bornTod 없는 구 검도 안전 (접두 생략)
 test('generateBiography: 名(명명된 적) 격파가 일대기에 결합 — 龍斬은 鬼斬보다 우선 (v370h)', () => {
   const bio = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath']).generateBiography;
   const mk = (ins, extra) => bio(Object.assign({ form: '직', name: '검', level: 10, slainCount: 0, levelHistory: [0, 10] }, { inscriptions: ins }, extra || {}));
-  assert.match(mk(['龍斬']), /용을 베어냈/, '龍斬 → 용 격파 서사');
-  assert.match(mk(['帝斬']), /귀제/, '帝斬 → 귀제 격파');
-  assert.match(mk(['風斬']), /흑풍/, '風斬 → 흑풍 격파');
+  assert.match(mk(['용참']), /용을 베어냈/, '龍斬 → 용 격파 서사');
+  assert.match(mk(['제참']), /귀제/, '帝斬 → 귀제 격파');
+  assert.match(mk(['풍참']), /흑풍/, '風斬 → 흑풍 격파');
   // 龍斬은 鬼斬보다 우선 (정점 무훈)
-  assert.match(mk(['龍斬', '鬼斬']), /용을 베어냈/, '龍斬+鬼斬 → 龍 우선');
+  assert.match(mk(['용참', '귀참']), /용을 베어냈/, '龍斬+鬼斬 → 龍 우선');
   // 그 외 명명된 적은 鬼斬보다 아래
-  assert.match(mk(['帝斬', '鬼斬']), /검귀의 피/, '帝斬+鬼斬 → 鬼斬 우선 (龍 외엔 鬼斬이 위)');
+  assert.match(mk(['제참', '귀참']), /검귀의 피/, '帝斬+鬼斬 → 鬼斬 우선 (龍 외엔 鬼斬이 위)');
   // 명명된 적 없으면 기존 일반 슬레인 서사 유지
   assert.match(mk([], { slainCount: 6 }), /6의 그림자를 베어냈/, '명명된 적 없음 → 일반 슬레인');
   // v370k 夜叉斬 — 鬼斬 바로 아래
-  assert.match(mk(['夜叉斬']), /야차/, '夜叉斬 → 야차 격파 서사');
-  assert.match(mk(['鬼斬', '夜叉斬']), /검귀의 피/, '鬼斬+夜叉斬 → 鬼斬 우선');
+  assert.match(mk(['야차참']), /야차/, '夜叉斬 → 야차 격파 서사');
+  assert.match(mk(['귀참', '야차참']), /검귀의 피/, '鬼斬+夜叉斬 → 鬼斬 우선');
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -694,20 +694,20 @@ test('generateVerse: 4행 반환 + 형/닫음 행', () => {
   assert.strictEqual(v[3], '+15 의 길로 마무리되다', '닫음 행');
 });
 test('generateVerse: 명문 행 우선순위 (鬼斬+本 > 本 > 무명)', () => {
-  assert.strictEqual(verse('곡', ['鬼斬', '本'], 12, 3)[1], '본질을 깨우고 검귀의 피를 받아');
+  assert.strictEqual(verse('곡', ['귀참', '本'], 12, 3)[1], '본질을 깨우고 검귀의 피를 받아');
   assert.strictEqual(verse('곡', ['本'], 12, 3)[1], '본질에 이르러');
   assert.strictEqual(verse('곡', [], 12, 3)[1], '조용히 단련되어', '무명');
 });
 test('generateVerse: 名(명명된 적) 격파 행 — 龍斬은 鬼斬보다 우선 (v370i)', () => {
-  assert.match(verse('직', ['龍斬'], 15, 8)[1], /용을 베어/, '龍斬 → 용 격파 시행');
-  assert.match(verse('직', ['帝斬'], 13, 5)[1], /귀제/, '帝斬 → 귀제');
-  assert.match(verse('직', ['風斬'], 8, 2)[1], /흑풍/, '風斬 → 흑풍');
+  assert.match(verse('직', ['용참'], 15, 8)[1], /용을 베어/, '龍斬 → 용 격파 시행');
+  assert.match(verse('직', ['제참'], 13, 5)[1], /귀제/, '帝斬 → 귀제');
+  assert.match(verse('직', ['풍참'], 8, 2)[1], /흑풍/, '風斬 → 흑풍');
   // 龍斬은 鬼斬보다 위 (정점 무훈), 그 외 명명된 적은 鬼斬보다 아래
-  assert.match(verse('직', ['龍斬', '鬼斬'], 15, 8)[1], /용을 베어/, '龍斬+鬼斬 → 龍 우선');
-  assert.strictEqual(verse('직', ['帝斬', '鬼斬'], 13, 5)[1], '검귀의 그림자를 베고', '帝斬+鬼斬 → 鬼斬 우선');
+  assert.match(verse('직', ['용참', '귀참'], 15, 8)[1], /용을 베어/, '龍斬+鬼斬 → 龍 우선');
+  assert.strictEqual(verse('직', ['제참', '귀참'], 13, 5)[1], '검귀의 그림자를 베고', '帝斬+鬼斬 → 鬼斬 우선');
   // v370k 夜叉斬 — 鬼斬 아래
-  assert.match(verse('직', ['夜叉斬'], 10, 3)[1], /야차/, '夜叉斬 → 야차 시행');
-  assert.strictEqual(verse('직', ['鬼斬', '夜叉斬'], 10, 3)[1], '검귀의 그림자를 베고', '鬼斬+夜叉斬 → 鬼斬 우선');
+  assert.match(verse('직', ['야차참'], 10, 3)[1], /야차/, '夜叉斬 → 야차 시행');
+  assert.strictEqual(verse('직', ['귀참', '야차참'], 10, 3)[1], '검귀의 그림자를 베고', '鬼斬+夜叉斬 → 鬼斬 우선');
 });
 test('generateVerse: 슬레인 행 구간 (0 / 1 / <5 / <10 / 이상)', () => {
   assert.match(verse('중', [], 10, 0)[2], /한 마리도 만나지 않은/);
@@ -764,12 +764,12 @@ test('generatePlayerTitle: 무성취도 항상 칭호 반환 (빈 문자열 아�
   const keys = ins => detect(ins).map(r => r.key);
   test('detectResonances: 쌍이 모두 있을 때만 공명', () => {
     assert.deepStrictEqual(keys(['道', '七星']), ['tianming'], '天命 쌍');
-    assert.deepStrictEqual(keys(['鬼斬', '斷魔']), ['metsumao'], '滅魔 쌍');
+    assert.deepStrictEqual(keys(['귀참', '단마']), ['metsumao'], '滅魔 쌍');
     assert.deepStrictEqual(keys(['道']), [], '쌍 미완성 → 공명 없음');
     assert.deepStrictEqual(keys([]), [], '명문 없음');
   });
   test('detectResonances: 여러 쌍 동시 감지', () => {
-    const k = keys(['道', '七星', '鬼斬', '斷魔']);
+    const k = keys(['道', '七星', '귀참', '단마']);
     assert.ok(k.includes('tianming') && k.includes('metsumao'), '두 공명 모두');
   });
   test('detectResonances: onSeal 보상 배수 순수성 (天命 ×2)', () => {
@@ -1107,7 +1107,7 @@ test('deriveNameOrigin: 이름의 유래 서사 (makeSwordName 우선순위 거�
   const NS = extractConst('NAME_SUFFIX');
   const f = (ins, lv) => loadFunctions(['deriveNameOrigin'], { NAME_SUFFIX: NS }).deriveNameOrigin('직', ins, lv);
   assert.match(f(['道'], 15), /도에 이르러 道의 이름을 얻었다/);
-  assert.match(f(['鬼斬', '本'], 12), /魔의 이름을 얻었다/, '鬼斬이 本보다 우선');
+  assert.match(f(['귀참', '本'], 12), /마의 이름을 얻었다/, '鬼斬이 本보다 우선');
   assert.match(f(['本'], 10), /본질을 깨달아 本의 이름을 얻었다/);
   assert.match(f([], 7), /강화 \+7의 자취로 이름을 얻었다/, '명문 없으면 강화도');
 });
@@ -1566,7 +1566,7 @@ test('v371f generateLastWords: 古/久 노쇠 검의 작별 + 우선순위', () 
   assert.match(fns.generateLastWords({ inscriptions: ['久'], level: 5 }), /긴 생이었다/, '久 작별');
   // 정점(道/龍斬)이 노쇠보다 우선
   assert.match(fns.generateLastWords({ inscriptions: ['道', '古'], level: 5 }), /도를 보았다/, '道가 古보다 우선');
-  assert.match(fns.generateLastWords({ inscriptions: ['龍斬', '古'], level: 5 }), /용을 베었으니/, '龍斬이 古보다 우선');
+  assert.match(fns.generateLastWords({ inscriptions: ['용참', '古'], level: 5 }), /용을 베었으니/, '龍斬이 古보다 우선');
   // 노쇠 없으면 기존 性情 경로 (구 검 하위호환)
   assert.ok(fns.generateLastWords({ inscriptions: [], level: 5 }).length > 0, '노쇠 없는 검도 작별 존재');
 });

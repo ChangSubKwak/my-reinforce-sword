@@ -4004,7 +4004,7 @@
 <!-- v49 검귀 베어낸 큰 의식 -->
 <div id="demon-slay-overlay">
   <div id="demon-slay-content">
-    <div id="demon-slay-kanji">鬼斬</div>
+    <div id="demon-slay-kanji">귀참</div>
     <div id="demon-slay-msg">검귀를 베어냈다</div>
   </div>
 </div>
@@ -4407,6 +4407,13 @@
         fixForm(state.currentSword);
         (Array.isArray(state.sealedSwords) ? state.sealedSwords : []).forEach(fixForm);
         (Array.isArray(state.enshrined) ? state.enshrined : []).forEach(fixForm); }
+      // 한글화 10단계 — 명문 키(명명된 적 격파·斷魔) 한자→음역 마이그레이션 (inscriptions 배열 무손실)
+      { const IM = { '鬼斬':'귀참','龍斬':'용참','帝斬':'제참','刃斬':'인참','月斬':'월참','風斬':'풍참','夜叉斬':'야차참','斷魔':'단마' };
+        const mapIns = a => Array.isArray(a) ? a.map(k => IM[k] || k) : a;
+        if (state.currentSword) state.currentSword.inscriptions = mapIns(state.currentSword.inscriptions);
+        (Array.isArray(state.sealedSwords) ? state.sealedSwords : []).forEach(s => { if (s) s.inscriptions = mapIns(s.inscriptions); });
+        (Array.isArray(state.enshrined) ? state.enshrined : []).forEach(s => { if (s) s.inscriptions = mapIns(s.inscriptions); });
+        if (state.heritageInscription && IM[state.heritageInscription]) state.heritageInscription = IM[state.heritageInscription]; }
       if (!state.foesSlain || typeof state.foesSlain !== 'object') state.foesSlain = {};
       if (!Array.isArray(state.enshrined)) state.enshrined = [];  // v118 殿堂
       // v370m XSS 경계 방어 — 검의 사용자 텍스트(검명/血統/메모/寄言)는 회고·계보·詩集 등에서
@@ -6854,8 +6861,8 @@
     if (soul >= 67) pool.push('검은 자신의 본질을 들여다본다');
     else if (soul >= 34) pool.push('검의 의식이 꿈 속에서 깨어난다');
     // 명문
-    if ((cs.inscriptions || []).indexOf('鬼斬') >= 0) pool.push('검귀의 핏빛 기억이 어른거린다');
-    if ((cs.inscriptions || []).indexOf('夜叉斬') >= 0) pool.push('달빛 아래 야차의 환영');
+    if ((cs.inscriptions || []).indexOf('귀참') >= 0) pool.push('검귀의 핏빛 기억이 어른거린다');
+    if ((cs.inscriptions || []).indexOf('야차참') >= 0) pool.push('달빛 아래 야차의 환영');
     if (pool.length === 0) pool.push('검은 고요히 잠들어 있다');
     return pool[Math.floor(Math.random() * pool.length)];
   }
@@ -7786,9 +7793,9 @@
     const slain = s.slainCount || 0;
     const enhanceN = s.enhanceAttempts || 0;
     if (ins.indexOf('道') >= 0) return '도의 검';
-    if (ins.indexOf('龍斬') >= 0) return '용을 벤 검';  // v370l 名 정점 무훈 — 비교에서도 고유 정체성
-    if (ins.indexOf('鬼斬') >= 0 || slain >= 10) return '전투의 검';
-    if (ins.indexOf('夜叉斬') >= 0) return '밤의 검';
+    if (ins.indexOf('용참') >= 0) return '용을 벤 검';  // v370l 名 정점 무훈 — 비교에서도 고유 정체성
+    if (ins.indexOf('귀참') >= 0 || slain >= 10) return '전투의 검';
+    if (ins.indexOf('야차참') >= 0) return '밤의 검';
     if (ins.indexOf('精進') >= 0 || enhanceN >= 50) return '수행의 검';
     if (ins.indexOf('始祖') >= 0) return '선조의 검';
     if ((s.soul || 0) >= 67) return '본질의 검';
@@ -10854,8 +10861,8 @@
     p += scars * 2;  // 흉터는 *경험*
     // 명문 보너스
     if (ins.includes('道')) p += 30;
-    if (ins.includes('鬼斬')) p += 15;
-    if (ins.includes('斷魔')) p += 12;
+    if (ins.includes('귀참')) p += 15;
+    if (ins.includes('단마')) p += 12;
     if (ins.includes('本')) p += 10;
     if (ins.includes('七星')) p += 25;
     if (ins.includes('仙')) p += 20;
@@ -11372,7 +11379,7 @@
       onSeal: (state, reward) => Math.floor(reward * 2),
     },
     {
-      key: 'metsumao', pair: ['鬼斬', '斷魔'], name: '滅魔', label: '모든 마를 멸하다',
+      key: 'metsumao', pair: ['귀참', '단마'], name: '滅魔', label: '모든 마를 멸하다',
       desc: '검귀와 단마가 함께 — 봉인 시 다음 5번 슬레이 ×1.5',
       onSealPersistent: (state) => { state.metsumaoCharges = 5; },
     },
@@ -12509,7 +12516,7 @@
   const YAKSHA_TYPE = {
     key: 'yaksha', name: '夜叉', weight: 0,  // 별도 룰
     strengthMul: 1.0, rewardMul: 3.0, strengthAdd: 1,
-    desc: '밤의 그림자 — 보상 ×3, 첫 처치 시 夜叉斬 영구 명문',
+    desc: '밤의 그림자 — 보상 ×3, 첫 처치 시 야차참 영구 명문',
     isYaksha: true,
   };
   function isNightHour() {
@@ -12539,11 +12546,11 @@
   // === v90 名 — 이름 있는 적 (Named Foes) ===
   // 강화도 마일스톤마다 1회성 등장. 베면 영구 명문 + 대량 조각 + 컬렉션 등재.
   const NAMED_FOES = [
-    { key: 'blackwind',  name: '黑風', trigger: 5,  strength: 6,  reward: 80,   inscription: '風斬', desc: '검은 바람의 그림자' },
-    { key: 'silvermoon', name: '銀月', trigger: 8,  strength: 10, reward: 180,  inscription: '月斬', desc: '달의 한기를 두른 자' },
-    { key: 'thousand',   name: '千刃', trigger: 11, strength: 13, reward: 350,  inscription: '刃斬', desc: '천 개의 칼날을 가진 자' },
-    { key: 'demonemp',   name: '鬼帝', trigger: 13, strength: 16, reward: 700,  inscription: '帝斬', desc: '귀신을 다스리는 자' },
-    { key: 'dragon',     name: '龍',   trigger: 15, strength: 18, reward: 1500, inscription: '龍斬', desc: '하늘의 그림자' }
+    { key: 'blackwind',  name: '黑風', trigger: 5,  strength: 6,  reward: 80,   inscription: '풍참', desc: '검은 바람의 그림자' },
+    { key: 'silvermoon', name: '銀月', trigger: 8,  strength: 10, reward: 180,  inscription: '월참', desc: '달의 한기를 두른 자' },
+    { key: 'thousand',   name: '千刃', trigger: 11, strength: 13, reward: 350,  inscription: '인참', desc: '천 개의 칼날을 가진 자' },
+    { key: 'demonemp',   name: '鬼帝', trigger: 13, strength: 16, reward: 700,  inscription: '제참', desc: '귀신을 다스리는 자' },
+    { key: 'dragon',     name: '龍',   trigger: 15, strength: 18, reward: 1500, inscription: '용참', desc: '하늘의 그림자' }
   ];
   function pendingNamedFoe() {
     if (!state.foesSlain) state.foesSlain = {};
@@ -13867,20 +13874,20 @@
       if (c.origin) {
         state.shadowOriginsSlain[c.origin] = (state.shadowOriginsSlain[c.origin] || 0) + 1;
         const allFour = ORIGIN_KEYS.every(k => (state.shadowOriginsSlain[k] || 0) > 0);
-        if (allFour) grantInscription('斷魔');
+        if (allFour) grantInscription('단마');
       }
       if (c.type.isYaksha) {
-        grantInscription('夜叉斬');
+        grantInscription('야차참');
         addSoul(15); // 夜叉 추가 +15
         bumpStat('yakshaSlain');
       }
       if (c.type.isDemon) {
-        grantInscription('鬼斬');
+        grantInscription('귀참');
         addSoul(10); // 검귀 추가 +10
         // v49 검귀 베어낸 큰 의식 컷씬
         const dso = $('demon-slay-overlay');
         if (dso) {
-          const dk = $('demon-slay-kanji'); if (dk) dk.textContent = '鬼斬';
+          const dk = $('demon-slay-kanji'); if (dk) dk.textContent = '귀참';
           $('demon-slay-msg').textContent = '검귀를 베어냈다 · 조각 +' + fmtNum(finalReward);
           dso.classList.remove('active');
           void dso.offsetWidth;
@@ -14088,13 +14095,13 @@
     { key: 'slay10',    label: '百影의 천명', desc: '이 검으로 그림자 열을 베어내라',   reward: { protections: 2 },    rewardLabel: '보호권 +2',
       check: () => (state.currentSword.slainCount || 0) >= 10 },
     { key: 'demon',     label: '鬼緣의 천명', desc: '이 검으로 검귀를 베어내라',       reward: { shards: 250 },       rewardLabel: '조각 +250',
-      check: () => (state.currentSword.inscriptions || []).includes('鬼斬') },
+      check: () => (state.currentSword.inscriptions || []).includes('귀참') },
     { key: 'enhance30', label: '百鍊의 천명', desc: '이 검으로 서른 번 강화하라',     reward: { whetstones: 3 },     rewardLabel: '숫돌 +3',
       check: () => (state.currentSword.enhanceAttempts || 0) >= 30 },
     { key: 'soul67',    label: '本心의 천명', desc: '이 검의 혼을 67까지 깨워라',     reward: { shards: 120 },       rewardLabel: '조각 +120',
       check: () => (state.currentSword.soul || 0) >= 67 },
     { key: 'foe',       label: '宿敵의 천명', desc: '이 검으로 이름 있는 적을 베어내라', reward: { spiritstones: 1, shards: 80 }, rewardLabel: '靈石 +1 · 조각 +80',
-      check: () => (state.currentSword.inscriptions || []).some(k => ['風斬','月斬','刃斬','帝斬','龍斬'].indexOf(k) >= 0) },
+      check: () => (state.currentSword.inscriptions || []).some(k => ['풍참','월참','인참','제참','용참'].indexOf(k) >= 0) },
   ];
   function assignDestiny() {
     if (!state.hasSword || !state.currentSword) return;
@@ -14317,17 +14324,17 @@
     const demonEl = $('mark-demon');
     const honestEl = $('mark-honest');
     if (wayEl) wayEl.setAttribute('opacity', ins.includes('道') ? '0.85' : '0');
-    if (demonEl) demonEl.setAttribute('opacity', ins.includes('鬼斬') ? '0.9' : '0');
+    if (demonEl) demonEl.setAttribute('opacity', ins.includes('귀참') ? '0.9' : '0');
     if (honestEl) honestEl.setAttribute('opacity', ins.includes('本') ? '0.7' : '0');
     // v69 정점 명문 한자를 칼날 중앙에 직접 새김 (우선순위)
     const kanjiEl = $('mark-kanji');
     if (kanjiEl) {
       let kanji = '', color = '#fff5c0';
       if (ins.includes('道')) { kanji = '道'; color = '#fff5c0'; }
-      else if (ins.includes('鬼斬')) { kanji = '鬼'; color = '#ff8060'; }
+      else if (ins.includes('귀참')) { kanji = '鬼'; color = '#ff8060'; }
       else if (ins.includes('本')) { kanji = '本'; color = '#a0c0d0'; }
       else if (ins.includes('聖')) { kanji = '聖'; color = '#fff5c0'; }
-      else if (ins.includes('斷魔')) { kanji = '斷'; color = '#fff5c0'; }
+      else if (ins.includes('단마')) { kanji = '斷'; color = '#fff5c0'; }
       kanjiEl.textContent = kanji;
       kanjiEl.setAttribute('fill', color);
       kanjiEl.setAttribute('opacity', kanji ? '0.9' : '0');
@@ -15056,7 +15063,7 @@
     if (!sword) return '';
     const ins = sword.inscriptions || [];
     if (ins.includes('道')) return '나는 도를 보았다. 그것으로 족하다.';
-    if (ins.includes('龍斬')) return '용을 베었으니, 여한이 없다.';  // v370j 名 정점 무훈 — 검의 1인칭 회한
+    if (ins.includes('용참')) return '용을 베었으니, 여한이 없다.';  // v370j 名 정점 무훈 — 검의 1인칭 회한
     // v371f 久/古(노쇠, v18) — 오래 산 검의 작별은 그 긴 생을 비춘다. 遺言이 무시하던 정체성 결합.
     // 정점(道/龍斬) 아래, 性情 위 우선순위(검명 NAME_SUFFIX와 동일하게 久/古는 낮으나 존재). 효과 0.
     if (ins.includes('古')) return '오랜 세월을 보았다. 이제 쉬어도 좋으리.';
@@ -15145,12 +15152,12 @@
     const notes = [];
     // v370h — 名(명명된 적, v90) 격파를 일대기에 결합. 보스 처치는 검의 정점 무훈인데
     // 一代記가 무시하던 누락(龍을 벤 검도 "평범한 생"이 될 수 있었음). 명문에서 파생, 효과 0.
-    const FOE_NARR = { '龍斬': '전설의 용을 베어냈고', '帝斬': '귀제를 쓰러뜨렸고', '刃斬': '천 개의 칼날을 갈랐고', '月斬': '은월을 베었고', '風斬': '흑풍을 잠재웠고' };
-    const foeKill = ['龍斬', '帝斬', '刃斬', '月斬', '風斬'].find(k => ins.includes(k));
-    if (foeKill === '龍斬') notes.push(FOE_NARR['龍斬']);  // 명명된 용은 정점 — 검귀보다 위
-    else if (ins.includes('鬼斬')) notes.push('검귀의 피를 받았고');
-    else if (ins.includes('夜叉斬')) notes.push('밤의 야차를 베어냈고');  // v370k 특수 그림자 격파 — 鬼斬 바로 아래(검명 우선순위와 일치)
-    else if (ins.includes('斷魔')) notes.push('네 그림자를 모두 베어냈고');
+    const FOE_NARR = { '용참': '전설의 용을 베어냈고', '제참': '귀제를 쓰러뜨렸고', '인참': '천 개의 칼날을 갈랐고', '월참': '은월을 베었고', '풍참': '흑풍을 잠재웠고' };
+    const foeKill = ['용참', '제참', '인참', '월참', '풍참'].find(k => ins.includes(k));
+    if (foeKill === '용참') notes.push(FOE_NARR['용참']);  // 명명된 용은 정점 — 검귀보다 위
+    else if (ins.includes('귀참')) notes.push('검귀의 피를 받았고');
+    else if (ins.includes('야차참')) notes.push('밤의 야차를 베어냈고');  // v370k 특수 그림자 격파 — 鬼斬 바로 아래(검명 우선순위와 일치)
+    else if (ins.includes('단마')) notes.push('네 그림자를 모두 베어냈고');
     else if (foeKill) notes.push(FOE_NARR[foeKill]);  // 그 외 명명된 적 (帝/刃/月/風)
     else if (slain >= 5) notes.push(slain + '의 그림자를 베어냈고');
     else if (slain >= 1) notes.push('그림자 ' + slain + '을 베어냈고');
@@ -15204,16 +15211,16 @@
 
     // v370i — 名(명명된 적) 격파를 一生詩(道 검 시)에도 결합. 龍을 벤 道 검의 시가 그
     // 정점 무훈을 노래하지 않던 누락 (v370h 一代記과 동일 시스템, 시 surface에도 적용).
-    const FOE_VERSE = { '龍斬': '용을 베어 하늘마저 가르고', '帝斬': '귀제를 쓰러뜨리고', '刃斬': '천 개의 칼날을 가르며', '月斬': '은월을 베고', '風斬': '흑풍을 잠재우고' };
-    const foeV = ['龍斬', '帝斬', '刃斬', '月斬', '風斬'].find(k => inscriptions.includes(k));
+    const FOE_VERSE = { '용참': '용을 베어 하늘마저 가르고', '제참': '귀제를 쓰러뜨리고', '인참': '천 개의 칼날을 가르며', '월참': '은월을 베고', '풍참': '흑풍을 잠재우고' };
+    const foeV = ['용참', '제참', '인참', '월참', '풍참'].find(k => inscriptions.includes(k));
     let insLine;
-    if (inscriptions.includes('龍斬')) {
-      insLine = FOE_VERSE['龍斬'];  // 정점 무훈 — 鬼斬보다 위
-    } else if (inscriptions.includes('鬼斬') && inscriptions.includes('本')) {
+    if (inscriptions.includes('용참')) {
+      insLine = FOE_VERSE['용참'];  // 정점 무훈 — 鬼斬보다 위
+    } else if (inscriptions.includes('귀참') && inscriptions.includes('本')) {
       insLine = '본질을 깨우고 검귀의 피를 받아';
-    } else if (inscriptions.includes('鬼斬')) {
+    } else if (inscriptions.includes('귀참')) {
       insLine = '검귀의 그림자를 베고';
-    } else if (inscriptions.includes('夜叉斬')) {
+    } else if (inscriptions.includes('야차참')) {
       insLine = '밤의 야차를 베어내고';  // v370k 특수 그림자 — 鬼斬 아래
     } else if (foeV) {
       insLine = FOE_VERSE[foeV];  // 그 외 명명된 적 (帝/刃/月/風)
@@ -15579,8 +15586,8 @@
   // 형이 있으면 prefix, 없으면 無
   const NAME_SUFFIX = [
     { key: '道',   word: '道' },
-    { key: '鬼斬', word: '魔' },
-    { key: '夜叉斬', word: '夜' },
+    { key: '귀참', word: '마' },
+    { key: '야차참', word: '야' },
     { key: '本',   word: '本' },
     { key: '剛體', word: '剛' },
     { key: '覺',   word: '覺' },
@@ -15609,7 +15616,7 @@
   function deriveNameOrigin(form, inscriptions, level) {
     inscriptions = inscriptions || [];
     const reason = {
-      '道': '도에 이르러', '鬼斬': '검귀를 베어', '夜叉斬': '야차를 베어',
+      '道': '도에 이르러', '귀참': '검귀를 베어', '야차참': '야차를 베어',
       '本': '본질을 깨달아', '剛體': '강체를 이루어', '覺': '혼이 깨어나',
       '古': '오랜 세월을 견뎌', '久': '긴 단련을 거쳐',
     };
@@ -15627,8 +15634,8 @@
     { key: '剛體', label: '+10 단계에 도달',               verse: '검의 몸이 단단해졌다',              trigger: () => state.level >= 10 },
     { key: '回魔', label: '그림자를 5번 베어냈다',         verse: '검이 어둠을 거듭 물리쳤다',         trigger: () => state.currentSword.slainCount >= 5 },
     { key: '道',   label: '최고 단계 +15 도달',            verse: '검과 사람이 하나의 길이 되었다',     trigger: () => state.level >= MAX_LEVEL },
-    { key: '鬼斬', label: '검귀를 베어냈다',               verse: '검귀의 피가 칼끝에 묻었다',         trigger: () => false },
-    { key: '夜叉斬', label: '밤의 야차를 베어냈다',          verse: '달빛 아래 검이 그림자를 갈랐다',     trigger: () => false },
+    { key: '귀참', label: '검귀를 베어냈다',               verse: '검귀의 피가 칼끝에 묻었다',         trigger: () => false },
+    { key: '야차참', label: '밤의 야차를 베어냈다',          verse: '달빛 아래 검이 그림자를 갈랐다',     trigger: () => false },
     { key: '月蝕',  label: '월식의 순간에 검을 쥐었다',       verse: '달이 가려진 30초의 천문이 검에 깃들었다', trigger: () => false },
     { key: '朔',   label: '연속 강화 성공 36회',              verse: '새 달이 시작된다',                  trigger: () => false },
     { key: '半',   label: '연속 강화 성공 72회',              verse: '달이 반쯤 차올랐다',                trigger: () => false },
@@ -15646,7 +15653,7 @@
     { key: '始祖', label: '선조의 흔적이 깃들었다',         verse: '선조의 길이 새 검에 흐른다',         trigger: () => false },
     { key: '達人', label: '도 5번 달성',                verse: '다섯 길의 흔적이 검에 깃들었다',     trigger: () => false },
     { key: '聖',   label: '도 10번 달성',               verse: '검은 성인의 무게를 가진다',         trigger: () => false },
-    { key: '斷魔', label: '네 종류 그림자 모두 베어냈다',   verse: '검이 모든 어둠을 알아본다',         trigger: () => false },
+    { key: '단마', label: '네 종류 그림자 모두 베어냈다',   verse: '검이 모든 어둠을 알아본다',         trigger: () => false },
     { key: '久',   label: '50번 강화한 오랜 검',            verse: '검에 세월의 빛이 깃들었다',         trigger: () => state.currentSword.enhanceAttempts >= 50 },
     { key: '古',   label: '100번 강화한 아주 오랜 검',      verse: '검은 잊혀진 시대를 기억한다',       trigger: () => state.currentSword.enhanceAttempts >= 100 },
     { key: '讀劍', label: '전조를 능숙하게 읽는 검',        verse: '검과 사람이 같은 하늘을 보았다',     trigger: () => (state.currentSword.omenTotal || 0) >= 10 && (state.currentSword.omenHits || 0) / (state.currentSword.omenTotal || 1) >= 0.8 },
@@ -16169,7 +16176,7 @@
   // === v92 融劍 — 검 합성 (봉인 검 2자루 → 형·명문·혼 계승) ===
   const FUSION_COST = 60;
   // 계승 명문 우선순위 (메타 명문 始祖/達人/聖 제외 — newSword가 자동 부여)
-  const FUSION_PRIORITY = ['道','龍斬','帝斬','鬼斬','刃斬','月斬','風斬','斷魔','本','覺','剛體','百鍊','回魔','初刃','古','久'];
+  const FUSION_PRIORITY = ['道','용참','제참','귀참','인참','월참','풍참','단마','本','覺','剛體','百鍊','回魔','初刃','古','久'];
   let fusionSelected = [];
   function fusionPreview() {
     // 현재 선택된 2검으로 생성될 검의 미리보기 — { form, inscription, soul, startLevel } 또는 null
@@ -16530,7 +16537,7 @@
         }).catch(() => {});
       }
       // v33 傳授: 道 검 봉인 시 희귀 명문 1개 다음 검에 전수
-      const heritageOrder = ['斷魔', '鬼斬', '古', '久'];
+      const heritageOrder = ['단마', '귀참', '古', '久'];
       const heritage = heritageOrder.find(k => ins.includes(k));
       if (heritage) {
         state.heritageInscription = heritage;
@@ -16582,7 +16589,7 @@
     const pMarkDemon = $('preview-mark-demon');
     const pMarkHonest = $('preview-mark-honest');
     if (pMarkWay) pMarkWay.setAttribute('opacity', ins.includes('道') ? '0.85' : '0');
-    if (pMarkDemon) pMarkDemon.setAttribute('opacity', ins.includes('鬼斬') ? '0.9' : '0');
+    if (pMarkDemon) pMarkDemon.setAttribute('opacity', ins.includes('귀참') ? '0.9' : '0');
     if (pMarkHonest) pMarkHonest.setAttribute('opacity', ins.includes('本') ? '0.7' : '0');
     // v70 명명 미리 보기에도 한자 새김
     const pKanji = $('preview-mark-kanji');
@@ -16832,10 +16839,10 @@
 
   function getPrimaryKanji(ins) {
     if (ins.includes('道')) return { k: '道', c: '#fff5c0' };
-    if (ins.includes('鬼斬')) return { k: '鬼', c: '#ff8060' };
+    if (ins.includes('귀참')) return { k: '귀', c: '#ff8060' };
     if (ins.includes('本')) return { k: '本', c: '#a0c0d0' };
     if (ins.includes('聖')) return { k: '聖', c: '#fff5c0' };
-    if (ins.includes('斷魔')) return { k: '斷', c: '#fff5c0' };
+    if (ins.includes('단마')) return { k: '단', c: '#fff5c0' };
     return null;
   }
 
@@ -16844,7 +16851,7 @@
     const ins = s.inscriptions || [];
     const body = buildSwordBody(s.level || 0, s.form, s.playerSeal || '');
     const wayOpacity = ins.includes('道') ? '0.85' : '0';
-    const demonOpacity = ins.includes('鬼斬') ? '0.9' : '0';
+    const demonOpacity = ins.includes('귀참') ? '0.9' : '0';
     const honestOpacity = ins.includes('本') ? '0.7' : '0';
     const kanji = getPrimaryKanji(ins);
     const kanjiSVG = kanji
@@ -17092,7 +17099,7 @@
         const hasWay = ins.includes('道');
         const name = s.name || makeSwordName(s.form, ins, s.level);
         const soulStr = (typeof s.soul === 'number' && s.soul > 0) ? s.soul : '';
-        const keyIns = ins.filter(k => ['道','鬼斬','本','覺','斷魔','逆轉'].includes(k));
+        const keyIns = ins.filter(k => ['道','귀참','本','覺','단마','逆轉'].includes(k));
         // v163 鬪將 — 챔피언 표시
         const champIdx = getChampionSwordIdx();
         const isChampion = (champIdx === originalIdx);
@@ -17632,7 +17639,7 @@
       const defs = document.querySelector('#sword-svg defs').outerHTML;
       // 명문 마크 (정점)
       const wayMark = ins.includes('道') ? '<line x1="50" y1="20" x2="50" y2="138" stroke="#fff5c0" stroke-width="1.6" opacity="0.85" style="filter: drop-shadow(0 0 3px #d4af37);"/>' : '';
-      const demonMark = ins.includes('鬼斬') ? '<circle cx="50" cy="22" r="1.8" fill="#c0392b" opacity="0.9"/>' : '';
+      const demonMark = ins.includes('귀참') ? '<circle cx="50" cy="22" r="1.8" fill="#c0392b" opacity="0.9"/>' : '';
       const honestMark = ins.includes('本') ? '<polygon points="50,12 51.5,14 50,16 48.5,14" fill="#6a8a9a" opacity="0.7"/>' : '';
       const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200" width="200" height="400">' +
         defs +
@@ -18304,13 +18311,13 @@
       '剛體': '+10 단계 도달',
       '回魔': '그림자를 5번 베어내기',
       '道': '최고 단계 +' + MAX_LEVEL + ' 도달',
-      '鬼斬': '검귀 (드문 그림자) 베어내기',
+      '귀참': '검귀 (드문 그림자) 베어내기',
       '覺': '魂 게이지 ' + SOUL_AWAKEN + ' 도달',
       '本': '魂 게이지 ' + SOUL_TRUE + ' 도달',
       '始祖': '첫 道 도달 — 모든 새 검에 자동',
       '達人': '도 5번 도달 — 모든 새 검에 자동',
       '聖': '도 10번 도달 — 모든 새 검에 자동',
-      '斷魔': '4종류 그림자(夜/霧/骨/焰) 모두 베어내기',
+      '단마': '4종류 그림자(夜/霧/骨/焰) 모두 베어내기',
       '久': '한 검으로 50번 강화 시도',
       '古': '한 검으로 100번 강화 시도',
     };
