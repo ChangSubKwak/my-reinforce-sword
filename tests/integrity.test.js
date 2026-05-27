@@ -786,3 +786,15 @@ test('v368: isStuck가 voidPending도 가드 — 파괴~회수창(350ms) 사이 
   const sv = js.match(/function showVoid\([^)]*\)\s*\{([\s\S]{0,120})/);
   assert.ok(sv && /voidPending = false/.test(sv[1]), 'showVoid 진입 시 voidPending 해제');
 });
+
+// UI 재설계(B) 회귀 방지: 1a 검 정보 패널(현세)이 천명 포함 + 1b stage-minimal로 무대 배너 일원화.
+// 무대 배너를 다시 always-on으로 되돌리거나 패널에서 천명이 빠지면(드라마가 다시 묻힘) 잠금.
+test('UI 재설계: 검 정보 패널 천명 통합 + stage-minimal 무대 배너 숨김 (1a/1b)', () => {
+  // 1a — 현세 패널이 천명을 모음 (무대 배너 대체 완결)
+  const rm = js.match(/function renderStatus\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(rm && /천명/.test(rm[1]), '현세 패널에 천명 통합 (1a)');
+  // 1b — stage-minimal이 항상-켜진 배너 4종을 숨김
+  assert.match(html, /body\.stage-minimal[\s\S]*?#destiny-banner/, 'stage-minimal이 천명 배너 숨김');
+  assert.match(html, /#guardian-display\s*\{\s*display:\s*none/, 'stage-minimal이 수호자 표시 숨김');
+  assert.match(js, /classList\.add\('stage-minimal'\)/, '초기화 시 stage-minimal 적용');
+});
