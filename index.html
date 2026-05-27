@@ -5444,10 +5444,10 @@
     const el = $('slay-streak');
     if (!el) return;
     el.classList.remove('tier-1', 'tier-2', 'tier-3');
-    if (slayStreak >= 7) { el.classList.add('tier-3'); el.textContent = '連斬 ' + slayStreak; }
-    else if (slayStreak >= 5) { el.classList.add('tier-2'); el.textContent = '連斬 ' + slayStreak; }
-    else if (slayStreak >= 3) { el.classList.add('tier-1'); el.textContent = '連斬 ' + slayStreak; }
-    else el.textContent = slayStreak >= 1 ? '連斬 ' + slayStreak : '';
+    if (slayStreak >= 7) { el.classList.add('tier-3'); el.textContent = '연참 ' + slayStreak; }
+    else if (slayStreak >= 5) { el.classList.add('tier-2'); el.textContent = '연참 ' + slayStreak; }
+    else if (slayStreak >= 3) { el.classList.add('tier-1'); el.textContent = '연참 ' + slayStreak; }
+    else el.textContent = slayStreak >= 1 ? '연참 ' + slayStreak : '';
   }
   function clearSlayStreak() {
     slayStreak = 0;
@@ -5502,15 +5502,15 @@
     const sc = $('streak-counter');
     if (successStreak >= 8) {
       swordWrap.classList.add('streak-8');
-      if (sc) { sc.textContent = '連 ' + successStreak; sc.classList.add('visible'); }
-      if (successStreak === 8) announceInscription('連 八', '여덟 번이 이어졌다 — 검이 타오른다');
+      if (sc) { sc.textContent = '연 ' + successStreak; sc.classList.add('visible'); }
+      if (successStreak === 8) announceInscription('연 팔', '여덟 번이 이어졌다 — 검이 타오른다');
     } else if (successStreak >= 5) {
       swordWrap.classList.add('streak-5');
-      if (sc) { sc.textContent = '連 ' + successStreak; sc.classList.add('visible'); }
-      if (successStreak === 5) announceInscription('連 五', '다섯 번이 이어졌다 — 기세가 실린다');
+      if (sc) { sc.textContent = '연 ' + successStreak; sc.classList.add('visible'); }
+      if (successStreak === 5) announceInscription('연 오', '다섯 번이 이어졌다 — 기세가 실린다');
     } else if (successStreak >= 3) {
       swordWrap.classList.add('streak-3');
-      if (sc) { sc.textContent = '連 ' + successStreak; sc.classList.add('visible'); }
+      if (sc) { sc.textContent = '연 ' + successStreak; sc.classList.add('visible'); }
     } else {
       if (sc) { sc.classList.remove('visible'); }
     }
@@ -5521,7 +5521,7 @@
     const sc = $('streak-counter');
     if (sc) { sc.classList.remove('visible'); }
   }
-  // v239 連氣 — 흐름의 기운. 연속 성공이 강화 비용을 점진 절감(자기제한·휘발성).
+  // v239 연기 — 흐름의 기운. 연속 성공이 강화 비용을 점진 절감(자기제한·휘발성).
   // 厄運轉機(실패연쇄→성공보너스)의 거울: 한 번의 파괴/하락이 흐름을 razes(clearStreak).
   // 파괴 확률은 손대지 않음 — 도박의 드라마 보존. 효과는 비용 효율에 한정.
   const FLOW_STEP = 0.02, FLOW_CAP = 0.10;  // 단계당 -2%, 최대 -10% (連5)
@@ -5858,7 +5858,7 @@
     }
     oddsFail.innerHTML = failMsg.replace('파괴', '<span class="destroy">파괴</span>');
     const flowR = flowCostReduce();
-    oddsCost.textContent = '조각 ' + fmtNum(actualCost) + ' 소모' + (flowR > 0 ? '  · 連氣 -' + Math.round(flowR * 100) + '%' : '');
+    oddsCost.textContent = '조각 ' + fmtNum(actualCost) + ' 소모' + (flowR > 0 ? '  · 연기 -' + Math.round(flowR * 100) + '%' : '');
 
     // v91 覺悟 — 마음가짐 UI 갱신
     const rrow = $('resolve-row'), resolveDesc = $('resolve-desc');
@@ -10682,8 +10682,8 @@
       if (stars > 0) swordLines.push(line('칠성', stars + ' / 7'));
       if (cs.inscriptions && cs.inscriptions.length) swordLines.push(line('명문', cs.inscriptions.length + ' 종'));
       if (typeof currentMood !== 'undefined') swordLines.push(line('기분 (氣)', currentMood === 'joy' ? '희' : currentMood === 'rage' ? '노' : '정'));
-      if (typeof successStreak !== 'undefined' && successStreak > 0) swordLines.push(line('강화 連', successStreak + '회'));
-      if (typeof slayStreak !== 'undefined' && slayStreak > 0) swordLines.push(line('슬레이 連斬', slayStreak + '회'));
+      if (typeof successStreak !== 'undefined' && successStreak > 0) swordLines.push(line('강화 연', successStreak + '회'));
+      if (typeof slayStreak !== 'undefined' && slayStreak > 0) swordLines.push(line('슬레이 연참', slayStreak + '회'));
       if (typeof failStreak !== 'undefined' && failStreak > 0) swordLines.push(line('실패 streak', failStreak + '회'));
       if (typeof adversityReady !== 'undefined' && adversityReady) swordLines.push(line('逆轉 준비', '활성', '#fff5c0'));
       // UI 재설계 1단계 — 천명(destiny)을 검 정보 패널에 통합 (무대 배너 → 패널 단일화 준비)
@@ -12172,7 +12172,7 @@
           return;
         }
         // 파괴
-        if (successStreak >= 3) log('連 ' + successStreak + '회 streak 종료 — 검이 부서졌다', 'destroy');
+        if (successStreak >= 3) log('연 ' + successStreak + '회 streak 종료 — 검이 부서졌다', 'destroy');
         failStreak = 0; adversityReady = false; resolveOmen('destroy');  // v102
         clearStreak();
         state.totalDestroyed++;
@@ -12206,7 +12206,7 @@
         }
       } else if (failRoll < effectiveDestroy + effectiveDowngrade && !useProtect) {
         // 하락 (v105 落)
-        if (successStreak >= 3) log('連 ' + successStreak + '회 streak 종료 — 하락', 'fail');
+        if (successStreak >= 3) log('연 ' + successStreak + '회 streak 종료 — 하락', 'fail');
         failStreak++; checkAdversity(); resolveOmen('hold');  // v102 (하락도 hold 오멘)
         clearStreak();
         bumpStat('downgraded');
@@ -12223,7 +12223,7 @@
         else SFX.enhanceFail();
       } else {
         // 유지 (또는 방지권 발동)
-        if (successStreak >= 3) log('連 ' + successStreak + '회 streak 종료 — 유지', 'fail');
+        if (successStreak >= 3) log('연 ' + successStreak + '회 streak 종료 — 유지', 'fail');
         clearStreak();
         failStreak++; checkAdversity(); resolveOmen('hold');  // v102
         // v111 刻痕: 방지권이 파괴 roll을 막아낸 경우 흉터 새김
