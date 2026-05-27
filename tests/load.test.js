@@ -269,3 +269,12 @@ test('normalizeState: 명문 키 道→도, 四道→사도 (구 세이브 정�
   assert.deepStrictEqual(st.currentSword.inscriptions, ['도', '본'], '道→도');
   assert.deepStrictEqual(st.sealedSwords[0].inscriptions, ['사도', '도'], '四道→사도, 기존 도 보존');
 });
+
+// 한글화 — 時生(bornTod) 키 한자→한글 마이그레이션
+test('normalizeState: bornTod 朝/夜 → 아침/밤 (時生 저장 키)', () => {
+  const st = { currentSword: { bornTod: '朝' }, sealedSwords: [{ bornTod: '夜' }, { bornTod: '낮' }] };
+  loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 }).normalizeState();
+  assert.strictEqual(st.currentSword.bornTod, '아침', '朝→아침');
+  assert.strictEqual(st.sealedSwords[0].bornTod, '밤', '夜→밤');
+  assert.strictEqual(st.sealedSwords[1].bornTod, '낮', '이미 한글이면 유지');
+});

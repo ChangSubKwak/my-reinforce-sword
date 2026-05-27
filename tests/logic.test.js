@@ -650,7 +650,7 @@ test('generateBiography 통합: 時生·형·정점·性情이 일대기에 결�
   const bio = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath']).generateBiography;
   const sword = {
     form: '직', name: '직검', level: 15, inscriptions: ['도'],
-    slainCount: 8, soul: 80, scars: 1, stars: {}, bornTod: '夜',
+    slainCount: 8, soul: 80, scars: 1, stars: {}, bornTod: '밤',
     levelHistory: [0, 5, 10, 15],
   };
   const text = bio(sword);

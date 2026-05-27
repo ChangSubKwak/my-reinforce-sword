@@ -4417,6 +4417,12 @@
         (Array.isArray(state.sealedSwords) ? state.sealedSwords : []).forEach(s => { if (s) s.inscriptions = mapIns(s.inscriptions); });
         (Array.isArray(state.enshrined) ? state.enshrined : []).forEach(s => { if (s) s.inscriptions = mapIns(s.inscriptions); });
         if (state.heritageInscription && IM[state.heritageInscription]) state.heritageInscription = IM[state.heritageInscription]; }
+      // 한글화 — 時生(bornTod) 키 한자→한글 마이그레이션 (현재검·봉인검·전당검)
+      { const TM = { '朝':'아침','晝':'낮','夕':'저녁','夜':'밤' };
+        const fixTod = o => { if (o && TM[o.bornTod]) o.bornTod = TM[o.bornTod]; };
+        fixTod(state.currentSword);
+        (Array.isArray(state.sealedSwords) ? state.sealedSwords : []).forEach(fixTod);
+        (Array.isArray(state.enshrined) ? state.enshrined : []).forEach(fixTod); }
       if (!state.foesSlain || typeof state.foesSlain !== 'object') state.foesSlain = {};
       if (!Array.isArray(state.enshrined)) state.enshrined = [];  // v118 殿堂
       // v370m XSS 경계 방어 — 검의 사용자 텍스트(검명/血統/메모/寄言)는 회고·계보·詩集 등에서
@@ -13271,10 +13277,10 @@
   // === v153 朝夕 — 실시간 시간대 기반 분위기 ===
   function getTimeOfDay() {
     const h = new Date().getHours();
-    if (h >= 5 && h < 11) return { key: 'morning', name: '朝', label: '아침' };
-    if (h >= 11 && h < 17) return { key: 'day', name: '晝', label: '낮' };
-    if (h >= 17 && h < 21) return { key: 'evening', name: '夕', label: '저녁' };
-    return { key: 'night', name: '夜', label: '밤' };
+    if (h >= 5 && h < 11) return { key: 'morning', name: '아침', label: '아침' };
+    if (h >= 11 && h < 17) return { key: 'day', name: '낮', label: '낮' };
+    if (h >= 17 && h < 21) return { key: 'evening', name: '저녁', label: '저녁' };
+    return { key: 'night', name: '밤', label: '밤' };
   }
   function todSlayRewardBonus() {
     return getTimeOfDay().key === 'night' ? 1.02 : 1.0;
@@ -15130,7 +15136,7 @@
     const name = sword.name || '이름 없는 검';
     // 1. 개막 (form 기반)
     // v252b 時生 — 빚어진 시각을 개막에 녹임
-    const todWord = ({ '朝': '아침', '晝': '한낮', '夕': '저녁', '夜': '깊은 밤' })[sword.bornTod] || '';
+    const todWord = ({ '아침': '아침', '낮': '한낮', '저녁': '저녁', '밤': '깊은 밤' })[sword.bornTod] || '';
     const todPrefix = todWord ? todWord + ', ' : '';
     const formOpening = todPrefix + (({
       '직': '곧은 검 ' + name + '은 바람을 가르며 태어났다.',
