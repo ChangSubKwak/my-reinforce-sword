@@ -15045,7 +15045,7 @@
     if (max <= 0) return { key: 'wa', name: '화', line: '뚜렷한 기질 없이 고요한 균형 속에 살았다.' };
     if (gang === max) return { key: 'gang', name: '강', line: '베기로써 나아가는 기질을 품었다.' };
     if (jeong === max) return { key: 'jeong', name: '정', line: '부서짐을 견디며 지키는 기질을 품었다.' };
-    return { key: 'do', name: '도', line: '위험을 무릅쓰고 높이 오르는 기질을 품었다.' };
+    return { key: 'do', name: '도박', line: '위험을 무릅쓰고 높이 오르는 기질을 품었다.' };
   }
   // v370 率性 — 形(타고난 천성, v6)과 性情(살며 얻은 기질, v247)의 합치/배반을 읽는다.
   // 率性之謂도(中庸) — 제 천성을 따랐는가 거슬렀는가는 도 주제의 핵심. 메커니즘 효과 0,
@@ -17018,8 +17018,8 @@
       const counts = getFormCounts();
       const wayCount = sealed.filter(s => (s.inscriptions || []).includes('도')).length;
       // v254 性情 필터 — 봉인 검을 기질로도 분류
-      const tc = { '剛': 0, '靜': 0, '賭': 0, '和': 0 };
-      sealed.forEach(s => { tc[deriveTemperament(s).name]++; });
+      const tc = { gang: 0, jeong: 0, do: 0, wa: 0 };
+      sealed.forEach(s => { tc[deriveTemperament(s).key]++; });
       const filters = [
         { key: 'all', label: '전체', count: sealed.length },
         { key: '직', label: '직', count: counts['직'] || 0 },
@@ -17027,10 +17027,10 @@
         { key: '중', label: '중', count: counts['중'] || 0 },
         { key: '속', label: '속', count: counts['속'] || 0 },
         { key: '도', label: '도', count: wayCount },
-        { key: '剛', label: '剛', count: tc['剛'] },
-        { key: '靜', label: '靜', count: tc['靜'] },
-        { key: '賭', label: '賭', count: tc['賭'] },
-        { key: '和', label: '和', count: tc['和'] },
+        { key: 'gang', label: '강', count: tc.gang },
+        { key: 'jeong', label: '정', count: tc.jeong },
+        { key: 'do', label: '도박', count: tc.do },
+        { key: 'wa', label: '화', count: tc.wa },
       ].filter(f => f.count > 0 || f.key === 'all');
       filterEl.innerHTML = filters.map(f => {
         const active = legacyFilter === f.key;
@@ -17075,7 +17075,7 @@
         .filter(({s}) => {
           if (legacyFilter === 'all') return true;
           if (legacyFilter === '도') return (s.inscriptions || []).includes('도');
-          if (legacyFilter === '剛' || legacyFilter === '靜' || legacyFilter === '賭' || legacyFilter === '和') return deriveTemperament(s).name === legacyFilter;  // v254 性情 필터
+          if (legacyFilter === 'gang' || legacyFilter === 'jeong' || legacyFilter === 'do' || legacyFilter === 'wa') return deriveTemperament(s).key === legacyFilter;  // v254 性情 필터 (안정 키 기준)
           return s.form === legacyFilter;
         });
       if (filtered.length === 0) {
@@ -17168,7 +17168,7 @@
     // v247c 性情 분포 — 컬렉션의 기질 구성 (개별 검 性情(v247)의 집계 차원)
     const sealedAll = state.sealedSwords || [];
     if (sealedAll.length >= 2) {
-      const dist = { '剛': 0, '靜': 0, '賭': 0, '和': 0 };
+      const dist = { '강': 0, '정': 0, '도박': 0, '화': 0 };
       sealedAll.forEach(s => { dist[deriveTemperament(s).name]++; });
       const tempStr = Object.keys(dist).filter(k => dist[k] > 0).map(k => k + ' ' + dist[k]).join('  ·  ');
       summary += '<br><span style="font-size:10px;color:#a8c0d8;letter-spacing:2px">性情  ' + tempStr + '</span>';

@@ -507,7 +507,7 @@ const temp = s => tempFns.deriveTemperament(s).name;
 test('deriveTemperament: 강(베기)·정(흉터)·도(고강화)·화(균형)', () => {
   assert.strictEqual(temp({ slainCount: 5 }), '강', '베기 지배 → 강');
   assert.strictEqual(temp({ scars: 2 }), '정', '흉터(×2=4) 지배 → 정');
-  assert.strictEqual(temp({ level: 12 }), '도', '위험 영역(+12→5) 지배 → 도');
+  assert.strictEqual(temp({ level: 12 }), '도박', '위험 영역(+12→5) 지배 → 도박');
   assert.strictEqual(temp({ slainCount: 0, scars: 0, level: 5 }), '화', '뚜렷한 기질 없음 → 화');
 });
 test('deriveTemperament: 동점은 강>정>도 우선', () => {

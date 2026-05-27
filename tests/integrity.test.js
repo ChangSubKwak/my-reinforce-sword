@@ -336,6 +336,14 @@ test('회수/도박 핸들러는 조각 지급 전에 rescued 잠금 (더블클�
   assert.ok((slice.match(/rescued = true/g) || []).length >= 2, '회수·도박 두 핸들러 모두 rescued 잠금');
 });
 
+// 한글화 회귀 방지: 性情 분포 카운터·필터는 deriveTemperament().key(안정 영문 키)로 집계해야
+// 한다. 표시 이름(.name)으로 키잉하면 음역 단계에서 이름이 바뀔 때 조용히 깨진다
+// (한글화 1단계에서 tc[.name]가 구 한자 키와 불일치해 분포·필터가 0이 된 회귀).
+test('性情 분포/필터는 deriveTemperament().key로 집계 (표시이름 키잉 회귀 방지)', () => {
+  assert.match(js, /tc\[deriveTemperament\(s\)\.key\]/, '분포 카운터는 .key로 집계');
+  assert.match(js, /deriveTemperament\(s\)\.key === legacyFilter/, '性情 필터는 .key로 비교');
+});
+
 // v371 率性 인식 순간: deriveNaturePath(v370)가 follow/defy일 때 1회만 페이드. naturePathSeen
 // 플래그로 재발화 차단, 명문 cadence(checkInscriptions)에 훅. 점수 효과 0 — 회귀 시 즉발/중복/무발화.
 test('v371: checkNaturePath는 follow/defy 1회성 게이트 + checkInscriptions 훅', () => {
