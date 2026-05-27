@@ -6681,7 +6681,7 @@
     document.body.appendChild(moon);
     // 큰 페이드
     const fade = document.createElement('div');
-    fade.innerHTML = '<div style="font-size:10px;color:rgba(192,64,48,0.85);letter-spacing:12px;margin-bottom:18px">月  식</div>' +
+    fade.innerHTML = '<div style="font-size:10px;color:rgba(192,64,48,0.85);letter-spacing:12px;margin-bottom:18px">월  식</div>' +
                       '<div style="font-size:84px;color:#c04030;letter-spacing:12px;text-shadow:0 0 40px #802820,0 0 80px rgba(192,64,48,0.5);font-weight:200;line-height:1">식</div>' +
                       '<div style="font-size:13px;color:rgba(220,168,168,0.85);letter-spacing:5px;margin-top:24px;font-style:italic;line-height:1.7">달이 가려진 30초 — 검의 영혼이 두 배로 깨어난다</div>' +
                       '<div style="font-size:10px;color:#888;letter-spacing:3px;margin-top:14px">일생의 한 번</div>';
@@ -7407,9 +7407,9 @@
       if (c > maxDay) maxDay = c;
     }
     const header = $('calendar-header');
-    if (header) header.innerHTML = year + '年 ' + (month + 1) + '月 — <span style="color:var(--accent)">' + monthTotal + '</span> 액션 in <span style="color:#88c8a8">' + monthDays + '</span>일';
+    if (header) header.innerHTML = year + '년 ' + (month + 1) + '월 — <span style="color:var(--accent)">' + monthTotal + '</span> 액션 in <span style="color:#88c8a8">' + monthDays + '</span>일';
     // 그리드 — 7 요일 헤더 + 5~6 주
-    const wdays = ['日','月','火','水','木','금','土'];
+    const wdays = ['일','월','화','수','목','금','토'];
     let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">';
     wdays.forEach((w, i) => {
       const color = (i === 0) ? '#c08858' : (i === 6 ? '#88a8c8' : '#888');
@@ -8722,9 +8722,9 @@
   // === v201 配 — 4 시각 테마 (古/月/晨/雪) ===
   const VISUAL_THEMES = [
     { key:'',         name:'고', label:'고풍 — 황금 다크', bg:'#1f1a14', accent:'#e8c454' },
-    { key:'tsuki',    name:'月', label:'달빛 — 푸른 밤',   bg:'#0a0e1a', accent:'#c8d8e8' },
-    { key:'akatsuki', name:'晨', label:'새벽 — 따뜻한 빛', bg:'#1c100a', accent:'#f8c890' },
-    { key:'yuki',     name:'雪', label:'눈 — 은빛 차분',   bg:'#0d0e12', accent:'#d8e0e8' },
+    { key:'tsuki',    name:'월', label:'달빛 — 푸른 밤',   bg:'#0a0e1a', accent:'#c8d8e8' },
+    { key:'akatsuki', name:'신', label:'새벽 — 따뜻한 빛', bg:'#1c100a', accent:'#f8c890' },
+    { key:'yuki',     name:'설', label:'눈 — 은빛 차분',   bg:'#0d0e12', accent:'#d8e0e8' },
   ];
   function applyVisualTheme(themeKey) {
     document.body.classList.remove('theme-tsuki', 'theme-akatsuki', 'theme-yuki');
@@ -9547,7 +9547,7 @@
   <!-- 위 / 세월 row -->
   <text x="30" y="158" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">위</text>
   <text x="50" y="158" font-family="Noto Serif KR, serif" font-size="13" fill="#e8e6dd">${swordGen} 대</text>
-  <text x="${W-30}" y="158" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888" text-anchor="end">歲 月  ${playTime}</text>
+  <text x="${W-30}" y="158" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888" text-anchor="end">세 월  ${playTime}</text>
 
   <!-- 봉인 / 도 / 명 row -->
   <text x="30" y="183" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">봉</text>
@@ -9707,7 +9707,7 @@
     spring: { name:'桃花', color:'#f8a8c0', glow:false, shape:'flower', verse:'복숭아꽃' },
     summer: { name:'螢',   color:'#fff5a0', glow:true,  shape:'dot',    verse:'반딧불' },
     autumn: { name:'紅葉', color:'#d4683a', glow:false, shape:'leaf',   verse:'단풍' },
-    winter: { name:'雪',   color:'#ffffff', glow:false, shape:'snow',   verse:'눈' },
+    winter: { name:'설',   color:'#ffffff', glow:false, shape:'snow',   verse:'눈' },
   };
   let seasonalParticleTimer = null;
   function spawnSeasonalParticle() {
@@ -11143,7 +11143,7 @@
     const total = HIDDEN_ACHIEVEMENTS.length;
     const foundCount = HIDDEN_ACHIEVEMENTS.filter(a => found[a.key]).length;
     let html = '<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">' +
-      '<div style="font-size:11px;color:var(--accent);letter-spacing:5px;margin-bottom:8px;text-align:center">풍 月  ·  ' + foundCount + ' / ' + total + '</div>' +
+      '<div style="font-size:11px;color:var(--accent);letter-spacing:5px;margin-bottom:8px;text-align:center">풍 월  ·  ' + foundCount + ' / ' + total + '</div>' +
       '<div style="font-size:9px;color:var(--dim);text-align:center;margin-bottom:10px;letter-spacing:1px;opacity:0.7">조용한 성취 — 알아본 자만 보는 시</div>';
     html += HIDDEN_ACHIEVEMENTS.map(a => {
       const ok = !!found[a.key];
@@ -12088,7 +12088,7 @@
       addBead();  // v202 염주
       // v35 첫 강화 / 첫 +5(봉인 가능) 마일스톤
       if (state.level === 1) {
-        maybeMilestone('first1', '一', '첫 강화 — 검의 이야기가 시작됩니다');
+        maybeMilestone('first1', '일', '첫 강화 — 검의 이야기가 시작됩니다');
         // v130 音律 — 첫 +1 = 형 시그니처 (검이 깨어남)
         const fNow = state.currentSword && state.currentSword.form;
         if (fNow) setTimeout(() => SFX.formMotif(fNow, 0.80), 400);
