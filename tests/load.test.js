@@ -287,3 +287,12 @@ test('normalizeState: blessingsDiscovered 涅槃→열반 등 (奇緣 발견 보
   assert.strictEqual(st.blessingsDiscovered['은하'], 456, '銀河→은하');
   assert.ok(!('涅槃' in st.blessingsDiscovered) && !('銀河' in st.blessingsDiscovered), '구 한자 키 제거');
 });
+
+// 한글화 — 印(인장) 저장값 음역 (팔레트 글자만, 임의 입력 보존)
+test('normalizeState: userSeal/playerSeal 天→천 등 (인장 음 보존)', () => {
+  const st = { userSeal: ['天', '無', 'X'], playerSeal: '心', currentSword: { playerSeal: '道' } };
+  loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 }).normalizeState();
+  assert.deepStrictEqual(st.userSeal, ['천', '무', 'X'], '팔레트 글자 음역, 비팔레트(X) 보존');
+  assert.strictEqual(st.playerSeal, '심', '心→심');
+  assert.strictEqual(st.currentSword.playerSeal, '道', '팔레트 외(道)는 그대로');
+});

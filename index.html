@@ -4430,6 +4430,15 @@
       // 한글화 — 字(칼날 새김) 저장값 한자→한글 음역 (현재검 engraving, 개인 선택의 음 보존)
       { const EM = { '義':'의','仁':'인','禮':'예','智':'지','信':'신','龍':'용','虎':'호','鳳':'봉','鶴':'학','風':'풍','月':'월','心':'심' };
         if (state.currentSword && EM[state.currentSword.engraving]) state.currentSword.engraving = EM[state.currentSword.engraving]; }
+      // 한글화 — 印(사용자 인장) 저장값 음역 (팔레트 글자만; 임의 입력 글자는 보존)
+      { const SM = { '天':'천','地':'지','人':'인','日':'일','月':'월','星':'성','風':'풍','雨':'우','山':'산','水':'수','石':'석','江':'강','海':'해','土':'토','心':'심','志':'지','義':'의','勇':'용','靜':'정','誠':'성','虛':'허','無':'무','寂':'적','禪':'선','空':'공' };
+        const sc = c => SM[c] || c;
+        if (Array.isArray(state.userSeal)) state.userSeal = state.userSeal.map(sc);
+        if (state.playerSeal) state.playerSeal = sc(state.playerSeal);
+        const fixPS = o => { if (o && o.playerSeal) o.playerSeal = sc(o.playerSeal); };
+        fixPS(state.currentSword);
+        (Array.isArray(state.sealedSwords) ? state.sealedSwords : []).forEach(fixPS);
+        (Array.isArray(state.enshrined) ? state.enshrined : []).forEach(fixPS); }
       if (!state.foesSlain || typeof state.foesSlain !== 'object') state.foesSlain = {};
       if (!Array.isArray(state.enshrined)) state.enshrined = [];  // v118 殿堂
       // v370m XSS 경계 방어 — 검의 사용자 텍스트(검명/血統/메모/寄言)는 회고·계보·詩集 등에서
@@ -9295,10 +9304,10 @@
 
   // === v187 印 — 사용자 인장 (한자 2자 서명) ===
   const SEAL_HANJI = {
-    '天': ['天','日','月','星','風','雨'],
-    '地': ['山','水','石','江','海','土'],
-    '人': ['心','志','義','勇','靜','誠'],
-    '도': ['도','虛','無','寂','禪','空'],
+    '천': ['천','일','월','성','풍','우'],
+    '지': ['산','수','석','강','해','토'],
+    '인': ['심','지','의','용','정','성'],
+    '도': ['도','허','무','적','선','공'],
   };
   let sealEditing = [];  // [c1, c2] during editing
   function renderSealPalette() {
