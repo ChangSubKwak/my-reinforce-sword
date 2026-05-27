@@ -1099,8 +1099,8 @@ test('computeMindChart: 무행동(zero) 상태도 NaN 없이 0% (|| 1 가드)', 
     assert.strictEqual(b.pct, 0, b.name + ' = 0%');
   });
   const f = loadFunctions(['computeMindChart'], { state: { stats: { slainNormal: 3 }, gambleStats: { win: 1 } } }).computeMindChart();
-  assert.strictEqual(f.find(b => b.name.startsWith('戰')).pct, 75, '3/(3+1)=75%');
-  assert.strictEqual(f.find(b => b.name.startsWith('賭')).pct, 25, '1/4=25%');
+  assert.strictEqual(f.find(b => b.name.startsWith('전')).pct, 75, '3/(3+1)=75%');
+  assert.strictEqual(f.find(b => b.name.startsWith('도')).pct, 25, '1/4=25%');
 });
 
 test('deriveNameOrigin: 이름의 유래 서사 (makeSwordName 우선순위 거울, v311)', () => {
@@ -1541,7 +1541,7 @@ test('v371d generateBiography: 달성한 天命은 일대기에 줄로 나타나
   const fns = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { DESTINIES });
   const base = { form: '직', level: 13, inscriptions: [], slainCount: 0, soul: 0, scars: 0, stars: {}, name: '시험검' };
   const fulfilled = fns.generateBiography(Object.assign({}, base, { destiny: 'reach13', destinyFulfilled: true }));
-  assert.match(fulfilled, /천명 「極의 천명」을 이루었다/, '달성한 天命이 일대기에 결합');
+  assert.match(fulfilled, /천명 「극의 천명」을 이루었다/, '달성한 天命이 일대기에 결합');
   const unfulfilled = fns.generateBiography(Object.assign({}, base, { destiny: 'reach13', destinyFulfilled: false }));
   assert.ok(!/천명 「/.test(unfulfilled), '미달성 검은 天命 줄 없음');
   const noDestiny = fns.generateBiography(base);  // 하위호환: destiny 필드 없는 구 검
