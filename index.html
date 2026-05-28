@@ -3556,7 +3556,7 @@
   </div>
 </div>
 
-<!-- v196 週報 — 매주 자동 리포트 -->
+<!-- v196 주보 — 매주 자동 리포트 -->
 <div class="modal" id="weekly-report-modal">
   <div class="modal-box" role="dialog" aria-modal="true" style="max-width: 460px;">
     <div id="weekly-report-content"></div>
@@ -4186,8 +4186,8 @@
     streakMilestonesShown: {},  // v191 練日 — 7/30/100/365 마일스톤 표시 여부
     festivalsGreetedYear: {},   // v192 절 — 명절별 마지막 인사한 년 ('01-01': '2026')
     hourActivity: new Array(24).fill(0),  // v195 時計 — 24시간 활동 카운트
-    lastReportWeek: '',         // v196 週報 — 마지막 리포트 ISO 주차 (e.g. '2026-W20')
-    lastReportSnapshot: null,   // v196 週報 — 마지막 스냅샷 stats
+    lastReportWeek: '',         // v196 주보 — 마지막 리포트 ISO 주차 (e.g. '2026-W20')
+    lastReportSnapshot: null,   // v196 주보 — 마지막 스냅샷 stats
     eclipseSeenAt: 0,           // v197 월식 — 첫 영구 1회 발현 timestamp (0이면 미발현)
     oracleResultDate: '',       // v198 점 — 오늘 점 받은 날짜
     oracleResultIdx: null,      // v198 점 — 오늘 점 결과 인덱스
@@ -4197,7 +4197,7 @@
     lastSenDate: '',            // v211 첨 — 마지막 댓가지 추첨 날짜
     lastSenResult: null,        // v211 첨 — 마지막 결과 객체
     lastWeekendGreeting: '',    // v212 휴 — 마지막 주말 인사 날짜
-    lastThreeRitualsDate: '',   // v214 三禮 — 일일 3 의식 완성 날짜
+    lastThreeRitualsDate: '',   // v214 삼례 — 일일 3 의식 완성 날짜
     todaySheet: null,           // v215 帖 — 오늘 24시간 시트 {date, hours[24]}
     discoveredEggs: {},         // v216 비 — 발견된 이스터에그 {key: timestamp}
     activityByDate: {},         // v217 暦 — 일자별 활동 카운트 {YYYY-MM-DD: count}
@@ -4551,7 +4551,7 @@
     }
   }
 
-  let lastSeenSeason = null;  // v157 季變
+  let lastSeenSeason = null;  // v157 계변
   function applySeason() {
     const s = getSeason();
     const body = document.body;
@@ -4648,7 +4648,7 @@
         osc.start(now); osc.stop(now + 3.1);
       }
     }
-    log('季變 — ' + verse, 'info');
+    log('계변 — ' + verse, 'info');
   }
 
   // === v121 결계 — 신성 보호 공간 (조각 1000+ 시 활성 가능, 비용 ×3, 파괴 차단) ===
@@ -5442,7 +5442,7 @@
     if (el) {
       el.classList.remove('mood-joy', 'mood-rage');
       el.classList.add('mood-calm');
-      el.textContent = '静';
+      el.textContent = '정';
       el.style.opacity = '0.4';
     }
   }
@@ -5707,7 +5707,7 @@
     renderWayProgress();
     renderResonanceDisplay();  // v178 공명
     syncWaterMirror();  // v182 水鏡
-    applyMutationVisualToSword();  // v199 稟賦 — 검 mutation 시각 glow
+    applyMutationVisualToSword();  // v199 품부 — 검 mutation 시각 glow
     applyEngravingToSword();  // v203 자 — 사용자 한자 새김 override
     renderAdvice();  // v209 助言 — 상태 기반 미세 안내
     // v208 염화 — 蘭 plucked 상태 토글 (오늘 이미 꺾었으면)
@@ -6268,7 +6268,7 @@
         });
       }
     } catch (e) {}
-    log('老師 — ' + t.verse, 'success');
+    log('노사 — ' + t.verse, 'success');
   }
 
   // === v195 時計 — 24시간 활동 분포 ===
@@ -6506,7 +6506,7 @@
     const wrap = $('user-poem-content');
     if (!wrap) return;
     const lines = composeUserPoem();
-    const daoTitle = (state.daoTitle && state.daoTitle.title) || '無 명';
+    const daoTitle = (state.daoTitle && state.daoTitle.title) || '무 명';
     let html = '<div style="text-align:center;font-family:\'Noto Serif KR\',serif">';
     html += '<div style="font-size:11px;letter-spacing:8px;color:rgba(212,175,55,0.7);margin-bottom:8px">오  시</div>';
     html += '<div style="font-size:14px;letter-spacing:3px;color:#fff5c0;margin-bottom:22px;font-style:italic">' + daoTitle + '</div>';
@@ -6818,7 +6818,7 @@
     html += '</div>';
     $('weekly-report-content').innerHTML = html;
     $('weekly-report-modal').classList.add('active');
-    log('週報 — ' + prevWeek + ' · ' + summary, 'success');
+    log('주보 — ' + prevWeek + ' · ' + summary, 'success');
   }
 
   // === v233 至高 — 역대 최고 강화도 갱신 축하 ===
@@ -6862,7 +6862,7 @@
         });
       }
     } catch(e) {}
-    log('至高 +' + lv + ' — 새로운 정점 (영혼 +3)', 'success');
+    log('지고 +' + lv + ' — 새로운 정점 (영혼 +3)', 'success');
   }
 
   // === v231 劍夢 — 명상 중 검의 꿈 ===
@@ -6901,7 +6901,7 @@
     const dream = composeSwordDream();
     if (!dream) return;
     const el = document.createElement('div');
-    el.innerHTML = '<div style="font-size:8px;color:rgba(168,160,200,0.5);letter-spacing:8px;margin-bottom:8px">검  夢</div>' +
+    el.innerHTML = '<div style="font-size:8px;color:rgba(168,160,200,0.5);letter-spacing:8px;margin-bottom:8px">검  몽</div>' +
                     '<div style="font-size:11px;color:rgba(200,192,224,0.75);letter-spacing:3px;line-height:1.7;font-style:italic">' + dream + '</div>';
     el.style.cssText = 'position:fixed;top:30%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:1600;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;max-width:440px;text-shadow:0 0 12px rgba(0,0,0,0.6)';
     document.body.appendChild(el);
@@ -7024,7 +7024,7 @@
   }
   function showEternityFade(title, points) {
     const el = document.createElement('div');
-    el.innerHTML = '<div style="font-size:10px;color:rgba(180,160,232,0.7);letter-spacing:12px;margin-bottom:18px">無  극</div>' +
+    el.innerHTML = '<div style="font-size:10px;color:rgba(180,160,232,0.7);letter-spacing:12px;margin-bottom:18px">무  극</div>' +
                     '<div style="font-size:88px;color:#c8b8f0;letter-spacing:14px;text-shadow:0 0 40px #c8b8f0,0 0 80px rgba(180,160,232,0.5);font-weight:200;line-height:1">' + title + '</div>' +
                     '<div class="verse-line">영겁 ' + points + ' — 도를 거듭 넘었다</div>' +
                     '<div style="font-size:11px;color:#c8b8f0;letter-spacing:3px;margin-top:12px">글로벌 강화 +' + (eternityBonus()*100).toFixed(1) + '%</div>';
@@ -7243,7 +7243,7 @@
     if (indicator) indicator.textContent = '권 ' + (bookPageIdx + 1) + ' / ' + BOOK_PAGES;
     const wrap = $('book-page-content');
     if (!wrap) return;
-    const daoTitle = (state.daoTitle && state.daoTitle.title) || '無 명';
+    const daoTitle = (state.daoTitle && state.daoTitle.title) || '무 명';
     const sealed = (state.sealedSwords || []).length;
     const ways = (state.stats && state.stats.wayReached) || 0;
     const enhAttempts = (state.stats && state.stats.enhanceAttempts) || 0;
@@ -7294,7 +7294,7 @@
       }
     } else if (bookPageIdx === 2) {
       // 卷三 — 도
-      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">권  三  ─  도</div>';
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">권  삼  ─  도</div>';
       const wayswords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).indexOf('도') >= 0);  // v359 — 전당 도 검도 劍士録에 (display undercount 수정)
       if (wayswords.length === 0) {
         html += '<div style="text-align:center;padding:30px;color:#888;font-style:italic;font-size:11px;letter-spacing:3px">아직 도에 닿지 않았다 — +15까지 검을 강화하라</div>';
@@ -7589,8 +7589,8 @@
   }
   function showThreeRitualsFade() {
     const el = document.createElement('div');
-    el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.7);letter-spacing:10px;margin-bottom:18px">三  예  ─  원  만</div>' +
-                    '<div style="font-size:84px;color:#fff5c0;letter-spacing:14px;text-shadow:0 0 36px #fff5c0,0 0 72px rgba(212,175,55,0.5);font-weight:200;line-height:1">三</div>' +
+    el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.7);letter-spacing:10px;margin-bottom:18px">삼  예  ─  원  만</div>' +
+                    '<div style="font-size:84px;color:#fff5c0;letter-spacing:14px;text-shadow:0 0 36px #fff5c0,0 0 72px rgba(212,175,55,0.5);font-weight:200;line-height:1">삼</div>' +
                     '<div class="verse-line">하루의 세 의식이 모였다 — 점·첨·염화</div>' +
                     '<div class="reward-label">호흡 ×2 + ' + (state.hasSword ? '영혼 +10' : '조각 +30') + '</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5900;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:40px 60px;background:radial-gradient(ellipse,rgba(15,15,22,0.94) 0%,rgba(15,15,22,0.6) 60%,transparent 90%);max-width:560px';
@@ -7616,7 +7616,7 @@
         });
       }
     } catch(e) {}
-    log('三禮 원만 — 점·첨·염화 모두 완성 (호흡 ×2 + ' + (state.hasSword ? '영혼 +10' : '조각 +30') + ')', 'success');
+    log('삼례 원만 — 점·첨·염화 모두 완성 (호흡 ×2 + ' + (state.hasSword ? '영혼 +10' : '조각 +30') + ')', 'success');
   }
 
   // === v230 劍響 — 봉인 검 전체 합주 ===
@@ -7680,7 +7680,7 @@
       concertPlaying = false;
       if (btn) { btn.textContent = '다시 연주'; btn.disabled = false; }
     }, finaleAt + 1500);
-    log('劍響 — ' + sealed.length + '자루 검의 합주', 'success');
+    log('검향 — ' + sealed.length + '자루 검의 합주', 'success');
   }
 
   // === v227 객검 — 검 공유 코드 ===
@@ -8034,7 +8034,7 @@
       }
     } catch(e) {}
     log('첨 ' + picked.kanji + ' — ' + picked.verse + ' (' + picked.label + ')', 'success');
-    checkThreeRituals();  // v214 三禮
+    checkThreeRituals();  // v214 삼례
   }
 
   // === v210 자서 — 사용자 자유 일기 ===
@@ -8212,7 +8212,7 @@
     save();
     // 페이드
     const el = document.createElement('div');
-    el.innerHTML = '<div style="font-size:9px;color:rgba(232,168,192,0.7);letter-spacing:8px;margin-bottom:12px">拈  화</div>' +
+    el.innerHTML = '<div style="font-size:9px;color:rgba(232,168,192,0.7);letter-spacing:8px;margin-bottom:12px">념  화</div>' +
                     '<div style="font-size:14px;color:#f8d4d8;letter-spacing:4px;line-height:1.7;font-style:italic">' + verse + '</div>' +
                     '<div style="font-size:9px;color:rgba(168,200,168,0.7);letter-spacing:3px;margin-top:12px">' + (state.hasSword ? '영혼 +5' : '조각 +5') + '</div>';
     el.style.cssText = 'position:fixed;top:38%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5300;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:24px 40px;background:radial-gradient(ellipse,rgba(20,15,18,0.85) 0%,rgba(20,15,18,0.3) 70%,transparent 95%);max-width:520px';
@@ -8259,7 +8259,7 @@
       }
     } catch(e) {}
     log('염화 — ' + verse, 'success');
-    checkThreeRituals();  // v214 三禮
+    checkThreeRituals();  // v214 삼례
   }
 
   // === v207 정진 — 한 세션 머무름 마일스톤 ===
@@ -8294,7 +8294,7 @@
   }
   function showPrecisionFade(m, rewardLabel) {
     const el = document.createElement('div');
-    el.innerHTML = '<div style="font-size:10px;color:rgba(168,200,168,0.7);letter-spacing:10px;margin-bottom:18px">精  進</div>' +
+    el.innerHTML = '<div style="font-size:10px;color:rgba(168,200,168,0.7);letter-spacing:10px;margin-bottom:18px">정진</div>' +
                     '<div style="font-size:84px;color:#a8c8a8;letter-spacing:14px;text-shadow:0 0 36px #a8c8a8,0 0 72px rgba(168,200,168,0.5);font-weight:200;line-height:1">' + m.kanji + '</div>' +
                     '<div class="verse-line">' + m.label + '</div>' +
                     '<div style="font-size:11px;color:#88c8a8;letter-spacing:3px;margin-top:14px">' + rewardLabel + '</div>';
@@ -8472,7 +8472,7 @@
       { opacity: 0, transform: 'translateX(-50%) translateY(-12px)' }
     ], { duration: 5500, easing: 'ease-in-out' });
     setTimeout(() => el.remove(), 5600);
-    log('起念 — ' + statement, 'info');
+    log('기념 — ' + statement, 'info');
   }
 
   // === v203 字 — 검 칼날 한자 새김 (사용자 선택) ===
@@ -8570,7 +8570,7 @@
   function showBeadMilestone(m) {
     const el = document.createElement('div');
     const rewardLabel = m.reward.type === 'shards' ? ('조각 +' + m.reward.amount) : ('영혼 +' + m.reward.amount);
-    el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.65);letter-spacing:10px;margin-bottom:18px">념  珠</div>' +
+    el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.65);letter-spacing:10px;margin-bottom:18px">념  주</div>' +
                     '<div style="font-size:88px;color:#fff5c0;letter-spacing:14px;text-shadow:0 0 38px #fff5c0,0 0 76px rgba(212,175,55,0.5);font-weight:200;line-height:1">' + m.kanji + '</div>' +
                     '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:24px;font-style:italic">' + m.verse + '</div>' +
                     '<div class="reward-label">' + rewardLabel + '</div>';
@@ -8664,7 +8664,7 @@
         });
       }
     } catch(e) {}
-    log('稟賦 ' + mut.name + ' — ' + mut.verse, 'success');
+    log('품부 ' + mut.name + ' — ' + mut.verse, 'success');
   }
   function mutationVisualGlow() {
     if (!state.hasSword || !state.currentSword || !state.currentSword.mutation) return '';
@@ -8832,7 +8832,7 @@
       }
     } catch(e) {}
     log('점 ' + oracle.kanji + ' — ' + oracle.verse, 'info');
-    checkThreeRituals();  // v214 三禮
+    checkThreeRituals();  // v214 삼례
   }
 
   // === v193 日言 — 매일 변하는 격언 ===
@@ -9490,7 +9490,7 @@
   // === v180 검명편 — 검명함 (identity card SVG) ===
   function buildMeishiSVG() {
     const W = 480, H = 320;
-    const daoTitle = (state.daoTitle && state.daoTitle.title) || '無 명';
+    const daoTitle = (state.daoTitle && state.daoTitle.title) || '무 명';
     const daoSubtitle = (state.daoTitle && state.daoTitle.subtitle) || '검의 길';
     const pathProgress = Math.min(100, Math.floor((state.pathProgress || 0) * 100) / 100);
     const swordGen = state.swordGeneration || 1;
@@ -10209,7 +10209,7 @@
       state.ultimateAchieved = true;
       state.ultimateAchievedAt = Date.now();
       playUltimateCeremony();
-      setTimeout(() => maybeMaster('firstUltimate'), 8000);  // v181 老師
+      setTimeout(() => maybeMaster('firstUltimate'), 8000);  // v181 노사
       save();
       return true;
     }
@@ -12005,7 +12005,7 @@
     // v216 秘 — 11:11 + rapid 체크
     checkEgg11_11();
     recordRapidAction();
-    if (((state.stats && state.stats.enhanceAttempts) || 0) === 100) setTimeout(() => maybeMaster('hundredEnhance'), 1500);  // v181 老師
+    if (((state.stats && state.stats.enhanceAttempts) || 0) === 100) setTimeout(() => maybeMaster('hundredEnhance'), 1500);  // v181 노사
     consumeMatsu();  // v119 천년송 카운트 소모
     consumeDawnBonus();  // v126 여명 — 보너스 카운트 소모
     consumeLightningBonus();  // v147 뇌 — 다음 강화 +10% 1회 소모
@@ -12036,7 +12036,7 @@
       state.level++;
       if (state.level > state.bestLevel) {
         state.bestLevel = state.level;
-        if (state.level >= 4) showZenith(state.level);  // v233 至高 — +4 이상부터 신기록 축하
+        if (state.level >= 4) showZenith(state.level);  // v233 지고 — +4 이상부터 신기록 축하
       }
       // v135 鍛 — 티어 전환 의식 (1→2, 2→3, 3→4, 4→5)
       const tierBefore = getTier(state.level - 1);
@@ -13870,7 +13870,7 @@
       // v125 연참 — 슬레이 streak 증가 + 단계별 보너스
       slayStreak++;
       updateRecord('maxSlayStreak', slayStreak);  // v156
-      const newTierLabel = slayStreak === 3 ? '연참 三' : slayStreak === 5 ? '연참 五' : slayStreak === 7 ? '연참 七' : null;
+      const newTierLabel = slayStreak === 3 ? '연참 삼' : slayStreak === 5 ? '연참 五' : slayStreak === 7 ? '연참 七' : null;
       if (newTierLabel) {
         const tierMsg = slayStreak === 3 ? '세 번 이어졌다 — 검의 흐름이 살아난다' :
                         slayStreak === 5 ? '다섯 번 — 보호권 +1' :
@@ -15544,7 +15544,7 @@
       if (!state.recordFirstWayGen) state.recordFirstWayGen = state.swordGeneration || 1;  // v224 劍士録
       setTimeout(() => announceInscription('시조', '첫 도 달성 — 선조의 길이 열렸다'), 5800);
     }
-    if (((state.stats && state.stats.wayReached) || 0) === 5) setTimeout(() => maybeMaster('fiveWays'), 6800);  // v181 老師
+    if (((state.stats && state.stats.wayReached) || 0) === 5) setTimeout(() => maybeMaster('fiveWays'), 6800);  // v181 노사
     log('🏛 전당 — ' + swordName + ' 박물관에 영구 진열되었다 (강화 성공 +1.5%)', 'success');
     recordEvent('전당 진열 ' + swordName);
     captureRubbing('firstEnshrine', { level: lv, form, inscriptions: ins.slice(), soul: state.currentSword.soul || 0 });  // v136
@@ -16072,7 +16072,7 @@
     // v123 계보 — 세대 카운터 증가 + 마일스톤 체크
     const prevGen = state.swordGeneration || 0;
     state.swordGeneration = prevGen + 1;
-    if (state.swordGeneration === 30) setTimeout(() => maybeMaster('thirtyGens'), 1800);  // v181 老師
+    if (state.swordGeneration === 30) setTimeout(() => maybeMaster('thirtyGens'), 1800);  // v181 노사
     // v89 시련의 혼: 시작 강화 + 영혼 보너스
     let startLv = startBonus() + trialStartLevelBonus();
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
@@ -16262,7 +16262,7 @@
     SFX.forge();
     spawnLegacyRays(24);
     log('융검 — ' + nameA + ' + ' + nameB + ' → 새 검 (형·명문·혼 계승)', 'success');
-    setTimeout(() => maybeMaster('firstFusion'), 2200);  // v181 老師
+    setTimeout(() => maybeMaster('firstFusion'), 2200);  // v181 노사
     recordEvent('융검 ' + nameA + ' + ' + nameB);
     if (p.inscription) {
       setTimeout(() => announceInscription(p.inscription, '두 검의 유산이 깃들었다'), 500);
@@ -16640,7 +16640,7 @@
       }
     }
     // 미리 보기: 형 + 명문 + 회수 + 시구
-    const formStr = form ? '<span style="color:var(--accent);letter-spacing:4px">' + form + '</span>' : '<span style="color:var(--dim)">無</span>';
+    const formStr = form ? '<span style="color:var(--accent);letter-spacing:4px">' + form + '</span>' : '<span style="color:var(--dim)">무</span>';
     const insStr = ins.length
       ? '<span style="color:var(--accent);opacity:0.85;letter-spacing:3px">' + ins.join(' · ') + '</span>'
       : '<span style="color:var(--dim)">— 명문 없음 —</span>';
@@ -18492,7 +18492,7 @@
     if (fourW) return '四도의 검사';
     if (ways >= 5) return '오도사 — 다섯 길의 사범';
     if (origins >= 4) return '斷魔者 — 모든 어둠을 베다';
-    if (ways >= 3) return '三도의 검수';
+    if (ways >= 3) return '삼도의 검수';
     if (ways >= 1) return '도를 본 자';
     if (gen >= 25) return '천단사 — 천 번 두드린 장인';
     if (gen >= 10) return '백련종 — 백 번 단련하는 자';
@@ -19075,7 +19075,7 @@
   setInterval(checkFestival, 60 * 60 * 1000);  // 자정 경계 자동
   renderDailySaying();       // v193 日言 — 매일의 격언 표시
   setInterval(renderDailySaying, 60 * 60 * 1000);  // 자정 경계 자동 갱신
-  checkWeeklyReport();       // v196 週報 — 주차 변경 시 자동 리포트
+  checkWeeklyReport();       // v196 주보 — 주차 변경 시 자동 리포트
   setInterval(maybeTriggerEclipse, 60 * 1000);  // v197 월식 — 매분 0.5% 체크
   startHeartbeat();  // v205 心拍 — ECG 맥박 시작
   // v208 염화 — 蘭 클릭 가능 (조건 만족 시)
