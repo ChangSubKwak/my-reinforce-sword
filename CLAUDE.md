@@ -13,12 +13,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 새 인스턴스가 첫 5분 안에 잡을 그림:
 
 - **파일**: `index.html` (인라인) + `server.js` (Express 정적 서버) + `package.json` + `render.yaml` + `supabase/schema.sql`. 누적 약 700KB 인라인 JS / 약 928KB index.html (단일 파일 — 읽기 전 규모 인지). git 추적 (`main` 브랜치, GitHub remote). Render Web Service 배포 가능, Supabase 연결.
-- **루프**: 강화(`enhance`) → 파괴 시 5초 회수(`showVoid`) → 강화 성공 시 그림자(`maybeTriggerChallenge`, 4종 변종) → 베기(`slay`) → 자발 봉인(`sealSword`, 道 검은 컷씬) → 새 검(`newSword`) + 명문(`checkInscriptions`) + 첫 강화 시 검의 形(`decideForm`).
-- **결정 차원**: 강화 / 방지권 / 회수 / 베기 / 물러남 / 봉인 / 숫돌(砥) / 영석(靈).
+- **루프**: 강화(`enhance`) → 파괴 시 5초 회수(`showVoid`) → 강화 성공 시 그림자(`maybeTriggerChallenge`, 4종 변종) → 베기(`slay`) → 자발 봉인(`sealSword`, 도 검은 컷씬) → 새 검(`newSword`) + 명문(`checkInscriptions`) + 첫 강화 시 검의 형(`decideForm`).
+- **결정 차원**: 강화 / 방지권 / 회수 / 베기 / 물러남 / 봉인 / 숫돌 / 영석.
 - **상태 진입점**: `let state = {...}` 한 객체. `localStorage['reinforce_sword_v1']`. 음소거는 별도 키 `reinforce_sword_muted`.
 - **휘발성 상태**: 모듈 스코프 변수 — `challenge`, `rescueWindow`, `inscribeQueue`, `audioCtx`, `muted`. 새로고침 시 사라짐 (의도) / muted는 별도 보존.
 - **렌더 모델**: 매 액션 후 `save()` → `render()` 풀 리렌더. 부분 업데이트 없음.
-- **시각 톤** (`:root` 라이브 값): `--bg #1f1a14` / `--bg-2 #2a221b` / `--fg #f0ece0` / `--dim #968d80` / `--accent #e8c454` / `--danger #d04830` / `--safe #6a9a6a` / `--line #3a322a`. 한국어 + 한자 미니멀, 자간으로 호흡. 색은 항상 CSS 변수(var(--accent) 등) 사용 — 하드코딩 hex(#d4af37 등 레거시)는 테마 전환을 안 따르므로 금지. theme-* 변형이 --accent 등을 재정의.
+- **시각 톤** (`:root` 라이브 값): `--bg #1f1a14` / `--bg-2 #2a221b` / `--fg #f0ece0` / `--dim #968d80` / `--accent #e8c454` / `--danger #d04830` / `--safe #6a9a6a` / `--line #3a322a`. 한국어 미니멀(한자→한글 음역 마이그레이션 ~99.5% 완료, 시스템 카탈로그의 한자명은 개념·역사 참조), 자간으로 호흡. 색은 항상 CSS 변수(var(--accent) 등) 사용 — 하드코딩 hex(#d4af37 등 레거시)는 테마 전환을 안 따르므로 금지. theme-* 변형이 --accent 등을 재정의.
 - **소리**: Web Audio API 톤 합성, 외부 파일 0. 첫 사용자 인터랙션 후 `audioCtx` lazy 시작. M키 음소거.
 
 ## 개발 / 실행
