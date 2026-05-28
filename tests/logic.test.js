@@ -444,6 +444,17 @@ test('successChanceNow: [0,1] 클램프', () => {
     assert.strictEqual(preview([A, B], [0], 100), null);
     assert.strictEqual(preview([A, B], [], 100), null);
   });
+  // 야차참·역전이 FUSION_PRIORITY에 빠져 융합 시 silently lost되던 narrative drop 차단
+  test('fusionPreview: 야차참(특수 그림자) 계승 — 본보다 우선 (prestige 일치)', () => {
+    const Y = { level: 8, form: '직', soul: 0, inscriptions: ['야차참'] };
+    const C = { level: 8, form: '곡', soul: 0, inscriptions: ['본'] };
+    assert.strictEqual(preview([Y, C], [0, 1], 50).inscription, '야차참', '야차참이 본보다 우선 (귀참 동등 희귀)');
+  });
+  test('fusionPreview: 역전(厄運轉機) 계승 — 강체/백련보다 우선', () => {
+    const R = { level: 5, form: '직', soul: 0, inscriptions: ['역전'] };
+    const D = { level: 5, form: '직', soul: 0, inscriptions: ['강체', '백련'] };
+    assert.strictEqual(preview([R, D], [0, 1], 50).inscription, '역전', '역전이 강체/백련보다 우선 (마스터 prestige)');
+  });
 })();
 
 // ─────────────────────────────────────────────────────────────

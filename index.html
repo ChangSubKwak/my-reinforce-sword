@@ -16211,8 +16211,10 @@
 
   // === v92 융검 — 검 합성 (봉인 검 2자루 → 형·명문·혼 계승) ===
   const FUSION_COST = 60;
-  // 계승 명문 우선순위 (메타 명문 始祖/달인/聖 제외 — newSword가 자동 부여)
-  const FUSION_PRIORITY = ['도','용참','제참','귀참','인참','월참','풍참','단마','본','각성','강체','백련','회마','초인','고','구'];
+  // 계승 명문 우선순위 (메타 명문 始祖/달인/聖 제외 — newSword가 자동 부여).
+  // 야차참(특수 그림자 처치, 귀참과 동등 희귀) + 역전(逆轉, 厄運轉機 마스터)이 누락되어
+  // 융합 시 이 두 prestige 명문이 silently 사라지던 narrative drop을 차단.
+  const FUSION_PRIORITY = ['도','용참','제참','귀참','야차참','인참','월참','풍참','단마','역전','본','각성','강체','백련','회마','초인','고','구'];
   let fusionSelected = [];
   function fusionPreview() {
     // 현재 선택된 2검으로 생성될 검의 미리보기 — { form, inscription, soul, startLevel } 또는 null
