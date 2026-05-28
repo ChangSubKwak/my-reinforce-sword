@@ -18446,12 +18446,15 @@
     const s = state.stats || {};
     const personas = [];
     if ((s.slainDemon || 0) >= 3) personas.push({ name: '귀살자', desc: '검귀를 거듭 베어낸 자' });
+    if ((s.yakshaSlain || 0) >= 3) personas.push({ name: '야차 사냥꾼', desc: '밤의 야차를 거듭 베어낸 자' });
     if ((s.sealed || 0) >= 10) personas.push({ name: '봉인가', desc: '10자루 이상 봉인한 자' });
     if ((s.wayReached || 0) >= 1) personas.push({ name: '도의 추구자', desc: '최고 단계에 이른 적이 있다' });
     if ((s.wayReached || 0) >= 5) personas.push({ name: '달인 (달인)', desc: '도를 다섯 번 지났다' });
     if ((s.rescued || 0) >= 5) personas.push({ name: '구원자', desc: '검의 파편을 거듭 회수' });
     if ((state.totalDestroyed || 0) >= 10) personas.push({ name: '도박꾼', desc: '많은 검을 잃었지만 계속 도전한다' });
     if ((s.fled || 0) >= 10) personas.push({ name: '바람의 검', desc: '도전에서 자주 물러난다' });
+    if ((s.stalemate || 0) >= 5) personas.push({ name: '평화의 검사', desc: '대치로 그림자를 거듭 돌려보낸 자' });
+    if ((s.downgraded || 0) >= 15) personas.push({ name: '단련의 인내자', desc: '거듭 하락하여도 다시 두드린다' });
     if (state.sealedSwords && state.sealedSwords.length === 0 && (state.bestLevel || 0) >= 8) {
       personas.push({ name: '집착자', desc: '한 자루의 검을 깊이 키운다' });
     }
