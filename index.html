@@ -17135,7 +17135,9 @@
         const hasWay = ins.includes('도');
         const name = s.name || makeSwordName(s.form, ins, s.level);
         const soulStr = (typeof s.soul === 'number' && s.soul > 0) ? s.soul : '';
-        const keyIns = ins.filter(k => ['도','귀참','본','각성','단마','역전'].includes(k));
+        // 명예 뱃지(prestige inscriptions): 정점/베기 영웅·각성·역전 + 名(NAMED_FOES) 보스 처치 + 야차.
+        // 이전엔 NAMED_FOES inscription이 빠져 龍을 벤 검(용참)이 다른 prestige 없으면 무명으로 표시되던 UX 비대칭.
+        const keyIns = ins.filter(k => ['도','귀참','야차참','본','각성','단마','역전'].includes(k) || NAMED_FOES.some(f => f.inscription === k));
         // v163 투장 — 챔피언 표시
         const champIdx = getChampionSwordIdx();
         const isChampion = (champIdx === originalIdx);
