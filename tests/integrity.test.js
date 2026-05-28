@@ -863,3 +863,11 @@ test('allSealedSwords() 헬퍼가 정의되고 인라인 (sealedSwords||[]).conc
   assert.strictEqual(inlinePat1.length, 1, '인라인 (sealedSwords||[]).concat(enshrined||[]) — 헬퍼 본문 1곳만 (' + inlinePat1.length + '개 발견)');
   assert.strictEqual(inlinePat2.length, 0, '인라인 [].concat(sealedSwords||[], enshrined||[]) 회귀 0건 (' + inlinePat2.length + '개 발견)');
 });
+
+// 접근성: 모든 role="dialog" modal에 aria-labelledby 또는 aria-label 보유
+// (4개 누락이 stale했음: weekly-report / gallery / codex-book / user-poem).
+test('a11y: 모든 modal dialog는 aria-labelledby/aria-label 보유 (screen reader 식별)', () => {
+  const dialogMatches = html.match(/<div[^>]*role="dialog"[^>]*>/g) || [];
+  const unlabeled = dialogMatches.filter(d => !/aria-label/.test(d));
+  assert.deepStrictEqual(unlabeled, [], 'aria-labelledby 또는 aria-label 누락 dialog: ' + unlabeled.join('\n  '));
+});
