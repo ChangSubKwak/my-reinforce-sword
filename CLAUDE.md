@@ -518,7 +518,7 @@ footer 7개 버튼 → 3개 (조합소·계보·詩集) + 우상단 ≡ 메뉴 (
 
 **v54 화면 흔들림**: `screenShake(heavy)` — `#game.screen-shake-{light,heavy}` 클래스 토글. 베기 실패=light(0.35s), 검 파괴/검귀 등장=heavy(0.55s).
 
-**v55 명문 사전 모달** (`renderCodex`): 14종 명문 전체 — 한자/라벨/조건/시구/상태. 미획득은 opacity 0.35. 상단 진척도 (N/14). 메뉴 진입.
+**v55 명문 사전 모달** (`renderCodex`): INSCRIPTIONS 배열 전체 (현재 32개) — 한자/라벨/시구/상태. 미획득은 opacity 0.35. 상단 진척도 (N/INSCRIPTIONS.length). 메뉴 진입. (label 단일 출처 — 별도 conditions 룩업은 v4 당시 14개 한정으로 절반 미커버 stale → 제거됨.)
 
 **v56 도전 결정 명료**: 베기 버튼에 보상 텍스트 (`+N 조각`) + challenge-stakes에 검/그림자 강도 막대 비교.
 
