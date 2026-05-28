@@ -18587,8 +18587,10 @@
       bar('도망 그림자', fmtNum(s.slainFlee || 0) + ' 회', slainMax, '#aac0c8') +
       bar('강철 그림자', fmtNum(s.slainSteel || 0) + ' 회', slainMax, '#888aa8') +
       bar('검귀', fmtNum(s.slainDemon || 0) + ' 회', slainMax, '#fff5c0') +
+      (s.yakshaSlain > 0 ? row('야차', fmtNum(s.yakshaSlain) + ' 회', '#a896c8') : '') +
       row('도망 그림자에게 놓침', fmtNum(s.evaded || 0) + ' 회', 'var(--dim)') +
       row('도전에서 도망', fmtNum(s.fled || 0) + ' 회', 'var(--dim)') +
+      (s.stalemate > 0 ? row('대치 (평화의 길)', fmtNum(s.stalemate) + ' 회', '#5878b8') : '') +
       // v256 學派 — 그림자 출신별 처치 + 斷魔 진척 (기존 shadowOriginsSlain 노출)
       (function() {
         const os = state.shadowOriginsSlain || {};
