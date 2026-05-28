@@ -4156,9 +4156,9 @@
     scrollsUnlocked: {},      // v124 고문서 — 풀린 두루마리
     scrollsAllRead: false,    // v124 고문서 — 모두 풀었는지
     rubbings: [],             // v136 탁본 — 의미있는 순간 포착 (최대 20)
-    resonancesDiscovered: {}, // v138 雙銘 — 발견한 명문 쌍
-    metsumaoCharges: 0,       // v138 雙銘 — 멸마 슬레이 ×1.5 남은 횟수
-    hondoCharges: 0,          // v138 雙銘 — 본도 새 검 시작 영혼 +20 남은 횟수
+    resonancesDiscovered: {}, // v138 쌍명 — 발견한 명문 쌍
+    metsumaoCharges: 0,       // v138 쌍명 — 멸마 슬레이 ×1.5 남은 횟수
+    hondoCharges: 0,          // v138 쌍명 — 본도 새 검 시작 영혼 +20 남은 횟수
     playerSeal: '',           // v140 篆刻 — 플레이어 인장 (1자)
     collectionMilestones: {}, // v145 명집 — 달성한 명문 수집 마일스톤
     shrineDonations: {},      // v149 신사 — 영구 헌사 잠금 해제
@@ -4881,7 +4881,7 @@
   const GENERATIONS = [
     { key: 'g10',  threshold: 10,  name: '백련종', label: '백 번 단련하는 종가', successBonus: 0.01 },
     { key: 'g25',  threshold: 25,  name: '천단사', label: '천 번 두드린 장인',  sealMul: 1.05 },
-    { key: 'g50',  threshold: 50,  name: '萬代將', label: '만 대를 잇는 장수',  successBonus: 0.01 },
+    { key: 'g50',  threshold: 50,  name: '만대장', label: '만 대를 잇는 장수',  successBonus: 0.01 },
     { key: 'g100', threshold: 100, name: '백대선', label: '백 대의 신선',       slayMul: 1.10, autoInscription: '선' },
   ];
   function getGenerationMilestones() {
@@ -4973,11 +4973,11 @@
 
   // === v120 기원 — 누적 강화 시도 기반 5시대 ===
   const ERAS = [
-    { key: 'hoga',    name: '萌芽', label: '맹아',         threshold: 0,    successBonus: 0,    dronePitchMul: 1.00 },
+    { key: 'hoga',    name: '맹아', label: '맹아',         threshold: 0,    successBonus: 0,    dronePitchMul: 1.00 },
     { key: 'shuren',  name: '수련', label: '수련',         threshold: 300,  successBonus: 0.01, dronePitchMul: 1.05 },
-    { key: 'kaigan',  name: '開眼', label: '눈을 떴다',    threshold: 1000, successBonus: 0.02, dronePitchMul: 1.10 },
-    { key: 'takkan',  name: '達觀', label: '관통하였다',  threshold: 3000, successBonus: 0.03, dronePitchMul: 1.18 },
-    { key: 'shinki',  name: '神域', label: '신의 영역에 들었다', threshold: 8000, successBonus: 0.05, dronePitchMul: 1.30 },
+    { key: 'kaigan',  name: '개안', label: '눈을 떴다',    threshold: 1000, successBonus: 0.02, dronePitchMul: 1.10 },
+    { key: 'takkan',  name: '달관', label: '관통하였다',  threshold: 3000, successBonus: 0.03, dronePitchMul: 1.18 },
+    { key: 'shinki',  name: '신역', label: '신의 영역에 들었다', threshold: 8000, successBonus: 0.05, dronePitchMul: 1.30 },
   ];
   function getCurrentEra() {
     const n = (state.stats && state.stats.enhanceAttempts) || 0;
@@ -5846,7 +5846,7 @@
     oddsSuccess.innerHTML = '성공률 ' + Math.round(showSuccess * 100) + '%' + freeNote +
       (breathStr ? '  <span style="color:#6a8a9a;font-size:10px">· ' + breathStr + '</span>' : '');
     // v121 결계: 파괴가 차단되면 그 확률이 하락으로 흡수되어 표시.
-    // v245b: 영석/여향影盾이 이미 파괴를 막으면 결계가 흡수할 파괴가 없음 — 실제 굴림과 동일 조건.
+    // v245b: 영석/여향영순이 이미 파괴를 막으면 결계가 흡수할 파괴가 없음 — 실제 굴림과 동일 조건.
     const spiritCkR = $('spirit-check');
     const useSpiritR = spiritCkR && spiritCkR.checked && !spiritCkR.disabled && (state.spiritstones || 0) > 0;
     const echoBlockR = !!(enhanceEcho && enhanceEcho.destroyBlock);
@@ -6221,14 +6221,14 @@
 
   // === v181 老師 — 큰 마일스톤에서 스승의 가르침 ===
   const MASTER_TEACHINGS = {
-    hundredEnhance: { kanji:'器', verse:'그릇이 깊어지면 물도 깊다 — 너의 검도 그렇다' },
+    hundredEnhance: { kanji:'기', verse:'그릇이 깊어지면 물도 깊다 — 너의 검도 그렇다' },
     fiveWays:       { kanji:'도', verse:'길은 보는 것이 아니라 걸어서 안다' },
     thirtyGens:     { kanji:'류', verse:'강이 끊이지 않는 까닭 — 흐르기 때문이다' },
     firstSpring:    { kanji:'맹', verse:'봄에 칼을 뽑지 마라 — 잎이 먼저 나야 한다' },
-    firstSummer:    { kanji:'炎', verse:'여름의 그림자는 깊다 — 그러나 검도 깊어진다' },
-    firstAutumn:    { kanji:'熟', verse:'가을은 거두는 계절 — 검도 봉인할 때를 안다' },
-    firstWinter:    { kanji:'凝', verse:'겨울은 머무름 — 멈춤이 검의 일부다' },
-    firstFusion:    { kanji:'融', verse:'두 검이 하나가 될 때 — 그것은 죽음이 아니라 강이다' },
+    firstSummer:    { kanji:'염', verse:'여름의 그림자는 깊다 — 그러나 검도 깊어진다' },
+    firstAutumn:    { kanji:'숙', verse:'가을은 거두는 계절 — 검도 봉인할 때를 안다' },
+    firstWinter:    { kanji:'응', verse:'겨울은 머무름 — 멈춤이 검의 일부다' },
+    firstFusion:    { kanji:'융', verse:'두 검이 하나가 될 때 — 그것은 죽음이 아니라 강이다' },
     firstUltimate:  { kanji:'극', verse:'정점에 이르렀다 — 이제 처음으로 돌아갈 차례다' },
   };
   function maybeMaster(triggerKey) {
@@ -6573,13 +6573,13 @@
 
   // === v192 節 — 전통 명절 (元旦/端午/七夕/重陽) ===
   const FESTIVALS = [
-    { date:'01-01', name:'원단', kanji:'元', verse:'새해 첫날 — 검의 새 길이 열린다',
+    { date:'01-01', name:'원단', kanji:'원', verse:'새해 첫날 — 검의 새 길이 열린다',
       reward: { type:'shards', amount:50, label:'조각 +50' }, color:'#fff5c0' },
     { date:'05-05', name:'단오', kanji:'절', verse:'단오의 깊은 의례 — 창포물로 검을 씻는다',
       reward: { type:'whetstone', amount:1, label:'숫돌 +1' }, color:'#88c8a8' },
-    { date:'07-07', name:'칠석', kanji:'夕', verse:'직녀와 견우가 만나는 밤 — 강을 건너는 검',
+    { date:'07-07', name:'칠석', kanji:'석', verse:'직녀와 견우가 만나는 밤 — 강을 건너는 검',
       reward: { type:'spiritstone', amount:1, label:'영석 +1' }, color:'#5878b8' },
-    { date:'09-09', name:'중양', kanji:'陽', verse:'아홉이 두 번 겹친 날 — 양기가 정점에 이른다',
+    { date:'09-09', name:'중양', kanji:'양', verse:'아홉이 두 번 겹친 날 — 양기가 정점에 이른다',
       reward: { type:'soul', amount:30, label:'영혼 +30 (조각 +30 if 검 없음)' }, color:'#d4884a' },
   ];
   function getTodayFestival() {
@@ -7506,7 +7506,7 @@
   // === v216 秘 — 숨겨진 3 이스터에그 ===
   const EASTER_EGGS = {
     'twin1111': { kanji:'쌍', verse:'11:11 — 두 1이 검을 만났다', label:'시각의 일치' },
-    'midnight': { kanji:'자', verse:'자정의 봉인 — 새 날의 첫 검', label:'子時의 발견' },
+    'midnight': { kanji:'자', verse:'자정의 봉인 — 새 날의 첫 검', label:'자시의 발견' },
     'rapid5':   { kanji:'류', verse:'한 호흡에 다섯 — 흐름이 검을 이끈다', label:'류의 발견' },
   };
   let rapidActionBuffer = [];
@@ -8268,9 +8268,9 @@
   const PRECISION_MILESTONES = [
     { min: 30,  kanji:'수', label:'한 자리를 30분 지킴',
       reward: () => { pendingBreathBoost = true; return '호흡 보너스 ×2 부여'; } },
-    { min: 60,  kanji:'居', label:'한 자리에 1시간 머무름',
+    { min: 60,  kanji:'거', label:'한 자리에 1시간 머무름',
       reward: () => { if (state.hasSword) addSoul(5); return '영혼 +5'; } },
-    { min: 120, kanji:'住', label:'한 자리에 2시간 머무름',
+    { min: 120, kanji:'주', label:'한 자리에 2시간 머무름',
       reward: () => { state.spiritstones = (state.spiritstones || 0) + 1; return '영석 +1'; } },
     { min: 180, kanji:'정진', label:'정진 — 3시간',
       reward: () => {
@@ -8327,17 +8327,17 @@
   // === v206 時辰 — 12지간 시진 (좌상단 항상 표시) ===
   const SIDIN_HOURS = [
     { kanji:'자', label:'쥐', hStart:23, hEnd:1,  color:'#5878a8', tone:'night'  },  // 23-01
-    { kanji:'丑', label:'소', hStart:1,  hEnd:3,  color:'#4a6890', tone:'night'  },  // 01-03
-    { kanji:'寅', label:'호랑이', hStart:3,  hEnd:5,  color:'#48688a', tone:'night'  },  // 03-05
-    { kanji:'卯', label:'토끼', hStart:5,  hEnd:7,  color:'#c89898', tone:'dawn'   },  // 05-07
-    { kanji:'辰', label:'용',  hStart:7,  hEnd:9,  color:'#d4a880', tone:'dawn'   },  // 07-09
-    { kanji:'巳', label:'뱀',  hStart:9,  hEnd:11, color:'#d4af55', tone:'day'    },  // 09-11
-    { kanji:'午', label:'말',  hStart:11, hEnd:13, color:'#e8c454', tone:'day'    },  // 11-13
-    { kanji:'未', label:'양',  hStart:13, hEnd:15, color:'#d8b454', tone:'day'    },  // 13-15
-    { kanji:'申', label:'원숭이', hStart:15, hEnd:17, color:'#c89858', tone:'evening' }, // 15-17
-    { kanji:'酉', label:'닭',  hStart:17, hEnd:19, color:'#c8784a', tone:'evening' }, // 17-19
-    { kanji:'戌', label:'개',  hStart:19, hEnd:21, color:'#8a6878', tone:'evening' }, // 19-21
-    { kanji:'亥', label:'멧돼지', hStart:21, hEnd:23, color:'#6a5878', tone:'night' },   // 21-23
+    { kanji:'축', label:'소', hStart:1,  hEnd:3,  color:'#4a6890', tone:'night'  },  // 01-03
+    { kanji:'인', label:'호랑이', hStart:3,  hEnd:5,  color:'#48688a', tone:'night'  },  // 03-05
+    { kanji:'묘', label:'토끼', hStart:5,  hEnd:7,  color:'#c89898', tone:'dawn'   },  // 05-07
+    { kanji:'진', label:'용',  hStart:7,  hEnd:9,  color:'#d4a880', tone:'dawn'   },  // 07-09
+    { kanji:'사', label:'뱀',  hStart:9,  hEnd:11, color:'#d4af55', tone:'day'    },  // 09-11
+    { kanji:'오', label:'말',  hStart:11, hEnd:13, color:'#e8c454', tone:'day'    },  // 11-13
+    { kanji:'미', label:'양',  hStart:13, hEnd:15, color:'#d8b454', tone:'day'    },  // 13-15
+    { kanji:'신', label:'원숭이', hStart:15, hEnd:17, color:'#c89858', tone:'evening' }, // 15-17
+    { kanji:'유', label:'닭',  hStart:17, hEnd:19, color:'#c8784a', tone:'evening' }, // 17-19
+    { kanji:'술', label:'개',  hStart:19, hEnd:21, color:'#8a6878', tone:'evening' }, // 19-21
+    { kanji:'해', label:'멧돼지', hStart:21, hEnd:23, color:'#6a5878', tone:'night' },   // 21-23
   ];
   function getCurrentSidin() {
     const h = new Date().getHours();
@@ -8602,10 +8602,10 @@
 
   // === v199 稟賦 — 새 검 생성 시 무작위 mutation (천부적 재능) ===
   const MUTATIONS = [
-    { key:'tenshi',  name:'天賜', chance:0.005, verse:'천부의 검 — 시작부터 두 단계 높다',     color:'#fff5c0' },
-    { key:'sohye',   name:'早慧', chance:0.005, verse:'일찍 깨어난 검 — 영혼이 이미 깊다',     color:'#a8c0e8' },
-    { key:'gangol',  name:'強骨', chance:0.005, verse:'강한 골격 — 평생 강화 성공이 높다',     color:'#d4af37' },
-    { key:'isai',    name:'異彩', chance:0.005, verse:'특별한 색이 깃든 검 — 형 색조가 깊다',  color:'#c8a0e8' },
+    { key:'tenshi',  name:'천사', chance:0.005, verse:'천부의 검 — 시작부터 두 단계 높다',     color:'#fff5c0' },
+    { key:'sohye',   name:'조혜', chance:0.005, verse:'일찍 깨어난 검 — 영혼이 이미 깊다',     color:'#a8c0e8' },
+    { key:'gangol',  name:'강골', chance:0.005, verse:'강한 골격 — 평생 강화 성공이 높다',     color:'#d4af37' },
+    { key:'isai',    name:'이채', chance:0.005, verse:'특별한 색이 깃든 검 — 형 색조가 깊다',  color:'#c8a0e8' },
   ];
   function rollMutation() {
     for (const m of MUTATIONS) {
@@ -8627,7 +8627,7 @@
       state.currentSword.soul = Math.max(state.currentSword.soul || 0, 30);
     }
     // 強骨 효과는 mutationSuccessBonus()로 별도 적용 (영구)
-    // 異彩 효과는 시각만 (mutationVisual 적용)
+    // 이채 효과는 시각만 (mutationVisual 적용)
     save();
     showMutationFade(mut);
   }
@@ -8684,7 +8684,7 @@
 
   // === v228 設 — 접근성 설정 ===
   const SETTINGS_DEFS = [
-    { key:'particles',   label:'환경 입자', desc:'季韻·유성·먼지 입자', def:true },
+    { key:'particles',   label:'환경 입자', desc:'계운·유성·먼지 입자', def:true },
     { key:'screenShake', label:'화면 흔들림', desc:'베기·파괴 시 흔들림', def:true },
     { key:'reduceMotion',label:'모션 감소', desc:'애니메이션 최소화 (저사양)', def:false },
     { key:'largeText',   label:'큰 글씨', desc:'전체 글자 크기 +15%', def:false },
@@ -8937,10 +8937,10 @@
 
   // === v191 練日 — 연속 플레이 일자 (지속성 reward) ===
   const STREAK_MILESTONES = [
-    { n: 7,   kanji:'七', label:'7일 연속 — 한 주의 수행', reward:30 },
-    { n: 30,  kanji:'修', label:'30일 수행 — 검의 습관',   reward:120 },
-    { n: 100, kanji:'百', label:'백일 수행 — 의지의 검',  reward:400 },
-    { n: 365, kanji:'年', label:'1년 수행 — 길의 검사',   reward:1200 },
+    { n: 7,   kanji:'칠', label:'7일 연속 — 한 주의 수행', reward:30 },
+    { n: 30,  kanji:'수', label:'30일 수행 — 검의 습관',   reward:120 },
+    { n: 100, kanji:'백', label:'백일 수행 — 의지의 검',  reward:400 },
+    { n: 365, kanji:'년', label:'1년 수행 — 길의 검사',   reward:1200 },
   ];
   function todayDateStr() { return todayStr(); }  // v245h 로컬 날짜 (연속 출석 = 로컬 자정 기준)
   function dateDiffDays(a, b) {
@@ -9040,9 +9040,9 @@
   // === v189 칠보 — 일곱 보물 수집 (봉인 시 확률 drop) ===
   const SEVEN_TREASURES = [
     { key:'gold',    name:'금',   color:'#d4af37', verse:'태양의 금 — 흔들리지 않는 견고함' },
-    { key:'silver',  name:'銀',   color:'#c8c8d0', verse:'달의 은 — 변하지 않는 청결' },
-    { key:'jade',    name:'玉',   color:'#88c8a8', verse:'산의 옥 — 따뜻한 깊이' },
-    { key:'pearl',   name:'珠',   color:'#f0e8d4', verse:'바다의 진주 — 침묵의 결정체' },
+    { key:'silver',  name:'은',   color:'#c8c8d0', verse:'달의 은 — 변하지 않는 청결' },
+    { key:'jade',    name:'옥',   color:'#88c8a8', verse:'산의 옥 — 따뜻한 깊이' },
+    { key:'pearl',   name:'주',   color:'#f0e8d4', verse:'바다의 진주 — 침묵의 결정체' },
     { key:'agate',   name:'瑪瑙', color:'#c08068', verse:'땅의 마노 — 시간이 굳힌 무늬' },
     { key:'lapis',   name:'瑠璃', color:'#5878b8', verse:'하늘의 유리 — 푸른 정신' },
     { key:'coral',   name:'珊瑚', color:'#d4684a', verse:'심해의 산호 — 살아있는 돌' },
@@ -9700,7 +9700,7 @@
     }, 180000 + Math.random() * 300000);
   }
 
-  // === v179 季韻 — 절기에 따른 환경 입자 (桃花/螢/紅葉/雪) ===
+  // === v179 계운 — 절기에 따른 환경 입자 (桃花/螢/紅葉/雪) ===
   function seasonalCategory() {
     const t = getCurrentSolarTerm();
     if (!t) return 'spring';
@@ -10521,7 +10521,7 @@
       const v = shrineSuccessBonus(); if (v) successLines.push(line('신사 성', pct(v)));
     }
     if (typeof schoolSuccessBonus === 'function') {
-      const v = schoolSuccessBonus(); if (v) successLines.push(line('유파 (流派)', pct(v)));
+      const v = schoolSuccessBonus(); if (v) successLines.push(line('유파', pct(v)));
     }
     if (typeof trialSuccessBonus === 'function') {
       const v = trialSuccessBonus(); if (v) successLines.push(line('시련의 혼', pct(v)));
@@ -10596,7 +10596,7 @@
         if (typeof schoolDestroyReduce === 'function') { const v = schoolDestroyReduce(); if (v) destroyLines.push(line('유파 곡류', reduce(v), 'var(--safe)')); }
         if (typeof guardianBonus === 'function') { const v = guardianBonus().destroyReduce; if (v) destroyLines.push(line('수호자 (수)', reduce(v), 'var(--safe)')); }
         if (typeof adversityReady !== 'undefined' && adversityReady) destroyLines.push(line('역 (역경 발동)', reduce(0.12), 'var(--safe)'));
-        if (typeof getScarDestroyReduce === 'function') { const v = getScarDestroyReduce(); if (v) destroyLines.push(line('흉터 (傷)', reduce(v), 'var(--safe)')); }
+        if (typeof getScarDestroyReduce === 'function') { const v = getScarDestroyReduce(); if (v) destroyLines.push(line('흉터', reduce(v), 'var(--safe)')); }
         if (typeof weatherDestroyReduce === 'function') { const v = weatherDestroyReduce(); if (v) destroyLines.push(line('천후', reduce(v), 'var(--safe)')); }
         if (typeof wishDestroyReduce === 'function') { const v = wishDestroyReduce(); if (v) destroyLines.push(line('유언 (원)', reduce(v), 'var(--safe)')); }
         if (typeof solarDestroyReduce === 'function') { const v = solarDestroyReduce(); if (v) destroyLines.push(line('절기 (동지)', reduce(v), 'var(--safe)')); }
@@ -10749,7 +10749,7 @@
       if (s.kigen) {
         pages.push({
           kind: 'kigen', sword: s,
-          kanji: '寄', label: '후일에게',
+          kanji: '기', label: '후일에게',
           title: swordName,
           body: s.kigen,
         });
@@ -11097,27 +11097,27 @@
   // === v152 풍월 — 숨겨진 조용한 성취 (sealed 검 데이터 자동 패턴 발견) ===
   const HIDDEN_ACHIEVEMENTS = [
     {
-      key: 'shinjuu', kanji: '慎重', label: '신중의 검',
+      key: 'shinjuu', kanji: '신중', label: '신중의 검',
       desc: '한 검에서 보호권 5회 이상 사용',
       check: (sword) => (sword.protectsUsed || 0) >= 5,
     },
     {
-      key: 'konshu', kanji: '魂主', label: '영혼의 주인',
+      key: 'konshu', kanji: '혼주', label: '영혼의 주인',
       desc: '한 검의 영혼이 95 이상 도달',
       check: (sword) => (sword.soul || 0) >= 95,
     },
     {
-      key: 'jusshoo', kanji: '十勝', label: '열 번의 승리',
+      key: 'jusshoo', kanji: '십승', label: '열 번의 승리',
       desc: '한 검으로 그림자 10명 이상 베어냄',
       check: (sword) => (sword.slainCount || 0) >= 10,
     },
     {
-      key: 'muyoku', kanji: '無欲', label: '욕심 없는 검',
+      key: 'muyoku', kanji: '무욕', label: '욕심 없는 검',
       desc: '+10 이상에서 보호권 한 번도 안 쓰고 봉인',
       check: (sword) => (sword.level || 0) >= 10 && (sword.protectsUsed || 0) === 0,
     },
     {
-      key: 'shichisei', kanji: '칠성完', label: '북두칠성을 모두 본 자',
+      key: 'shichisei', kanji: '칠성완', label: '북두칠성을 모두 본 자',
       desc: '한 검에서 7별 모두 달성',
       check: (sword) => {
         const stars = sword.stars || {};
@@ -11125,7 +11125,7 @@
       },
     },
     {
-      key: 'kessai', kanji: '潔齋', label: '깨끗한 일생',
+      key: 'kessai', kanji: '결재', label: '깨끗한 일생',
       desc: '+15 도달 + 흉터 없이 봉인',
       check: (sword) => (sword.inscriptions || []).includes('도') && (sword.scars || 0) === 0,
     },
@@ -11167,10 +11167,10 @@
 
   // === v145 명집 — 명문 수집 메타 차원 ===
   const COLLECTION_MILESTONES = [
-    { count: 5,  key: 'm5',  reward: { shards: 30 },                 label: '명집 五 — 다섯 명문 수집' },
-    { count: 10, key: 'm10', reward: { protections: 2 },             label: '명집 十 — 열 명문 수집 · 보호권 +2' },
-    { count: 15, key: 'm15', reward: { whetstones: 3 },              label: '명집 十五 — 열다섯 명문 · 숫돌 +3' },
-    { count: 20, key: 'm20', reward: { spiritstones: 2, shards: 100 }, label: '명집 二十 — 스물 명문 · 영석 +2 + 조각 +100' },
+    { count: 5,  key: 'm5',  reward: { shards: 30 },                 label: '명집 오 — 다섯 명문 수집' },
+    { count: 10, key: 'm10', reward: { protections: 2 },             label: '명집 십 — 열 명문 수집 · 보호권 +2' },
+    { count: 15, key: 'm15', reward: { whetstones: 3 },              label: '명집 십오 — 열다섯 명문 · 숫돌 +3' },
+    { count: 20, key: 'm20', reward: { spiritstones: 2, shards: 100 }, label: '명집 이십 — 스물 명문 · 영석 +2 + 조각 +100' },
   ];
   function countUniqueInscriptions() {
     const set = new Set();
@@ -11407,7 +11407,7 @@
     setTimeout(() => el.remove(), 4100);
   }
 
-  // === v138 雙銘 — 명문 쌍 공명 (paired inscription resonance) ===
+  // === v138 쌍명 — 명문 쌍 공명 (paired inscription resonance) ===
   const PAIRED_RESONANCES = [
     {
       key: 'tianming', pair: ['도', '칠성'], name: '천명', label: '하늘의 명',
@@ -11708,9 +11708,9 @@
   let enhanceEchoDeadline = 0;  // 만료 timestamp (ms)
   const ECHO_LIFESPAN_MS = 30000;  // 30초 후 자연 소멸
   const ECHO_TYPES = {
-    demon:  { kanji: '신', label: '神髓 — 다음 강화 성공 +30%',  successBonus: 0.30, color: '#c0392b' },
-    steel:  { kanji: '순', label: '影盾 — 다음 강화 파괴 차단',  destroyBlock: true,  color: '#8ab0c8' },
-    flee:   { kanji: '輕', label: '影絲 — 다음 강화 비용 절반',  costMul: 0.5,        color: '#a8c87a' },
+    demon:  { kanji: '신', label: '신수 — 다음 강화 성공 +30%',  successBonus: 0.30, color: '#c0392b' },
+    steel:  { kanji: '순', label: '영순 — 다음 강화 파괴 차단',  destroyBlock: true,  color: '#8ab0c8' },
+    flee:   { kanji: '경', label: '영사 — 다음 강화 비용 절반',  costMul: 0.5,        color: '#a8c87a' },
     named:  { kanji: '혼', label: '영혼 — 다음 강화 영혼 +20',   soulBonus: 20,       color: '#fff5c0' },
   };
   function setEnhanceEcho(typeKey, sourceRect) {
@@ -12147,7 +12147,7 @@
       const failRoll = (useDivination && divinationLockedFailRoll !== null)
         ? divinationLockedFailRoll
         : Math.random();
-      // 영석/여향影盾/결계(v121): 파괴 차단 / 유파 + 수호자 + 흉터(v111) 보너스도 destroy 감소 / v91 覺悟 배율 / v96 역경전기 감소
+      // 영석/여향영순/결계(v121): 파괴 차단 / 유파 + 수호자 + 흉터(v111) 보너스도 destroy 감소 / v91 覺悟 배율 / v96 역경전기 감소
       // v343 — solarDestroyReduce() 누락 수정: 표시(effectiveDestroyChance)·破 breakdown(절기 동지 -2%)이
       // 약속하던 절기 파괴 감소를 실제 굴림이 무시했다(display≠actual). v263이 헬퍼엔 넣었으나 이
       // 인라인 사본을 못 고침. 단, 헬퍼 직접 호출은 불가 — 헬퍼가 state.spiritstones를 live 재계산하는데
@@ -12722,7 +12722,7 @@
     const currentForm = state.hasSword && state.currentSword && state.currentSword.form;
     const affMul = affinityRewardMul(currentForm, type.key);
     if (affMul !== 1) reward = Math.floor(reward * affMul);
-    // v138 雙銘 — 멸마 charge 활성 시 슬레이 ×1.5
+    // v138 쌍명 — 멸마 charge 활성 시 슬레이 ×1.5
     if (state.metsumaoCharges > 0) {
       reward = Math.floor(reward * 1.5);
       state.metsumaoCharges--;
@@ -14122,21 +14122,21 @@
   // === v93 천명 — 검의 운명 (검 한 자루의 일생 목표) ===
   // 새 검마다 랜덤 부여. 달성 시 보상. 강화 루프에 *방향성*을 준다.
   const DESTINIES = [
-    { key: 'reach10',   label: '十의 천명',   desc: '이 검을 +10까지 강화하라',       reward: { shards: 60 },        rewardLabel: '조각 +60',
+    { key: 'reach10',   label: '십의 천명',   desc: '이 검을 +10까지 강화하라',       reward: { shards: 60 },        rewardLabel: '조각 +60',
       check: () => state.level >= 10 },
     { key: 'reach13',   label: '극의 천명',   desc: '이 검을 +13까지 강화하라',       reward: { shards: 150 },       rewardLabel: '조각 +150',
       check: () => state.level >= 13 },
-    { key: 'slay5',     label: '影殺의 천명', desc: '이 검으로 그림자 다섯을 베어내라', reward: { soul: 25 },          rewardLabel: '혼 +25',
+    { key: 'slay5',     label: '영살의 천명', desc: '이 검으로 그림자 다섯을 베어내라', reward: { soul: 25 },          rewardLabel: '혼 +25',
       check: () => (state.currentSword.slainCount || 0) >= 5 },
-    { key: 'slay10',    label: '百影의 천명', desc: '이 검으로 그림자 열을 베어내라',   reward: { protections: 2 },    rewardLabel: '보호권 +2',
+    { key: 'slay10',    label: '백영의 천명', desc: '이 검으로 그림자 열을 베어내라',   reward: { protections: 2 },    rewardLabel: '보호권 +2',
       check: () => (state.currentSword.slainCount || 0) >= 10 },
-    { key: 'demon',     label: '鬼緣의 천명', desc: '이 검으로 검귀를 베어내라',       reward: { shards: 250 },       rewardLabel: '조각 +250',
+    { key: 'demon',     label: '귀연의 천명', desc: '이 검으로 검귀를 베어내라',       reward: { shards: 250 },       rewardLabel: '조각 +250',
       check: () => (state.currentSword.inscriptions || []).includes('귀참') },
     { key: 'enhance30', label: '백련의 천명', desc: '이 검으로 서른 번 강화하라',     reward: { whetstones: 3 },     rewardLabel: '숫돌 +3',
       check: () => (state.currentSword.enhanceAttempts || 0) >= 30 },
     { key: 'soul67',    label: '본심의 천명', desc: '이 검의 혼을 67까지 깨워라',     reward: { shards: 120 },       rewardLabel: '조각 +120',
       check: () => (state.currentSword.soul || 0) >= 67 },
-    { key: 'foe',       label: '宿敵의 천명', desc: '이 검으로 이름 있는 적을 베어내라', reward: { spiritstones: 1, shards: 80 }, rewardLabel: '영석 +1 · 조각 +80',
+    { key: 'foe',       label: '숙적의 천명', desc: '이 검으로 이름 있는 적을 베어내라', reward: { spiritstones: 1, shards: 80 }, rewardLabel: '영석 +1 · 조각 +80',
       check: () => (state.currentSword.inscriptions || []).some(k => ['풍참','월참','인참','제참','용참'].indexOf(k) >= 0) },
   ];
   function assignDestiny() {
@@ -15520,7 +15520,7 @@
       level: lv, inscriptions: ins, form,
       enhanceAttempts: state.currentSword.enhanceAttempts || 0,  // v313 단련
       beads: state.currentSword.beads || 0,  // v314 염주
-      protectsUsed: state.currentSword.protectsUsed || 0,  // v315 慎重/無欲
+      protectsUsed: state.currentSword.protectsUsed || 0,  // v315 신중/무욕
       soul: state.currentSword.soul || 0, name: swordName,
       slainCount: slainHere, verse,
       levelHistory: (state.currentSword.levelHistory || []).slice(),
@@ -16036,7 +16036,7 @@
   }
   // v242 — 봉인 보상 단일 진원. 표시 버튼·다음보상·명명 미리보기·실제 grant(doSeal)가
   // 동일 결정적 배수를 공유 → 라벨이 실제 금액과 일치. 은하(ginha ×2, 휘발성 소비) +
-  // 雙銘 지속효과는 doSeal에서만 적용 (휘발성/부작용이라 미리보기에서 제외).
+  // 쌍명 지속효과는 doSeal에서만 적용 (휘발성/부작용이라 미리보기에서 제외).
   function sealRewardBase(lv, ins, isWay, opts) {
     ins = ins || [];
     const steps = opts && opts.steps;  // v274 — 분해 표시용 단계 수집 (단일 진원)
@@ -16058,12 +16058,12 @@
     step('계보', generationSealMul());  // v123
     return reward;
   }
-  // 雙銘 공명의 보상 배수만(지속효과·발견기록·announce 제외) — 미리보기 전용.
+  // 쌍명 공명의 보상 배수만(지속효과·발견기록·announce 제외) — 미리보기 전용.
   function previewResonanceReward(ins, reward) {
     detectResonances(ins || []).forEach(r => { if (r.onSeal) reward = r.onSeal(state, reward); });
     return reward;
   }
-  // 미리보기 표시용 — 결정적 배수 전체(base 1~7 + 雙銘 배수). ginha는 예측 불가라 제외.
+  // 미리보기 표시용 — 결정적 배수 전체(base 1~7 + 쌍명 배수). ginha는 예측 불가라 제외.
   function sealRewardDisplay(lv, ins, isWay) {
     return previewResonanceReward(ins, sealRewardBase(lv, ins, isWay));
   }
@@ -16089,7 +16089,7 @@
     swordWrap.classList.remove('resolve-focus', 'resolve-guard');
     setAmbientLevel(startLv); applyAmbientMode('idle');
     let startSoul = trialStartSoulBonus() + shrineStartSoul();  // v149 신사 영혼
-    // v138 雙銘 — 본도 charge 활성 시 시작 영혼 +20 (한 번 소모)
+    // v138 쌍명 — 본도 charge 활성 시 시작 영혼 +20 (한 번 소모)
     if (state.hondoCharges > 0) {
       startSoul += 20;
       state.hondoCharges--;
@@ -16436,7 +16436,7 @@
     tryBlessing('sealBefore');
     // v242 단일 진원 — 표시 버튼/명명 미리보기와 동일한 결정적 배수 (base 1~7)
     let reward = sealRewardBase(lv, ins, isWay);
-    // v138 雙銘 — 명문 쌍 공명 (천명 ×2 보상 배수 + 멸마/본도 지속 효과·발견기록)
+    // v138 쌍명 — 명문 쌍 공명 (천명 ×2 보상 배수 + 멸마/본도 지속 효과·발견기록)
     const resResult = applyResonancesAtSeal(ins, reward);
     reward = resResult.reward;
     // v119 기연 — 은하 활성 시 봉인 보상 ×2
@@ -16457,7 +16457,7 @@
       level: lv, inscriptions: ins, form,
       enhanceAttempts: state.currentSword.enhanceAttempts || 0,  // v313 단련 — 검의 단련 노고 보존
       beads: state.currentSword.beads || 0,  // v314 염주 — 봉인 검에도 보존 (記錄 최다 염주 정확화)
-      protectsUsed: state.currentSword.protectsUsed || 0,  // v315 — 慎重/無欲 숨은 성취 정확화
+      protectsUsed: state.currentSword.protectsUsed || 0,  // v315 — 신중/무욕 숨은 성취 정확화
       soul: state.currentSword.soul || 0, name: swordName,
       slainCount: slainHere, verse,
       levelHistory: (state.currentSword.levelHistory || []).slice(),
@@ -18037,7 +18037,7 @@
     (state.rubbings || []).forEach(r => {
       events.push({
         time: r.timestamp,
-        kanji: '拓',
+        kanji: '탁',
         label: r.reasonLabel,
         sub: (r.form || '없음') + ' +' + r.level + (r.inscriptions && r.inscriptions[0] ? ' · ' + r.inscriptions[0] : ''),
         color: '#d4af37',
@@ -18099,14 +18099,14 @@
         }
       });
     }
-    // 雙銘 (state.resonancesDiscovered)
+    // 쌍명 (state.resonancesDiscovered)
     if (state.resonancesDiscovered) {
       PAIRED_RESONANCES.forEach(r => {
         if (state.resonancesDiscovered[r.key]) {
           events.push({
             time: state.resonancesDiscovered[r.key],
             kanji: r.name.substring(0, 1),
-            label: '雙銘 — ' + r.name,
+            label: '쌍명 — ' + r.name,
             sub: r.label,
             color: '#fff5c0',
           });
@@ -18456,17 +18456,17 @@
   function getPersonas() {
     const s = state.stats || {};
     const personas = [];
-    if ((s.slainDemon || 0) >= 3) personas.push({ name: '귀살자 (鬼殺者)', desc: '검귀를 거듭 베어낸 자' });
-    if ((s.sealed || 0) >= 10) personas.push({ name: '봉인가 (封印家)', desc: '10자루 이상 봉인한 자' });
+    if ((s.slainDemon || 0) >= 3) personas.push({ name: '귀살자', desc: '검귀를 거듭 베어낸 자' });
+    if ((s.sealed || 0) >= 10) personas.push({ name: '봉인가', desc: '10자루 이상 봉인한 자' });
     if ((s.wayReached || 0) >= 1) personas.push({ name: '도의 추구자', desc: '최고 단계에 이른 적이 있다' });
     if ((s.wayReached || 0) >= 5) personas.push({ name: '달인 (달인)', desc: '도를 다섯 번 지났다' });
-    if ((s.rescued || 0) >= 5) personas.push({ name: '구원자 (救援者)', desc: '검의 파편을 거듭 회수' });
-    if ((state.totalDestroyed || 0) >= 10) personas.push({ name: '도박꾼 (賭博者)', desc: '많은 검을 잃었지만 계속 도전한다' });
-    if ((s.fled || 0) >= 10) personas.push({ name: '바람의 검 (風劍)', desc: '도전에서 자주 물러난다' });
+    if ((s.rescued || 0) >= 5) personas.push({ name: '구원자', desc: '검의 파편을 거듭 회수' });
+    if ((state.totalDestroyed || 0) >= 10) personas.push({ name: '도박꾼', desc: '많은 검을 잃었지만 계속 도전한다' });
+    if ((s.fled || 0) >= 10) personas.push({ name: '바람의 검', desc: '도전에서 자주 물러난다' });
     if (state.sealedSwords && state.sealedSwords.length === 0 && (state.bestLevel || 0) >= 8) {
-      personas.push({ name: '집착자 (執着者)', desc: '한 자루의 검을 깊이 키운다' });
+      personas.push({ name: '집착자', desc: '한 자루의 검을 깊이 키운다' });
     }
-    if (personas.length === 0) personas.push({ name: '초보 (初步)', desc: '검의 길을 막 시작한 자' });
+    if (personas.length === 0) personas.push({ name: '초보', desc: '검의 길을 막 시작한 자' });
     return personas;
   }
 
@@ -19067,7 +19067,7 @@
   applySettings();  // v228 設 — 접근성 설정 복원
   applySolarTerm();    // v177 절기 — 현재 절기 적용 + 진입 시 페이드
   setInterval(applySolarTerm, 60 * 60 * 1000);  // 매시간 절기 재확인 (자정 경계)
-  startSeasonalParticles();  // v179 季韻 — 환경 입자 spawner
+  startSeasonalParticles();  // v179 계운 — 환경 입자 spawner
   startMeteorSchedule();     // v185 유성 — 무작위 유성 spawner
   checkDailyStreak();        // v191 練日 — 연속 일자 체크
   renderStreakMark();        // v191 練日 — 우상단 표식 초기 렌더
