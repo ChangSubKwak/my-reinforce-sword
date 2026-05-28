@@ -10080,7 +10080,7 @@
     const stage = $('stage');
     if (!stage) return;
     const el = document.createElement('div');
-    el.innerHTML = '<span style="font-size:24px;color:#fff5c0;text-shadow:0 0 12px rgba(212,175,55,0.6);letter-spacing:6px">종</span><br><span style="font-size:11px;color:rgba(212,175,55,0.7);letter-spacing:4px;margin-top:4px;display:inline-block">' + hour + '時</span>';
+    el.innerHTML = '<span style="font-size:24px;color:#fff5c0;text-shadow:0 0 12px rgba(212,175,55,0.6);letter-spacing:6px">종</span><br><span style="font-size:11px;color:rgba(212,175,55,0.7);letter-spacing:4px;margin-top:4px;display:inline-block">' + hour + '시</span>';
     el.style.cssText = 'position:absolute;top:25%;left:50%;transform:translateX(-50%);pointer-events:none;z-index:30;text-align:center;opacity:0;font-family:"Noto Serif KR",serif;line-height:1.4';
     stage.appendChild(el);
     el.animate([
@@ -10527,7 +10527,7 @@
       const v = trialSuccessBonus(); if (v) successLines.push(line('시련의 혼', pct(v)));
     }
     if (typeof todSuccessBonus === 'function') {
-      const v = todSuccessBonus(); if (v) successLines.push(line('朝 (시간대)', pct(v)));
+      const v = todSuccessBonus(); if (v) successLines.push(line('시각 (시간대)', pct(v)));
     }
     if (typeof breathBonus === 'function') {
       let v = breathBonus();
@@ -10537,7 +10537,7 @@
     }
     // v265 — successChanceNow의 즉시/검별 성공원도 분해에 포함 (形/砥/魂/守/覺悟/逆/잔향)
     if (state.hasSword) { const f0 = getForm(); const fb = (f0 && f0.successBonus) || 0; if (fb) successLines.push(line('형 ' + (f0.name || ''), pct(fb))); }
-    (function() { const wc = $('whet-check'); if (wc && wc.checked && !wc.disabled && (state.whetstones || 0) > 0) successLines.push(line('砥石 (이번 1회)', pct(0.25))); })();
+    (function() { const wc = $('whet-check'); if (wc && wc.checked && !wc.disabled && (state.whetstones || 0) > 0) successLines.push(line('숫돌 (이번 1회)', pct(0.25))); })();
     if (typeof soulEffects === 'function') { const v = soulEffects().successBonus; if (v) successLines.push(line('혼', pct(v))); }
     if (typeof guardianBonus === 'function') { const v = guardianBonus().successBonus; if (v) successLines.push(line('수호자 (수)', pct(v))); }
     if (typeof getResolve === 'function') { const r = getResolve(); if (r.successAdd) successLines.push(line('각오 ' + r.label, pct(r.successAdd), r.successAdd < 0 ? 'var(--danger)' : null)); }
@@ -10559,7 +10559,7 @@
       const v = weatherSuccessBonus(); if (v) successLines.push(line('천후 (뇌)', pct(v)));
     }
     if (typeof moodSuccessBonus === 'function') {
-      const v = moodSuccessBonus(); if (v) successLines.push(line('心象', pct(v), v < 0 ? 'var(--danger)' : null));
+      const v = moodSuccessBonus(); if (v) successLines.push(line('심상', pct(v), v < 0 ? 'var(--danger)' : null));
     }
     if (typeof dawnBonusSuccess === 'function') {
       const v = dawnBonusSuccess(); if (v) successLines.push(line('여명 (새벽)', pct(v)));
@@ -10568,10 +10568,10 @@
       const v = wishSuccessBonus(); if (v) successLines.push(line('유언 (원)', pct(v)));
     }
     if (typeof ultimateSuccessBonus === 'function') {
-      const v = ultimateSuccessBonus(); if (v) successLines.push(line('究極', pct(v)));
+      const v = ultimateSuccessBonus(); if (v) successLines.push(line('궁극', pct(v)));
     }
     if (typeof mutationSuccessBonus === 'function') {
-      const v = mutationSuccessBonus(); if (v) successLines.push(line('變異 (鋼骨)', pct(v)));
+      const v = mutationSuccessBonus(); if (v) successLines.push(line('변이 (강골)', pct(v)));
     }
     sections.push(section('강화 성공 보너스', successLines));
 
@@ -10668,7 +10668,7 @@
     timeLines.push(line('기원', eraNow.name + ' (' + (state.stats && state.stats.enhanceAttempts || 0) + ' 시도)'));
     if (typeof getSeason === 'function') timeLines.push(line('계절', getSeason().name));
     if (typeof getCurrentSolarTerm === 'function') { const st = getCurrentSolarTerm(); const se = (typeof solarTermEffect === 'function') ? solarTermEffect(st) : ''; timeLines.push(line('절기', st.name + (se ? ' · ' + se : ''), 'var(--dim)')); }
-    if (typeof getTimeOfDay === 'function') timeLines.push(line('朝夕', getTimeOfDay().name + ' (' + getTimeOfDay().label + ')'));
+    if (typeof getTimeOfDay === 'function') timeLines.push(line('시각', getTimeOfDay().name + ' (' + getTimeOfDay().label + ')'));
     if (typeof weatherActive !== 'undefined' && weatherActive) {
       timeLines.push(line('천후', weatherActive === 'rain' ? '비' : '바람'));
     }
@@ -18607,7 +18607,7 @@
         const done = ORIGIN_KEYS.filter(k => (os[k] || 0) > 0).length;
         const breakdown = ORIGIN_KEYS.map(k => k + ' ' + fmtNum(os[k] || 0)).join('  ·  ');
         return row('그림자 학파 처치', breakdown, '#a8c0d8') +
-          row('斷魔 진척', done >= ORIGIN_KEYS.length ? '달 — 네 학파 모두 베다' : done + ' / ' + ORIGIN_KEYS.length + ' 학파', done >= ORIGIN_KEYS.length ? '#fff5c0' : 'var(--dim)');
+          row('단마 진척', done >= ORIGIN_KEYS.length ? '달 — 네 학파 모두 베다' : done + ' / ' + ORIGIN_KEYS.length + ' 학파', done >= ORIGIN_KEYS.length ? '#fff5c0' : 'var(--dim)');
       })() +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">생 사</div>' +
       row('조각 줍기 성공', fmtNum(s.rescued || 0) + ' 회') +
