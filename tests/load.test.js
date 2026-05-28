@@ -270,6 +270,17 @@ test('normalizeState: 명문 키 道→도, 四道→사도 (구 세이브 정�
   assert.deepStrictEqual(st.sealedSwords[0].inscriptions, ['사도', '도'], '四道→사도, 기존 도 보존');
 });
 
+// 한글화 10단계(D) — 축제·월상 명문 배치 잠금 (IM 4419 줄 실수 삭제 회귀 방어)
+test('normalizeState: 축제·월상 명문 元旦/端午/月蝕/朔/雙 → 원단/단오/월식/삭/쌍', () => {
+  const st = { currentSword: { inscriptions: ['元旦', '端午', '七夕', '重陽', '月蝕', '朔', '半', '圓', '雙'] } };
+  loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 }).normalizeState();
+  assert.deepStrictEqual(
+    st.currentSword.inscriptions,
+    ['원단', '단오', '칠석', '중양', '월식', '삭', '반', '원', '쌍'],
+    '축제·월상 9키 전부 음역 마이그레이션 (IM 한 줄 잠금)'
+  );
+});
+
 // 한글화 — 時生(bornTod) 키 한자→한글 마이그레이션
 test('normalizeState: bornTod 朝/夜 → 아침/밤 (時生 저장 키)', () => {
   const st = { currentSword: { bornTod: '朝' }, sealedSwords: [{ bornTod: '夜' }, { bornTod: '낮' }] };
