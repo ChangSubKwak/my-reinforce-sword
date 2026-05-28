@@ -296,3 +296,14 @@ test('normalizeState: userSeal/playerSeal 天→천 등 (인장 음 보존)', ()
   assert.strictEqual(st.playerSeal, '심', '心→심');
   assert.strictEqual(st.currentSword.playerSeal, '道', '팔레트 외(道)는 그대로');
 });
+
+// 한글화 — 字(칼날 새김) currentSword.engraving 마이그레이션
+test('normalizeState: currentSword.engraving 義/龍 등→의/용 (字 새김 음 보존)', () => {
+  const st = { currentSword: { engraving: '義' } };
+  loadFunctions(['normalizeState'], { state: st, assignDestiny: () => {}, MAX_LEVEL: 15 }).normalizeState();
+  assert.strictEqual(st.currentSword.engraving, '의', '義→의');
+  // 미팔레트 글자(古 등 EM 맵 밖)는 그대로
+  const st2 = { currentSword: { engraving: 'X' } };
+  loadFunctions(['normalizeState'], { state: st2, assignDestiny: () => {}, MAX_LEVEL: 15 }).normalizeState();
+  assert.strictEqual(st2.currentSword.engraving, 'X', '팔레트 외 보존');
+});
