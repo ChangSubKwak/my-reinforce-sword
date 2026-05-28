@@ -871,3 +871,17 @@ test('a11y: 모든 modal dialog는 aria-labelledby/aria-label 보유 (screen rea
   const unlabeled = dialogMatches.filter(d => !/aria-label/.test(d));
   assert.deepStrictEqual(unlabeled, [], 'aria-labelledby 또는 aria-label 누락 dialog: ' + unlabeled.join('\n  '));
 });
+
+// a11y: modal focus trap (inert 기반) 설정이 있는지 잠금.
+// 67개 modal 열기 사이트가 있어 site-별 inert toggle은 비현실적.
+// 단일 MutationObserver가 모든 .modal class 변경 감시 + 형제(#game/다른 modal) inert sync.
+test('a11y: setupModalFocusTrap이 MutationObserver로 .modal active 감시 (focus 이탈 방지)', () => {
+  assert.match(js, /setupModalFocusTrap/, '모달 focus trap 헬퍼 존재');
+  // MutationObserver 사용 (attribute class 감시)
+  assert.match(js, /new MutationObserver\(syncInert\)/, 'MutationObserver로 syncInert 호출');
+  // inert 토글 — game 본체 + 다른 modal
+  assert.match(js, /game\.inert\s*=\s*true/, '#game에 inert 적용 (modal 열림 시)');
+  assert.match(js, /m\.inert\s*=\s*\(m\s*!==\s*active\)/, '활성 modal 외 다른 modal들에 inert');
+  // 구 브라우저 graceful (구식 사용자도 게임 가능)
+  assert.match(js, /'inert' in HTMLElement\.prototype/, 'inert 지원 안 하면 graceful skip');
+});

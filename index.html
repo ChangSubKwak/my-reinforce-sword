@@ -19055,6 +19055,29 @@
   // === 시작 ===
   load();
   document.body.classList.add('stage-minimal');  // UI 재설계 1b — 무대 배너를 검 정보 패널로 일원화 (reversible)
+
+  // a11y — modal focus trap (inert 기반). modal이 .active 상태로 토글되면
+  // 형제 노드(#game 메인 UI + 다른 modal들)에 inert를 적용해 Tab 이탈을 차단.
+  // 67개 modal 열기 사이트를 건드리지 않고 단일 MutationObserver로 통합.
+  (function setupModalFocusTrap() {
+    if (typeof MutationObserver !== 'function' || !('inert' in HTMLElement.prototype)) return;  // 구 브라우저 graceful
+    const game = document.getElementById('game');
+    const modals = Array.from(document.querySelectorAll('.modal'));
+    function syncInert() {
+      const active = modals.find(m => m.classList.contains('active'));
+      if (active) {
+        if (game) game.inert = true;
+        modals.forEach(m => { m.inert = (m !== active); });
+      } else {
+        if (game) game.inert = false;
+        modals.forEach(m => { m.inert = false; });
+      }
+    }
+    const obs = new MutationObserver(syncInert);
+    modals.forEach(m => obs.observe(m, { attributes: true, attributeFilter: ['class'] }));
+    syncInert();  // 시작 상태 동기
+  })();
+
   ensureDailyTrial();  // v94 천시 — 오늘의 도전 초기화/갱신
   applyVisualTheme(state.visualTheme || '');  // v201 配 — 저장된 테마 복원
   applySettings();  // v228 設 — 접근성 설정 복원
