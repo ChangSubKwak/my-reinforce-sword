@@ -5114,10 +5114,7 @@
 
   const SFX = {
     // 강화 성공: 도-미-솔 화음 → 옥타브 위
-    enhanceSuccess: () => {
-      chord([523, 659, 784], 0.18, 'sine', 0.5);
-      setTimeout(() => chord([784, 988, 1175], 0.25, 'sine', 0.4), 100);
-    },
+    // enhanceSuccess (옛 단순 chord)는 enhanceSuccessStreak(0)이 동일 출력을 내며 모든 call site에서 streak 버전 사용 — 제거됨.
     enhanceSuccessStreak: (streak) => {
       // v108 響應: streak에 따라 pitch escalation
       // 반음 = ×2^(1/12) ≈ 1.0595
