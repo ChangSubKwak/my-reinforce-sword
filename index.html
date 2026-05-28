@@ -15093,7 +15093,7 @@
     if (temp === affinity) return { key: 'follow', name: '솔성', line: '타고난 형 그대로 나아간, 천성을 따른 검이었다.' };
     return { key: 'defy', name: '역성', line: '타고난 형을 거슬러 제 길을 연, 천성을 거스른 검이었다.' };
   }
-  // v248 遺言 — 봉인되는 검의 1인칭 마지막 말. 一代記(3인칭 서술)·一生詩(도 한정 시)와 달리
+  // v248 遺言 — 봉인되는 검의 1인칭 마지막 말. 一代記(3인칭 서술)·일생시(도 한정 시)와 달리
   // 검 자신의 목소리. 성정(v247) + 정점 성취에서 결정적 파생 (메커니즘 효과 0, 순수 narrative).
   function generateLastWords(sword) {
     if (!sword) return '';
@@ -15236,7 +15236,7 @@
     return formOpening + ' ' + (fusionLine ? fusionLine + ' ' : '') + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + (destinyLine ? destinyLine + ' ' : '') + ending;
   }
 
-  // === 一生詩 — 도 검 봉인 시 일생을 4행 시구로 응축 ===
+  // === 일생시 — 도 검 봉인 시 일생을 4행 시구로 응축 ===
   function generateVerse(form, inscriptions, level, slainCount, reward, soul) {
     const formLine = ({
       '직': '강직의 검 한 자루',
@@ -15245,7 +15245,7 @@
       '속': '바람의 검 한 자루',
     })[form] || '이름 없는 검 한 자루';
 
-    // v370i — 名(명명된 적) 격파를 一生詩(도 검 시)에도 결합. 龍을 벤 도 검의 시가 그
+    // v370i — 名(명명된 적) 격파를 일생시(도 검 시)에도 결합. 龍을 벤 도 검의 시가 그
     // 정점 무훈을 노래하지 않던 누락 (v370h 一代記과 동일 시스템, 시 surface에도 적용).
     const FOE_VERSE = { '용참': '용을 베어 하늘마저 가르고', '제참': '귀제를 쓰러뜨리고', '인참': '천 개의 칼날을 가르며', '월참': '은월을 베고', '풍참': '흑풍을 잠재우고' };
     const foeV = ['용참', '제참', '인참', '월참', '풍참'].find(k => inscriptions.includes(k));
@@ -16760,7 +16760,7 @@
     log('🌟 성에 이르다 — 그대는 도달했다', 'success');
   }
 
-  // === 儀式 — 도 검 봉인 컷씬 (v15부터 一生詩 표시) ===
+  // === 儀式 — 도 검 봉인 컷씬 (v15부터 일생시 표시) ===
   function playRitual(form, inscriptions, level, reward) {
     const ritualEl = $('ritual-overlay');
     const formEl = $('ritual-form');
@@ -18410,7 +18410,7 @@
 
   function renderAnthology() {
     const list = $('anthology-list');
-    // v370e — 전당(enshrined) 검의 一生詩·遺言도 포함. 詩集은 모든 검의 시·말의 정전인데
+    // v370e — 전당(enshrined) 검의 일생시·遺言도 포함. 詩集은 모든 검의 시·말의 정전인데
     // 가장 고운 시를 남길 도 검을 전당에 진열하면 詩集에서 사라지던 누락 — v369(whisper가
     // enshrined verse 합산)과 일관. 풀은 disjoint(enshrine은 이동이라 중복 없음).
     const sealed = (state.sealedSwords || []).concat(state.enshrined || []);
@@ -18421,8 +18421,8 @@
     // v253c 序 — 詩集 머리글: 검들이 남긴 시와 말의 규모
     const daoCount = sealed.filter(s => s.verse && Array.isArray(s.verse)).length;
     let html = '<div style="text-align:center;color:var(--dim);font-size:10px;letter-spacing:2px;padding:2px 0 10px">' +
-      sealed.length + '자루의 검 · 一生詩 ' + daoCount + ' · 유언 ' + Math.min(20, sealed.length) + '</div>';
-    // 一生詩 — 도에 이른 검 (최근 순)
+      sealed.length + '자루의 검 · 일생시 ' + daoCount + ' · 유언 ' + Math.min(20, sealed.length) + '</div>';
+    // 일생시 — 도에 이른 검 (최근 순)
     const dao = sealed.filter(s => s.verse && Array.isArray(s.verse));
     if (dao.length > 0) {
       html += '<div style="text-align:center;color:var(--accent);letter-spacing:6px;font-size:12px;padding:8px 0 4px;opacity:0.7">일 생 시</div>';
