@@ -4538,12 +4538,12 @@
     if (!el) return;
     const ways = (state.stats && state.stats.wayReached) || 0;
     if (ways > 0) {
-      // v117 四도 — 4형 도 진척도 또는 완성 표시
+      // v117 사도 — 4형 도 진척도 또는 완성 표시
       const wc = getWayFormCounts();
       const lit = ['직','곡','중','속'].filter(f => wc[f] > 0).length;
       const fourWayLabel = hasFourWays()
-        ? '<span style="color:#fff5c0;text-shadow:0 0 8px rgba(255,245,192,0.7);margin-left:8px;letter-spacing:2px">四도</span>'
-        : (lit > 0 ? '<span style="color:var(--dim);margin-left:8px;font-size:9px;letter-spacing:2px">四도 ' + lit + '/4</span>' : '');
+        ? '<span style="color:#fff5c0;text-shadow:0 0 8px rgba(255,245,192,0.7);margin-left:8px;letter-spacing:2px">사도</span>'
+        : (lit > 0 ? '<span style="color:var(--dim);margin-left:8px;font-size:9px;letter-spacing:2px">사도 ' + lit + '/4</span>' : '');
       el.innerHTML = '도 × ' + ways + fourWayLabel;
       el.classList.add('active');
     } else {
@@ -7216,7 +7216,7 @@
       const color = pct >= 100 ? '#fff5c0' : (pct >= 70 ? '#d4af37' : (pct >= 40 ? '#a8c0d8' : '#888'));
       ov.innerHTML = '<div style="font-size:48px;color:' + color + ';font-weight:200;letter-spacing:2px;text-shadow:0 0 24px ' + color + '66">' + pct + '<span style="font-size:20px">%</span></div>' +
                      '<div style="font-size:10px;letter-spacing:4px;color:#888;margin-top:4px">전체 탐험률</div>' +
-                     (pct >= 100 ? '<div style="font-size:11px;letter-spacing:4px;color:#fff5c0;margin-top:8px">大成 — 모든 길을 걸었다</div>' : '');
+                     (pct >= 100 ? '<div style="font-size:11px;letter-spacing:4px;color:#fff5c0;margin-top:8px">대성 — 모든 길을 걸었다</div>' : '');
     }
     const wrap = $('completion-bars');
     if (!wrap) return;
@@ -7234,7 +7234,7 @@
     wrap.innerHTML = html;
   }
 
-  // === v200 完一書 — 사용자 전체 여정 6권 책 ===
+  // === v200 완일서 — 사용자 전체 여정 6권 책 ===
   let bookPageIdx = 0;
   const BOOK_PAGES = 6;
   function renderBookPage(idx) {
@@ -7257,7 +7257,7 @@
     if (bookPageIdx === 0) {
       // 卷一 — 표지
       html += '<div style="text-align:center;padding:20px 0">';
-      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);margin-bottom:18px">권  一  ─  표  지</div>';
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);margin-bottom:18px">권  일  ─  표  지</div>';
       html += '<div style="font-size:32px;color:#fff5c0;letter-spacing:8px;margin:20px 0 8px;font-family:\'Noto Serif KR\',serif;font-weight:200">' + daoTitle + '</div>';
       html += '<div style="font-size:11px;letter-spacing:4px;color:#a8a098;font-style:italic;margin-bottom:24px">한 자루의 검에서 시작된 길</div>';
       if ((state.userSeal || []).length > 0) {
@@ -7274,7 +7274,7 @@
       html += '</div>';
     } else if (bookPageIdx === 1) {
       // 卷二 — 검들
-      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">권  二  ─  검  들</div>';
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">권  이  ─  검  들</div>';
       html += '<div style="font-size:13px;letter-spacing:4px;color:#e8e6dd;text-align:center;margin-bottom:18px;font-family:\'Noto Serif KR\',serif">' + sealed + '자루의 검 봉인, ' + swordGen + '대 이어졌다</div>';
       const formCounts = { '직':0,'곡':0,'중':0,'속':0 };
       (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });  // v359 — 전당 검도 형 분포에 (display undercount)
@@ -7312,7 +7312,7 @@
       }
     } else if (bookPageIdx === 3) {
       // 卷四 — 메타
-      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">권  四  ─  메  타</div>';
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">권  사  ─  메  타</div>';
       // 시련의 혼 / 사신 / 칠보
       const trialsU = (typeof TRIALS !== 'undefined') ? TRIALS.filter(t => trialUnlocked(t.key)).length : 0;
       const trialsT = (typeof TRIALS !== 'undefined') ? TRIALS.length : 5;
@@ -7335,7 +7335,7 @@
       }
     } else if (bookPageIdx === 4) {
       // 卷五 — 시간
-      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">권  五  ─  시  간</div>';
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">권  오  ─  시  간</div>';
       const playTime = (typeof formatPlayTime === 'function') ? formatPlayTime(state.totalPlayTimeMs || 0) : '0';
       const streak = state.playStreak || 0;
       const bestStreak = state.bestStreak || 0;
@@ -7354,7 +7354,7 @@
     } else {
       // 卷六 — 종결
       html += '<div style="text-align:center;padding:20px 0">';
-      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);margin-bottom:24px">권  六  ─  종  결</div>';
+      html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);margin-bottom:24px">권  육  ─  종  결</div>';
       // narrative summary
       let summary = '';
       if (ways >= 5) summary = '여러 번 도에 닿았다 — 검의 정점을 알았다.';
@@ -7364,7 +7364,7 @@
       else summary = '아직 길 위에 서 있다 — 검의 본성을 찾는 중.';
       html += '<div style="font-size:14px;color:#fff5c0;letter-spacing:4px;margin:30px 0;line-height:1.9;font-family:\'Noto Serif KR\',serif">' + summary + '</div>';
       html += '<div style="font-size:13px;color:rgba(168,184,200,0.8);letter-spacing:3px;margin:24px 0;font-style:italic;line-height:1.8">검의 길은 끊임없다.<br/>이 책의 다음 권은<br/>당신이 다음에 쥐는 검이다.</div>';
-      html += '<div style="font-size:9px;letter-spacing:4px;color:#666;margin-top:36px">完一書 ─ v200</div>';
+      html += '<div style="font-size:9px;letter-spacing:4px;color:#666;margin-top:36px">완일서 ─ v200</div>';
       html += '<div style="font-size:9px;letter-spacing:3px;color:#555;margin-top:6px">' + new Date().toISOString().slice(0,10) + '</div>';
       html += '</div>';
     }
@@ -8912,7 +8912,7 @@
       el = document.createElement('div');
       el.id = 'daily-saying';
       el.style.cssText = 'position:fixed;bottom:54px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;color:rgba(168,168,168,0.45);font-family:"Noto Serif KR",serif;font-style:italic;pointer-events:auto;z-index:8;cursor:pointer;transition:opacity 0.4s,color 0.4s;max-width:80%;text-align:center';
-      el.title = '日言 — 클릭하여 큰 글로 본다';
+      el.title = '일언 — 클릭하여 큰 글로 본다';
       el.addEventListener('mouseenter', () => { el.style.opacity = '0.9'; el.style.color = '#d4af37'; });
       el.addEventListener('mouseleave', () => { el.style.opacity = ''; el.style.color = ''; });
       el.addEventListener('click', showDailySayingFade);
@@ -10624,7 +10624,7 @@
       if (typeof wishCostMul === 'function') costMulLine('유언 (원)', wishCostMul());
       if (typeof solarCostMul === 'function') costMulLine('절기', solarCostMul());
       if (typeof weekendCostMul === 'function') costMulLine('주말 (휴)', weekendCostMul());
-      if (typeof flowCostReduce === 'function') { const fr = flowCostReduce(); if (fr) costMulLine('連 흐름', 1 - fr); }
+      if (typeof flowCostReduce === 'function') { const fr = flowCostReduce(); if (fr) costMulLine('연 흐름', 1 - fr); }
       costLines.push(line('실제 비용', fmtNum(enhanceCost(lv)) + ' 조각', 'var(--accent)'));
     }
     sections.push(section('강화 비용 요인', costLines));
@@ -11080,7 +11080,7 @@
   function renderShinkiSection() {  // v288 — 신기 html 반환 (記錄 모달 임베드용). 이전 이름 renderRecords가 劍士録 모달용 동명 함수(6986)를 가려 그 모달이 비어 있던 버그 수정.
     const r = state.records || {};
     let html = '<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">' +
-      '<div style="font-size:11px;color:var(--accent);letter-spacing:5px;margin-bottom:10px;text-align:center">新  기</div>';
+      '<div style="font-size:11px;color:var(--accent);letter-spacing:5px;margin-bottom:10px;text-align:center">신  기</div>';
     html += RECORDS.map(def => {
       const v = r[def.key];
       const display = (v == null) ? '— 미기록 —' : (v + def.unit);
@@ -11460,7 +11460,7 @@
     'firstSeven':     '첫 칠성 달성',
     'firstFusion':    '첫 검 융합',
     'first100Gen':    '100대 도달',
-    'first4Way':      '四도 달성',
+    'first4Way':      '사도 달성',
   };
   const RUBBING_MAX = 20;
   function captureRubbing(reasonKey, extraData) {
@@ -13870,7 +13870,7 @@
       // v125 연참 — 슬레이 streak 증가 + 단계별 보너스
       slayStreak++;
       updateRecord('maxSlayStreak', slayStreak);  // v156
-      const newTierLabel = slayStreak === 3 ? '연참 삼' : slayStreak === 5 ? '연참 五' : slayStreak === 7 ? '연참 七' : null;
+      const newTierLabel = slayStreak === 3 ? '연참 삼' : slayStreak === 5 ? '연참 오' : slayStreak === 7 ? '연참 칠' : null;
       if (newTierLabel) {
         const tierMsg = slayStreak === 3 ? '세 번 이어졌다 — 검의 흐름이 살아난다' :
                         slayStreak === 5 ? '다섯 번 — 보호권 +1' :
@@ -15171,7 +15171,7 @@
       '중': '무거운 검 ' + name + '은 산의 무게를 지고 태어났다.',
       '속': '빠른 검 ' + name + '은 빛처럼 빠르게 태어났다.',
     })[form] || '검 ' + name + '은 이름 없이 태어났다.');
-    // v371e 血統 — 융합(융검 v92)으로 태어난 검은 두 선대의 혼을 잇는다. fusedFrom(보존됨)을
+    // v371e 혈통 — 융합(융검 v92)으로 태어난 검은 두 선대의 혼을 잇는다. fusedFrom(보존됨)을
     // 一代記 개막에 결합 — 합성검의 血統 origin이 서술에서 누락이던 갭. 보존 데이터 파생, 효과 0.
     let fusionLine = '';
     if (Array.isArray(sword.fusedFrom) && sword.fusedFrom.length === 2) {
@@ -15374,7 +15374,7 @@
   function getFormCounts() {
     const counts = {};
     // v350 — 봉인 + 전당 모두 집계. getFormCounts만 sealedSwords-only였던 outlier로,
-    // 도 검을 전당에 진열하면 流派(유파) 진척에서 빠지던 버그 — 四도(getWayFormCounts)와
+    // 도 검을 전당에 진열하면 流派(유파) 진척에서 빠지던 버그 — 사도(getWayFormCounts)와
     // 다른 ~10개 집계 지점은 두 컬렉션을 합산함. enshrine은 봉인의 한 형태이므로 같이 센다.
     const all = (state.sealedSwords || []).concat(state.enshrined || []);
     for (const s of all) {
@@ -15535,7 +15535,7 @@
       kigen: (userKigen && userKigen.trim()) ? userKigen.trim() : null,  // v158 기언
       playerSeal: state.currentSword.playerSeal || state.playerSeal || '',  // v344 篆刻 — doSeal과 동기 (전당 검도 인장 보존)
       bornTod: state.currentSword.bornTod || null,  // v344 時生 — 빚어진 시각 보존 (회고·一代記)
-      fusedFrom: state.currentSword.fusedFrom || null,  // v344 血統 — 융합 혈통 보존
+      fusedFrom: state.currentSword.fusedFrom || null,  // v344 혈통 — 융합 혈통 보존
     });
     bumpStat('wayReached');
     grantEternity();  // v225 무극 — 도 검 전당도 영겁 +1
@@ -15580,7 +15580,7 @@
     updateForgeButtons();
   }
 
-  // === v117 四도 — 4형의 도(+15) 검을 모두 봉인하면 영구 패시브 ===
+  // === v117 사도 — 4형의 도(+15) 검을 모두 봉인하면 영구 패시브 ===
   function getWayFormCounts() {
     const counts = { '직': 0, '곡': 0, '중': 0, '속': 0 };
     const all = (state.sealedSwords || []).concat(state.enshrined || []);
@@ -16111,7 +16111,7 @@
       state.currentSword.inscriptions.push('성');
       state.currentSword.soul = Math.max(state.currentSword.soul, 30);
     }
-    // v117 四도 — 4형의 도 검 모두 보유 시 영구 시작 영혼 +50
+    // v117 사도 — 4형의 도 검 모두 보유 시 영구 시작 영혼 +50
     if (hasFourWays()) {
       state.currentSword.soul = Math.max(state.currentSword.soul, fourWayStartSoul());
     }
@@ -16254,7 +16254,7 @@
       state.currentSword.inscriptions.push(p.inscription);
     }
     state.currentSword.soul = Math.max(state.currentSword.soul, p.soul);
-    state.currentSword.fusedFrom = [nameA, nameB];  // v255 血統 — 융합 혈통 (정체성)
+    state.currentSword.fusedFrom = [nameA, nameB];  // v255 혈통 — 융합 혈통 (정체성)
     checkInscriptions();
     captureRubbing('firstFusion');  // v136 탁본
     fusionSelected = [];
@@ -16451,7 +16451,7 @@
       : null;
     // v89 시련의 혼 — 봉인 직전 잠금 상태 기록
     const trialsBefore = TRIALS.filter(t => trialUnlocked(t.key)).map(t => t.key);
-    // v117 四도 — 봉인 전 4도 상태 추적
+    // v117 사도 — 봉인 전 4도 상태 추적
     const fourWaysBefore = hasFourWays();
     state.sealedSwords.push({
       level: lv, inscriptions: ins, form,
@@ -16471,7 +16471,7 @@
       playerSeal: state.currentSword.playerSeal || state.playerSeal || '',  // v140 篆刻
       kigen: (userKigen && userKigen.trim()) ? userKigen.trim() : null,  // v158 기언
       bornTod: state.currentSword.bornTod || null,  // v252 時生 — 빚어진 시각
-      fusedFrom: state.currentSword.fusedFrom || null,  // v255 血統 — 융합 혈통
+      fusedFrom: state.currentSword.fusedFrom || null,  // v255 혈통 — 융합 혈통
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -16520,7 +16520,7 @@
     updateRecord('maxSoul', justSealed.soul || 0);
     updateRecord('maxSwordLife', justSealed.enhanceAttempts || 0);  // v353 — 형제 호출(soul/slainCount)처럼 captured justSealed 사용. 기존 state.currentSword는 newSword() 전이라 우연히 맞았으나 재정렬 시 새 검 0을 기록할 fragility 제거
     updateRecord('maxSlainPerSword', justSealed.slainCount || 0);
-    // v117 四도 — 이 봉인으로 4형 도 모두 달성 시 큰 의식
+    // v117 사도 — 이 봉인으로 4형 도 모두 달성 시 큰 의식
     if (!fourWaysBefore && hasFourWays()) {
       setTimeout(() => {
         announceInscription('사도', '네 길의 검사가 되었다 — 모든 새 검 시작 영혼 +50, 강화 성공 +3%');
@@ -16969,16 +16969,16 @@
         '<div><span style="color:var(--dim)">강화도</span> <span style="color:var(--accent);margin-left:6px">+' + s.level + '</span></div>' +
         '<div style="color:var(--dim);font-size:10px;font-style:italic;letter-spacing:1px;margin:2px 0 4px">' + deriveNameOrigin(s.form, s.inscriptions || [], s.level) + '</div>' +
         (deriveForging(s.enhanceAttempts, s.level) ? '<div style="color:var(--dim);font-size:10px;font-style:italic;letter-spacing:1px;margin:0 0 4px">' + deriveForging(s.enhanceAttempts, s.level) + '</div>' : '') +
-        (s.bornTod ? '<div><span style="color:var(--dim)">時生</span> <span style="color:#a8c0d8;margin-left:6px">' + s.bornTod + '</span></div>' : '') +  // v252 빚어진 시각
+        (s.bornTod ? '<div><span style="color:var(--dim)">시생</span> <span style="color:#a8c0d8;margin-left:6px">' + s.bornTod + '</span></div>' : '') +  // v252 빚어진 시각
       '</div>' +
       verseBlock +
       // v204 起念 — 탄생문 (회고에 영구 표시)
       (s.birthStatement ? '<div style="margin:14px 0;padding:12px;background:rgba(168,184,200,0.04);border-left:2px solid rgba(168,184,200,0.4);font-size:10.5px;line-height:1.8;letter-spacing:2px;color:var(--fg);font-style:italic"><div style="color:var(--dim);font-size:9px;letter-spacing:3px;margin-bottom:5px;font-style:normal">기 념 — 탄생</div>' + s.birthStatement + '</div>' : '') +
-      // v255 血統 — 융합으로 태어난 검의 혈통
-      (Array.isArray(s.fusedFrom) && s.fusedFrom.length === 2 ? '<div style="text-align:center;color:#c8a8d8;font-size:10px;letter-spacing:2px;padding:4px 0">血統 — ' + s.fusedFrom[0] + ' + ' + s.fusedFrom[1] + ' 의 융합</div>' : '') +
+      // v255 혈통 — 융합으로 태어난 검의 혈통
+      (Array.isArray(s.fusedFrom) && s.fusedFrom.length === 2 ? '<div style="text-align:center;color:#c8a8d8;font-size:10px;letter-spacing:2px;padding:4px 0">혈통 — ' + s.fusedFrom[0] + ' + ' + s.fusedFrom[1] + ' 의 융합</div>' : '') +
       // v139 一代記 — 자동 일대기 narrative
       '<div style="margin:14px 0;padding:14px 12px;background:rgba(212,175,55,0.025);border-left:2px solid rgba(212,175,55,0.4);font-size:11px;line-height:1.9;letter-spacing:1.5px;color:var(--fg);font-style:italic">' +
-        '<div style="color:var(--dim);font-size:9px;letter-spacing:3px;margin-bottom:6px;font-style:normal">一 대 기</div>' +
+        '<div style="color:var(--dim);font-size:9px;letter-spacing:3px;margin-bottom:6px;font-style:normal">일 대 기</div>' +
         generateBiography(s) +
       '</div>' +
       // v248 遺言 — 검의 1인칭 마지막 말
@@ -17017,7 +17017,7 @@
         '</div>';
       })() : '') +
       (s.memo ? '<div style="margin:12px 0;padding:10px 14px;background:rgba(212,175,55,0.04);border:1px dashed rgba(212,175,55,0.2);text-align:center;font-size:12px;letter-spacing:3px;color:var(--fg);line-height:1.8">' + s.memo + '</div>' : '') +
-      (s.kigen ? '<div style="margin:12px 0;padding:14px 16px;background:rgba(212,175,55,0.06);border-left:2px solid rgba(212,175,55,0.5);font-size:11px;letter-spacing:2px;color:#fff5c0;line-height:1.9;font-style:italic"><div style="font-size:9px;letter-spacing:3px;opacity:0.7;margin-bottom:6px;font-style:normal">寄  언</div>' + s.kigen + '</div>' : '') +
+      (s.kigen ? '<div style="margin:12px 0;padding:14px 16px;background:rgba(212,175,55,0.06);border-left:2px solid rgba(212,175,55,0.5);font-size:11px;letter-spacing:2px;color:#fff5c0;line-height:1.9;font-style:italic"><div style="font-size:9px;letter-spacing:3px;opacity:0.7;margin-bottom:6px;font-style:normal">기  언</div>' + s.kigen + '</div>' : '') +
       guardianBlock;
     $('sword-detail-modal').classList.add('active');
     // 수호자 지정 / 해제 이벤트
@@ -17881,7 +17881,7 @@
     renderUserPoem();
   });
   if ($('poem-download')) $('poem-download').addEventListener('click', downloadUserPoem);
-  // v200 完一書
+  // v200 완일서
   if ($('btn-codex-book')) $('btn-codex-book').addEventListener('click', () => {
     $('menu-drop').classList.remove('open');
     openBook();
@@ -18353,7 +18353,7 @@
       '시조': '첫 도 도달 — 모든 새 검에 자동',
       '달인': '도 5번 도달 — 모든 새 검에 자동',
       '성': '도 10번 도달 — 모든 새 검에 자동',
-      '단마': '4종류 그림자(夜/霧/골/焰) 모두 베어내기',
+      '단마': '4종류 그림자(야/무/골/염) 모두 베어내기',
       '구': '한 검으로 50번 강화 시도',
       '고': '한 검으로 100번 강화 시도',
     };
@@ -18489,7 +18489,7 @@
     if (ways >= 10) return '십도사 — 열 길의 사범';
     if (foes >= 5) return '五帝를 멸한 자';
     if (blessingsFound >= 6) return '기연진지 — 모든 인연을 본 자';
-    if (fourW) return '四도의 검사';
+    if (fourW) return '사도의 검사';
     if (ways >= 5) return '오도사 — 다섯 길의 사범';
     if (origins >= 4) return '斷魔者 — 모든 어둠을 베다';
     if (ways >= 3) return '삼도의 검수';
