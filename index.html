@@ -4578,7 +4578,7 @@
   };
   function playSeasonTransition(seasonKey) {
     const verse = SEASON_VERSES[seasonKey];
-    const kanji = ({ 'spring': '春', 'summer': '夏', 'autumn': '秋', 'winter': '冬' })[seasonKey];
+    const kanji = ({ 'spring': '춘', 'summer': '하', 'autumn': '추', 'winter': '동' })[seasonKey];
     if (!verse || !kanji) return;
     // 한자 페이드 (3초)
     const k = document.createElement('div');
@@ -5329,7 +5329,7 @@
     // 피드백: 오멘 한자를 결과 한자로 교차 전환
     const el = $('omen-indicator');
     if (!el) return;
-    const resultKanji = actualOutcome === 'success' ? '성' : actualOutcome === 'destroy' ? '파' : '落';
+    const resultKanji = actualOutcome === 'success' ? '성' : actualOutcome === 'destroy' ? '파' : '낙';
     const resultClass = actualOutcome === 'success' ? 'omen-s' : actualOutcome === 'destroy' ? 'omen-d' : 'omen-h';
     el.classList.remove('visible');
     setTimeout(() => {
@@ -9159,28 +9159,28 @@
 
   // === v188 사신 — 4신수 (다양한 플레이로 잠금 해제) ===
   const SACRED_BEASTS = [
-    { key:'genbu',  name:'현무', dir:'北', dirKr:'북', element:'水', color:'#4a7a9a',
+    { key:'genbu',  name:'현무', dir:'북', dirKr:'북', element:'수', color:'#4a7a9a',
       condition: () => ((state.stats && state.stats.stalemate) || 0) >= 5,
       conditionDesc: '대치 5회',
       progress: () => ({ cur: (state.stats && state.stats.stalemate) || 0, max: 5 }),
       bonusDesc: '도전 보상 +5%',
       bonusKey: 'challengeRewardMul', bonusVal: 1.05,
       verse: '북방의 수호자가 강림하였다 — 양보가 길임을 알렸다' },
-    { key:'suzaku', name:'주작', dir:'南', dirKr:'남', element:'火', color:'#c04040',
+    { key:'suzaku', name:'주작', dir:'남', dirKr:'남', element:'화', color:'#c04040',
       condition: () => ((state.stats && state.stats.slainDemon) || 0) >= 3,
       conditionDesc: '검귀 3회 베기',
       progress: () => ({ cur: (state.stats && state.stats.slainDemon) || 0, max: 3 }),
       bonusDesc: '강화 성공 +1%',
       bonusKey: 'successBonus', bonusVal: 0.01,
       verse: '남방의 화염이 검의 길을 비춘다' },
-    { key:'seiryu', name:'청룡', dir:'東', dirKr:'동', element:'木', color:'#4a9a6a',
+    { key:'seiryu', name:'청룡', dir:'동', dirKr:'동', element:'목', color:'#4a9a6a',
       condition: () => ((state.sealedSwords || []).length) >= 10,
       conditionDesc: '봉인 10자루',
       progress: () => ({ cur: (state.sealedSwords || []).length, max: 10 }),
       bonusDesc: '봉인 보상 +3%',
       bonusKey: 'sealRewardMul', bonusVal: 1.03,
       verse: '동방의 용이 봉인의 길에 깃들었다' },
-    { key:'byakko', name:'백호', dir:'西', dirKr:'서', element:'금', color:'#c8b8a8',
+    { key:'byakko', name:'백호', dir:'서', dirKr:'서', element:'금', color:'#c8b8a8',
       condition: () => ((state.stats && state.stats.wayReached) || 0) >= 3,
       conditionDesc: '도 3회 도달',
       progress: () => ({ cur: (state.stats && state.stats.wayReached) || 0, max: 3 }),
@@ -9820,8 +9820,8 @@
     const n = sameFormSealedCount(f);
     if (n >= 10) return { stage: '극', count: n, color: '#fff5c0' };
     if (n >= 6)  return { stage: '대', count: n, color: '#d4af37' };
-    if (n >= 3)  return { stage: '中', count: n, color: '#a8c0d8' };
-    if (n >= 1)  return { stage: '小', count: n, color: '#888888' };
+    if (n >= 3)  return { stage: '중', count: n, color: '#a8c0d8' };
+    if (n >= 1)  return { stage: '소', count: n, color: '#888888' };
     return null;
   }
   function renderResonanceDisplay() {
@@ -11525,7 +11525,7 @@
   }
 
   // === v135 鍛 — 티어 전환 의식 + 高險 성공 의식 ===
-  const TIER_NAMES = ['', '初', '련', '剛', '靈', '성'];  // tier 1~5
+  const TIER_NAMES = ['', '초', '련', '강', '령', '성'];  // tier 1~5
   const TIER_LABELS = ['', '단검 — 첫 단련', '사벨 — 정련된 강철', '양손검 — 영혼이 깃들다', '마법사검 — 신묘한 검', '신검 — 도의 영역'];
   function playTierTransition(tier) {
     if (tier < 2 || tier > 5) return;
@@ -13785,7 +13785,7 @@
     if (!challenge) return;
     bumpStat('evaded');
     log('그림자가 인내심을 잃고 떠났다', 'fail');
-    inscribeQueue.push({ key: '逝', label: '그림자가 흩어졌다 — 결단의 시간을 놓쳤다' });
+    inscribeQueue.push({ key: '서', label: '그림자가 흩어졌다 — 결단의 시간을 놓쳤다' });
     if (!inscribeRunning) runInscribeQueue();
     clearSlayStreak();  // v125 연참 — 자발 후퇴도 리셋
     endChallenge();
