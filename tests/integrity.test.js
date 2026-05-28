@@ -798,3 +798,15 @@ test('UI 재설계: 검 정보 패널 천명 통합 + stage-minimal 무대 배�
   assert.match(html, /#guardian-display\s*\{\s*display:\s*none/, 'stage-minimal이 수호자 표시 숨김');
   assert.match(js, /classList\.add\('stage-minimal'\)/, '초기화 시 stage-minimal 적용');
 });
+
+// renderCodex 단일 출처 잠금 — 별도 conditions 룩업 재유입 차단.
+// v4 당시의 conditions{} 는 INSCRIPTIONS 14개만 커버 → 32 으로 자란 후 18개가 "특수 조건"으로 추락했음.
+// label은 모든 항목에 존재. 재유입 시 같은 stale 발생.
+test('renderCodex가 별도 conditions 룩업 없이 ins.label 단일 출처로 (stale "특수 조건" 회귀 방어)', () => {
+  const rc = js.match(/function renderCodex\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(rc, 'renderCodex 본문 위치');
+  const body = rc[1];
+  assert.ok(!/const conditions\s*=\s*\{/.test(body), 'renderCodex 내 별도 conditions 룩업 없음 (label 단일 출처 보존)');
+  assert.ok(!/'특수 조건'/.test(body), '"특수 조건" fallback 문구 없음 (label로 대체됨)');
+  assert.match(body, /ins\.label/, 'ins.label을 직접 표시');
+});
