@@ -18576,7 +18576,9 @@
       bar('성공률', rate + '% (' + fmtNum(s.enhanceSuccess || 0) + '/' + fmtNum(s.enhanceAttempts || 0) + ')',
           100, 'var(--safe)').replace(/>(\d+)% \(/, '><span style="font-size:10px">$1% (') +
       row('강화 시도', fmtNum(s.enhanceAttempts || 0) + ' 회') +
+      row('강화 하락', fmtNum(s.downgraded || 0) + ' 회', s.downgraded > 0 ? '#c8a8a0' : 'var(--dim)') +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">그 림 자</div>' +
+      row('나타난 그림자', fmtNum(s.challengesAppeared || 0) + ' 회', 'var(--dim)') +
       bar('그림자', fmtNum(s.slainNormal || 0) + ' 회', slainMax) +
       bar('도망 그림자', fmtNum(s.slainFlee || 0) + ' 회', slainMax, '#aac0c8') +
       bar('강철 그림자', fmtNum(s.slainSteel || 0) + ' 회', slainMax, '#888aa8') +
