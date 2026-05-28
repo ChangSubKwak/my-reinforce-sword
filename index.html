@@ -9107,7 +9107,7 @@
     if (typeof SFX !== 'undefined' && SFX.ritual) SFX.ritual();  // v340 — 칠보 원만 효과음 (무음이었음)
     const el = document.createElement('div');
     el.innerHTML = '<div style="font-size:10px;color:rgba(255,245,192,0.65);letter-spacing:12px;margin-bottom:24px">칠  보  원  만</div>' +
-                    '<div style="font-size:84px;color:#fff5c0;letter-spacing:18px;text-shadow:0 0 50px #fff5c0,0 0 100px rgba(212,175,55,0.7);font-weight:200;line-height:1.1">七 보</div>' +
+                    '<div style="font-size:84px;color:#fff5c0;letter-spacing:18px;text-shadow:0 0 50px #fff5c0,0 0 100px rgba(212,175,55,0.7);font-weight:200;line-height:1.1">칠 보</div>' +
                     '<div style="font-size:13px;color:rgba(168,184,200,0.85);letter-spacing:5px;margin-top:24px;font-style:italic;line-height:1.7">일곱 보물이 모였다 — 검의 길에 영원의 빛이 깃들었다</div>' +
                     '<div class="reward-label">영구 — 모든 강화 +1.5%</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:6000;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:50px 70px;background:radial-gradient(ellipse,rgba(15,12,5,0.96) 0%,rgba(15,12,5,0.7) 60%,transparent 90%);max-width:600px';
@@ -9537,7 +9537,7 @@
   <rect x="10" y="10" width="${W-20}" height="${H-20}" fill="none" stroke="#d4af37" stroke-width="0.4" stroke-opacity="0.3"/>
 
   <!-- title -->
-  <text x="22" y="32" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="6" fill="#888" opacity="0.7">검  명  片</text>
+  <text x="22" y="32" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="6" fill="#888" opacity="0.7">검  명  편</text>
 
   <!-- 도號 (큰 글자) -->
   <text x="${W/2}" y="78" font-family="Noto Serif KR, serif" font-size="32" font-weight="200" letter-spacing="6" fill="#fff5c0" text-anchor="middle" filter="url(#meishi-glow)">${daoTitle}</text>
@@ -9562,7 +9562,7 @@
   <text x="120" y="183" font-family="Noto Serif KR, serif" font-size="14" fill="#d4af37">${wayCount}</text>
   <text x="170" y="183" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">명</text>
   <text x="190" y="183" font-family="Noto Serif KR, serif" font-size="14" fill="#c0883a">${namedSlain}</text>
-  <text x="240" y="183" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">試</text>
+  <text x="240" y="183" font-family="Noto Serif KR, serif" font-size="10" letter-spacing="2" fill="#888">시</text>
   <text x="260" y="183" font-family="Noto Serif KR, serif" font-size="14" fill="#a8c0d8">${trialsUnlocked}/${trialsTotal}</text>
 
   <!-- 4 form 분포 -->
@@ -18425,7 +18425,7 @@
     // 一生詩 — 도에 이른 검 (최근 순)
     const dao = sealed.filter(s => s.verse && Array.isArray(s.verse));
     if (dao.length > 0) {
-      html += '<div style="text-align:center;color:var(--accent);letter-spacing:6px;font-size:12px;padding:8px 0 4px;opacity:0.7">一 생 시</div>';
+      html += '<div style="text-align:center;color:var(--accent);letter-spacing:6px;font-size:12px;padding:8px 0 4px;opacity:0.7">일 생 시</div>';
       html += dao.slice().reverse().map((s, ri) => {
         const i = dao.length - ri;
         const name = s.name || ('검 #' + i);
