@@ -18340,23 +18340,6 @@
   }
 
   function renderCodex() {
-    // 명문별 획득 조건 텍스트
-    const conditions = {
-      '초인': '그림자를 한 번 베어내기',
-      '백련': '한 검으로 10번 강화 시도',
-      '강체': '+10 단계 도달',
-      '회마': '그림자를 5번 베어내기',
-      '도': '최고 단계 +' + MAX_LEVEL + ' 도달',
-      '귀참': '검귀 (드문 그림자) 베어내기',
-      '각성': '혼 게이지 ' + SOUL_AWAKEN + ' 도달',
-      '본': '혼 게이지 ' + SOUL_TRUE + ' 도달',
-      '시조': '첫 도 도달 — 모든 새 검에 자동',
-      '달인': '도 5번 도달 — 모든 새 검에 자동',
-      '성': '도 10번 도달 — 모든 새 검에 자동',
-      '단마': '4종류 그림자(야/무/골/염) 모두 베어내기',
-      '구': '한 검으로 50번 강화 시도',
-      '고': '한 검으로 100번 강화 시도',
-    };
     // 검사: 현재 검 / 봉인 검 중 어디에 새겨졌는지
     const currentIns = (state.hasSword && state.currentSword.inscriptions) || [];
     const allEverEarned = new Set(currentIns);
@@ -18365,16 +18348,15 @@
     const list = INSCRIPTIONS.map(ins => {
       const earned = allEverEarned.has(ins.key);
       const onCurrent = currentIns.includes(ins.key);
-      const cond = conditions[ins.key] || '특수 조건';
       const status = onCurrent ? '✦ 현재 검' : earned ? '✓ 획득함' : '— 미획득';
       const statusColor = onCurrent ? 'var(--accent)' : earned ? 'var(--safe)' : 'var(--dim)';
       const kanjiColor = earned ? 'var(--accent)' : 'var(--dim)';
       const kanjiOpacity = earned ? '1' : '0.35';
+      // 조건/획득 설명은 ins.label 단일 출처 (이전엔 별도 conditions 룩업이 INSCRIPTIONS의 절반(14/32)만 커버 → 나머지 18개는 "특수 조건" 으로 추락. label은 모든 항목에 존재하고 정보 동등)
       return '<div style="padding:10px 6px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px">' +
         '<div class="codex-kanji" data-codex-key="' + ins.key + '" data-codex-label="' + ins.label + '" style="font-size:28px;color:' + kanjiColor + ';letter-spacing:4px;opacity:' + kanjiOpacity + ';flex-shrink:0;width:50px;text-align:center;cursor:pointer;transition:transform 0.15s">' + ins.key + '</div>' +
         '<div style="flex:1;font-size:11px;line-height:1.6">' +
           '<div style="color:var(--fg);letter-spacing:2px">' + ins.label + '</div>' +
-          '<div style="color:var(--dim);font-size:10px;margin-top:2px">조건: ' + cond + '</div>' +
           (ins.verse ? '<div style="color:var(--dim);font-size:10px;font-style:italic;margin-top:2px;opacity:0.75">' + ins.verse + '</div>' : '') +
           '<div style="color:' + statusColor + ';font-size:10px;margin-top:3px;letter-spacing:2px">' + status + '</div>' +
         '</div></div>';
