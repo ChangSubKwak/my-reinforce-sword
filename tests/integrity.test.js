@@ -2,7 +2,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
-const { HTML_PATH, readScript } = require('./harness');
+const { HTML_PATH, readScript, extractConst } = require('./harness');
 
 const html = fs.readFileSync(HTML_PATH, 'utf8');
 const js = readScript();
@@ -819,4 +819,23 @@ test('DESTINIES.foe.check는 NAMED_FOES를 동적 참조 (하드코드 회귀 �
   assert.ok(foeDef, 'DESTINIES.foe 정의 위치');
   assert.match(foeDef[0], /NAMED_FOES\.some/, 'foe.check가 NAMED_FOES.some 패턴으로 동적 순회');
   assert.ok(!/\['풍참'[^\]]*'용참'\]/.test(foeDef[0]), 'inscription 하드코드 배열 없음 (제대로 동적화)');
+});
+
+// generateBiography / generateVerse 의 名 격파 분기가 NAMED_FOES.narration / .verse 단일 출처
+// (이전 FOE_NARR / FOE_VERSE 객체 + 하드코드 inscription 배열 = 4-way drift 채널).
+test('NAMED_FOES 격파 narration/verse는 단일 출처 (FOE_NARR/FOE_VERSE 객체 회귀 차단)', () => {
+  // 옛 lookup 객체 재유입 금지
+  assert.ok(!/const FOE_NARR\s*=\s*\{/.test(js), 'FOE_NARR 룩업 객체 없음 (NAMED_FOES.narration로 통합)');
+  assert.ok(!/const FOE_VERSE\s*=\s*\{/.test(js), 'FOE_VERSE 룩업 객체 없음 (NAMED_FOES.verse로 통합)');
+  // 옛 하드코드 inscription 배열 회귀 금지(2곳)
+  const hardArr = /\[\s*'용참'\s*,\s*'제참'\s*,\s*'인참'\s*,\s*'월참'\s*,\s*'풍참'\s*\]/g;
+  const hits = (js.match(hardArr) || []).length;
+  assert.strictEqual(hits, 0, '용참/제참/인참/월참/풍참 하드코드 배열 없음 (NAMED_FOES 동적 순회)');
+  // NAMED_FOES 5개 모두 narration·verse 필드 보유 (출처 무결성)
+  const NF = extractConst('NAMED_FOES');
+  assert.strictEqual(NF.length, 5, 'NAMED_FOES 5개');
+  NF.forEach(f => {
+    assert.ok(typeof f.narration === 'string' && f.narration.length > 0, f.key + ' .narration 보유');
+    assert.ok(typeof f.verse === 'string' && f.verse.length > 0, f.key + ' .verse 보유');
+  });
 });

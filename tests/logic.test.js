@@ -647,7 +647,7 @@ test('shadowTier: 강도 구간별 형용 (여린/굳센/강대한/흉험한)', 
 // 통합: generateBiography — 파생 요소(時生·形·정점·性情)가 한 서사로 결합
 // ─────────────────────────────────────────────────────────────
 test('generateBiography 통합: 時生·형·정점·性情이 일대기에 결합', () => {
-  const bio = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath']).generateBiography;
+  const bio = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { NAMED_FOES: extractConst('NAMED_FOES') }).generateBiography;
   const sword = {
     form: '직', name: '직검', level: 15, inscriptions: ['도'],
     slainCount: 8, soul: 80, scars: 1, stars: {}, bornTod: '밤',
@@ -661,12 +661,12 @@ test('generateBiography 통합: 時生·형·정점·性情이 일대기에 결�
   assert.match(text, /베기로써 나아가는 기질/, '性情(베기 지배 → 강) 결합');
 });
 test('generateBiography 통합: bornTod 없는 구 검도 안전 (접두 생략)', () => {
-  const bio = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath']).generateBiography;
+  const bio = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { NAMED_FOES: extractConst('NAMED_FOES') }).generateBiography;
   const text = bio({ form: '곡', name: '구검', level: 4, inscriptions: [], levelHistory: [0, 1] });
   assert.ok(text.length > 0 && !text.startsWith(','), '접두 없이 정상 서사');
 });
 test('generateBiography: 名(명명된 적) 격파가 일대기에 결합 — 龍斬은 鬼斬보다 우선 (v370h)', () => {
-  const bio = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath']).generateBiography;
+  const bio = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { NAMED_FOES: extractConst('NAMED_FOES') }).generateBiography;
   const mk = (ins, extra) => bio(Object.assign({ form: '직', name: '검', level: 10, slainCount: 0, levelHistory: [0, 10] }, { inscriptions: ins }, extra || {}));
   assert.match(mk(['용참']), /용을 베어냈/, '龍斬 → 용 격파 서사');
   assert.match(mk(['제참']), /귀제/, '帝斬 → 귀제 격파');
@@ -685,7 +685,7 @@ test('generateBiography: 名(명명된 적) 격파가 일대기에 결합 — �
 // ─────────────────────────────────────────────────────────────
 // v15 generateVerse — 道 검 일생시 4행 (형/명문/슬레인 분기)
 // ─────────────────────────────────────────────────────────────
-const verseFns = loadFunctions(['generateVerse']);
+const verseFns = loadFunctions(['generateVerse'], { NAMED_FOES: extractConst('NAMED_FOES') });
 const verse = (f, ins, lv, sl) => verseFns.generateVerse(f, ins, lv, sl, 0, 0);
 test('generateVerse: 4행 반환 + 형/닫음 행', () => {
   const v = verse('직', ['도'], 15, 8);
@@ -1538,7 +1538,7 @@ test('v371 checkNaturePath: follow/defy만 1회 발화 + seen 잠금 + 일지 �
 // v371d 天命 — 이룬 천명이 一代記에 결합되는지 (天命 v93 + 傳記 융합, 효과 0)
 test('v371d generateBiography: 달성한 天命은 일대기에 줄로 나타나고 미달성은 안 나타남', () => {
   const DESTINIES = extractConst('DESTINIES');
-  const fns = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { DESTINIES });
+  const fns = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { DESTINIES, NAMED_FOES: extractConst('NAMED_FOES') });
   const base = { form: '직', level: 13, inscriptions: [], slainCount: 0, soul: 0, scars: 0, stars: {}, name: '시험검' };
   const fulfilled = fns.generateBiography(Object.assign({}, base, { destiny: 'reach13', destinyFulfilled: true }));
   assert.match(fulfilled, /천명 「극의 천명」을 이루었다/, '달성한 天命이 일대기에 결합');
@@ -1551,7 +1551,7 @@ test('v371d generateBiography: 달성한 天命은 일대기에 줄로 나타나
 // v371e 血統 — 융합으로 태어난 검의 부모 혈통이 一代記 개막에 결합되는지 (효과 0)
 test('v371e generateBiography: 융합검은 血統(부모 검명) 줄이 나타나고 비융합검은 안 나타남', () => {
   const DESTINIES = extractConst('DESTINIES');
-  const fns = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { DESTINIES });
+  const fns = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { DESTINIES, NAMED_FOES: extractConst('NAMED_FOES') });
   const base = { form: '직', level: 8, inscriptions: [], slainCount: 0, soul: 0, scars: 0, stars: {}, name: '자식검' };
   const fused = fns.generateBiography(Object.assign({}, base, { fusedFrom: ['아비검', '어미검'] }));
   assert.match(fused, /두 검 「아비검」과 「어미검」의 혼을 이어 태어났다/, '융합검 血統 결합');

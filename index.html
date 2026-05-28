@@ -12581,12 +12581,13 @@
 
   // === v90 名 — 이름 있는 적 (Named Foes) ===
   // 강화도 마일스톤마다 1회성 등장. 베면 영구 명문 + 대량 조각 + 컬렉션 등재.
+  // narration: 一代記 (전기) 끝맺음 행, verse: 一生詩 (도 검 시) 무훈 행. 격파 시각 surfaces 통합 — 새 적 추가 시 한 줄.
   const NAMED_FOES = [
-    { key: 'blackwind',  name: '흑풍', trigger: 5,  strength: 6,  reward: 80,   inscription: '풍참', desc: '검은 바람의 그림자' },
-    { key: 'silvermoon', name: '은월', trigger: 8,  strength: 10, reward: 180,  inscription: '월참', desc: '달의 한기를 두른 자' },
-    { key: 'thousand',   name: '천인', trigger: 11, strength: 13, reward: 350,  inscription: '인참', desc: '천 개의 칼날을 가진 자' },
-    { key: 'demonemp',   name: '귀제', trigger: 13, strength: 16, reward: 700,  inscription: '제참', desc: '귀신을 다스리는 자' },
-    { key: 'dragon',     name: '용',   trigger: 15, strength: 18, reward: 1500, inscription: '용참', desc: '하늘의 그림자' }
+    { key: 'blackwind',  name: '흑풍', trigger: 5,  strength: 6,  reward: 80,   inscription: '풍참', desc: '검은 바람의 그림자',     narration: '흑풍을 잠재웠고',           verse: '흑풍을 잠재우고' },
+    { key: 'silvermoon', name: '은월', trigger: 8,  strength: 10, reward: 180,  inscription: '월참', desc: '달의 한기를 두른 자',   narration: '은월을 베었고',             verse: '은월을 베고' },
+    { key: 'thousand',   name: '천인', trigger: 11, strength: 13, reward: 350,  inscription: '인참', desc: '천 개의 칼날을 가진 자', narration: '천 개의 칼날을 갈랐고',     verse: '천 개의 칼날을 가르며' },
+    { key: 'demonemp',   name: '귀제', trigger: 13, strength: 16, reward: 700,  inscription: '제참', desc: '귀신을 다스리는 자',    narration: '귀제를 쓰러뜨렸고',         verse: '귀제를 쓰러뜨리고' },
+    { key: 'dragon',     name: '용',   trigger: 15, strength: 18, reward: 1500, inscription: '용참', desc: '하늘의 그림자',         narration: '전설의 용을 베어냈고',      verse: '용을 베어 하늘마저 가르고' }
   ];
   function pendingNamedFoe() {
     if (!state.foesSlain) state.foesSlain = {};
@@ -15188,14 +15189,13 @@
     let notable;
     const notes = [];
     // v370h — 名(명명된 적, v90) 격파를 일대기에 결합. 보스 처치는 검의 정점 무훈인데
-    // 一代記가 무시하던 누락(龍을 벤 검도 "평범한 생"이 될 수 있었음). 명문에서 파생, 효과 0.
-    const FOE_NARR = { '용참': '전설의 용을 베어냈고', '제참': '귀제를 쓰러뜨렸고', '인참': '천 개의 칼날을 갈랐고', '월참': '은월을 베었고', '풍참': '흑풍을 잠재웠고' };
-    const foeKill = ['용참', '제참', '인참', '월참', '풍참'].find(k => ins.includes(k));
-    if (foeKill === '용참') notes.push(FOE_NARR['용참']);  // 명명된 용은 정점 — 검귀보다 위
+    // 一代記가 무시하던 누락(龍을 벤 검도 "평범한 생"이 될 수 있었음). NAMED_FOES.narration 단일 출처, 효과 0.
+    const foeKilled = NAMED_FOES.find(f => ins.includes(f.inscription));
+    if (foeKilled && foeKilled.key === 'dragon') notes.push(foeKilled.narration);  // 명명된 용은 정점 — 검귀보다 위
     else if (ins.includes('귀참')) notes.push('검귀의 피를 받았고');
     else if (ins.includes('야차참')) notes.push('밤의 야차를 베어냈고');  // v370k 특수 그림자 격파 — 鬼斬 바로 아래(검명 우선순위와 일치)
     else if (ins.includes('단마')) notes.push('네 그림자를 모두 베어냈고');
-    else if (foeKill) notes.push(FOE_NARR[foeKill]);  // 그 외 명명된 적 (帝/刃/月/풍)
+    else if (foeKilled) notes.push(foeKilled.narration);  // 그 외 명명된 적 (제/인/월/풍)
     else if (slain >= 5) notes.push(slain + '의 그림자를 베어냈고');
     else if (slain >= 1) notes.push('그림자 ' + slain + '을 베어냈고');
     if (ins.includes('본')) notes.push('본질을 깨우쳤다');
@@ -15247,12 +15247,11 @@
     })[form] || '이름 없는 검 한 자루';
 
     // v370i — 名(명명된 적) 격파를 일생시(도 검 시)에도 결합. 龍을 벤 도 검의 시가 그
-    // 정점 무훈을 노래하지 않던 누락 (v370h 一代記과 동일 시스템, 시 surface에도 적용).
-    const FOE_VERSE = { '용참': '용을 베어 하늘마저 가르고', '제참': '귀제를 쓰러뜨리고', '인참': '천 개의 칼날을 가르며', '월참': '은월을 베고', '풍참': '흑풍을 잠재우고' };
-    const foeV = ['용참', '제참', '인참', '월참', '풍참'].find(k => inscriptions.includes(k));
+    // 정점 무훈을 노래하지 않던 누락. NAMED_FOES.verse 단일 출처 (v370h와 동일 시스템).
+    const foeV = NAMED_FOES.find(f => inscriptions.includes(f.inscription));
     let insLine;
-    if (inscriptions.includes('용참')) {
-      insLine = FOE_VERSE['용참'];  // 정점 무훈 — 鬼斬보다 위
+    if (foeV && foeV.key === 'dragon') {
+      insLine = foeV.verse;  // 정점 무훈 — 鬼斬보다 위
     } else if (inscriptions.includes('귀참') && inscriptions.includes('본')) {
       insLine = '본질을 깨우고 검귀의 피를 받아';
     } else if (inscriptions.includes('귀참')) {
@@ -15260,7 +15259,7 @@
     } else if (inscriptions.includes('야차참')) {
       insLine = '밤의 야차를 베어내고';  // v370k 특수 그림자 — 鬼斬 아래
     } else if (foeV) {
-      insLine = FOE_VERSE[foeV];  // 그 외 명명된 적 (帝/刃/月/풍)
+      insLine = foeV.verse;  // 그 외 명명된 적 (제/인/월/풍)
     } else if (inscriptions.includes('본')) {
       insLine = '본질에 이르러';
     } else if (inscriptions.includes('강체')) {
