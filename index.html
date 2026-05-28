@@ -19056,6 +19056,17 @@
   load();
   document.body.classList.add('stage-minimal');  // UI 재설계 1b — 무대 배너를 검 정보 패널로 일원화 (reversible)
 
+  // 페이지 가시성 — 탭 숨김 시 ambient drone fade out. 표시되면 재개.
+  // 다른 탭에서 게임이 들리는 잡음 제거 + 모바일 배터리 절약.
+  // (시각 spawner는 requestAnimationFrame 기반이라 브라우저가 자동 throttle.)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (typeof stopAmbient === 'function') stopAmbient(false);  // 페이드아웃
+    } else {
+      if (!muted && audioCtx && typeof startAmbient === 'function') startAmbient();
+    }
+  });
+
   // a11y — modal focus trap (inert 기반). modal이 .active 상태로 토글되면
   // 형제 노드(#game 메인 UI + 다른 modal들)에 inert를 적용해 Tab 이탈을 차단.
   // 67개 modal 열기 사이트를 건드리지 않고 단일 MutationObserver로 통합.

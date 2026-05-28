@@ -885,3 +885,10 @@ test('a11y: setupModalFocusTrap이 MutationObserver로 .modal active 감시 (foc
   // 구 브라우저 graceful (구식 사용자도 게임 가능)
   assert.match(js, /'inert' in HTMLElement\.prototype/, 'inert 지원 안 하면 graceful skip');
 });
+
+// 페이지 가시성 — 탭 숨김 시 ambient drone fade. 다른 탭 잡음 + 모바일 배터리.
+test('페이지 가시성: visibilitychange 핸들러가 ambient drone 제어', () => {
+  assert.match(js, /addEventListener\('visibilitychange'/, 'visibilitychange 이벤트 리스너 등록');
+  assert.match(js, /document\.hidden[\s\S]{0,80}stopAmbient/, '탭 숨김 시 stopAmbient 호출');
+  assert.match(js, /!muted[\s\S]{0,80}startAmbient/, '탭 표시 시 (음소거 아님) startAmbient 재개');
+});
