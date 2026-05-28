@@ -810,3 +810,13 @@ test('renderCodex가 별도 conditions 룩업 없이 ins.label 단일 출처로 
   assert.ok(!/'특수 조건'/.test(body), '"특수 조건" fallback 문구 없음 (label로 대체됨)');
   assert.match(body, /ins\.label/, 'ins.label을 직접 표시');
 });
+
+// DESTINIES.foe 체크가 NAMED_FOES.inscription 자동 동기화 (하드코드 회귀 방어).
+// 이전: ['풍참','월참','인참','제참','용참'] 하드코드 → NAMED_FOES에 6번째 추가 시 천명이 새 적 베어도 silently 미발동.
+test('DESTINIES.foe.check는 NAMED_FOES를 동적 참조 (하드코드 회귀 차단)', () => {
+  // foe 천명 정의 줄(들) 본문에서 NAMED_FOES 참조 확인
+  const foeDef = js.match(/key:\s*'foe'[\s\S]{0,500}?check:[^}]+?\}/);
+  assert.ok(foeDef, 'DESTINIES.foe 정의 위치');
+  assert.match(foeDef[0], /NAMED_FOES\.some/, 'foe.check가 NAMED_FOES.some 패턴으로 동적 순회');
+  assert.ok(!/\['풍참'[^\]]*'용참'\]/.test(foeDef[0]), 'inscription 하드코드 배열 없음 (제대로 동적화)');
+});

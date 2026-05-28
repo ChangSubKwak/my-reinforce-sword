@@ -14137,7 +14137,8 @@
     { key: 'soul67',    label: '본심의 천명', desc: '이 검의 혼을 67까지 깨워라',     reward: { shards: 120 },       rewardLabel: '조각 +120',
       check: () => (state.currentSword.soul || 0) >= 67 },
     { key: 'foe',       label: '숙적의 천명', desc: '이 검으로 이름 있는 적을 베어내라', reward: { spiritstones: 1, shards: 80 }, rewardLabel: '영석 +1 · 조각 +80',
-      check: () => (state.currentSword.inscriptions || []).some(k => ['풍참','월참','인참','제참','용참'].indexOf(k) >= 0) },
+      // NAMED_FOES.inscription을 직접 순회 (foe 추가 시 자동 인식).
+      check: () => { const ins = state.currentSword.inscriptions || []; return NAMED_FOES.some(f => ins.indexOf(f.inscription) >= 0); } },
   ];
   function assignDestiny() {
     if (!state.hasSword || !state.currentSword) return;
