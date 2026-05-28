@@ -14325,7 +14325,7 @@
     };
     const formKr = { '직': '곧은 검', '곡': '굽은 검', '중': '무거운 검', '속': '빠른 검' };
     // v129 形상극 — 상성 표기
-    const affName = { 'normal': '普通', 'flee': '逃影', 'steel': '鋼影', 'demon': '검귀' };
+    const affName = { 'normal': '보통', 'flee': '도영', 'steel': '강영', 'demon': '검귀' };
     const formAff = {};
     Object.keys(FORM_AFFINITY).forEach(f => {
       const aff = FORM_AFFINITY[f];
@@ -18421,7 +18421,7 @@
     // v253c 序 — 詩集 머리글: 검들이 남긴 시와 말의 규모
     const daoCount = sealed.filter(s => s.verse && Array.isArray(s.verse)).length;
     let html = '<div style="text-align:center;color:var(--dim);font-size:10px;letter-spacing:2px;padding:2px 0 10px">' +
-      sealed.length + '자루의 검 · 一生詩 ' + daoCount + ' · 遺言 ' + Math.min(20, sealed.length) + '</div>';
+      sealed.length + '자루의 검 · 一生詩 ' + daoCount + ' · 유언 ' + Math.min(20, sealed.length) + '</div>';
     // 一生詩 — 도에 이른 검 (최근 순)
     const dao = sealed.filter(s => s.verse && Array.isArray(s.verse));
     if (dao.length > 0) {
@@ -18482,16 +18482,16 @@
     const blessingsFound = state.blessingsDiscovered ? Object.keys(state.blessingsDiscovered).length : 0;
     // 우선순위 — 가장 희귀/높은 성취가 우선
     if (state.ultimateAchieved) return '천추만대 — 영원한 검선';
-    if (gen >= 100 && enshrines >= 3 && ways >= 15) return '百代도선 — 백 대를 잇는 검선';
+    if (gen >= 100 && enshrines >= 3 && ways >= 15) return '백대도선 — 백 대를 잇는 검선';
     if (gen >= 100) return '백대선 — 백 대를 잇는 자';
     if (ways >= 15) return '십오도사 — 열다섯 길의 사범';
     if (ways >= 10 && enshrines >= 2) return '전당의 검선 — 둘을 영구 진열한 자';
     if (ways >= 10) return '십도사 — 열 길의 사범';
-    if (foes >= 5) return '五帝를 멸한 자';
+    if (foes >= 5) return '오제를 멸한 자';
     if (blessingsFound >= 6) return '기연진지 — 모든 인연을 본 자';
     if (fourW) return '사도의 검사';
     if (ways >= 5) return '오도사 — 다섯 길의 사범';
-    if (origins >= 4) return '斷魔者 — 모든 어둠을 베다';
+    if (origins >= 4) return '단마자 — 모든 어둠을 베다';
     if (ways >= 3) return '삼도의 검수';
     if (ways >= 1) return '도를 본 자';
     if (gen >= 25) return '천단사 — 천 번 두드린 장인';
