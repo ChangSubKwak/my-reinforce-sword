@@ -731,9 +731,15 @@ test('v350: getFormCounts가 sealedSwords+enshrined 둘 다 집계 (流派가 �
   // getWayFormCounts(四道)·~10개 집계 지점은 두 컬렉션을 합산하는데 getFormCounts만
   // sealedSwords-only였음 → 道 검 殿堂 진열 시 流派 진척에서 빠짐. 같은 형 검 집계는
   // 봉인+殿堂을 합쳐야 함(enshrine은 봉인의 한 형태, 四道와 동일 처리).
+  // 헬퍼화 후: allSealedSwords() 호출이 두 컬렉션을 통합 (헬퍼 본문 자체 검증 별도).
   const m = js.match(/function getFormCounts\(\)\s*\{([\s\S]*?)\n  \}/);
   assert.ok(m, 'getFormCounts 본문');
-  assert.match(m[1], /state\.enshrined/, 'getFormCounts는 state.enshrined도 집계해야 함');
+  assert.match(m[1], /allSealedSwords\(\)|state\.enshrined/, 'getFormCounts는 봉인+전당 통합 컬렉션 사용');
+  // allSealedSwords 자체가 두 컬렉션을 통합하는지 검증
+  const h = js.match(/function allSealedSwords\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(h, 'allSealedSwords 헬퍼 본문');
+  assert.match(h[1], /state\.sealedSwords/, '헬퍼가 sealedSwords 포함');
+  assert.match(h[1], /state\.enshrined/, '헬퍼가 enshrined 포함');
 });
 
 test('merged-collection: 形/道 집계·필터가 sealedSwords-only면 안 됨 (v350-362 클러스터 회귀 방지)', () => {
@@ -761,19 +767,20 @@ test('save(): 저장 실패를 침묵하지 않고 1회 경고 (v370p — quota 
 test('merged-collection: 검 중의 검(컬렉션 하이라이트)이 殿堂 검도 합산 (v370d — 헬퍼 site 회귀 방지)', () => {
   // collectionHighlight(sealed,...) 헬퍼를 쓰는 site는 위 .forEach/.filter 정규식에 안 잡힘.
   // 가장 강한 검을 殿堂에 진열하면 명예의 전당에서 사라지던 v350류 누락 — sealed-only 회귀 차단.
-  // 게이트(sealed.length<3) + collectionHighlight(sealed) 시그니처로 블록을 유일 식별
+  // 헬퍼화 후: allSealedSwords() 통합. 게이트(sealed.length<3) + collectionHighlight(sealed) 시그니처.
   assert.match(js,
-    /const sealed = \(state\.sealedSwords \|\| \[\]\)\.concat\(state\.enshrined \|\| \[\]\);\s*\n\s*if \(sealed\.length < 3\)[\s\S]{0,260}?collectionHighlight\(sealed/,
-    '검 중의 검은 sealedSwords+enshrined 합산이어야 함 (殿堂 검 누락 회귀)');
+    /const sealed = allSealedSwords\(\);\s*\n\s*if \(sealed\.length < 3\)[\s\S]{0,260}?collectionHighlight\(sealed/,
+    '검 중의 검은 봉인+전당 통합(allSealedSwords) 사용 (殿堂 검 누락 회귀)');
 });
 
 test('merged-collection: 詩集(renderAnthology) 一生詩·遺言이 殿堂 검도 포함 (v370e — verse shape 회귀 방지)', () => {
   // verse(一生詩/遺言) 컬렉션은 .filter(s=>s.verse)·slice 형태라 form/道 meta-test에 안 잡힘.
   // whisper(v369)는 enshrined verse 합산하는데 詩集이 sealed-only면 — 속삭인 시가 詩集에 없는 모순.
+  // 헬퍼화 후: allSealedSwords() 통합.
   const body = js.match(/function renderAnthology\(\)\s*\{[\s\S]{0,260}?const sealed =[^\n]*/);
   assert.ok(body, 'renderAnthology 본문');
-  assert.match(body[0], /const sealed = \(state\.sealedSwords \|\| \[\]\)\.concat\(state\.enshrined \|\| \[\]\)/,
-    '詩集은 sealedSwords+enshrined 합산이어야 함 (殿堂 道 검 一生詩 누락 회귀)');
+  assert.match(body[0], /const sealed = allSealedSwords\(\)/,
+    '詩集은 봉인+전당 통합(allSealedSwords) 사용 (殿堂 道 검 一生詩 누락 회귀)');
 });
 
 test('v368: isStuck가 voidPending도 가드 — 파괴~회수창(350ms) 사이 game-over가 회수창을 덮지 않음', () => {
@@ -838,4 +845,21 @@ test('NAMED_FOES 격파 narration/verse는 단일 출처 (FOE_NARR/FOE_VERSE 객
     assert.ok(typeof f.narration === 'string' && f.narration.length > 0, f.key + ' .narration 보유');
     assert.ok(typeof f.verse === 'string' && f.verse.length > 0, f.key + ' .verse 보유');
   });
+});
+
+// allSealedSwords() 헬퍼 단일 진원 잠금 — 봉인+전당 통합 컬렉션 패턴이 인라인으로 회귀하지 않도록.
+// 28개 사이트가 이 헬퍼를 통해 두 컬렉션을 자동 합산. 사이트가 helper 우회해 인라인 sealedSwords-only로
+// 작성하면 v350-362 클러스터 같은 enshrined 누락 회귀 재발.
+test('allSealedSwords() 헬퍼가 정의되고 인라인 (sealedSwords||[]).concat(enshrined||[]) 패턴 회귀 없음', () => {
+  // 헬퍼 정의 존재 + 두 컬렉션 통합
+  const def = js.match(/function allSealedSwords\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(def, 'allSealedSwords 헬퍼 정의 존재');
+  assert.match(def[1], /state\.sealedSwords/, '헬퍼가 sealedSwords 포함');
+  assert.match(def[1], /state\.enshrined/, '헬퍼가 enshrined 포함');
+  // 인라인 회귀 패턴 (헬퍼 정의 본문 외엔 0건)
+  const inlinePat1 = js.match(/\(state\.sealedSwords \|\| \[\]\)\.concat\(state\.enshrined \|\| \[\]\)/g) || [];
+  const inlinePat2 = js.match(/\[\]\.concat\(state\.sealedSwords \|\| \[\], state\.enshrined \|\| \[\]\)/g) || [];
+  // pat1은 헬퍼 정의 본문 1곳만 허용. pat2는 0건.
+  assert.strictEqual(inlinePat1.length, 1, '인라인 (sealedSwords||[]).concat(enshrined||[]) — 헬퍼 본문 1곳만 (' + inlinePat1.length + '개 발견)');
+  assert.strictEqual(inlinePat2.length, 0, '인라인 [].concat(sealedSwords||[], enshrined||[]) 회귀 0건 (' + inlinePat2.length + '개 발견)');
 });

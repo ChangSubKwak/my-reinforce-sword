@@ -4743,7 +4743,7 @@
         '어느 하나도 정답은 아니다.',
       ],
       unlock: () => {
-        const forms = new Set((state.sealedSwords || []).concat(state.enshrined || []).filter(s => s.form).map(s => s.form));  // v352 — 전당 검 형도 집계
+        const forms = new Set(allSealedSwords().filter(s => s.form).map(s => s.form));  // v352 — 전당 검 형도 집계
         return forms.size >= 4;
       },
     },
@@ -4754,7 +4754,7 @@
         '사용할수록 깊어진다.',
         '평범에서 깨움으로, 깨움에서 본질로.',
       ],
-      unlock: () => (state.sealedSwords || []).concat(state.enshrined || []).some(s => (s.inscriptions || []).includes('본')),  // v352 — 전당 검도
+      unlock: () => allSealedSwords().some(s => (s.inscriptions || []).includes('본')),  // v352 — 전당 검도
     },
     {
       key: 'dou', kanji: '도', title: '도',
@@ -6469,7 +6469,7 @@
     const counts = { '직':0, '곡':0, '중':0, '속':0 };
     // v360 — 전당 검도 포함(시 dominant form이 전체 컬렉션 반영). 마지막 형-집계 sealedSwords-only
     // 였던 곳 — 다른 모든 형 집계가 enshrined 합산하므로 일관성 위해 통일(순수 narrative).
-    (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => { if (s.form && counts[s.form] !== undefined) counts[s.form]++; });
+    allSealedSwords().forEach(s => { if (s.form && counts[s.form] !== undefined) counts[s.form]++; });
     let max = 0, dom = null;
     Object.keys(counts).forEach(f => { if (counts[f] > max) { max = counts[f]; dom = f; } });
     if (state.hasSword && state.currentSword && state.currentSword.form && !dom) return state.currentSword.form;
@@ -7065,7 +7065,7 @@
 
   // === v224 劍士録 — 개인 최고 기록 ===
   function computeRecords() {
-    const allSwords = [].concat(state.sealedSwords || [], state.enshrined || []);
+    const allSwords = allSealedSwords();
     if (state.hasSword && state.currentSword) allSwords.push(state.currentSword);
     let maxSlain = 0, maxEnhance = 0, maxBeads = 0, maxSoul = 0;
     allSwords.forEach(s => {
@@ -7274,7 +7274,7 @@
       html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">권  이  ─  검  들</div>';
       html += '<div style="font-size:13px;letter-spacing:4px;color:#e8e6dd;text-align:center;margin-bottom:18px;font-family:\'Noto Serif KR\',serif">' + sealed + '자루의 검 봉인, ' + swordGen + '대 이어졌다</div>';
       const formCounts = { '직':0,'곡':0,'중':0,'속':0 };
-      (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });  // v359 — 전당 검도 형 분포에 (display undercount)
+      allSealedSwords().forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });  // v359 — 전당 검도 형 분포에 (display undercount)
       html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:20px 0">';
       const formCard = (f, n, c) => '<div style="text-align:center;padding:14px 4px;border:1px solid ' + c + ';border-radius:2px;background:rgba(15,15,22,0.5)"><div style="font-size:22px;color:' + c + '">' + f + '</div><div style="font-size:14px;color:#e8e6dd;margin-top:6px;font-weight:200">' + n + '</div></div>';
       html += formCard('직', formCounts['직'], '#a8c0e8');
@@ -7292,7 +7292,7 @@
     } else if (bookPageIdx === 2) {
       // 卷三 — 도
       html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">권  삼  ─  도</div>';
-      const wayswords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).indexOf('도') >= 0);  // v359 — 전당 도 검도 劍士録에 (display undercount 수정)
+      const wayswords = allSealedSwords().filter(s => (s.inscriptions || []).indexOf('도') >= 0);  // v359 — 전당 도 검도 劍士録에 (display undercount 수정)
       if (wayswords.length === 0) {
         html += '<div style="text-align:center;padding:30px;color:#888;font-style:italic;font-size:11px;letter-spacing:3px">아직 도에 닿지 않았다 — +15까지 검을 강화하라</div>';
       } else {
@@ -9498,7 +9498,7 @@
     const trialsTotal = (typeof TRIALS !== 'undefined') ? TRIALS.length : 5;
     const playTime = formatPlayTime(state.totalPlayTimeMs || 0);
     const formCounts = { '직':0, '곡':0, '중':0, '속':0 };
-    (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });  // v359 — 전당 검도 형 분포에 (display undercount)
+    allSealedSwords().forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });  // v359 — 전당 검도 형 분포에 (display undercount)
     // 메타 인장 결정
     let seal = '초';
     if (state.ultimateAchieved) seal = '극';
@@ -9803,7 +9803,7 @@
     // v358 — 공명은 형-수집 보너스. 전당(enshrined) 도 같은 형 검도 공명해야 함(같은 형의 도 검은
     // 최고 등급). v350에서 流派(getFormCounts)는 enshrined 포함하므로, 같은 형-수집 보너스인
     // 공명만 sealedSwords-only면 비일관. 두 컬렉션 합산으로 통일(balance-adjacent, 되돌릴 수 있음).
-    return (state.sealedSwords || []).concat(state.enshrined || []).filter(s => s.form === form).length;
+    return allSealedSwords().filter(s => s.form === form).length;
   }
   function resonanceBonus() {
     const f = state.hasSword && state.currentSword && state.currentSword.form;
@@ -10113,7 +10113,7 @@
   // === v172 蘭 — 무대 우하단 난초 (도 도달에 따라 성장 / 형별 색) ===
   function getDominantForm() {
     const counts = { '직': 0, '곡': 0, '중': 0, '속': 0 };
-    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    const all = allSealedSwords();
     all.forEach(s => { if (s.form && counts[s.form] !== undefined) counts[s.form]++; });
     let best = null, bestCount = 0;
     Object.keys(counts).forEach(f => {
@@ -10401,7 +10401,7 @@
       el.className = '';
       return;
     }
-    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    const all = allSealedSwords();
     if (all.length === 0) {
       el.textContent = '';
       el.className = '';
@@ -10723,7 +10723,7 @@
   let bunshuIndex = 0;
   function collectBunshuPages() {
     const pages = [];
-    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    const all = allSealedSwords();
     all.forEach(s => {
       // 검명 (모든 검) — 자동 생성된 검명도 포함
       const swordName = s.name || makeSwordName(s.form, s.inscriptions || [], s.level || 0);
@@ -10870,7 +10870,7 @@
   function getChampionInfo() {
     const idx = getChampionSwordIdx();
     if (idx < 0) return null;
-    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    const all = allSealedSwords();
     const sword = all[idx];
     if (!sword) return null;
     return { idx, sword, wins: state.duelWins[idx] || 0 };
@@ -10904,7 +10904,7 @@
   function renderDuelList() {
     const list = $('duel-list');
     if (!list) return;
-    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    const all = allSealedSwords();
     if (all.length === 0) {
       list.innerHTML = '<div class="modal-empty" style="grid-column:span 3">— 봉인 검 없음 —</div>';
       return;
@@ -10945,7 +10945,7 @@
   }
   function startDuel() {
     if (duelSelected.length !== 2) return;
-    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    const all = allSealedSwords();
     const swordA = all[duelSelected[0]];
     const swordB = all[duelSelected[1]];
     if (!swordA || !swordB) return;
@@ -11171,7 +11171,7 @@
   ];
   function countUniqueInscriptions() {
     const set = new Set();
-    const all = [].concat(state.sealedSwords || [], state.enshrined || []);
+    const all = allSealedSwords();
     if (state.hasSword && state.currentSword) all.push(state.currentSword);
     for (const s of all) {
       (s.inscriptions || []).forEach(k => set.add(k));
@@ -11306,7 +11306,7 @@
   // === v144 招魂 — 검 파괴 시 봉인된 선대 검들이 목격 ===
   function summonAncestorSpirits() {
     // 선대 검들의 이름 첫 글자 수집 (sealedSwords + enshrined)
-    const ancestors = [].concat(state.sealedSwords || [], state.enshrined || []);
+    const ancestors = allSealedSwords();
     if (ancestors.length === 0) return;
     // 도 검 우선 + 최근 검 우선 (최근 7자루)
     const recent = ancestors.slice(-7);
@@ -12455,7 +12455,7 @@
   function whisperFromAncestor(currentForm) {
     // v369 — 전당 도 검도 후세에 시구를 전함. 전당 검은 가장 영예로운 도 검인데 기존엔
     // sealedSwords만 봐서 안 속삭였음 — v359(劍士録 도 목록)·merged-collection류 표시 누락. 순수 narrative.
-    const sealed = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => s.verse && Array.isArray(s.verse));
+    const sealed = allSealedSwords().filter(s => s.verse && Array.isArray(s.verse));
     if (sealed.length === 0) return;
     // v371c 守魂 — 수호자(지정한 도 검)가 있으면 그가 시련을 지켜보며 속삭인다. 守(v52)는 그동안
     // 패시브 stat로만 존재했으나, 일섬(도전) 때 제 목소리를 얻는다 (守+일섬 whisper 융합, 점수 0).
@@ -15373,7 +15373,7 @@
     // v350 — 봉인 + 전당 모두 집계. getFormCounts만 sealedSwords-only였던 outlier로,
     // 도 검을 전당에 진열하면 流派(유파) 진척에서 빠지던 버그 — 사도(getWayFormCounts)와
     // 다른 ~10개 집계 지점은 두 컬렉션을 합산함. enshrine은 봉인의 한 형태이므로 같이 센다.
-    const all = (state.sealedSwords || []).concat(state.enshrined || []);
+    const all = allSealedSwords();
     for (const s of all) {
       if (s.form) counts[s.form] = (counts[s.form] || 0) + 1;
     }
@@ -15580,7 +15580,7 @@
   // === v117 사도 — 4형의 도(+15) 검을 모두 봉인하면 영구 패시브 ===
   function getWayFormCounts() {
     const counts = { '직': 0, '곡': 0, '중': 0, '속': 0 };
-    const all = (state.sealedSwords || []).concat(state.enshrined || []);
+    const all = allSealedSwords();
     for (const s of all) {
       if (s.form && (s.inscriptions || []).includes('도')) {
         counts[s.form] = (counts[s.form] || 0) + 1;
@@ -16024,6 +16024,12 @@
   function legacyStrength() {
     return state.sealedSwords.reduce((a, s) => a + (s.level || 0), 0);
   }
+  // 봉인 검 + 전당 검 통합 컬렉션 (read-only 순회/필터). 28곳에 중복되던
+  // (sealedSwords||[]).concat(enshrined||[]) / [].concat(sealedSwords||[], enshrined||[])
+  // 두 인라인 패턴을 단일 진원지로 통합. 새 컬렉션 source 추가 시 한 곳만 수정.
+  function allSealedSwords() {
+    return (state.sealedSwords || []).concat(state.enshrined || []);
+  }
   function startBonus(extraLegacy) {
     const total = legacyStrength() + (extraLegacy || 0);
     return Math.min(START_BONUS_CAP, Math.floor(total / START_BONUS_DIVISOR));
@@ -16188,7 +16194,7 @@
   }
   function maybeShowKigen() {
     if (Math.random() > 0.25) return;
-    const allLetters = [].concat(state.sealedSwords || [], state.enshrined || []).filter(s => s.kigen);
+    const allLetters = allSealedSwords().filter(s => s.kigen);
     if (allLetters.length === 0) return;
     const source = allLetters[Math.floor(Math.random() * allLetters.length)];
     const stage = $('stage');
@@ -16712,7 +16718,7 @@
     const overlay = $('ending-overlay');
     if (!overlay) return;
     // 봉인 검 중 도 명문 보유한 것들의 검명 cascade
-    const daoSwords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).includes('도'));  // v352 — 전당 도 검도 엔딩 行列에
+    const daoSwords = allSealedSwords().filter(s => (s.inscriptions || []).includes('도'));  // v352 — 전당 도 검도 엔딩 行列에
     const cascadeNames = daoSwords.slice(-12).reverse(); // 최근 12개
     const cascade = $('ending-cascade');
     if (cascade) {
@@ -18344,7 +18350,7 @@
     // 검사: 현재 검 / 봉인 검 중 어디에 새겨졌는지
     const currentIns = (state.hasSword && state.currentSword.inscriptions) || [];
     const allEverEarned = new Set(currentIns);
-    (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => (s.inscriptions || []).forEach(k => allEverEarned.add(k)));  // v351 — 전당 검 명문도 '획득'에 집계 (v350 merged-collection류)
+    allSealedSwords().forEach(s => (s.inscriptions || []).forEach(k => allEverEarned.add(k)));  // v351 — 전당 검 명문도 '획득'에 집계 (v350 merged-collection류)
 
     const list = INSCRIPTIONS.map(ins => {
       const earned = allEverEarned.has(ins.key);
@@ -18396,7 +18402,7 @@
     // v370e — 전당(enshrined) 검의 일생시·遺言도 포함. 詩集은 모든 검의 시·말의 정전인데
     // 가장 고운 시를 남길 도 검을 전당에 진열하면 詩集에서 사라지던 누락 — v369(whisper가
     // enshrined verse 합산)과 일관. 풀은 disjoint(enshrine은 이동이라 중복 없음).
-    const sealed = (state.sealedSwords || []).concat(state.enshrined || []);
+    const sealed = allSealedSwords();
     if (sealed.length === 0) {
       list.innerHTML = '<p style="text-align:center;color:var(--dim);font-size:12px;padding:32px 0;line-height:1.8">아직 봉인된 검이 없습니다.<br><br>검을 팔면 그 검의 일생시와<br>마지막 말이 이곳에 모입니다.</p>';
       return;
@@ -18505,7 +18511,7 @@
     // v76 형 분포 차트
     const formCounts = { '직': 0, '곡': 0, '중': 0, '속': 0 };
     const formNames = { '직': '곧은', '곡': '굽은', '중': '무거운', '속': '빠른' };
-    (state.sealedSwords || []).concat(state.enshrined || []).forEach(sw => {  // v351 — 전당 검도 형 분포에 집계
+    allSealedSwords().forEach(sw => {  // v351 — 전당 검도 형 분포에 집계
       if (sw.form && formCounts[sw.form] !== undefined) formCounts[sw.form]++;
     });
     const totalForms = Object.values(formCounts).reduce((a, b) => a + b, 0);
@@ -18531,7 +18537,7 @@
     const forms = ['직', '곡', '중', '속'];
     const suffixes = NAME_SUFFIX.map(s => s.word); // 도/마/본/剛/覺/고/구
     const collectedNames = new Set();
-    (state.sealedSwords || []).concat(state.enshrined || []).forEach(s => {  // v351 — 전당 검명도 컬렉션 집계
+    allSealedSwords().forEach(s => {  // v351 — 전당 검명도 컬렉션 집계
       // 자동 검명 재계산 (form + 정점 명문)
       if (s.form && s.inscriptions) {
         for (const def of NAME_SUFFIX) {
@@ -18617,7 +18623,7 @@
       // 사라지던 merged-collection 누락(v350류) — collectionHighlight 헬퍼를 써서 .forEach
       // grep sweep(v350~v359)에 안 잡혔던 site. 형분포·명문·검명 컬렉션은 이미 전당 합산함.
       (function() {
-        const sealed = (state.sealedSwords || []).concat(state.enshrined || []);
+        const sealed = allSealedSwords();
         if (sealed.length < 3) return '';
         const nm = sw => sw ? (sw.name || makeSwordName(sw.form, sw.inscriptions || [], sw.level)) : '—';
         const strongest = collectionHighlight(sealed, sw => sw.level || 0);
@@ -18630,7 +18636,7 @@
         return h;
       })() +
       (function() {  // v370c 솔성 — 컬렉션 전체 천성 경향 (전당 포함 합산)
-        const t = collectionNatureTendency((state.sealedSwords || []).concat(state.enshrined || []));
+        const t = collectionNatureTendency(allSealedSwords());
         return t.line ? '<div style="color:#a8c0d8;font-size:10.5px;letter-spacing:1.5px;padding:8px 0;line-height:1.6;font-style:italic">솔성 — ' + t.line + '</div>' : '';
       })() +
       renderShinkiSection() +  // v156 신기 (v288 rename)
@@ -18954,7 +18960,7 @@
   // v86 닉네임 자동 제안 — 사용자 도 검 중 가장 강한 것
   function suggestNickname() {
     // 우선순위 1: 도 검 중 가장 강화도 높은 검명 (v362 — 전당 도 검도 포함, 가장 영예로운 검)
-    const daoSwords = (state.sealedSwords || []).concat(state.enshrined || []).filter(s => (s.inscriptions || []).includes('도'));
+    const daoSwords = allSealedSwords().filter(s => (s.inscriptions || []).includes('도'));
     if (daoSwords.length > 0) {
       const best = daoSwords.slice().sort((a, b) => (b.level || 0) - (a.level || 0))[0];
       return best.name || makeSwordName(best.form, best.inscriptions || [], best.level);

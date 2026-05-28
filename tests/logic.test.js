@@ -1066,7 +1066,7 @@ test('guardianBonus: 守 형별 패시브 잠금 (道 검만 — v52 dial)', () 
 test('getSchoolMastery / MASTERY_TIERS: 流派 숙련 임계 잠금 (모든 유파 보너스 배율)', () => {
   const M = extractConst('MASTERY_TIERS');
   assert.deepStrictEqual(M.map(t => [t.min, t.mul]), [[3, 1.0], [6, 1.5], [10, 2.0], [15, 2.5]], 'tier 값');
-  const at = (count) => loadFunctions(['getSchoolMastery', 'getFormCounts'], {
+  const at = (count) => loadFunctions(['getSchoolMastery', 'getFormCounts', 'allSealedSwords'], {
     state: { sealedSwords: Array.from({ length: count }, () => ({ form: '직' })) },
     MASTERY_TIERS: M,
   }).getSchoolMastery('직');
@@ -1136,7 +1136,7 @@ test('computeRecords: 봉인 검의 beads·enhanceAttempts도 최댓값에 반�
     sealedSwords: [{ beads: 50, enhanceAttempts: 30, slainCount: 2, soul: 10 }],
     enshrined: [], hasSword: false, bestLevel: 5, swordGeneration: 1, bestStreak: 0,
   };
-  const r = loadFunctions(['computeRecords'], { state }).computeRecords();
+  const r = loadFunctions(['computeRecords', 'allSealedSwords'], { state }).computeRecords();
   assert.strictEqual(r.maxBeads, 50, '봉인 검 念珠가 최다 念珠 기록에 반영');
   assert.strictEqual(r.maxEnhance, 30, '봉인 검 강화 시도가 최다 시도 기록에 반영');
   assert.strictEqual(r.maxSlain, 2);
@@ -1170,14 +1170,14 @@ test('encodeSwordCode→decodeSwordCode 라운드트립 — 공유 코드 무결
 });
 
 test('resonanceBonus: 共鳴 — 같은 형 봉인 검당 +0.5%, cap 5% (v178 dial)', () => {
-  const mk = (form, sealedForms) => loadFunctions(['resonanceBonus', 'sameFormSealedCount'], {
+  const mk = (form, sealedForms) => loadFunctions(['resonanceBonus', 'sameFormSealedCount', 'allSealedSwords'], {
     state: { hasSword: true, currentSword: { form }, sealedSwords: sealedForms.map(f => ({ form: f })) },
   });
   assert.strictEqual(mk('직', []).resonanceBonus(), 0, '같은 형 0개 → 0');
   assert.ok(Math.abs(mk('직', ['직', '직']).resonanceBonus() - 0.01) < 1e-9, '直 2개 → +1%');
   assert.ok(Math.abs(mk('직', ['직', '곡', '직']).resonanceBonus() - 0.01) < 1e-9, '直 2개만 카운트(曲 무시)');
   assert.strictEqual(mk('직', Array(20).fill('직')).resonanceBonus(), 0.05, 'cap +5%');
-  const noSword = loadFunctions(['resonanceBonus', 'sameFormSealedCount'], { state: { hasSword: false, sealedSwords: [] } });
+  const noSword = loadFunctions(['resonanceBonus', 'sameFormSealedCount', 'allSealedSwords'], { state: { hasSword: false, sealedSwords: [] } });
   assert.strictEqual(noSword.resonanceBonus(), 0, '검 없음 → 0');
 });
 
@@ -1277,7 +1277,7 @@ test('stalemateCost: 對峙 비용 10 + ceil(강도*1.2) (v183)', () => {
 });
 
 test('getActiveSchools: 같은 형 SCHOOL_THRESHOLD(3) 이상 봉인 시 활성 (v12)', () => {
-  const at = (forms) => loadFunctions(['getActiveSchools', 'getFormCounts'], {
+  const at = (forms) => loadFunctions(['getActiveSchools', 'getFormCounts', 'allSealedSwords'], {
     state: { sealedSwords: forms.map(f => ({ form: f })) },
     SCHOOLS: { '직': {}, '곡': {}, '중': {}, '속': {} }, SCHOOL_THRESHOLD: 3,
   }).getActiveSchools();
@@ -1301,7 +1301,7 @@ test('schoolRescueSec(): 속류 회수 보너스가 활성 임계·유파 숙련
   const expectFast = SCHOOLS['속'].schoolBonusRescueSec; // 1.0
   // 같은 컬렉션을 getFormCounts/getActiveSchools/schoolMasteryMul 전 체인에 흘려 합성 검증
   const at = (sealed, enshrined) => loadFunctions(
-    ['schoolRescueSec', 'getActiveSchools', 'getFormCounts', 'schoolMasteryMul', 'getSchoolMastery'],
+    ['schoolRescueSec', 'getActiveSchools', 'getFormCounts', 'schoolMasteryMul', 'getSchoolMastery', 'allSealedSwords'],
     {
       state: {
         sealedSwords: (sealed || []).map(f => ({ form: f })),
