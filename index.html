@@ -9043,9 +9043,9 @@
     { key:'silver',  name:'은',   color:'#c8c8d0', verse:'달의 은 — 변하지 않는 청결' },
     { key:'jade',    name:'옥',   color:'#88c8a8', verse:'산의 옥 — 따뜻한 깊이' },
     { key:'pearl',   name:'주',   color:'#f0e8d4', verse:'바다의 진주 — 침묵의 결정체' },
-    { key:'agate',   name:'瑪瑙', color:'#c08068', verse:'땅의 마노 — 시간이 굳힌 무늬' },
-    { key:'lapis',   name:'瑠璃', color:'#5878b8', verse:'하늘의 유리 — 푸른 정신' },
-    { key:'coral',   name:'珊瑚', color:'#d4684a', verse:'심해의 산호 — 살아있는 돌' },
+    { key:'agate',   name:'마노', color:'#c08068', verse:'땅의 마노 — 시간이 굳힌 무늬' },
+    { key:'lapis',   name:'유리', color:'#5878b8', verse:'하늘의 유리 — 푸른 정신' },
+    { key:'coral',   name:'산호', color:'#d4684a', verse:'심해의 산호 — 살아있는 돌' },
   ];
   const TREASURE_DROP_CHANCE = 0.08;
   function treasureUnlocked(key) {
@@ -9710,9 +9710,9 @@
     return 'winter';
   }
   const SEASONAL_PARTICLE = {
-    spring: { name:'桃花', color:'#f8a8c0', glow:false, shape:'flower', verse:'복숭아꽃' },
-    summer: { name:'螢',   color:'#fff5a0', glow:true,  shape:'dot',    verse:'반딧불' },
-    autumn: { name:'紅葉', color:'#d4683a', glow:false, shape:'leaf',   verse:'단풍' },
+    spring: { name:'도화', color:'#f8a8c0', glow:false, shape:'flower', verse:'복숭아꽃' },
+    summer: { name:'반딧불',   color:'#fff5a0', glow:true,  shape:'dot',    verse:'반딧불' },
+    autumn: { name:'단풍', color:'#d4683a', glow:false, shape:'leaf',   verse:'단풍' },
     winter: { name:'설',   color:'#ffffff', glow:false, shape:'snow',   verse:'눈' },
   };
   let seasonalParticleTimer = null;
@@ -9874,13 +9874,13 @@
 
   // === v177 절기 — 실시간 24절기 중 8주요 ===
   const SOLAR_TERMS = [
-    { key:'lichun',  name:'立春', month:2,  day:4,  verse:'봄이 시작된다 · 새 검을 빚을 때', costMul:0.97 },
-    { key:'chunfen', name:'春分', month:3,  day:20, verse:'낮과 밤이 같다 · 균형의 시각', soulMul:1.05 },
-    { key:'lixia',   name:'立夏', month:5,  day:5,  verse:'여름이 깊다 · 그림자 짙어진다', challengeMul:1.05 },
-    { key:'xiazhi',  name:'夏至', month:6,  day:21, verse:'해가 정점 · 검이 가장 빛난다', rewardMul:1.10 },
-    { key:'liqiu',   name:'立秋', month:8,  day:7,  verse:'가을 시작 · 거두어 봉인하라', sealMul:1.05 },
-    { key:'qiufen',  name:'秋分', month:9,  day:23, verse:'결실의 균형 · 봉인이 무거워진다', sealMul:1.08 },
-    { key:'lidong',  name:'立冬', month:11, day:7,  verse:'겨울 시작 · 회수의 시간이 늘어난다', rescueSec:1.0 },
+    { key:'lichun',  name:'입춘', month:2,  day:4,  verse:'봄이 시작된다 · 새 검을 빚을 때', costMul:0.97 },
+    { key:'chunfen', name:'춘분', month:3,  day:20, verse:'낮과 밤이 같다 · 균형의 시각', soulMul:1.05 },
+    { key:'lixia',   name:'입하', month:5,  day:5,  verse:'여름이 깊다 · 그림자 짙어진다', challengeMul:1.05 },
+    { key:'xiazhi',  name:'하지', month:6,  day:21, verse:'해가 정점 · 검이 가장 빛난다', rewardMul:1.10 },
+    { key:'liqiu',   name:'입추', month:8,  day:7,  verse:'가을 시작 · 거두어 봉인하라', sealMul:1.05 },
+    { key:'qiufen',  name:'추분', month:9,  day:23, verse:'결실의 균형 · 봉인이 무거워진다', sealMul:1.08 },
+    { key:'lidong',  name:'입동', month:11, day:7,  verse:'겨울 시작 · 회수의 시간이 늘어난다', rescueSec:1.0 },
     { key:'dongzhi', name:'동지', month:12, day:22, verse:'가장 긴 밤 · 침묵이 검을 지킨다', destroyReduce:0.02 },
   ];
   function getCurrentSolarTerm() {
@@ -11043,7 +11043,7 @@
     { key: 'maxSealReward',    label: '최고 봉인 보상',     unit: '조각' },
     { key: 'maxSoul',          label: '최고 영혼',          unit: '혼' },
     { key: 'maxSlainPerSword', label: '한 검 최다 슬레이',  unit: '회' },
-    { key: 'maxSuccessStreak', label: '최고 강화 連 streak', unit: '회' },
+    { key: 'maxSuccessStreak', label: '최고 강화 연 streak', unit: '회' },
     { key: 'minWayAttempts',   label: '최단 도 도달',       unit: '강화', isMin: true },  // 작을수록 좋음
   ];
   function updateRecord(key, value) {
