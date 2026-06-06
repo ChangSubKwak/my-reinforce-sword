@@ -1581,3 +1581,25 @@ test('v371f generateLastWords: 古/久 노쇠 검의 작별 + 우선순위', () 
   // 노쇠 없으면 기존 性情 경로 (구 검 하위호환)
   assert.ok(fns.generateLastWords({ inscriptions: [], level: 5 }).length > 0, '노쇠 없는 검도 작별 존재');
 });
+
+// getPrimaryKanji(v69 칼날 한자 새김) — 名 보스 처치 명문 coverage (additive tail).
+// 기존 iconic(도/귀참/본/성/단마) 표시는 불변, 없을 때만 보스 한자 새김.
+test('getPrimaryKanji: 名 보스 처치 명문 coverage + 기존 표시 불변', () => {
+  const { getPrimaryKanji } = loadFunctions(['getPrimaryKanji'], { NAMED_FOES: extractConst('NAMED_FOES') });
+  // 기존 iconic 불변
+  assert.strictEqual(getPrimaryKanji(['도']).k, '도', '道 불변');
+  assert.strictEqual(getPrimaryKanji(['귀참']).k, '귀', '鬼斬 불변');
+  assert.strictEqual(getPrimaryKanji(['단마']).k, '단', '斷魔 불변');
+  // 야차참(귀참 동등 희귀) 새김
+  assert.strictEqual(getPrimaryKanji(['야차참']).k, '야', '야차참 → 야');
+  // 名 보스 처치 명문 — 각 보스의 첫 글자 새김
+  const NAMED_FOES = extractConst('NAMED_FOES');
+  NAMED_FOES.forEach(f => {
+    assert.strictEqual(getPrimaryKanji([f.inscription]).k, f.inscription[0],
+      f.name + ' 처치 명문 ' + f.inscription + ' → ' + f.inscription[0]);
+  });
+  // iconic이 있으면 보스보다 우선 (기존 표시 불변 보장)
+  assert.strictEqual(getPrimaryKanji(['도', '용참']).k, '도', '道가 용참보다 우선 (기존 불변)');
+  // 아무것도 없으면 null
+  assert.strictEqual(getPrimaryKanji([]), null, '명문 없으면 null');
+});

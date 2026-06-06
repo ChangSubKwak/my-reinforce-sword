@@ -290,7 +290,7 @@ test('slay는 보상 분기 전에 challenge를 즉시 null로 잠금 (더블클
 // 融劍도 보상-변이 행동 더블파이어 클래스: fuseSwords는 splice+과금 전에 hasSword로 잠근다.
 // newSword()가 hasSword=true를 동기 설정 → 두 번째 클릭은 차단(이중 splice/이중 과금 방지).
 test('fuseSwords는 splice/과금 전에 hasSword로 재진입 차단 (이중 융검 방지)', () => {
-  const body = afterDecl('function fuseSwords() {', 600);
+  const body = afterDecl('function fuseSwords() {', 1100);
   const guardIdx = body.indexOf('if (state.hasSword) return');
   const spliceIdx = body.indexOf('state.sealedSwords.splice');
   const costIdx = body.indexOf('state.shards -= FUSION_COST');
@@ -912,4 +912,44 @@ test('테마 추종: 감사 수정한 강조/전경 역할 UI가 레거시 hex�
   assert.doesNotMatch(js, /style\.color = '#d4af37'/, '일언 hover색은 var(--accent)');
   // 시(時)분포 시계차트 — 단일 accent 데이터 시각화
   assert.doesNotMatch(js, /count > 0 \? '#d4af37'/, '시계차트 데이터색은 var(--accent)');
+});
+
+// v33 傳授 heritageOrder가 名 보스 처치 명문 전체를 포함하는지 — FUSION_PRIORITY 쌍둥이 drift 차단.
+// (이전: ['단마','귀참','고','구']로 용참/제참/인참/월참/풍참/야차참 누락 → 가장 빛나는 무훈이
+//  전수에서 silently 사라지던 버그. NAMED_FOES 단일 출처와 대조해 회귀 잠금.)
+test('傳授: heritageOrder가 모든 名 보스 처치 명문 포함 (전수 누락 drift 차단)', () => {
+  const heritageOrder = extractConst('heritageOrder');
+  const NAMED_FOES = extractConst('NAMED_FOES');
+  assert.ok(Array.isArray(heritageOrder), 'heritageOrder 배열 존재');
+  NAMED_FOES.forEach(f => {
+    assert.ok(heritageOrder.includes(f.inscription),
+      '보스 명문 ' + f.inscription + '(' + f.name + ')이 heritageOrder에 누락 — 전수 silently lost');
+  });
+  // 특수 그림자 처치 야차참(귀참 동등 희귀)도 포함
+  assert.ok(heritageOrder.includes('야차참'), '야차참 누락');
+  // 우선순위 일관 — 귀참이 단마보다 앞 (NAME_SUFFIX/FUSION_PRIORITY와 동일)
+  assert.ok(heritageOrder.indexOf('귀참') < heritageOrder.indexOf('단마'),
+    '귀참은 단마보다 우선 (우선순위 역전 회귀)');
+});
+
+// 融劍 후 守(guardianIdx) 보정 — sealedSwords splice로 인덱스가 밀리면 수호자가 다른 道 검으로
+// 조용히 뒤바뀌거나 소멸. fuseSwords가 splice 후 guardianIdx를 보정하는지 잠금.
+test('融劍: fuseSwords가 splice 후 guardianIdx 보정 (수호자 스왑/소멸 차단)', () => {
+  const fuse = js.match(/function fuseSwords\(\)\s*\{[\s\S]*?\n  \}/);
+  assert.ok(fuse, 'fuseSwords 정의 존재');
+  assert.match(fuse[0], /guardianIdx/, 'fuseSwords가 guardianIdx를 보정');
+  // 제거 대상이 수호자면 null, 아니면 밀린 만큼 감소
+  assert.match(fuse[0], /guardianIdx\s*=\s*null/, '수호자 검 융합 시 guardianIdx=null');
+});
+
+// 봉인/전당 검 inscriptions 배열 강제 — 손상/import 검이 비배열이면 .includes/.join 크래시.
+test('세이브 호환: sanitizeSword가 inscriptions 배열 강제 (sealed/enshrined import 크래시 차단)', () => {
+  const san = js.match(/const sanitizeSword = \(sw\) =>\s*\{[\s\S]*?\n      \}/);
+  assert.ok(san, 'sanitizeSword 헬퍼 존재');
+  assert.match(san[0], /!Array\.isArray\(sw\.inscriptions\)/, 'inscriptions 비배열 보정');
+});
+
+// gameover 검명은 정규 3-arg makeSwordName(form, ins, level) — 단일 인자 호출(객체 전달) 회귀 차단.
+test('makeSwordName: gameover 호출이 정규 3-arg (단일 인자 TypeError 회귀 차단)', () => {
+  assert.doesNotMatch(js, /makeSwordName\(sw\)/, 'makeSwordName(sw) 단일 인자 호출 없음');
 });

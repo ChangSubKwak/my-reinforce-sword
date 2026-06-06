@@ -4461,6 +4461,9 @@
         // v370o 봉인 검 level도 범위 강제 — 손상 import의 level=999가 계보 SVG·"가장 강한 검"
         // 표시를 깨고 sealReward 표시를 폭주시키는 것 방지 (표시 전용이라 검 필드 sanitize에 동봉).
         if (sw.level != null) sw.level = clampInt(sw.level, 0, MAX_LEVEL);
+        // 봉인 검·전당 검의 inscriptions 배열 강제 — 손상/구버전/import 검이 비배열이면
+        // renderInscriptions/makeSwordName 등의 .includes/.join이 크래시 (currentSword만 4365에서 보정됐음).
+        if (!Array.isArray(sw.inscriptions)) sw.inscriptions = [];
       };
       state.sealedSwords.forEach(sanitizeSword);
       state.enshrined.forEach(sanitizeSword);
@@ -16250,6 +16253,13 @@
     const hi = Math.max(idxA, idxB), lo = Math.min(idxA, idxB);
     state.sealedSwords.splice(hi, 1);
     state.sealedSwords.splice(lo, 1);
+    // v52 守: guardianIdx는 sealedSwords 위치 인덱스 — 융합으로 2자루 제거 시 보정.
+    // 안 하면 수호자가 다른 道 검으로 조용히 뒤바뀌거나(getGuardian이 위치 조회+道검증만 함)
+    // 인덱스 초과로 말없이 소멸 → 강화/파괴/회수/보상 패시브가 엉뚱하게 적용/손실.
+    if (state.guardianIdx != null) {
+      if (state.guardianIdx === hi || state.guardianIdx === lo) state.guardianIdx = null;
+      else { let g = state.guardianIdx; if (g > hi) g--; if (g > lo) g--; state.guardianIdx = g; }
+    }
     state.shards -= FUSION_COST;
     // 새 검 (startBonus는 감소한 legacy로 재계산)
     newSword();
@@ -16376,7 +16386,7 @@
     // 봉인 검 이름 (최근 6자루 — 도 검 강조)
     const recentSwords = sealed.slice(-6).reverse();
     $('gameover-swords').innerHTML = recentSwords.map(sw => {
-      const n = sw.name || makeSwordName(sw);
+      const n = sw.name || makeSwordName(sw.form, sw.inscriptions || [], sw.level);
       const isWay = (sw.inscriptions || []).includes('도');
       return '<span class="go-sword-name' + (isWay ? ' way' : '') + '">' + n + '</span>';
     }).join('');
@@ -16577,8 +16587,11 @@
           }
         }).catch(() => {});
       }
-      // v33 傳授: 도 검 봉인 시 희귀 명문 1개 다음 검에 전수
-      const heritageOrder = ['단마', '귀참', '고', '구'];
+      // v33 傳授: 도 검 봉인 시 희귀 명문 1개 다음 검에 전수.
+      // 무훈 명문(名 보스 처치 용참~풍참·야차참·斷魔·鬼斬·逆轉)을 FUSION_PRIORITY와 동일
+      // 우선순위로 나열 — 빠지면 가장 빛나는 무훈이 전수에서 silently 누락 (FUSION_PRIORITY 쌍둥이 drift).
+      // 도(자식은 道검 아님)·성장 명문(본/각성/강체/백련)은 전수 대상 외 — 원작 v33의 무훈+노쇠 테마 유지.
+      const heritageOrder = ['용참', '제참', '귀참', '야차참', '인참', '월참', '풍참', '단마', '역전', '고', '구'];
       const heritage = heritageOrder.find(k => ins.includes(k));
       if (heritage) {
         state.heritageInscription = heritage;
@@ -16884,6 +16897,12 @@
     if (ins.includes('본')) return { k: '본', c: '#a0c0d0' };
     if (ins.includes('성')) return { k: '성', c: '#fff5c0' };
     if (ins.includes('단마')) return { k: '단', c: '#fff5c0' };
+    if (ins.includes('야차참')) return { k: '야', c: '#ffd080' };
+    // 名 보스 처치 명문 — 위 iconic 명문이 하나도 없을 때만 칼날에 새김 (순수 coverage 추가,
+    // 기존 표시 불변). NAMED_FOES 단일 출처 순회라 새 보스 추가 시 자동 반영.
+    for (const f of NAMED_FOES) {
+      if (ins.includes(f.inscription)) return { k: f.inscription[0], c: '#ffb060' };
+    }
     return null;
   }
 
