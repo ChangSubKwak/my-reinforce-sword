@@ -892,3 +892,24 @@ test('페이지 가시성: visibilitychange 핸들러가 ambient drone 제어', 
   assert.match(js, /document\.hidden[\s\S]{0,80}stopAmbient/, '탭 숨김 시 stopAmbient 호출');
   assert.match(js, /!muted[\s\S]{0,80}startAmbient/, '탭 표시 시 (음소거 아님) startAmbient 재개');
 });
+
+// 테마 추종(theme-* 변형이 --accent/--fg/--danger 재정의) — 강조/전경/위험 역할 UI가
+// 레거시 골드 #d4af37 / 오프화이트 #e8e6dd로 박히면 푸른/은빛 테마에서 미추종.
+// CLAUDE.md: "색은 항상 CSS 변수 사용 — 하드코딩 hex(#d4af37 등 레거시) 금지".
+// (검 <defs> 그라데이션 / burstParticles 장식 / 형-정체성 색맵 등 의도적 고정은 예외라 전수 검사 X.)
+// 감사로 확인·수정한 강조/전경 역할 6개 UI 사이트가 레거시 hex로 회귀하지 않는지 잠금.
+test('테마 추종: 감사 수정한 강조/전경 역할 UI가 레거시 hex로 회귀 안 함 (var(--accent)/--fg)', () => {
+  // 폼 입력(select/textarea) 텍스트 — fg 역할. color:#e8e6dd 0건.
+  assert.strictEqual((js.match(/color:#e8e6dd/g) || []).length, 0,
+    '폼 입력 텍스트색은 var(--fg) (레거시 #e8e6dd 회귀)');
+  // 설정 ON 토글 — accent 역할
+  assert.doesNotMatch(js, /on \? '#d4af37'/, '설정 ON 토글색은 var(--accent)');
+  // 도박 결과 오버레이 — win=accent / lose=danger
+  assert.doesNotMatch(js, /win \? '#d4af37'/, '도박 결과 win색은 var(--accent)');
+  // 銘刻 문자 선택 보더 — 선택 강조 accent 역할
+  assert.doesNotMatch(js, /isPicked \? '#d4af37'/, '銘刻 선택 보더는 var(--accent)');
+  // 일언 hover — accent 역할
+  assert.doesNotMatch(js, /style\.color = '#d4af37'/, '일언 hover색은 var(--accent)');
+  // 시(時)분포 시계차트 — 단일 accent 데이터 시각화
+  assert.doesNotMatch(js, /count > 0 \? '#d4af37'/, '시계차트 데이터색은 var(--accent)');
+});

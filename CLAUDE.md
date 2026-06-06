@@ -85,7 +85,7 @@ npm test
 
 ### 一閃 (`challenge` / `slay` / `flee`) — v2
 
-강화 성공 직후 `maybeTriggerChallenge()` 호출. 등장 확률 = `min(0.45, 0.13 + level * 0.018)` — 검이 강할수록 그림자가 끌어들임. `CHALLENGE_MIN_LEVEL=1` (검 +0 보호). `state.hasSword` 필수.
+강화 성공 직후 `maybeTriggerChallenge()` 호출. 등장 확률 = `min(CHALLENGE_MAX_CHANCE, (0.13 + level * 0.018) * seasonMul * solarChallengeMul())` — 검이 강할수록 그림자가 끌어들임. 기본 곡선은 `min(0.45, 0.13 + level * 0.018)`이고 여기에 季節(v37)·절기(v263) 곱항이 추가로 변조한다. `CHALLENGE_MIN_LEVEL=1` (검 +0 보호). `state.hasSword` 필수.
 
 도전은 **휘발성** — `challenge` 모듈 스코프 변수만 사용, `state`에 저장 안 함. 새로고침 시 사라짐 (도망친 셈). 영구 통계 `state.totalSlain`만 보존.
 
@@ -174,10 +174,12 @@ UI 흐름: `showChallenge`는 `swordWrap.opacity=0`로 검 stage 숨기고 `#cha
 
 | key | 효과 |
 |---|---|
-| `直` | `successBonus: 0.03` (강화 성공률 +3%) |
-| `曲` | `destroyReduce: 0.03` (파괴 확률 -3%) |
-| `重` | `costMul: 1.10`, `rewardMul: 1.20` (강화 비용 +10%, 도전 보상 +20%) |
-| `速` | `fleeFree: true` (물러남 무료) |
+| `직` (直) | `successBonus: 0.03` (강화 성공률 +3%) |
+| `곡` (曲) | `destroyReduce: 0.03` (파괴 확률 -3%) |
+| `중` (重) | `costMul: 1.10`, `rewardMul: 1.20` (강화 비용 +10%, 도전 보상 +20%) |
+| `속` (速) | `fleeFree: true` (물러남 무료) |
+
+> `SWORD_FORMS`의 실제 키는 한글 `'직'/'곡'/'중'/'속'` (한자→한글 마이그레이션 완료). 코드 grep·`state.currentSword.form` 비교는 한글 키 사용. 위 한자는 개념 참조.
 
 `getForm()`은 현재 검의 form 객체 반환. 메커니즘 영향 위치:
 - `enhance()` — `successBonus`, `destroyReduce`, `costMul` (cost 표시도 갱신)
@@ -719,7 +721,7 @@ Web Audio API 기반 실시간 반응 사운드스케이프. 외부 파일 0, �
 | `START_BONUS_DIVISOR = 25` | 봉인 | 누적 강기 → 시작 단계 변환율 |
 | `INSCRIPTIONS[]` | 명문 | 명문 트리거 조건. 효과 갖는 항목은 `sealSword`에서 별도 분기 |
 | `protectCost(lv)` | 방지권 | 강화 단계별 방지권 비용 계단 함수 |
-| `rescueShards(level)` | 회수 | 파괴된 검에서 회수 가능 조각 (`floor(lv^2 * 0.7)`) |
+| `rescueShards(level)` | 회수 | 파괴된 검에서 회수 가능 조각 (`max(3, floor(lv^2 * 0.7))` — 저레벨 최소 3 하한) |
 | `SHADOW_TYPES[]` | 影 변종 | weight·강도Mul·보상Mul·특수 메커니즘 (slayEvade 등) |
 | `SWORD_FORMS{}` | 검의 형 | 형별 successBonus / destroyReduce / costMul / rewardMul / fleeFree |
 | `recipes.whetstone.cost = 8` | 砥石 | 다음 강화 +25% 성공 |

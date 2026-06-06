@@ -3455,13 +3455,13 @@
     <p>봉인 검을 코드로 내보내거나, 받은 코드로 손님 검을 맞이하라</p>
     <div style="margin:14px 0">
       <div style="font-size:10px;letter-spacing:3px;color:#888;margin-bottom:6px">내보내기 — 봉인 검 선택</div>
-      <select id="guest-export-select" style="width:100%;padding:8px;background:#1a1a22;color:#e8e6dd;border:1px solid #3a3a44;font-family:inherit;font-size:11px;letter-spacing:2px;margin-bottom:6px"></select>
+      <select id="guest-export-select" style="width:100%;padding:8px;background:#1a1a22;color:var(--fg);border:1px solid #3a3a44;font-family:inherit;font-size:11px;letter-spacing:2px;margin-bottom:6px"></select>
       <textarea id="guest-export-code" readonly style="width:100%;height:48px;padding:8px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;color:#88c8a8;font-family:monospace;font-size:9px;resize:none;word-break:break-all"></textarea>
       <button id="guest-copy" style="margin-top:6px;width:100%">코드 복사</button>
     </div>
     <div style="margin:16px 0;border-top:1px solid #2a2a32;padding-top:14px">
       <div style="font-size:10px;letter-spacing:3px;color:#888;margin-bottom:6px">받기 — 코드 붙여넣기</div>
-      <textarea id="guest-import-code" aria-label="손님 검 공유 코드 입력" placeholder="공유받은 코드를 여기에..." style="width:100%;height:48px;padding:8px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;color:#e8e6dd;font-family:monospace;font-size:9px;resize:none;word-break:break-all"></textarea>
+      <textarea id="guest-import-code" aria-label="손님 검 공유 코드 입력" placeholder="공유받은 코드를 여기에..." style="width:100%;height:48px;padding:8px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;color:var(--fg);font-family:monospace;font-size:9px;resize:none;word-break:break-all"></textarea>
       <button id="guest-import-btn" style="margin-top:6px;width:100%">손님 검 맞이</button>
     </div>
     <div id="guest-gallery" style="margin-top:16px;max-height:200px;overflow-y:auto"></div>
@@ -3477,11 +3477,11 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0">
       <div>
         <div style="font-size:9px;letter-spacing:5px;color:#888;text-align:center;margin-bottom:6px">A</div>
-        <select id="compare-select-a" style="width:100%;padding:8px;background:#1a1a22;color:#e8e6dd;border:1px solid #3a3a44;font-family:inherit;font-size:11px;letter-spacing:2px"></select>
+        <select id="compare-select-a" style="width:100%;padding:8px;background:#1a1a22;color:var(--fg);border:1px solid #3a3a44;font-family:inherit;font-size:11px;letter-spacing:2px"></select>
       </div>
       <div>
         <div style="font-size:9px;letter-spacing:5px;color:#888;text-align:center;margin-bottom:6px">B</div>
-        <select id="compare-select-b" style="width:100%;padding:8px;background:#1a1a22;color:#e8e6dd;border:1px solid #3a3a44;font-family:inherit;font-size:11px;letter-spacing:2px"></select>
+        <select id="compare-select-b" style="width:100%;padding:8px;background:#1a1a22;color:var(--fg);border:1px solid #3a3a44;font-family:inherit;font-size:11px;letter-spacing:2px"></select>
       </div>
     </div>
     <div id="compare-display" style="margin-top:14px"></div>
@@ -3504,7 +3504,7 @@
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mtitle-10" style="max-width: 500px;">
     <h2 id="mtitle-10">자서</h2>
     <p>자유롭게 한 줄, 또는 여러 줄 — 검의 길에 새기는 당신의 글</p>
-    <textarea id="diary-input" aria-label="자유 일기" placeholder="검을 쥐고 무엇을 생각하나..." style="width:100%;min-height:80px;padding:10px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;border-radius:2px;color:#e8e6dd;font-family:'Noto Serif KR',serif;font-size:12px;letter-spacing:2px;resize:vertical;line-height:1.7"></textarea>
+    <textarea id="diary-input" aria-label="자유 일기" placeholder="검을 쥐고 무엇을 생각하나..." style="width:100%;min-height:80px;padding:10px;background:rgba(15,15,22,0.6);border:1px solid #3a3a44;border-radius:2px;color:var(--fg);font-family:'Noto Serif KR',serif;font-size:12px;letter-spacing:2px;resize:vertical;line-height:1.7"></textarea>
     <div class="actions-center">
       <button id="diary-save">기록</button>
       <button class="modal-close" data-close>닫 기</button>
@@ -6305,7 +6305,7 @@
       const ix2 = cx + Math.cos(a2) * innerR;
       const iy2 = cy + Math.sin(a2) * innerR;
       const opacity = count > 0 ? (0.4 + 0.55 * intensity) : 0.07;
-      const color = count > 0 ? '#d4af37' : '#444';
+      const color = count > 0 ? 'var(--accent)' : '#444';
       svg += '<path d="M ' + ix1.toFixed(1) + ' ' + iy1.toFixed(1) + ' L ' + x1.toFixed(1) + ' ' + y1.toFixed(1) + ' A ' + r.toFixed(1) + ' ' + r.toFixed(1) + ' 0 0 1 ' + x2.toFixed(1) + ' ' + y2.toFixed(1) + ' L ' + ix2.toFixed(1) + ' ' + iy2.toFixed(1) + ' A ' + innerR.toFixed(1) + ' ' + innerR.toFixed(1) + ' 0 0 0 ' + ix1.toFixed(1) + ' ' + iy1.toFixed(1) + ' Z" fill="' + color + '" fill-opacity="' + opacity.toFixed(2) + '"/>';
     }
     // 시간 라벨 (0/6/12/18) 4개
@@ -6326,7 +6326,7 @@
     svg += '<circle cx="' + cx + '" cy="' + cy + '" r="3" fill="#fff5c0"/>';
     // 중심 텍스트 — 총 합
     svg += '<text x="' + cx + '" y="' + (cy - 6) + '" font-family="Noto Serif KR, serif" font-size="10" fill="#888" text-anchor="middle" letter-spacing="3">총</text>';
-    svg += '<text x="' + cx + '" y="' + (cy + 12) + '" font-family="Noto Serif KR, serif" font-size="16" fill="#d4af37" text-anchor="middle" font-weight="200">' + total + '</text>';
+    svg += '<text x="' + cx + '" y="' + (cy + 12) + '" font-family="Noto Serif KR, serif" font-size="16" fill="var(--accent)" text-anchor="middle" font-weight="200">' + total + '</text>';
     svg += '</svg>';
     return svg;
   }
@@ -6507,7 +6507,7 @@
     let html = '<div style="text-align:center;font-family:\'Noto Serif KR\',serif">';
     html += '<div style="font-size:11px;letter-spacing:8px;color:rgba(212,175,55,0.7);margin-bottom:8px">오  시</div>';
     html += '<div style="font-size:14px;letter-spacing:3px;color:#fff5c0;margin-bottom:22px;font-style:italic">' + daoTitle + '</div>';
-    html += '<div style="line-height:2.3;font-size:14px;letter-spacing:3px;color:#e8e6dd">';
+    html += '<div style="line-height:2.3;font-size:14px;letter-spacing:3px;color:var(--fg)">';
     lines.forEach(line => {
       html += '<div style="margin:6px 0">' + line + '</div>';
     });
@@ -7272,11 +7272,11 @@
     } else if (bookPageIdx === 1) {
       // 卷二 — 검들
       html += '<div style="font-size:11px;letter-spacing:10px;color:rgba(212,175,55,0.7);text-align:center;margin-bottom:20px">권  이  ─  검  들</div>';
-      html += '<div style="font-size:13px;letter-spacing:4px;color:#e8e6dd;text-align:center;margin-bottom:18px;font-family:\'Noto Serif KR\',serif">' + sealed + '자루의 검 봉인, ' + swordGen + '대 이어졌다</div>';
+      html += '<div style="font-size:13px;letter-spacing:4px;color:var(--fg);text-align:center;margin-bottom:18px;font-family:\'Noto Serif KR\',serif">' + sealed + '자루의 검 봉인, ' + swordGen + '대 이어졌다</div>';
       const formCounts = { '직':0,'곡':0,'중':0,'속':0 };
       allSealedSwords().forEach(s => { if (s.form && formCounts[s.form] !== undefined) formCounts[s.form]++; });  // v359 — 전당 검도 형 분포에 (display undercount)
       html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:20px 0">';
-      const formCard = (f, n, c) => '<div style="text-align:center;padding:14px 4px;border:1px solid ' + c + ';border-radius:2px;background:rgba(15,15,22,0.5)"><div style="font-size:22px;color:' + c + '">' + f + '</div><div style="font-size:14px;color:#e8e6dd;margin-top:6px;font-weight:200">' + n + '</div></div>';
+      const formCard = (f, n, c) => '<div style="text-align:center;padding:14px 4px;border:1px solid ' + c + ';border-radius:2px;background:rgba(15,15,22,0.5)"><div style="font-size:22px;color:' + c + '">' + f + '</div><div style="font-size:14px;color:var(--fg);margin-top:6px;font-weight:200">' + n + '</div></div>';
       html += formCard('직', formCounts['직'], '#a8c0e8');
       html += formCard('곡', formCounts['곡'], '#e8a8c0');
       html += formCard('중', formCounts['중'], '#d4af37');
@@ -7964,7 +7964,7 @@
       if (prev) {
         wrap.innerHTML = '<div style="text-align:center"><div style="font-size:9px;letter-spacing:5px;color:#888;margin-bottom:14px">오늘 이미 받았다</div>' +
                           '<div style="font-size:70px;color:' + prev.color + ';text-shadow:0 0 26px ' + prev.color + ';letter-spacing:8px">' + prev.kanji + '</div>' +
-                          '<div style="font-size:12px;color:#e8e6dd;letter-spacing:3px;margin-top:14px;font-style:italic">' + prev.verse + '</div>' +
+                          '<div style="font-size:12px;color:var(--fg);letter-spacing:3px;margin-top:14px;font-style:italic">' + prev.verse + '</div>' +
                           '<div style="font-size:10px;color:' + prev.color + ';letter-spacing:3px;margin-top:8px">' + prev.label + '</div></div>';
       } else {
         wrap.innerHTML = '<div style="text-align:center;color:#888;font-size:10px;letter-spacing:3px;padding:30px">오늘은 이미 추첨됨</div>';
@@ -8006,7 +8006,7 @@
     wrap.innerHTML = '<div style="text-align:center;animation:none" id="sen-reveal">' +
                       '<div style="font-size:9px;letter-spacing:6px;color:rgba(212,175,55,0.65);margin-bottom:14px">첨</div>' +
                       '<div style="font-size:80px;color:' + picked.color + ';text-shadow:0 0 36px ' + picked.color + ',0 0 72px ' + picked.color + ';letter-spacing:10px;font-weight:200;line-height:1">' + picked.kanji + '</div>' +
-                      '<div style="font-size:13px;color:#e8e6dd;letter-spacing:4px;margin-top:18px;font-style:italic">' + picked.verse + '</div>' +
+                      '<div style="font-size:13px;color:var(--fg);letter-spacing:4px;margin-top:18px;font-style:italic">' + picked.verse + '</div>' +
                       '<div style="font-size:11px;color:' + picked.color + ';letter-spacing:3px;margin-top:10px">' + picked.label + '</div>' +
                       '</div>';
     const reveal = $('sen-reveal');
@@ -8082,7 +8082,7 @@
       html += '<span>' + dateStr + ' · ' + e.gen + '대 · ' + lvLabel + '</span>';
       html += '<button data-diary-del="' + idx + '" style="background:transparent;color:#666;border:none;font-family:inherit;font-size:10px;cursor:pointer;padding:0;letter-spacing:2px">×</button>';
       html += '</div>';
-      html += '<div style="font-size:11px;letter-spacing:2px;line-height:1.7;color:#e8e6dd;font-family:\'Noto Serif KR\',serif;white-space:pre-wrap">' + safeText + '</div>';
+      html += '<div style="font-size:11px;letter-spacing:2px;line-height:1.7;color:var(--fg);font-family:\'Noto Serif KR\',serif;white-space:pre-wrap">' + safeText + '</div>';
       html += '</div>';
     });
     wrap.innerHTML = html;
@@ -8506,7 +8506,7 @@
       html += '<div style="margin:10px 0"><div style="font-size:9px;letter-spacing:6px;color:#888;margin-bottom:6px">' + cat + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">';
       ENGRAVE_HANJI[cat].forEach(c => {
         const isPicked = engraveTempPick === c;
-        html += '<button class="engrave-char-btn" data-char="' + c + '" style="width:42px;height:42px;font-size:22px;font-family:\'Noto Serif KR\',serif;background:' + (isPicked ? '#3a2a14' : '#1a1a22') + ';color:' + (isPicked ? '#fff5c0' : '#e8e6dd') + ';border:1px solid ' + (isPicked ? '#d4af37' : '#3a3a44') + ';cursor:pointer;padding:0;transition:all 0.2s' + (isPicked ? ';box-shadow:0 0 14px rgba(212,175,55,0.5)' : '') + '">' + c + '</button>';
+        html += '<button class="engrave-char-btn" data-char="' + c + '" style="width:42px;height:42px;font-size:22px;font-family:\'Noto Serif KR\',serif;background:' + (isPicked ? '#3a2a14' : '#1a1a22') + ';color:' + (isPicked ? '#fff5c0' : '#e8e6dd') + ';border:1px solid ' + (isPicked ? 'var(--accent)' : '#3a3a44') + ';cursor:pointer;padding:0;transition:all 0.2s' + (isPicked ? ';box-shadow:0 0 14px rgba(212,175,55,0.5)' : '') + '">' + c + '</button>';
       });
       html += '</div></div>';
     });
@@ -8705,8 +8705,8 @@
     SETTINGS_DEFS.forEach(s => {
       const on = getSetting(s.key);
       html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:11px 12px;margin:6px 0;border:1px solid ' + (on ? 'rgba(212,175,55,0.4)' : '#2a2a32') + ';border-radius:2px;cursor:pointer;background:rgba(20,20,28,0.4)">';
-      html += '<div><div style="font-size:12px;letter-spacing:2px;color:#e8e6dd">' + s.label + '</div><div style="font-size:9px;letter-spacing:1px;color:#888;margin-top:3px">' + s.desc + '</div></div>';
-      html += '<span data-setting="' + s.key + '" style="font-size:11px;letter-spacing:2px;color:' + (on ? '#d4af37' : '#666') + ';padding:4px 10px;border:1px solid ' + (on ? '#d4af37' : '#444') + ';border-radius:2px">' + (on ? 'ON' : 'OFF') + '</span>';
+      html += '<div><div style="font-size:12px;letter-spacing:2px;color:var(--fg)">' + s.label + '</div><div style="font-size:9px;letter-spacing:1px;color:#888;margin-top:3px">' + s.desc + '</div></div>';
+      html += '<span data-setting="' + s.key + '" style="font-size:11px;letter-spacing:2px;color:' + (on ? 'var(--accent)' : '#666') + ';padding:4px 10px;border:1px solid ' + (on ? 'var(--accent)' : '#444') + ';border-radius:2px">' + (on ? 'ON' : 'OFF') + '</span>';
       html += '</label>';
     });
     wrap.innerHTML = html;
@@ -8803,7 +8803,7 @@
     const el = document.createElement('div');
     el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.6);letter-spacing:10px;margin-bottom:24px">점  ─  오늘의 점</div>' +
                     '<div style="font-size:120px;color:' + oracle.color + ';letter-spacing:12px;text-shadow:0 0 50px ' + oracle.color + ',0 0 100px ' + oracle.color + ';font-weight:200;line-height:1">' + oracle.kanji + '</div>' +
-                    '<div style="font-size:14px;color:#e8e6dd;letter-spacing:5px;margin-top:28px;font-style:italic;line-height:1.7">' + oracle.verse + '</div>' +
+                    '<div style="font-size:14px;color:var(--fg);letter-spacing:5px;margin-top:28px;font-style:italic;line-height:1.7">' + oracle.verse + '</div>' +
                     '<div style="font-size:9px;color:#666;letter-spacing:3px;margin-top:14px">' + todayOracleDateStr() + '</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5400;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:48px 64px;background:radial-gradient(ellipse,rgba(15,15,22,0.94) 0%,rgba(15,15,22,0.6) 65%,transparent 92%);max-width:600px';
     document.body.appendChild(el);
@@ -8910,7 +8910,7 @@
       el.id = 'daily-saying';
       el.style.cssText = 'position:fixed;bottom:54px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;color:rgba(168,168,168,0.45);font-family:"Noto Serif KR",serif;font-style:italic;pointer-events:auto;z-index:8;cursor:pointer;transition:opacity 0.4s,color 0.4s;max-width:80%;text-align:center';
       el.title = '일언 — 클릭하여 큰 글로 본다';
-      el.addEventListener('mouseenter', () => { el.style.opacity = '0.9'; el.style.color = '#d4af37'; });
+      el.addEventListener('mouseenter', () => { el.style.opacity = '0.9'; el.style.color = 'var(--accent)'; });
       el.addEventListener('mouseleave', () => { el.style.opacity = ''; el.style.color = ''; });
       el.addEventListener('click', showDailySayingFade);
       document.body.appendChild(el);
@@ -8920,7 +8920,7 @@
   function showDailySayingFade() {
     const el = document.createElement('div');
     el.innerHTML = '<div style="font-size:10px;color:rgba(212,175,55,0.65);letter-spacing:8px;margin-bottom:24px">일  언</div>' +
-                    '<div style="font-size:22px;color:#e8e6dd;letter-spacing:6px;line-height:1.8;font-style:italic;font-weight:200">' + getDailySaying() + '</div>';
+                    '<div style="font-size:22px;color:var(--fg);letter-spacing:6px;line-height:1.8;font-style:italic;font-weight:200">' + getDailySaying() + '</div>';
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5300;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:42px 60px;background:radial-gradient(ellipse,rgba(15,15,22,0.92) 0%,rgba(15,15,22,0.55) 65%,transparent 92%);max-width:600px';
     document.body.appendChild(el);
     el.animate([
@@ -9287,7 +9287,7 @@
       html += '<div style="font-size:32px;color:' + (u ? b.color : '#555') + ';letter-spacing:3px;text-shadow:' + (u ? '0 0 14px ' + b.color : 'none') + '">' + b.name + '</div>';
       html += '<div style="flex:1">';
       html += '<div style="font-size:10px;letter-spacing:5px;color:' + (u ? b.color : '#888') + '">' + b.dirKr + ' · ' + b.element + '</div>';
-      html += '<div style="font-size:11px;letter-spacing:2px;color:#e8e6dd;margin-top:4px">' + b.bonusDesc + '</div>';
+      html += '<div style="font-size:11px;letter-spacing:2px;color:var(--fg);margin-top:4px">' + b.bonusDesc + '</div>';
       html += '<div style="font-size:9px;letter-spacing:2px;color:#888;margin-top:4px">조건: ' + b.conditionDesc + ' — ' + (u ? '<span style="color:var(--accent)">강림</span>' : '대기') + '</div>';
       if (!u && b.progress) {
         const pr = b.progress();
@@ -12372,7 +12372,7 @@
   }
   function showGambleResult(win, amount) {
     const el = document.createElement('div');
-    const color = win ? '#d4af37' : '#c0392b';
+    const color = win ? 'var(--accent)' : 'var(--danger)';
     const kanji = win ? '도 ◯' : '도 ✕';
     const msg = win ? ('조각 +' + fmtNum(amount) + ' — 두 배') : '모두 잃었다';
     el.innerHTML = '<div style="font-size:64px;color:' + color + ';letter-spacing:10px;text-shadow:0 0 30px ' + color + ';font-weight:200;line-height:1">' + kanji + '</div>' +
@@ -15978,7 +15978,7 @@
     if (!m.label && !m.verse) return;
     const el = document.createElement('div');
     el.innerHTML = '<div style="font-size:36px;color:#fff5c0;letter-spacing:4px;text-shadow:0 0 18px rgba(212,175,55,0.6);font-weight:200">' + key + '</div>' +
-                    (m.label ? '<div style="font-size:12px;color:#e8e6dd;letter-spacing:3px;margin-top:10px">' + m.label + '</div>' : '') +
+                    (m.label ? '<div style="font-size:12px;color:var(--fg);letter-spacing:3px;margin-top:10px">' + m.label + '</div>' : '') +
                     (m.verse ? '<div style="font-size:10px;color:rgba(168,184,200,0.8);letter-spacing:2px;margin-top:6px;font-style:italic">' + m.verse + '</div>' : '');
     el.style.cssText = 'position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:1700;pointer-events:none;opacity:0;font-family:"Noto Serif KR",serif;padding:22px 38px;background:radial-gradient(ellipse,rgba(15,15,22,0.92) 0%,rgba(15,15,22,0.5) 70%,transparent 95%);max-width:420px';
     document.body.appendChild(el);
