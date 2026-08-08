@@ -1345,3 +1345,36 @@ test('v382 천칭: 표시 결합 — 記錄·회고·족자·페르소나', () =
   const gp = js.match(/function getPersonas\(\)\s*\{[\s\S]*?\n  \}/);
   assert.ok(gp && /천행/.test(gp[0]) && /역풍/.test(gp[0]), '천행/역풍 페르소나 (±5 임계)');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v383 꺾임의 儀式 — 와이어링 무결성 (패배 의식·숙적 결합·승리 컷씬 격리)
+// ─────────────────────────────────────────────────────────────
+test('v383 꺾임: slay 실패 분기 — 통계·숙적 반환값·의식이 순서대로 연결', () => {
+  const body = afterDecl('function slay() {', 14000);
+  const levelDownIdx = body.indexOf('state.level = Math.max(0, state.level - 1)');
+  const defeatStatIdx = body.indexOf("bumpStat('defeats')");
+  const noteIdx = body.indexOf('const nemInfo = noteNemesisDefeat(c)');
+  const ritualIdx = body.indexOf('showDefeatRitual(c, nemInfo)');
+  assert.ok(levelDownIdx >= 0 && defeatStatIdx > levelDownIdx, '꺾임 통계는 실제 단계 하락 후');
+  assert.ok(noteIdx > defeatStatIdx && ritualIdx > noteIdx, '숙적 판정 반환값 → 의식 메시지 결합 순서');
+});
+
+test('v383 꺾임: noteNemesisDefeat 반환 계약 (birth/deepen/null) + 의식 오버레이 재활용', () => {
+  const nb = afterDecl('function noteNemesisDefeat(', 2200);
+  assert.match(nb, /return \{ kind: 'deepen', name: n\.name, wins: n\.wins \}/, '심화 반환');
+  assert.match(nb, /return \{ kind: 'birth', name: state\.nemesis\.name \}/, '탄생 반환');
+  assert.match(nb, /if \(!c \|\| !c\.type\) return null/, '무효 입력 null');
+  const sr = afterDecl('function showDefeatRitual(', 1200);
+  assert.match(sr, /demon-slay-overlay/, '승리 컷씬 오버레이 재활용 (v49/v90/v372 패턴)');
+  assert.match(sr, /classList\.add\('defeat'\)/, '패배 변형 클래스');
+  assert.match(sr, /SFX\.defeat\(\)/, '꺾임 효과음');
+  assert.ok(html.includes('#demon-slay-overlay.defeat #demon-slay-kanji'), '패배 변형 CSS (핏빛 반전)');
+});
+
+test('v383 꺾임: 승리 컷씬 3처가 패배 변형을 방어적으로 해제 + 통계 병합', () => {
+  const clears = (js.match(/dso\.classList\.remove\('defeat'\)/g) || []).length;
+  assert.ok(clears >= 3, '설욕/귀참/名 승리 컷씬이 defeat 클래스 해제 (현재 ' + clears + '처) — 붉은 승리 컷씬 방지');
+  const ds = js.match(/const DEFAULT_STATS = \{[^}]*\}/);
+  assert.ok(ds && /defeats: 0/.test(ds[0]), 'DEFAULT_STATS에 defeats 병합 기본값');
+  assert.match(js, /SFX\.defeat\b/, 'SFX 카탈로그에 defeat 존재');
+});

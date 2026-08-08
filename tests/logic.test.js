@@ -1934,3 +1934,25 @@ test('v382 만가/一代記: 운의 결산 줄 — 불운/총애/중립 침묵·
   assert.match(fnsB.generateBiography({ ...base, luckExp: 9, luckAct: 6 }), /운은 그의 편이 아니었으나/, '一代記 — 불운');
   assert.ok(!/운이 그의|운은 그의/.test(fnsB.generateBiography(base)), '무기록 검 불변');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v383 꺾임의 儀式 — 패배 메시지 빌더 (순수)
+// ─────────────────────────────────────────────────────────────
+test('v383 buildDefeatMessage: 격 형용 + 숙적 탄생/심화 결합 + 결정적', () => {
+  const { buildDefeatMessage, shadowTier } = loadFunctions(['buildDefeatMessage', 'shadowTier']);
+  const c = { strength: 9, type: { name: '강철 그림자' } };
+  // 기본 — 그림자 격(v251 shadowTier) 형용 포함
+  const plain = buildDefeatMessage(c, null);
+  assert.ok(plain.includes(shadowTier(9)), '격 형용 (影格 v251 재사용)');
+  assert.ok(plain.includes('강철 그림자') && plain.includes('검이 꺾였다'), '누구에게 꺾였는지 명시');
+  assert.ok(!plain.includes('숙적 「'), '숙적 무관 패배엔 탄생 문구 없음');
+  // 탄생 — v372의 핵심 드라마가 컷씬 문구로
+  assert.ok(buildDefeatMessage(c, { kind: 'birth', name: '월풍' }).includes('그림자가 이름을 얻었다 · 숙적 「월풍」'), '탄생 결합');
+  // 심화 — 원한 승수 명시
+  assert.ok(buildDefeatMessage(c, { kind: 'deepen', name: '월풍', wins: 3 }).includes('「월풍」의 원한이 깊어졌다 · 3승'), '심화 결합');
+  // 숙적에게 진 경우 — 이름으로 부른다
+  const nem = { strength: 12, isNemesis: true, nemesisName: '월풍', type: { name: '도망 그림자' } };
+  assert.ok(buildDefeatMessage(nem, { kind: 'deepen', name: '월풍', wins: 2 }).includes('숙적 월풍'), '숙적 대면 패배는 이름으로');
+  // 결정적
+  assert.strictEqual(buildDefeatMessage(c, null), buildDefeatMessage(c, null), '결정적 (재호출 동일)');
+});

@@ -2171,6 +2171,12 @@
     filter: drop-shadow(0 0 18px rgba(208, 72, 48, 0.6));
     animation-duration: 1.2s;  /* 타입별 호흡 애니를 조급하게 — 원한의 조바심 */
   }
+  /* v383 꺾임의 의식 — 승리 컷씬(귀참)의 반전: 핏빛·가라앉은 톤 */
+  #demon-slay-overlay.defeat #demon-slay-kanji {
+    color: var(--danger);
+    text-shadow: 0 0 24px rgba(208, 72, 48, 0.7);
+  }
+  #demon-slay-overlay.defeat #demon-slay-msg { color: #c8a8a0; }
   /* v373/v374 검총 무덤 카드 — hover 피드백·부드러운 만가 펼침·reduced-motion 존중
      (ui-ux-pro-max 원칙: 클릭 요소 hover 전환 150-300ms, 상태 변화 즉발 금지) */
   .grave-item { transition: background 0.2s ease; }
@@ -4364,6 +4370,7 @@
       oathsSworn: 0, oathsKept: 0, oathsBroken: 0,  // v376 서약 — 맹세/지킴/파계 누적
       released: 0,  // v378 방하 — 조각을 놓아준 횟수
       luckExp: 0, luckAct: 0,  // v382 천칭 — 평생 운의 원장 (기대 확률 합 / 실제 성공 수)
+      defeats: 0,  // v383 꺾임 — 베기 실패로 검이 꺾인 횟수 (승리만 세던 비대칭 해소)
     },
     seenHelp: false,
   };
@@ -4716,7 +4723,7 @@
       if (!state.gambleStats || typeof state.gambleStats !== 'object') state.gambleStats = { win: 0, lose: 0 };  // v219
       if (typeof state.eternityPoints !== 'number') state.eternityPoints = 0;  // v225
       // stats — 기본 sub-key 병합 (구 저장본에 신규 key 누락 시 baseline 보정)
-      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0, oathsSworn: 0, oathsKept: 0, oathsBroken: 0, released: 0, luckExp: 0, luckAct: 0 };
+      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0, oathsSworn: 0, oathsKept: 0, oathsBroken: 0, released: 0, luckExp: 0, luckAct: 0, defeats: 0 };
       state.stats = Object.assign({}, DEFAULT_STATS, (state.stats && typeof state.stats === 'object') ? state.stats : {});
       // v382 천칭 — 평생 운 원장 숫자 강제 (오염 시 + 연산 붕괴 방지)
       if (typeof state.stats.luckExp !== 'number' || !isFinite(state.stats.luckExp)) state.stats.luckExp = 0;
@@ -5333,6 +5340,7 @@
       if (streak >= 8) setTimeout(() => tone(2093*mul, 0.12, 'sine', 0.25), 180); // 고음 shimmer
     },
     enhanceFail:    () => { tone(160, 0.22, 'sawtooth', 0.15); tone(120, 0.22, 'sawtooth', 0.1); },
+    defeat:         () => { tone(150, 0.55, 'sawtooth', 0.28, 82); tone(95, 0.6, 'sine', 0.18, 60); },  // v383 꺾임 — 하강 이중주 (패배의 무게)
     destroy:        () => { noise(0.4, 0.35); tone(80, 0.5, 'sawtooth', 0.2); tone(60, 0.6, 'sawtooth', 0.15); },
     rescueTick:     () => tone(70, 0.04, 'sine', 0.12),
     rescueSave:     () => {
@@ -12950,22 +12958,19 @@
     return Math.min(NEMESIS_TUNING.grudgeCap, 1 + wins * NEMESIS_TUNING.grudgePerWin);
   }
   // 베기 실패로 검 단계가 실제로 꺾였을 때만 호출 (보호권 차단 시엔 진 것이 아니다) — slay() 실패 분기 전용
+  // v383 — 결과를 반환해 꺾임의 의식(showDefeatRitual) 메시지에 결합 (탄생/심화가 컷씬으로 보인다)
   function noteNemesisDefeat(c) {
-    if (!c || !c.type) return;
+    if (!c || !c.type) return null;
     if (c.isNemesis && state.nemesis) {
       // 원한 심화 — 더 강해져 돌아온다
       const n = state.nemesis;
       n.wins++;
       n.strength = Math.min(MAX_LEVEL, n.strength + 1);
       log('숙적 ' + n.name + '이 더 강해져 떠났다 (원한 ' + n.wins + '승)', 'destroy');
-      setTimeout(() => {
-        inscribeQueue.push({ key: '숙', label: '숙적 ' + n.name + ' — 원한이 깊어졌다 · ' + n.wins + '승' });
-        if (!inscribeRunning) runInscribeQueue();
-      }, 900);
-      return;
+      return { kind: 'deepen', name: n.name, wins: n.wins };
     }
-    if (state.nemesis) return;  // 원한은 하나로 족하다
-    if (c.type.isNamed || c.type.isDemon || c.type.isYaksha) return;
+    if (state.nemesis) return null;  // 원한은 하나로 족하다
+    if (c.type.isNamed || c.type.isDemon || c.type.isYaksha) return null;
     const typeKey = (c.type.key === 'flee' || c.type.key === 'steel') ? c.type.key : 'normal';
     const origin = ORIGIN_KEYS.includes(c.origin) ? c.origin : ORIGIN_KEYS[0];
     state.nemesis = {
@@ -12975,12 +12980,35 @@
       wins: 1,
     };
     log('그림자가 너를 이기고 이름을 얻었다 — 숙적 ' + state.nemesis.name, 'destroy');
-    setTimeout(() => {
-      if (!state.nemesis) return;
-      inscribeQueue.push({ key: '숙', label: '숙적 탄생 — ' + state.nemesis.name + ' · 언젠가 돌아온다' });
-      if (!inscribeRunning) runInscribeQueue();
-    }, 900);
     maybeMilestone('firstNemesis', '숙적', '너를 이긴 그림자는 잊지 않는다 — 이름을 얻고 돌아온다');
+    return { kind: 'birth', name: state.nemesis.name };
+  }
+  // === v383 꺾임의 儀式 — 패배도 의식이 된다 ===
+  // 승리(귀참/名/설욕)는 풀스크린 컷씬을 갖지만, 훨씬 자주 겪는 *베기 실패로 검이 꺾이는
+  // 순간*은 로그 한 줄뿐이었다 — 숙적 탄생(v372의 핵심 드라마)조차 900ms 페이드로 지나갔다.
+  // 승리 컷씬 오버레이를 반전(핏빛 defeat 변형)해 재활용. 메커니즘 효과 0.
+  function buildDefeatMessage(c, nem) {
+    const tier = shadowTier(c.strength || 0);
+    const who = c.isNemesis ? ('숙적 ' + (c.nemesisName || '')) : ((c.type && c.type.name) || '그림자');
+    let msg = tier + ' ' + who + ' 앞에서 검이 꺾였다 · 강화 -1';
+    if (nem && nem.kind === 'birth') msg += '  —  그림자가 이름을 얻었다 · 숙적 「' + nem.name + '」';
+    else if (nem && nem.kind === 'deepen') msg += '  —  「' + nem.name + '」의 원한이 깊어졌다 · ' + nem.wins + '승';
+    return msg;
+  }
+  function showDefeatRitual(c, nem) {
+    const dso = $('demon-slay-overlay');
+    if (!dso) return;
+    const dk = $('demon-slay-kanji'); if (dk) dk.textContent = '꺾임';
+    const dm = $('demon-slay-msg'); if (dm) dm.textContent = buildDefeatMessage(c, nem);
+    dso.classList.add('defeat');
+    dso.classList.remove('active');
+    void dso.offsetWidth;
+    dso.classList.add('active');
+    setTimeout(() => {
+      dso.classList.remove('active');
+      setTimeout(() => dso.classList.remove('defeat'), 400);  // 페이드아웃 후 변형 해제
+    }, 1900);
+    SFX.defeat();
   }
   // 숙적 처치 — 설욕. slay() 성공 분기 전용 (보상 조각은 호출자의 기존 흐름이 이미 지급).
   function resolveNemesisSlain(c, finalReward) {
@@ -13008,6 +13036,7 @@
     // 큰 의식 — 검귀 컷씬 오버레이 재활용 (v90 이름 있는 적과 동일 패턴)
     const dso = $('demon-slay-overlay');
     if (dso) {
+      dso.classList.remove('defeat');  // v383 — 승리 컷씬은 패배 변형 해제 (방어적)
       const dk = $('demon-slay-kanji'); if (dk) dk.textContent = '설욕';
       $('demon-slay-msg').textContent = '숙적 ' + name + '을 베어냈다 · 원한 ' + wins + '승을 갚았다 · 조각 +' + fmtNum(finalReward);
       dso.classList.remove('active');
@@ -14488,6 +14517,7 @@
         // v49 검귀 베어낸 큰 의식 컷씬
         const dso = $('demon-slay-overlay');
         if (dso) {
+          dso.classList.remove('defeat');  // v383 — 승리 컷씬은 패배 변형 해제 (방어적)
           const dk = $('demon-slay-kanji'); if (dk) dk.textContent = '귀참';
           $('demon-slay-msg').textContent = '검귀를 베어냈다 · 조각 +' + fmtNum(finalReward);
           dso.classList.remove('active');
@@ -14511,6 +14541,7 @@
           // 큰 컷씬 (검귀 오버레이 재활용 — kanji 동적 교체)
           const dso = $('demon-slay-overlay');
           if (dso) {
+            dso.classList.remove('defeat');  // v383 — 승리 컷씬은 패배 변형 해제 (방어적)
             const dk = $('demon-slay-kanji'); if (dk) dk.textContent = foe.name;
             $('demon-slay-msg').textContent = foe.name + '을 베어냈다 · 조각 +' + fmtNum(finalReward);
             dso.classList.remove('active');
@@ -14571,9 +14602,9 @@
         state.level = Math.max(0, state.level - 1);
         log('베기 실패 — 검 단계 -1', 'destroy');
         screenShake(false);  // 베기 실패 — 작은 흔들림
-        inscribeQueue.push({ key: '실', label: '베기 실패 · 검 단계 -1' });
-        if (!inscribeRunning) runInscribeQueue();
-        noteNemesisDefeat(c);  // v372 숙적 — 검을 실제로 꺾은 그림자만 이름을 얻는다 (보호권 차단 시 제외)
+        bumpStat('defeats');  // v383 — 꺾임 누적 (승리만 세던 통계의 비대칭 해소)
+        const nemInfo = noteNemesisDefeat(c);  // v372 숙적 — 검을 실제로 꺾은 그림자만 이름을 얻는다 (보호권 차단 시 제외)
+        showDefeatRitual(c, nemInfo);  // v383 꺾임의 의식 — 숙적 탄생/심화가 컷씬으로 보인다
       }
       setTimeout(() => { save(); render(); }, 500);
     }
@@ -19616,6 +19647,7 @@
       bar('검귀', fmtNum(s.slainDemon || 0) + ' 회', slainMax, '#fff5c0') +
       (s.yakshaSlain > 0 ? row('야차', fmtNum(s.yakshaSlain) + ' 회', '#a896c8') : '') +
       row('도망 그림자에게 놓침', fmtNum(s.evaded || 0) + ' 회', 'var(--dim)') +
+      ((s.defeats || 0) > 0 ? row('검이 꺾임 (베기 실패)', fmtNum(s.defeats) + ' 회', 'var(--danger)') : '') +  // v383
       row('도전에서 도망', fmtNum(s.fled || 0) + ' 회', 'var(--dim)') +
       (s.stalemate > 0 ? row('대치 (평화의 길)', fmtNum(s.stalemate) + ' 회', '#5878b8') : '') +
       // v372 숙적 — 현재 원한 + 설욕 누적 (이름은 고정 팔레트 생성 + normalizeState 태그 제거라 innerHTML 안전)
