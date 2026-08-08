@@ -1,0 +1,30 @@
+# v392 관문(關門) — 모든 push/PR이 전체 테스트 스위트를 통과해야 한다.
+# 로컬에서 기억날 때만 돌던 358개 테스트(값 잠금 + 풍동 동역학)를 강제 관문으로.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # engines >=18 선언과의 정합 검증 — test 스크립트는 파일 명시 열거라 버전 무관 (v392)
+        node-version: [20, 22, 24]
+    name: node ${{ matrix.node-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - name: JS parse 검증 (인라인 스크립트)
+        run: npm run lint:parse
+      - name: 회귀 테스트 (값 잠금 + 풍동 동역학)
+        run: npm test

@@ -1623,6 +1623,25 @@ test('v390: 검없음 상태 상호작용 — 키보드/신사/점복/정진/단
   assert.doesNotMatch(js, /FORGE_NEW_SWORD_COST/, '미정의 상수 폴백 제거 (NEWSWORD_COST 단일 진원)');
 });
 
+// ─────────────────────────────────────────────────────────────
+// v392 관문 — CI·테스트 열거 무결성
+// ─────────────────────────────────────────────────────────────
+test('v392 관문: npm test가 모든 테스트 파일을 열거 + CI 워크플로 존재', () => {
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+  // glob(node 21+ 전용)이 아닌 명시 열거 — 새 *.test.js를 만들고 여기 안 넣으면 CI에서 조용히 안 돈다
+  const files = fs.readdirSync(__dirname).filter(f => f.endsWith('.test.js'));
+  assert.ok(files.length >= 5, '테스트 파일 ≥5 (현재 ' + files.length + ')');
+  files.forEach(f => assert.ok(pkg.scripts.test.includes('tests/' + f),
+    'npm test 스크립트에 ' + f + ' 누락 — 조용히 실행되지 않는 테스트'));
+  assert.ok(!pkg.scripts.test.includes('*'), 'glob 미사용 (node 18/20 호환 — engines 선언 정합)');
+  // CI 관문 존재
+  assert.ok(fs.existsSync(path.join(root, '.github', 'workflows', 'ci.yml')), 'CI 워크플로 존재 (push/PR 관문)');
+  const ci = fs.readFileSync(path.join(root, '.github', 'workflows', 'ci.yml'), 'utf8');
+  assert.ok(ci.includes('npm run lint:parse') && ci.includes('npm test'), 'CI가 parse+전체 스위트 실행');
+});
+
 test('v387 간결: menu-core 태깅 — 필수만, 과잉 태깅 금지', () => {
   const coreCount = (html.match(/class="menu-core"/g) || []).length;
   assert.ok(coreCount >= 8 && coreCount <= 13, '핵심 버튼 8~13개 (현재 ' + coreCount + ') — 전부 태깅하면 간결이 무의미');

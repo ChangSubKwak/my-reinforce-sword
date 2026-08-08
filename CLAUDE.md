@@ -42,7 +42,7 @@ console.log('OK', m[1].length, 'bytes');
 npm test
 ```
 
-**테스트 (`tests/`, node --test):** `harness.js`가 인라인 스크립트에서 순수 함수/상수를 추출(`extractConst`/`loadFunctions`)해 격리 sandbox에서 검증한다 (index.html은 비침투 보존). 게임 곡선·dial·구조 불변식이 ~218 테스트로 잠겨 있으니 **편집 후 `npm test` 필수**. 잠긴 항목 예: TABLE / SHADOW_TYPES / sealReward·sealRewardBase / enhanceCost·successChanceNow·effectiveDestroyChance 분해 완전성 / breathBonus(呼吸)·soulEffects(魂)·RESOLVE(覺悟)·guardianBonus(守)·MASTERY_TIERS(流派)·affinity(形相剋) / escapeHtml(공유데이터 XSS) / 동명 함수 중복 금지 / 레시피·砥 라벨 == 실제값. 새 dial/보너스 추가 시 해당 테스트도 갱신.
+**테스트 (`tests/`, node --test — 파일 명시 열거, glob 금지):** `harness.js`가 인라인 스크립트에서 순수 함수/상수를 추출(`extractConst`/`loadFunctions`)해 격리 sandbox에서 검증한다 (index.html은 비침투 보존). 새 `*.test.js` 추가 시 `package.json` test 스크립트에도 열거할 것 (v392 관문 테스트가 누락을 잡는다). CI(GitHub Actions, Node 20/22/24)가 push/PR마다 강제. 게임 곡선·dial·구조 불변식이 ~218 테스트로 잠겨 있으니 **편집 후 `npm test` 필수**. 잠긴 항목 예: TABLE / SHADOW_TYPES / sealReward·sealRewardBase / enhanceCost·successChanceNow·effectiveDestroyChance 분해 완전성 / breathBonus(呼吸)·soulEffects(魂)·RESOLVE(覺悟)·guardianBonus(守)·MASTERY_TIERS(流派)·affinity(形相剋) / escapeHtml(공유데이터 XSS) / 동명 함수 중복 금지 / 레시피·砥 라벨 == 실제값. 새 dial/보너스 추가 시 해당 테스트도 갱신.
 
 진행도 초기화는 게임 내 "초기화" 버튼(`location.reload()` 방식 — v289) 또는 DevTools에서 `localStorage.removeItem('reinforce_sword_v1')`.
 
@@ -886,6 +886,14 @@ v389가 부활시킨 검없음 상태는 수백 버전 동안 실전 도달이 �
 - **불변식 3종**: ① **초반 생존성** — +5 판매(파괴 구간 회피)는 파산율 <1% (안전지대), +7 판매에선 회수 성공(100% vs 0%)이 파산율을 유의미하게 가른다 (5초 침묵의 경제적 의미 — v389의 직접 증명) ② **봉인 루프 수익성** — +5/+7 판매 전략의 장기 순증 양수 (경제 침몰 감지) ③ **도의 값** — 맨몸 등정 중앙값 >50만 조각 (정점은 맨손의 산이 아님 — 시뮬 실측 ~580만), 영석 상시 전략은 도 보상×3 초과 & <40만 (실전 등정로 확보).
 - **다이얼 튜닝 시**: TABLE/비용을 바꾸면 풍동이 밴드 이탈로 실패할 수 있다 — 그것이 목적. 의도한 곡선 변화인지 판단 후 해당 밴드를 갱신할 것 (값 테스트와 달리 "게임이 질적으로 변했다"를 알린다).
 - 발견 기록: 맨 TABLE의 도는 ~580만 조각 — **영석 없이 도는 없다** (파괴 93%가 지배). 초반 파산은 파괴 구간(+5→6부터) 진입 + 회수 실패의 곱에서만 온다.
+
+### v392 關門(관문) — CI 파이프라인 + 테스트 이식성
+
+359개 테스트는 로컬에서 기억날 때만 돌던 자산이었다 — **push/PR마다 강제되는 관문**으로 승격. 게임 코드 무변경.
+
+- **`.github/workflows/ci.yml`**: push/PR(main) 시 Node **20/22/24 매트릭스**에서 `npm ci` → `lint:parse` → `npm test`. README 배지.
+- **테스트 이식성**: `npm test`의 glob(`tests/**/*.test.js`)은 **Node 21+ 전용**이라 `engines >= 18` 선언과 모순 (Node 18/20에선 테스트가 아예 안 돌았음) → **파일 명시 열거**로 교체 (pure/logic/integrity/load/simulation).
+- **열거 무결성 잠금**: 새 `*.test.js`를 만들고 스크립트에 안 넣으면 *조용히 실행되지 않는* 함정 → integrity 테스트가 tests/ 디렉토리와 스크립트 열거를 대조 + glob 미사용 + CI 워크플로 존재·내용 검증. **새 테스트 파일 추가 시 `package.json` test 스크립트에도 추가할 것** (잊으면 이 테스트가 잡는다).
 
 ### 봉인 균형 곡선 (참고)
 

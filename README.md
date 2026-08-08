@@ -1,5 +1,7 @@
 # 검 강화 (Sword Enhancement Game)
 
+[![CI](https://github.com/ChangSubKwak/my-reinforce-sword/actions/workflows/ci.yml/badge.svg)](https://github.com/ChangSubKwak/my-reinforce-sword/actions/workflows/ci.yml)
+
 원작 [NBS의 검 강화하기](https://vidkidz.tistory.com/5291)의 **클로닝 + 증류 (distillation)** 버전.
 
 단일 `index.html` (HTML/CSS/JS 인라인). 외부 의존성 0, 빌드 시스템 0. 80+개의 시스템이 누적된 깊이 있는 강화 사이클 게임.
@@ -38,8 +40,10 @@ npm start
 
 ```bash
 npm run lint:parse   # 인라인 JS 구문 검증
-npm test             # 회귀 테스트 (게임 곡선·dial·구조 불변식, 의존성 0)
+npm test             # 회귀 테스트 (게임 곡선·dial·구조 불변식 + 풍동 시뮬레이터, 의존성 0)
 ```
+
+push/PR마다 GitHub Actions CI가 Node 20/22/24 매트릭스에서 위 두 검증을 강제한다.
 
 ### Render 배포
 
