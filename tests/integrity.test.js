@@ -1009,7 +1009,7 @@ test('v373 검총: 파괴 분기가 showVoid 전에 검을 스냅샷 (일생 데
 });
 
 test('v373 검총: endVoid가 회수 결과를 무덤에 확정 + 첫 매장 마일스톤', () => {
-  const body = afterDecl('function endVoid(rescued) {', 2500);
+  const body = afterDecl('function endVoid(rescued, released) {', 3200);
   assert.match(body, /grave\.rescued = !!rescued/, '회수 결과 확정 (만가의 마지막 행)');
   assert.match(body, /grave\.rescued === null/, '이중 확정 방지 가드 (null일 때만)');
   assert.match(body, /maybeMilestone\('firstGrave'/, '첫 매장 안내 (검총 발견성)');
@@ -1186,4 +1186,44 @@ test('v377 영사: 모달·메뉴·정규화 와이어링', () => {
   assert.match(nb, /Array\.isArray\(state\.nemesesArchive\)/, '설욕록 배열 보정');
   assert.match(nb, /a\.strength = clampInt\(a\.strength, 1, MAX_LEVEL\)/, '설욕록 강도 범위 강제');
   assert.match(nb, /a\.name = makeNemesisName\(a\.origin, a\.typeKey\)/, '오염된 이름 결정적 재생성');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v378 放下 — 와이어링 무결성 (5초 침묵의 세 번째 길)
+// ─────────────────────────────────────────────────────────────
+test('v378 방하: rescueWindow.release — 잠금·타이머 정리·장송·endVoid(false, true)', () => {
+  const body = afterDecl('function showVoid(', 6500);
+  const releaseIdx = body.indexOf('release: () => {');
+  assert.ok(releaseIdx >= 0, 'rescueWindow에 release 경로 (줍기/도박/방하 3길)');
+  const rel = body.slice(releaseIdx, releaseIdx + 1400);
+  assert.match(rel, /if \(rescued\) return/, 'rescue·gamble과 동일 플래그로 더블클릭/경합 잠금');
+  assert.match(rel, /clearInterval\(tickInterval\)/, '틱 타이머 정리');
+  assert.match(rel, /clearTimeout\(failTimeout\)/, '안전망 타이머 정리');
+  assert.match(rel, /playSwordSignature\(/, '장송 — 부러진 검이 제 소리로 작별 (v229 재활용)');
+  assert.match(rel, /endVoid\(false, true\)/, '조각 미회수 + 방하 표식으로 종료');
+  assert.doesNotMatch(rel, /state\.shards \+=/, '방하는 보상 0 — 그것이 이 길의 전부');
+});
+
+test('v378 방하: endVoid — 의식적 놓아줌은 회수 실패가 아니다 (통계·위로·무덤 분리)', () => {
+  const body = afterDecl('function endVoid(rescued, released) {', 3200);
+  assert.match(body, /if \(!rescued && !released\) \{/, 'rescueFailed·慰는 무위 실패에만 (방하 제외 가드)');
+  const failIdx = body.indexOf('bumpStat(\'rescueFailed\')');
+  const relBranchIdx = body.indexOf('} else if (released) {');
+  assert.ok(failIdx >= 0 && relBranchIdx > failIdx, '방하 전용 분기 (장 페이드) 존재');
+  assert.match(body, /if \(released\) grave\.released = true/, '무덤에 후장(厚葬) 기록');
+});
+
+test('v378 방하: UI·통계·정규화 와이어링', () => {
+  assert.ok(html.includes('id="rescue-release"'), '#rescue-release 버튼 존재 (회수창 3번째 선택지)');
+  assert.match(js, /rescueWindow && rescueWindow\.release\) rescueWindow\.release\(\)/, '방하 클릭 핸들러');
+  assert.match(js, /bumpStat\('released'\)/, '방하 통계 집계');
+  const ds = js.match(/const DEFAULT_STATS = \{[^}]*\}/);
+  assert.ok(ds && /released: 0/.test(ds[0]), 'DEFAULT_STATS에 released 병합 기본값');
+  const nb = afterDecl('function normalizeState() {', 34000);
+  assert.match(nb, /f\.released = f\.released === true/, '무덤 후장 플래그 boolean 강제');
+  // 검총 목록에서 후장이 전손보다 우선 표시 (released 무덤은 rescued=false이기도 하므로)
+  const rg = afterDecl('function renderGraveyard() {', 5000);
+  const relIdx = rg.indexOf("f.released === true ? ' · 후장'");
+  const lostIdx = rg.indexOf("' · 전손'");
+  assert.ok(relIdx >= 0 && lostIdx > relIdx, '후장 분기가 전손보다 먼저');
 });

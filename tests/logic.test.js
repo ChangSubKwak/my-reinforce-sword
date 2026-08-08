@@ -1824,3 +1824,20 @@ test('v377 normalizeState: 설욕록 손상 import 방어 — 배열·화이트�
   assert.strictEqual(a2.strength, 15, 'strength cap = MAX_LEVEL');
   assert.strictEqual(a2.wins, 1, 'wins 하한 1');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v378 放下 — 놓아주는 손 (만가 3길 분기)
+// ─────────────────────────────────────────────────────────────
+test('v378 generateElegy: 방하(후장)는 전손·회수와 구분되는 세 번째 결말', () => {
+  const fns = loadFunctions(['generateElegy', 'deriveTemperament']);
+  const grave = { form: '중', level: 9, enhanceAttempts: 15, slainCount: 3 };
+  // 방하 — 후장 행, 전손 행 없음 (released가 rescued=false보다 우선)
+  const released = fns.generateElegy({ ...grave, rescued: false, released: true });
+  assert.ok(released.some(l => l.includes('바람에 놓아 보냈다') && l.includes('후하게 장사지낸')), '만가 — 후장 행');
+  assert.ok(!released.some(l => l.includes('조각마저 어둠')), '방하는 전손이 아니다');
+  // 회수/전손 기존 결말 불변
+  assert.ok(fns.generateElegy({ ...grave, rescued: true }).some(l => l.includes('거두어졌다')), '회수 결말 불변');
+  assert.ok(fns.generateElegy({ ...grave, rescued: false }).some(l => l.includes('조각마저 어둠')), '전손 결말 불변');
+  // 구 세이브 무덤 (released 필드 없음) — 기존 분기 그대로
+  assert.ok(!fns.generateElegy({ ...grave, rescued: true }).some(l => l.includes('후하게')), '구 무덤 하위호환');
+});

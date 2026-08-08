@@ -1083,6 +1083,27 @@
     color: #ffd0c8;
     box-shadow: 0 0 14px rgba(192,57,43,0.5);
   }
+  /* v378 放下 — 놓아줌: 도박(핏빛 탐욕)의 반대색 — 무채색의 고요 */
+  #rescue-release {
+    position: absolute;
+    bottom: -134px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 16px;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    color: var(--dim);
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: color 0.2s ease, border-color 0.2s ease;
+    z-index: 5;
+  }
+  #rescue-release:hover { color: var(--fg); border-color: var(--dim); }
+  @media (prefers-reduced-motion: reduce) { #rescue-release { transition: none; } }
 
   /* 통계 바 */
   #stats {
@@ -3165,6 +3186,7 @@
         <div id="rescue-timer">5.0</div>
       </div>
       <button id="rescue-gamble" style="display:none">도박<span style="font-size:9px;display:block;letter-spacing:2px;margin-top:3px;opacity:0.8">2배 or 0</span></button>
+      <button id="rescue-release" style="display:none" title="조각을 거두지 않고 검을 후하게 장사지낸다">방하<span style="font-size:9px;display:block;letter-spacing:2px;margin-top:3px;opacity:0.8">놓아준다</span></button>
     </div>
     <div id="challenge">
       <div id="slay-streak"></div>
@@ -4329,6 +4351,7 @@
       downgraded: 0,  // v105 落 — 하락 누적
       summoned: 0,  // v375 초영 — 그림자를 부른 횟수
       oathsSworn: 0, oathsKept: 0, oathsBroken: 0,  // v376 서약 — 맹세/지킴/파계 누적
+      released: 0,  // v378 방하 — 조각을 놓아준 횟수
     },
     seenHelp: false,
   };
@@ -4610,6 +4633,7 @@
           if (!f.name) f.name = makePosthumousName(f.form, f.level);
           if (f.rescued !== true && f.rescued !== false) f.rescued = null;
           f.reforged = f.reforged === true;  // v374 재련 — 1회성 플래그 boolean 강제
+          f.released = f.released === true;  // v378 방하 — 후장 플래그 boolean 강제
           // v376 서약 — 무덤의 oath도 동일 shape 강제 (만가가 innerHTML로 읽음)
           if (f.oath && typeof f.oath === 'object') {
             f.oath.name = (typeof f.oath.name === 'string') ? stripTags(f.oath.name).slice(0, 8) : '';
@@ -4674,7 +4698,7 @@
       if (!state.gambleStats || typeof state.gambleStats !== 'object') state.gambleStats = { win: 0, lose: 0 };  // v219
       if (typeof state.eternityPoints !== 'number') state.eternityPoints = 0;  // v225
       // stats — 기본 sub-key 병합 (구 저장본에 신규 key 누락 시 baseline 보정)
-      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0, oathsSworn: 0, oathsKept: 0, oathsBroken: 0 };
+      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0, oathsSworn: 0, oathsKept: 0, oathsBroken: 0, released: 0 };
       state.stats = Object.assign({}, DEFAULT_STATS, (state.stats && typeof state.stats === 'object') ? state.stats : {});
     } catch (e) {}
   }
@@ -12527,6 +12551,9 @@
     // v219 賭 — 회수 도박 버튼 노출
     const gambleBtn = $('rescue-gamble');
     if (gambleBtn) gambleBtn.style.display = 'block';
+    // v378 放下 — 놓아줌 버튼 노출 (줍기/도박/방하 — 탐욕·더 큰 탐욕·내려놓음의 3길)
+    const releaseBtn = $('rescue-release');
+    if (releaseBtn) releaseBtn.style.display = 'block';
     const totalSec = 5.0 + schoolRescueSec() + getSeason().rescueSec + guardianBonus().rescueSec + beastRescueSec() + solarRescueSec(); // 속류 + 冬 + 수호자 + 사신 백호 + 절기 立冬
     let timeLeft = totalSec;
     rescueTimer.classList.remove('urgent');  // v284 — 새 윈도우는 평상 색으로 시작
@@ -12602,6 +12629,23 @@
           log('도 — 실패. 조각 모두 잃었다', 'destroy');
         }
         endVoid(win);
+      },
+      // v378 放下 — 조각을 거두지 않고 의식적으로 놓아준다. 회수 실패(무위)와 달리
+      // *선택*이며, 무덤에 후장(厚葬)이 기록된다. 보상 0 — 그것이 이 길의 전부.
+      release: () => {
+        if (rescued) return;
+        rescued = true;  // 더블클릭/경합 잠금 (rescue·gamble과 동일 플래그)
+        clearInterval(tickInterval);
+        clearTimeout(failTimeout);
+        bumpStat('released');
+        log('방하 — 조각 ' + fmtNum(shardReward) + '을 바람에 놓아주었다', 'info');
+        // 장송 — 부러진 검이 제 소리 시그니처(v229)로 마지막 작별을 노래한다
+        const grave = (state.fallenSwords || [])[(state.fallenSwords || []).length - 1];
+        if (grave) {
+          setTimeout(() => playSwordSignature({ form: grave.form, level: grave.level, inscriptions: grave.inscriptions || [], soul: grave.soul || 0 }, 0.8, 0.55), 300);
+        }
+        maybeMilestone('firstRelease', '방하', '놓아줌도 하나의 길 — 무덤에 후장이 기록됩니다');
+        endVoid(false, true);
       }
     };
   }
@@ -12656,27 +12700,34 @@
     save();
   }
 
-  function endVoid(rescued) {
+  function endVoid(rescued, released) {
     voidEl.classList.remove('active');
     swordWrap.style.opacity = 1;
     setRescueBodyClass(false);  // v182 水鏡 restore
     const gambleBtn = $('rescue-gamble');
     if (gambleBtn) gambleBtn.style.display = 'none';  // v219 도
+    const releaseBtn = $('rescue-release');
+    if (releaseBtn) releaseBtn.style.display = 'none';  // v378 방하
     rescueWindow = null;
     voidPending = false;  // v368 — 안전망 (showVoid가 이미 해제했어도 재확인)
     applyAmbientMode('idle');
-    if (!rescued) {
+    // v378 방하 — 의식적 놓아줌은 '회수 실패'가 아니다: rescueFailed 미집계, 慰 없음, 담담한 페이드
+    if (!rescued && !released) {
       bumpStat('rescueFailed');
       log('조각도 모두 잃었다', 'destroy');
       // 검 + 조각 모두 잃었음을 페이드로 강조 — 다음 흐름 안내
       inscribeQueue.push({ key: '실', label: '검을 잃었다 · 새 검을 만드세요' });
       setTimeout(() => showConsolation('rescueFail'), 1200);  // v143 慰
       if (!inscribeRunning) runInscribeQueue();
+    } else if (released) {
+      inscribeQueue.push({ key: '장', label: '놓아주었다 · 새 검을 만드세요' });
+      if (!inscribeRunning) runInscribeQueue();
     }
     // v373 검총 — 방금 부러진 검의 무덤에 회수 결과를 확정 (만가의 마지막 행이 여기서 정해진다)
     const grave = (state.fallenSwords || [])[(state.fallenSwords || []).length - 1];
     if (grave && grave.rescued === null) {
       grave.rescued = !!rescued;
+      if (released) grave.released = true;  // v378 — 후장(厚葬) 기록
       log('검총에 한 자루가 묻혔다 — ' + grave.name, 'info');
       maybeMilestone('firstGrave', '총', '부러진 검이 검총에 잠들었다 — 메뉴 · 검총에서 무덤을 볼 수 있다');
     }
@@ -12691,6 +12742,11 @@
   if ($('rescue-gamble')) $('rescue-gamble').addEventListener('click', (e) => {
     e.stopPropagation();
     if (rescueWindow && rescueWindow.gamble) rescueWindow.gamble();
+  });
+  // v378 放下 — 놓아줌
+  if ($('rescue-release')) $('rescue-release').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (rescueWindow && rescueWindow.release) rescueWindow.release();
   });
 
   // === 도혼 — 봉인된 도 검이 후세에 시구를 전한다 ===
@@ -15588,7 +15644,8 @@
     }
     const lv = f.level || 0;
     lines.push('+' + lv + '에서 +' + (lv + 1) + '을 바라다 부러졌다' + (f.resolve === 'focus' ? ' — 일심, 모든 것을 걸었던 참이었다' : ''));
-    if (f.rescued === true) lines.push('다섯 호흡 안에, 남긴 조각은 거두어졌다');
+    if (f.released === true) lines.push('조각은 바람에 놓아 보냈다 — 후하게 장사지낸 무덤');
+    else if (f.rescued === true) lines.push('다섯 호흡 안에, 남긴 조각은 거두어졌다');
     else if (f.rescued === false) lines.push('조각마저 어둠 속에 남았다');
     return lines;
   }
@@ -15644,7 +15701,7 @@
         '</div>' +
         '<div style="display:flex;justify-content:space-between;margin-top:3px;font-size:10px;color:var(--dim);letter-spacing:2px">' +
           '<span>' + (formNames[f.form] || '형 미정') + (f.slainCount ? ' · 그림자 ' + f.slainCount : '') +
-            (f.rescued === true ? ' · 조각 거둠' : (f.rescued === false ? ' · 전손' : '')) + '</span>' +
+            (f.released === true ? ' · 후장' : (f.rescued === true ? ' · 조각 거둠' : (f.rescued === false ? ' · 전손' : ''))) + '</span>' +
           '<span>' + (f.ts ? formatTimeAgo(f.ts) : '') + '</span>' +
         '</div>' +
         (ins ? '<div style="margin-top:3px;font-size:10px;color:var(--accent);opacity:0.7;letter-spacing:2px">' + ins + '</div>' : '') +
@@ -19307,6 +19364,7 @@
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">생 사</div>' +
       row('조각 줍기 성공', fmtNum(s.rescued || 0) + ' 회') +
       row('조각 줍기 실패', fmtNum(s.rescueFailed || 0) + ' 회', 'var(--danger)') +
+      ((s.released || 0) > 0 ? row('방하 (놓아줌)', fmtNum(s.released) + ' 회', '#a8c0d8') : '') +  // v378
       (((state.gambleStats && (state.gambleStats.win || state.gambleStats.lose)) ?
         row('도 회수 도박', fmtNum(state.gambleStats.win || 0) + '승 ' + fmtNum(state.gambleStats.lose || 0) + '패', '#d4af37') : '')) +
       row('검 파괴', fmtNum(state.totalDestroyed || 0) + ' 회', 'var(--danger)') +
