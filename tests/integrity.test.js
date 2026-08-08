@@ -1551,6 +1551,40 @@ test('v388 감사: normalizeState 보강 — 무덤 soul/form·stats 정수·era
   assert.strictEqual(kept, 2, 'oathsKept 집계 2곳 — 봉인+전당 (현재 ' + kept + ')');
 });
 
+// ─────────────────────────────────────────────────────────────
+// v389 감사 — 문구 드리프트·죽은 차원 부활 잠금
+// ─────────────────────────────────────────────────────────────
+test('v389: 검없음 차원 부활 — 길이 하나라도 남으면 게임 오버가 아니다', () => {
+  const body = afterDecl('function isStuck() {', 1600);
+  // '검 없음 = 무조건 게임 오버'가 새 검 빚기(v31)·융검(v92)·재련(v374)을 도달 불가로 만들고
+  // 회수 조각의 물질적 의미를 죽이던 결함 — 세 갈래 길 검사 잠금
+  assert.match(body, /shardsNum >= NEWSWORD_COST\) return false/, '새 검의 길');
+  assert.match(body, /length >= 2 && shardsNum >= FUSION_COST\) return false/, '융검의 길');
+  assert.match(body, /!f\.reforged && shardsNum >= reforgeCost\(f\.level \|\| 0\)\)\) return false/, '재련의 길');
+  assert.match(body, /return true/, '세 길이 모두 끊겼을 때만 길의 끝');
+});
+
+test('v389: 게임오버 도구 초기화 완전성 + 안내 문구 현행화', () => {
+  const rb = afterDecl('function restartFromGameOver() {', 900);
+  assert.match(rb, /state\.divinationStones = 0/, '점복석도 초기화 (「도구는 초기화」 문구와 일치)');
+  // 3지선다가 된 두 결정의 안내 (2지선다로 안내하던 드리프트)
+  assert.match(js, /줍기 \/ 도박 \/ 놓아주기/, 'firstDestroy — 회수 3길 안내');
+  assert.match(js, /베거나, 양보\(대치\)하거나, 도망치세요/, 'firstChallenge — 도전 3택 안내');
+  assert.ok(html.includes('줍기 · 도박(2배 or 0) · 놓아주기'), '도움말 — 회수 3길');
+  assert.ok(html.includes('간결 모드」를 끄면'), '도움말 — 숨겨진 선택지의 존재 안내');
+  // 단축키 Enter 병기 (핸들러는 Space·Enter 동일)
+  assert.ok(html.includes('␣ Enter'), 'key-hint — Enter 병기');
+  assert.ok(html.includes('스페이스 · Enter'), '도움말 — Enter 병기');
+  // 서약 시한 안내 (버튼이 예고 없이 사라지던 UX)
+  assert.ok(html.includes('강화 3회를 넘기면 걸 수 없다'), '서약 모달 — 시한 명시');
+  assert.match(js, /맹세를 건다 \(강화 3회 전까지\)/, '서약 버튼 — 시한 명시');
+  // 보신 desc 하락 절반 (사용자에게 유리한 효과 누락)
+  assert.match(js, /파괴 0 · 하락 절반 · 비용 1\.5배/, '보신 desc — downgradeMul 0.5 반영');
+  // 검총·리더보드가 간결 모드에서도 보임 (안내 문구가 숨겨진 메뉴로 보내던 결함)
+  assert.match(html, /id="btn-graveyard" class="menu-core"/, '검총 — 파괴 서사의 종착점은 본질');
+  assert.match(html, /id="btn-leaderboard" class="menu-core"/, '리더보드 — 도달 안내 문구의 목적지');
+});
+
 test('v387 간결: menu-core 태깅 — 필수만, 과잉 태깅 금지', () => {
   const coreCount = (html.match(/class="menu-core"/g) || []).length;
   assert.ok(coreCount >= 8 && coreCount <= 13, '핵심 버튼 8~13개 (현재 ' + coreCount + ') — 전부 태깅하면 간결이 무의미');

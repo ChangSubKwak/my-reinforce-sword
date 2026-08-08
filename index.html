@@ -2926,7 +2926,7 @@
     <button id="btn-trial">시련</button>
   </div>
   <button id="btn-enshrined">🏛 전당</button>
-  <button id="btn-graveyard">검총 (부러진 검들)</button>
+  <button id="btn-graveyard" class="menu-core">검총 (부러진 검들)</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-shadowlore">영사 (그림자 도감)</button>
   <button id="btn-blessings">기연 발견</button>
@@ -2953,7 +2953,7 @@
   <label id="btn-cloud-autosync" style="display:none;padding:8px 12px;background:transparent;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:3px;cursor:pointer;text-align:left">
     <input type="checkbox" id="cloud-autosync-check" style="margin-right:6px;accent-color:var(--accent)"> ☁ 자동 동기화
   </label>
-  <button id="btn-leaderboard">🏆 리 더 보 드</button>
+  <button id="btn-leaderboard" class="menu-core">🏆 리 더 보 드</button>
   <div style="height:1px;background:var(--line);margin:4px 0"></div>
   <button id="btn-backup" class="menu-core">진행도 백업 (파일)</button>
   <button id="btn-restore" class="menu-core">진행도 복원 (파일)</button>
@@ -3407,7 +3407,7 @@
     <div id="resolve-row">
       <button class="resolve-btn active" data-resolve="normal" aria-label="평상 — 변화 없음">평상</button>
       <button class="resolve-btn focus-mode" data-resolve="focus" aria-label="일심 — 성공 +8%, 파괴 1.5배">일심</button>
-      <button class="resolve-btn guard-mode" data-resolve="guard" aria-label="보신 — 성공 -10%, 파괴 차단, 비용 1.5배">보신</button>
+      <button class="resolve-btn guard-mode" data-resolve="guard" aria-label="보신 — 성공 -10%, 파괴 차단, 하락 절반, 비용 1.5배">보신</button>
     </div>
     <div id="resolve-desc">마음을 비운다</div>
     <div id="sanctum-row">
@@ -3428,11 +3428,11 @@
     <button id="btn-enhance">강 &nbsp; 화</button>
     <button id="btn-seal-direct" title="검을 팔아 조각을 얻습니다">검  팔 기<span class="seal-reward" id="seal-reward-label"></span></button>
     <button id="btn-fusion" style="display:none" title="봉인된 검 둘을 합쳐 새 검으로">융검  ·  검 둘을 합친다</button>
-    <button id="btn-oath" style="display:none" title="이 검의 일생에 계율 하나를 건다 — 어기면 파계가 기록된다"></button>
+    <button id="btn-oath" style="display:none" title="이 검의 일생에 계율 하나를 건다 — 강화 3회 전까지만 · 어기면 파계가 기록된다"></button>
   </div>
 
   <div id="key-hint" style="text-align:center;font-size:9px;color:var(--dim);letter-spacing:2px;opacity:0.5;padding:4px 0">
-    <span class="key-chip">␣</span> 강화/베기/줍기 ·
+    <span class="key-chip">␣ Enter</span> 강화/베기/줍기 ·
     <span class="key-chip">Esc</span> 닫기/도망 ·
     <span class="key-chip">P</span> 보호권 ·
     <span class="key-chip">M</span> 소리
@@ -4005,7 +4005,8 @@
     <h2 id="mtitle-oath">서 약</h2>
     <p style="font-size:11px;color:var(--dim);letter-spacing:2px;line-height:1.9">
       이 검의 일생에 계율 하나를 건다.<br>
-      어길 수는 있다 — 파계가 기록될 뿐.
+      어길 수는 있다 — 파계가 기록될 뿐.<br>
+      맹세는 검의 초년에만 — 강화 3회를 넘기면 걸 수 없다.
     </p>
     <div id="oath-list" style="margin-top:10px"></div>
     <button class="modal-close" data-close>맹 세 하 지  않 는 다</button>
@@ -4207,7 +4208,7 @@
     <span style="color:var(--dim);font-size:11px">조각·도구는 초기화 · 봉인된 검과 도 기록은 영원히 보존</span>
   </div>
   <div id="gameover-stats"></div>
-  <button id="gameover-restart">다 시  검 을  들 다</button>
+  <button id="gameover-restart">다 시  검 을  들 다<span style="display:block;font-size:9px;letter-spacing:2px;opacity:0.6;margin-top:3px">Enter</span></button>
   <button id="gameover-fullreset">전 체  초 기 화 (계보까지 지움)</button>
 </div>
 
@@ -4244,15 +4245,22 @@
       실패하면 검이 망가지거나 단계가 떨어집니다.<br><br>
       <span style="color:var(--accent)">검을 팔면 조각(돈)을 얻습니다.</span><br>
       판 검은 사라지지만, 그 힘은 다음 검에 흐릅니다.<br><br>
-      검이 부서지면 5초 안에 조각을 주워야 합니다.<br>
+      검이 부서지면 기본 5초의 선택이 옵니다 —<br>
+      <span style="color:var(--accent)">줍기 · 도박(2배 or 0) · 놓아주기</span>.<br>
+      길이 완전히 끊기면 — 새 검도, 융검도,<br>
+      재련도 닿지 않으면 — 그 여정이 끝납니다.<br>
+      조각·도구는 초기화되고 기록만 남습니다.<br><br>
       조각을 모아 보호권을 만들면<br>
       실패해도 검이 망가지지 않습니다.<br><br>
-      때로 그림자가 나타납니다 — 베거나 도망치세요.<br><br>
+      때로 그림자가 나타납니다 —<br>
+      베거나, 양보(대치)하거나, 도망치세요.<br><br>
       검은 자라면서 한자 자국(명문)을 모읍니다.<br>
       가장 높은 +15까지 키운 검은<br>
       파는 값이 1.5배가 됩니다.<br><br>
+      <span style="color:var(--dim);font-size:11px">설정 「간결 모드」를 끄면 각오 · 숫돌 ·<br>
+      결계 · 서약 등 깊은 선택지가 열립니다.</span><br><br>
       <span style="display:inline-block;text-align:left;color:var(--dim);font-size:11px;letter-spacing:2px;line-height:1.9">
-      스페이스 · 강화 / 베기 / 줍기<br>
+      스페이스 · Enter — 강화 / 베기 / 줍기<br>
       Esc · 창 닫기 · 도전에서 도망<br>
       P · 보호권 켜기/끄기<br>
       M · 소리 끄기/켜기<br>
@@ -12304,7 +12312,7 @@
     } else if (canSwearOath()) {
       btn.style.display = '';
       btn.disabled = false;
-      btn.textContent = '서 약 — 이 검에 맹세를 건다';
+      btn.textContent = '서 약 — 이 검에 맹세를 건다 (강화 3회 전까지)';
       btn.classList.remove('oath-broken');
     } else {
       btn.style.display = 'none';
@@ -12387,7 +12395,7 @@
   const RESOLVE = {
     normal: { key: 'normal', label: '평상', name: '평상', successAdd: 0,     destroyMul: 1,   downgradeMul: 1,   costMul: 1,   desc: '마음을 비운다 — 변화 없음' },
     focus:  { key: 'focus',  label: '일심', name: '일심', successAdd: 0.08,  destroyMul: 1.5, downgradeMul: 1,   costMul: 1,   desc: '다음 한 번에 모든 것을 — 성공 +8% · 파괴 1.5배' },
-    guard:  { key: 'guard',  label: '보신', name: '보신', successAdd: -0.10, destroyMul: 0,   downgradeMul: 0.5, costMul: 1.5, desc: '부서짐을 허락하지 않는다 — 성공 -10% · 파괴 0 · 비용 1.5배' }
+    guard:  { key: 'guard',  label: '보신', name: '보신', successAdd: -0.10, destroyMul: 0,   downgradeMul: 0.5, costMul: 1.5, desc: '부서짐을 허락하지 않는다 — 성공 -10% · 파괴 0 · 하락 절반 · 비용 1.5배' }
   };
   let resolveMode = 'normal';
   function getResolve() { return RESOLVE[resolveMode] || RESOLVE.normal; }
@@ -12645,7 +12653,7 @@
         // 파괴 검은 봉인과 달리 이름이 없다 — 여기서 결정적 사후명을 얻는다.
         const fallen = recordFallenSword(destroyedLevel);
         recordEvent('검 파괴 ' + fallen.name + ' (+' + destroyedLevel + ')');
-        maybeMilestone('firstDestroy', '부서짐', '검이 부서졌습니다 — 5초 안에 조각을 주우세요');
+        maybeMilestone('firstDestroy', '부서짐', '검이 부서졌습니다 — 기본 5초 안에 결정하세요 · 줍기 / 도박 / 놓아주기');
         // v134: showVoid을 살짝 지연시켜 산산조각 비주얼이 먼저 보이게 (검집 동시 등장 시 시각 충돌 회피)
         voidPending = true;  // v368 — 350ms 갭 동안 game-over 보류 (회수창 우선 표시)
         setTimeout(() => showVoid(destroyedLevel), 350);
@@ -13469,7 +13477,7 @@
     }
     bumpStat('challengesAppeared');
     bumpDaily('challenge', 1);  // v94 천시
-    maybeMilestone('firstChallenge', '그림자', '그림자가 나타났습니다 — 베거나 도망치세요');
+    maybeMilestone('firstChallenge', '그림자', '그림자가 나타났습니다 — 베거나, 양보(대치)하거나, 도망치세요');
     SFX.challengeAppear();
     // v26 도혼: 1.2초 후 봉인된 도 검의 시구 한 줄 페이드
     setTimeout(() => {
@@ -16073,10 +16081,11 @@
       '</div>';
     // 1. 그림자 종 — SHADOW_TYPES 배열 직접 순회 (새 변종 자동 포함)
     let html = head('그 림 자  종');
+    // v389 감사 — 야차 롤이 선점하므로 '출몰 %'는 야차 외 배분임을 명시 (합 100%처럼 읽히던 드리프트)
     html += SHADOW_TYPES.map(t =>
-      card(glyphOf[t.key] || '影', t.name, t.desc, '출몰 ' + Math.round(t.weight * 100) + '% · 베어냄 ' + fmtNum(slainOf[t.key] || 0))
+      card(glyphOf[t.key] || '影', t.name, t.desc, '출몰 ' + Math.round(t.weight * 100) + '% (야차 외) · 베어냄 ' + fmtNum(slainOf[t.key] || 0))
     ).join('');
-    html += card('夜', '야차', '밤에만 나타나는 자주색 그림자 — 달빛 아래의 별종', '밤 한정 · 베어냄 ' + fmtNum(s.yakshaSlain || 0));
+    html += card('夜', '야차', '밤에만 나타나는 자주색 그림자 — 달빛 아래의 별종', '밤 12% · 낮 2% 선점 · 베어냄 ' + fmtNum(s.yakshaSlain || 0));
     // 2. 학파 — 출신별 처치 + 단마 진척
     const os = state.shadowOriginsSlain || {};
     const doneOrigins = ORIGIN_KEYS.filter(k => (os[k] || 0) > 0).length;
@@ -17407,8 +17416,16 @@
     const hasSwordBool = state.hasSword === true;
     // 회수 윈도우 진행 중에는 게임 오버 발동 차단 (사용자 마지막 기회)
     if (rescueWindow || voidPending) return false;  // v368 — 파괴~회수창 전환 중엔 game-over 보류 (회수창이 먼저)
-    // 케이스 1: 검 없음 → 무조건 게임 오버 (조각 잔여 무관, '처음부터')
-    if (!hasSwordBool) return true;
+    // 케이스 1: 검 없음 — v389 감사: '무조건 게임 오버'가 검없음 차원 전체(새 검 빚기 v31 ·
+    // 융검 v92 · 재련 v374)를 도달 불가로 만들고, 회수한 조각마저 리셋으로 소멸시켜 5초 회수
+    // 드라마의 물질적 의미를 죽이고 있었다 (6곳의 안내 문구·CLAUDE.md 설계와도 모순).
+    // 길이 하나라도 남아 있으면 여정은 계속 — 정말 끊겼을 때만 길의 끝.
+    if (!hasSwordBool) {
+      if (shardsNum >= NEWSWORD_COST) return false;  // 새 검을 빚을 수 있다
+      if ((state.sealedSwords || []).length >= 2 && shardsNum >= FUSION_COST) return false;  // 융검의 길
+      if ((state.fallenSwords || []).some(f => f && !f.reforged && shardsNum >= reforgeCost(f.level || 0))) return false;  // 재련의 길
+      return true;
+    }
     // 케이스 2: 검 보유 +1~+2 (판매 불가) + 다음 강화 비용 부족
     if (state.level >= 1 && state.level < SEAL_MIN_LEVEL) {
       const t = TABLE[state.level];
@@ -17473,6 +17490,7 @@
     state.protections = 0;
     state.whetstones = 0;
     state.spiritstones = 0;
+    state.divinationStones = 0;  // v389 감사 — 「도구는 초기화」 문구와 달리 점복석만 이월되던 결함
     // v89 시련의 혼 — 게임오버 보너스 자원 (1봉인 이상이면 활성)
     applyGameOverTrials();
     newSword();
@@ -18590,7 +18608,7 @@
     try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
     location.reload();
   });
-  // ESC 키로도 다시 시작
+  // Enter 키로도 다시 시작 (v389 감사 — 주석이 ESC라 적혀 있던 드리프트 수정; 코드는 원래 Enter)
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && gameOverShown) { e.preventDefault(); restartFromGameOver(); }
   });
