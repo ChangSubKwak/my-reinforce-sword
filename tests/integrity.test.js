@@ -1111,12 +1111,15 @@ test('v376 서약: 위반 훅 5곳 — 방지권/숫돌/영석/도망/대치/조
   assert.match(fleeBody, /breakOath\('noflee'\)/, '불퇴 — flee');
   const stBody = afterDecl('function stalemate() {', 1200);
   assert.match(stBody, /breakOath\('noflee'\)/, '불퇴 — stalemate');
-  // 일도 — 도 이르기 전 매각. ins 캡처 *전*에 새겨야 봉인 기록에 파계가 남는다
+  // 일도 — v388 감사로 위치 이동: 매각 *확정* 시점(doSeal)에서만 파계 (askName 취소 시 파계 없음),
+  // 새겨진 파계를 봉인 기록(ins)에도 반영. sealSword에는 상태 변경이 없어야 한다.
   const sealBody = afterDecl('function sealSword() {', 1200);
-  const brkIdx = sealBody.indexOf("breakOath('wayonly')");
-  const insIdx = sealBody.indexOf('const ins = ');
-  assert.ok(brkIdx >= 0 && insIdx > brkIdx, '일도 — 파계는 ins 캡처 전 (봉인 기록 포함)');
-  assert.match(sealBody, /state\.level < MAX_LEVEL\) breakOath\('wayonly'\)/, '일도 — 도 도달 매각은 위반 아님');
+  assert.ok(sealBody.indexOf("breakOath('wayonly')") < 0, '일도 — sealSword(모달 진입 전)에서 파계 금지 (취소 가능 지점)');
+  const dsB = afterDecl('function doSeal(', 1000);
+  const brkIdx = dsB.indexOf("breakOath('wayonly')");
+  assert.ok(brkIdx >= 0, '일도 — 파계는 doSeal(확정 시점)');
+  assert.match(dsB, /lv < MAX_LEVEL\) \{/, '일도 — 도 도달 매각은 위반 아님');
+  assert.match(dsB, /ins\.push\('파계'\)/, '새겨진 파계를 봉인 기록(ins)에 반영');
 });
 
 test('v376 서약: 기록 보존 (봉인·殿堂·무덤) + 지킴 통계 + sanitize', () => {
@@ -1476,7 +1479,7 @@ test('v386 생사 원장: closestCall 보존 3처 + 숫자 방어 + 표시 결�
 test('v387 간결: 설정 기본값 ON + applySettings 연결', () => {
   assert.match(js, /key:\s*'simpleMode'[^}]*def:\s*true/, '간결 모드 설정 존재 + 기본값 ON');
   const ab = afterDecl('function applySettings() {', 400);
-  assert.match(ab, /classList\.toggle\('simple-mode', getSetting\('simpleMode'\)\)/, 'body 클래스 토글');
+  assert.match(ab, /classList\.toggle\('simple-mode', getSetting\('simpleMode'\) === true\)/, 'body 클래스 토글 (=== true — truthy 문자열 방어, v388)');
 });
 
 test('v387 간결: 결정 표면은 숨기되 드라마·본질은 남긴다', () => {
@@ -1493,6 +1496,59 @@ test('v387 간결: 결정 표면은 숨기되 드라마·본질은 남긴다', (
     .forEach(sel => assert.ok(!css.includes(sel + ',') && !css.includes(sel + ' {') && !css.includes(sel + '\n'),
       sel + '은 간결 모드에서도 보임 (본질/드라마)'));
   assert.match(css, /#menu-drop button:not\(\.menu-core\)/, '메뉴는 핵심만');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v388 감사 — 세션 결함 수정 잠금 (재발 방지)
+// ─────────────────────────────────────────────────────────────
+test('v388 감사: 파괴~회수창 갭(voidPending) 유출 차단 — 강화/새검/융검/봉인/재진입', () => {
+  const eb = afterDecl('function enhance() {', 200);
+  assert.match(eb, /if \(voidPending\) return/, 'enhance — 갭 중 강화 차단 (Space auto-repeat 유출)');
+  assert.match(js, /if \(voidPending \|\| rescueWindow\) return;[^\n]*\n\s*if \(btnEnhance\.dataset\.mode === 'newsword'\)/,
+    '버튼 — 갭 중 새 검 구매 차단 (조각 유출)');
+  const fb = afterDecl('function fuseSwords() {', 250);
+  assert.match(fb, /challenge \|\| rescueWindow \|\| voidPending\) return/, '융검 — 갭/회수창 중 차단');
+  const sb = afterDecl('function sealSword() {', 200);
+  assert.match(sb, /if \(voidPending\) return/, '봉인 — 갭 중 차단');
+  const vb = afterDecl('function showVoid(', 300);
+  assert.match(vb, /if \(rescueWindow\) return/, '회수창 재진입 차단 (고아 타이머 → endVoid 이중 실행 방지)');
+});
+
+test('v388 감사: 초영 환급·컷씬 공유 타이머·꺾임 2.5s 정렬·간결 상태 중화', () => {
+  // 초영 — 450ms 사이 상태 어긋남 시 단일 진원 비용으로 환급 (무고지 조각 소실 방지)
+  assert.match(js, /state\.shards \+= recipes\.summon\.cost/, '초영 환급 (비용 단일 진원)');
+  assert.match(js, /부름이 어긋났다/, '환급 고지');
+  // 컷씬 4곳(귀참/名/설욕/꺾임) — 공유 dsoTimer로 교차 절단 방지
+  const clears = (js.match(/if \(dsoTimer\) clearTimeout\(dsoTimer\)/g) || []).length;
+  assert.strictEqual(clears, 4, '컷씬 4곳 전부 공유 타이머 정리 (현재 ' + clears + ')');
+  // 꺾임 지속시간이 CSS 애니메이션(2.5s)과 정렬
+  const dr = afterDecl('function showDefeatRitual(', 1400);
+  assert.match(dr, /\}, 2500\)/, '꺾임 2500ms (1900ms 조기 제거로 페이드 없이 사라지던 결함)');
+  // 간결 모드 — 숨겨진 결정 UI의 휘발 상태 중화 (보이지 않는 배율 지속 방지)
+  const ab = afterDecl('function applySettings() {', 1200);
+  assert.match(ab, /resolveMode = 'normal'/, '간결 ON 시 각오 평상 복귀');
+  assert.match(ab, /setSanctum\(false\)/, '간결 ON 시 결계 해제');
+  assert.match(ab, /'whet-check', 'spirit-check', 'divination-check', 'auto-check'/, '간결 ON 시 armed 체크 해제');
+});
+
+test('v388 감사: slay 실패/회피가 endChallenge 호출 (水鏡·crisis 드론·타이머 잔존 결함)', () => {
+  const body = afterDecl('function slay() {', 16000);
+  const calls = (body.match(/endChallenge\(\)/g) || []).length;
+  assert.ok(calls >= 3, 'slay 내 endChallenge ≥3 (성공/실패/회피 — 현재 ' + calls + ')');
+});
+
+test('v388 감사: normalizeState 보강 — 무덤 soul/form·stats 정수·eraStart·설정 boolean', () => {
+  const nb = afterDecl('function normalizeState() {', 52000);
+  assert.match(nb, /f\.soul = clampInt\(f\.soul, 0, 100\)/, '무덤 soul cap (재련 SOUL_MAX 우회 차단)');
+  assert.match(nb, /f\.form !== '직' && f\.form !== '곡'/, '무덤 form 화이트리스트 (재련 경유 XSS/룩업 붕괴 차단)');
+  assert.match(nb, /sw\.form !== '직' && sw\.form !== '곡'/, '봉인/전당/현재 검 form 화이트리스트');
+  assert.match(nb, /Object\.keys\(DEFAULT_STATS\)\.forEach/, '전 카운터 정수 강제 (bumpStat 문자열 폭주 차단)');
+  assert.match(nb, /Array\.isArray\(state\.eraStart\)/, 'eraStart 형태 검증 (NaN 겁 영구 기록 차단)');
+  assert.match(nb, /typeof state\.settings\[k\] !== 'boolean'/, '설정 boolean 강제');
+  assert.match(nb, /state\.totalSlain = clampInt/, 'totalSlain clamp (겁 델타 원천)');
+  // 전당 진열도 지킨 맹세 집계 (doSeal 단독이던 과소집계)
+  const kept = (js.match(/bumpStat\('oathsKept'\)/g) || []).length;
+  assert.strictEqual(kept, 2, 'oathsKept 집계 2곳 — 봉인+전당 (현재 ' + kept + ')');
 });
 
 test('v387 간결: menu-core 태깅 — 필수만, 과잉 태깅 금지', () => {
