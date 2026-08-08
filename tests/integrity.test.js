@@ -1469,3 +1469,37 @@ test('v386 생사 원장: closestCall 보존 3처 + 숫자 방어 + 표시 결�
   assert.match(smith, /deathLedgerWord\(d\.deathDelta\)/, '검사전에 파괴 천칭');
   assert.match(smith, /구사일생 ' \+ d\.nearMisses/, '검사전 무훈에 구사일생');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v387 簡 — 간결 모드 (사용자 제보 「너무 복잡」 대응: 숨김이지 삭제가 아님)
+// ─────────────────────────────────────────────────────────────
+test('v387 간결: 설정 기본값 ON + applySettings 연결', () => {
+  assert.match(js, /key:\s*'simpleMode'[^}]*def:\s*true/, '간결 모드 설정 존재 + 기본값 ON');
+  const ab = afterDecl('function applySettings() {', 400);
+  assert.match(ab, /classList\.toggle\('simple-mode', getSetting\('simpleMode'\)\)/, 'body 클래스 토글');
+});
+
+test('v387 간결: 결정 표면은 숨기되 드라마·본질은 남긴다', () => {
+  const cssM = html.match(/\/\* v387 簡[\s\S]*?body\.simple-mode #menu-drop[\s\S]*?\{ display: none; \}/);
+  assert.ok(cssM, '간결 모드 CSS 블록 존재');
+  const css = cssM[0];
+  // 고급 결정 UI 숨김 (inline display 이기려면 !important)
+  ['#resolve-row', '#stone-row', '#btn-oath', '#destiny-banner', '#guardian-display', '#current-chart']
+    .forEach(sel => assert.ok(css.includes('body.simple-mode ' + sel), sel + ' 숨김'));
+  assert.match(css, /display: none !important/, 'inline display를 이기는 !important');
+  // 본질·드라마는 절대 숨기지 않는다 — 강화/팔기/회수/도전/컷씬/의식
+  ['#btn-enhance', '#btn-seal-direct', '#void', '#challenge', '#rescue-circle', '#rescue-release',
+   '#demon-slay-overlay', '.life-flash', '#nemesis-mark', '#btn-fusion']
+    .forEach(sel => assert.ok(!css.includes(sel + ',') && !css.includes(sel + ' {') && !css.includes(sel + '\n'),
+      sel + '은 간결 모드에서도 보임 (본질/드라마)'));
+  assert.match(css, /#menu-drop button:not\(\.menu-core\)/, '메뉴는 핵심만');
+});
+
+test('v387 간결: menu-core 태깅 — 필수만, 과잉 태깅 금지', () => {
+  const coreCount = (html.match(/class="menu-core"/g) || []).length;
+  assert.ok(coreCount >= 8 && coreCount <= 13, '핵심 버튼 8~13개 (현재 ' + coreCount + ') — 전부 태깅하면 간결이 무의미');
+  ['btn-stats', 'btn-help', 'btn-settings', 'btn-mute', 'btn-reset', 'btn-backup', 'btn-restore', 'btn-cloud-login']
+    .forEach(id => assert.match(html, new RegExp('id="' + id + '" class="menu-core"'), id + '는 핵심 (기록/안내/설정/소리/초기화/백업/클라우드)'));
+  // 설정 진입로가 간결 모드에서 살아있어야 전체 복귀 가능 — btn-settings는 반드시 core
+  assert.match(html, /id="btn-settings" class="menu-core"/, '설정 진입로 보존 (전체 모드 복귀 경로)');
+});

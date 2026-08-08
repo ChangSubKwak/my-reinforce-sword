@@ -2171,6 +2171,32 @@
     filter: drop-shadow(0 0 18px rgba(208, 72, 48, 0.6));
     animation-duration: 1.2s;  /* 타입별 호흡 애니를 조급하게 — 원한의 조바심 */
   }
+  /* v387 簡 — 간결 모드 (기본값): 본질(강화·팔기·회수·도전·봉인)만 남긴 화면.
+     시스템은 전부 살아있다 — 보이지 않을 뿐 (설정 「간결 모드」 끄면 전체 복귀).
+     의식·드라마(주마등/꺾임/장송/컷씬)는 숨기지 않는다 — 간결의 대상은 *결정 표면*이다.
+     !important: destiny-banner 등은 렌더 함수가 inline display를 쓰므로 필요. */
+  body.simple-mode #resolve-row,
+  body.simple-mode #resolve-desc,
+  body.simple-mode #stone-row,
+  body.simple-mode #auto-row,
+  body.simple-mode #sanctum-row,
+  body.simple-mode #btn-oath,
+  body.simple-mode #destiny-banner,
+  body.simple-mode #adversity-banner,
+  body.simple-mode #enhance-echo,
+  body.simple-mode #current-chart,
+  body.simple-mode #guardian-display,
+  body.simple-mode #heartbeat-svg,
+  body.simple-mode #sword-rank,
+  body.simple-mode #key-hint,
+  body.simple-mode #corner-stack .corner-row,
+  body.simple-mode #way-counter,
+  body.simple-mode #path-progress { display: none !important; }
+  /* 메뉴 — 핵심(.menu-core: 기록/안내/설정/소리/초기화/백업·복원/클라우드)만 노출 */
+  body.simple-mode #menu-drop button:not(.menu-core),
+  body.simple-mode #menu-drop .menu-section,
+  body.simple-mode #menu-drop .menu-grid { display: none; }
+
   /* v383 꺾임의 의식 — 승리 컷씬(귀참)의 반전: 핏빛·가라앉은 톤 */
   #demon-slay-overlay.defeat #demon-slay-kanji {
     color: var(--danger);
@@ -2857,7 +2883,7 @@
 <div id="menu-drop">
   <div class="menu-section">기록</div>
   <button id="btn-status">현세</button>
-  <button id="btn-stats">기 록</button>
+  <button id="btn-stats" class="menu-core">기 록</button>
   <button id="btn-journey">기정</button>
   <button id="btn-daily">오늘의 도전</button>
   <button id="btn-mindchart">심보</button>
@@ -2916,25 +2942,25 @@
   </div>
 
   <div class="menu-section">설정</div>
-  <button id="btn-settings">설 — 환경 설정</button>
-  <button id="btn-help">안 내</button>
-  <button id="btn-mute">소 리  끄 기</button>
+  <button id="btn-settings" class="menu-core">설 — 환경 설정</button>
+  <button id="btn-help" class="menu-core">안 내</button>
+  <button id="btn-mute" class="menu-core">소 리  끄 기</button>
   <div style="height:1px;background:var(--line);margin:4px 0"></div>
-  <button id="btn-cloud-login">☁ 로 그 인</button>
-  <button id="btn-cloud-push" style="display:none">☁ 클라우드 저장</button>
-  <button id="btn-cloud-pull" style="display:none">☁ 클라우드 복원</button>
-  <button id="btn-cloud-logout" style="display:none">☁ 로그아웃</button>
+  <button id="btn-cloud-login" class="menu-core">☁ 로 그 인</button>
+  <button id="btn-cloud-push" class="menu-core" style="display:none">☁ 클라우드 저장</button>
+  <button id="btn-cloud-pull" class="menu-core" style="display:none">☁ 클라우드 복원</button>
+  <button id="btn-cloud-logout" class="menu-core" style="display:none">☁ 로그아웃</button>
   <label id="btn-cloud-autosync" style="display:none;padding:8px 12px;background:transparent;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:3px;cursor:pointer;text-align:left">
     <input type="checkbox" id="cloud-autosync-check" style="margin-right:6px;accent-color:var(--accent)"> ☁ 자동 동기화
   </label>
   <button id="btn-leaderboard">🏆 리 더 보 드</button>
   <div style="height:1px;background:var(--line);margin:4px 0"></div>
-  <button id="btn-backup">진행도 백업 (파일)</button>
-  <button id="btn-restore">진행도 복원 (파일)</button>
+  <button id="btn-backup" class="menu-core">진행도 백업 (파일)</button>
+  <button id="btn-restore" class="menu-core">진행도 복원 (파일)</button>
   <button id="btn-export-sword">현재 검 SVG 저장</button>
   <button id="btn-export-smith">검사전 족자 저장</button>
   <input type="file" id="restore-file-input" accept=".json,application/json" style="display:none">
-  <button id="btn-reset">초 기 화</button>
+  <button id="btn-reset" class="menu-core">초 기 화</button>
 </div>
 <div id="game" role="main" aria-label="검 강화 — 메인 게임">
   <header>
@@ -8925,6 +8951,9 @@
 
   // === v228 設 — 접근성 설정 ===
   const SETTINGS_DEFS = [
+    // v387 簡 — 기본값 ON: 본질(강화·팔기·회수·도전)만 남긴 화면. 시스템은 전부 살아있다 —
+    // 보이지 않을 뿐. 끄면 고급 결정 UI·부가 표시·전체 메뉴가 복귀 (사용자 제보 「너무 복잡」 대응).
+    { key:'simpleMode',  label:'간결 모드', desc:'본질만 남긴 화면 — 끄면 고급 UI·전체 메뉴 복귀', def:true },
     { key:'particles',   label:'환경 입자', desc:'계운·유성·먼지 입자', def:true },
     { key:'screenShake', label:'화면 흔들림', desc:'베기·파괴 시 흔들림', def:true },
     { key:'reduceMotion',label:'모션 감소', desc:'애니메이션 최소화 (저사양)', def:false },
@@ -8941,6 +8970,7 @@
   function applySettings() {
     document.body.classList.toggle('large-text', getSetting('largeText'));
     document.body.classList.toggle('reduce-motion', getSetting('reduceMotion'));
+    document.body.classList.toggle('simple-mode', getSetting('simpleMode'));  // v387 簡
   }
   function renderSettings() {
     const wrap = $('settings-list');
