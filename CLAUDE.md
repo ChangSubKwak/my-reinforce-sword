@@ -709,6 +709,16 @@ v372(나를 이긴 그림자가 이름을 얻는다)의 대구 — *나에게 �
 - **UI**: 메뉴 `검총` (전당 바로 아래 — 영광/상실 쌍) → `#graveyard-modal` (`renderGraveyard`, 최신 무덤 먼저, 클릭 시 만가 펼침, 전부 `escapeHtml`). 記錄 모달 「가장 높은 무덤」 행 (`collectionHighlight` 재사용).
 - **세이브/방어**: 키 추가만 (호환 ✅). `normalizeState`가 배열·레벨 cap·태그 제거·상한 강제 + 오염된 사후명 결정적 재생성. **빈 배열이면 외부 상수 참조 0** — 격리 sandbox 행위 테스트(load.test.js) 호환 패턴 (nemesis 가드와 동일). 테스트: logic 2건(사후명 결정성·경계 / 만가 결정성·안전) + integrity 4건(스냅샷 순서·회수 확정·보정·UI 와이어링).
 
+### v374 再鍊(재련) — 무덤에서 검을 다시 벼리다
+
+v373 검총을 박물관에서 **결정의 장소**로 전환 — 파괴(v372 이전부터의 도박 대가) → 애도(v373) → **재기**의 3부작 완결. 융검(v92: 봉인 검 2자루 합성)의 무덤 측 대응물.
+
+- **재련** (`reforgeSword(graveIdx)`, 검총 모달 무덤별 버튼): 검 없음 상태에서만 (융검과 동일 게이트), 무덤당 **1회** (`f.reforged` 잠금 — 혼 farming 차단). 비용 `reforgeCost(level) = REFORGE_TUNING.base(60) + level × perLevel(3)` — 새 검 빚기(50)보다 프리미엄 (재련이 기본 경로가 되는 경제 붕괴 방지). 가드: `challenge || rescueWindow || voidPending` (sealSword 동시성 규율 + v368 갭).
+- **계승**: `newSword()` 경유 (시작 강화 = 일반 startBonus — **점수 인플레이션 0**) 후 override: 무덤의 형 그대로 (選形 생략 — *그 검이다*), 혼 절반 (`Math.max` 병합), `재련` 명문(서사, 효과 0), `currentSword.reforgedFrom = 사후명`.
+- **혈통 보존**: `reforgedFrom`을 doSeal·전당 push 양쪽에 보존 (기존 field-set 대칭 자동 테스트가 강제). 一代記(`generateBiography`)에 "「직운」의 무덤에서 다시 벼려졌다" 줄 (융합 혈통 v371e와 공존 가능), 회고 모달에 재련 줄. `sanitizeSword`가 reforgedFrom stripTags (v370m).
+- **UI**: 검총 무덤 항목에 "다시 벼리기 · N 조각" 버튼 (검 없음 && 미재련 시; 조각 부족이면 disabled) / 재련된 무덤은 "다시 벼려졌다" 표기 (무덤은 남는다 — 죽음은 사실). 위임 핸들러가 만가 토글보다 먼저 분기.
+- 테스트: logic 2건(비용 단일 진원·단조·프리미엄 / 一代記 혈통 줄) + integrity 3건(가드 4중·newSword 경유 / 혈통 보존·sanitize / UI 와이어링·비용 단일 진원).
+
 ### 봉인 균형 곡선 (참고)
 
 | 검 강화도 | 봉인 보상 (조각) |
@@ -747,6 +757,7 @@ v372(나를 이긴 그림자가 이름을 얻는다)의 대구 — *나에게 �
 | `SHADOW_TYPES[]` | 影 변종 | weight·강도Mul·보상Mul·특수 메커니즘 (slayEvade 등) |
 | `NEMESIS_TUNING` | 宿敵 (v372) | 재등장 확률(base 0.15/승당 +0.05/cap 0.35)·원한 보상 배율(승당 +0.35/cap 2.5)·설욕 魂 |
 | `FALLEN_TUNING` | 劍塚 (v373) | 무덤 수 상한 (cap 30 — 초과 시 가장 오래된 무덤부터 잊힘, 저장 크기) |
+| `REFORGE_TUNING` | 再鍊 (v374) | 재련 비용 (base 60 + 무덤 강화도 × 3 — 새 검 50보다 프리미엄 유지) |
 | `SWORD_FORMS{}` | 검의 형 | 형별 successBonus / destroyReduce / costMul / rewardMul / fleeFree |
 | `recipes.whetstone.cost = 8` | 砥石 | 다음 강화 +25% 성공 |
 | `recipes.spiritstone.cost = 25` | 靈石 | 다음 강화 파괴 차단 |

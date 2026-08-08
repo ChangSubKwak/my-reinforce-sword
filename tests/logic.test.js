@@ -1693,3 +1693,34 @@ test('v373 generateElegy: 만가 결정적 생성 + 회수 결과/각오 반영 
   assert.ok(fns.generateElegy({}).length >= 2, '빈 무덤도 만가 존재');
   assert.strictEqual(fns.generateElegy(null).length, 0, 'null 안전');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v374 再鍊 — 무덤에서 검을 다시 벼리다 (순수 함수)
+// ─────────────────────────────────────────────────────────────
+test('v374 reforgeCost: REFORGE_TUNING 단일 진원 + 단조 + 프리미엄 가격 (인플레이션 차단)', () => {
+  const deps = { REFORGE_TUNING: extractConst('REFORGE_TUNING') };
+  const { reforgeCost } = loadFunctions(['reforgeCost'], deps);
+  const T = deps.REFORGE_TUNING;
+  assert.strictEqual(reforgeCost(0), T.base, '+0 무덤 = base');
+  assert.strictEqual(reforgeCost(15), T.base + 15 * T.perLevel, '+15 무덤 = base + 15×perLevel');
+  for (let lv = 0; lv < 15; lv++) {
+    assert.ok(reforgeCost(lv + 1) >= reforgeCost(lv), '높은 무덤일수록 비용 단조 증가');
+  }
+  // 새 검 빚기(NEWSWORD_COST 50)보다 싸면 재련이 기본 경로가 되어 경제 붕괴 — 프리미엄 서사 선택 유지
+  assert.ok(T.base >= 50, '재련 base(' + T.base + ')는 새 검 빚기(50) 이상');
+  assert.strictEqual(reforgeCost(undefined), T.base, '손상 입력(level 없음) 안전');
+});
+
+test('v374 generateBiography: 재련 검은 무덤 혈통 줄이 나타나고 비재련 검은 안 나타남', () => {
+  const DESTINIES = extractConst('DESTINIES');
+  const fns = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { DESTINIES, NAMED_FOES: extractConst('NAMED_FOES') });
+  const base = { form: '직', level: 8, inscriptions: [], slainCount: 0, soul: 0, scars: 0, stars: {}, name: '재기검' };
+  const reforged = fns.generateBiography(Object.assign({}, base, { reforgedFrom: '직운' }));
+  assert.match(reforged, /부러진 검 「직운」의 무덤에서 다시 벼려졌다/, '재련 혈통 결합');
+  const plain = fns.generateBiography(base);  // reforgedFrom 없음
+  assert.ok(!/무덤에서 다시 벼려졌다/.test(plain), '비재련 검은 무덤 혈통 줄 없음');
+  // 융합 혈통(v371e)과 공존 가능 (융검 후 파괴 → 재련의 겹친 혈통)
+  const both = fns.generateBiography(Object.assign({}, base, { fusedFrom: ['아비검', '어미검'], reforgedFrom: '직운' }));
+  assert.match(both, /혼을 이어 태어났다/, '융합 줄 보존');
+  assert.match(both, /무덤에서 다시 벼려졌다/, '재련 줄 공존');
+});

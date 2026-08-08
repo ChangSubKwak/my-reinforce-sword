@@ -1030,7 +1030,38 @@ test('v373 검총: 모달·메뉴·핸들러 와이어링 + recordFallenSword �
   const rec = afterDecl('function recordFallenSword(', 1400);
   assert.match(rec, /makePosthumousName\(/, '매장 시 사후명 부여');
   assert.match(rec, /FALLEN_TUNING\.cap/, '상한 초과 시 가장 오래된 무덤부터 잊힘');
-  const rg = afterDecl('function renderGraveyard() {', 3500);
+  const rg = afterDecl('function renderGraveyard() {', 4500);
   assert.match(rg, /generateElegy\(/, '무덤마다 만가 렌더');
   assert.match(rg, /escapeHtml\(/, 'import 유래 문자열 이스케이프 (v275 XSS 경계 일관)');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v374 再鍊 — 와이어링 무결성 (가드/1회성/혈통 보존/UI가 실제 경로에 연결됐는지)
+// ─────────────────────────────────────────────────────────────
+test('v374 재련: reforgeSword 가드 4중 (동시성·검 보유·1회성·조각) + newSword 경유', () => {
+  const body = afterDecl('function reforgeSword(', 2200);
+  assert.match(body, /if \(challenge \|\| rescueWindow \|\| voidPending\) return/,
+    '도전/회수/파괴 직후 갭 중 재련 차단 (sealSword 동시성 규율 + v368 voidPending)');
+  assert.match(body, /if \(state\.hasSword\) return/, '검 보유 중 재련 차단 (융검과 동일 게이트)');
+  assert.match(body, /f\.reforged\) return/, '무덤당 1회 — 혼 farming 차단');
+  assert.match(body, /state\.shards < cost/, '조각 부족 가드');
+  assert.match(body, /newSword\(\)/, '통합 진입점 newSword 경유 (시작 보너스 일관 — 인플레이션 없음)');
+  assert.match(body, /f\.reforged = true/, '과금 후 즉시 무덤 잠금');
+  assert.match(body, /reforgedFrom = f\.name/, '무덤 혈통 기록 (회고/一代記)');
+});
+
+test('v374 재련: 무덤 혈통이 봉인·殿堂 양쪽에 보존 + 명문·sanitize·boolean 강제', () => {
+  // 봉인/전당 push 필드 대칭은 기존 field-set 비교 테스트가 자동 강제 — 여기선 존재만 잠금
+  assert.match(js, /reforgedFrom: state\.currentSword\.reforgedFrom \|\| null/, 'push에 reforgedFrom 보존');
+  assert.match(js, /key: '재련'/, 'INSCRIPTIONS에 재련 명문 (verse 포함 — v20 규율)');
+  const nb = afterDecl('function normalizeState() {', 26000);
+  assert.match(nb, /sw\.reforgedFrom = stripTags\(sw\.reforgedFrom\)/, '재련 혈통 태그 제거 (v370m XSS 경계)');
+  assert.match(nb, /f\.reforged = f\.reforged === true/, '무덤 재련 플래그 boolean 강제 (truthy 오염 차단)');
+});
+
+test('v374 재련: 검총 UI에 버튼 렌더 + 위임 핸들러가 reforgeSword 호출', () => {
+  const rg = afterDecl('function renderGraveyard() {', 4500);
+  assert.match(rg, /grave-reforge-btn/, '무덤 항목에 재련 버튼 렌더');
+  assert.match(rg, /reforgeCost\(f\.level\)/, '버튼 라벨 비용 = 실제 비용 (단일 진원, 하드코딩 drift 방지)');
+  assert.match(js, /reforgeSword\(parseInt\(rf\.dataset\.graveIdx, 10\)\)/, '위임 핸들러 → reforgeSword');
 });

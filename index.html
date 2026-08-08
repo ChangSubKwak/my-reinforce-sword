@@ -3905,7 +3905,8 @@
     <div id="graveyard-list" style="max-height: 400px; overflow-y: auto; padding: 4px 2px; margin-top:8px"></div>
     <p style="font-size:10px;color:var(--dim);margin-top:10px;line-height:1.7;letter-spacing:2px">
       부러진 검은 사후명을 얻고 이곳에 잠든다.<br>
-      무덤을 누르면 만가가 읽힌다.
+      무덤을 누르면 만가가 읽힌다.<br>
+      검이 없을 때, 무덤의 검을 다시 벼릴 수 있다 — 무덤당 한 번.
     </p>
     <button class="modal-close" data-close>닫 기</button>
   </div>
@@ -4510,6 +4511,7 @@
         if (typeof sw.memo === 'string') sw.memo = stripTags(sw.memo);
         if (typeof sw.kigen === 'string') sw.kigen = stripTags(sw.kigen);
         if (Array.isArray(sw.fusedFrom)) sw.fusedFrom = sw.fusedFrom.map(stripTags);
+        if (typeof sw.reforgedFrom === 'string') sw.reforgedFrom = stripTags(sw.reforgedFrom);  // v374 재련 혈통
         // v370o 봉인 검 level도 범위 강제 — 손상 import의 level=999가 계보 SVG·"가장 강한 검"
         // 표시를 깨고 sealReward 표시를 폭주시키는 것 방지 (표시 전용이라 검 필드 sanitize에 동봉).
         if (sw.level != null) sw.level = clampInt(sw.level, 0, MAX_LEVEL);
@@ -4537,6 +4539,7 @@
           f.name = (typeof f.name === 'string' && f.name) ? stripTags(f.name).slice(0, 8) : '';
           if (!f.name) f.name = makePosthumousName(f.form, f.level);
           if (f.rescued !== true && f.rescued !== false) f.rescued = null;
+          f.reforged = f.reforged === true;  // v374 재련 — 1회성 플래그 boolean 강제
         });
       }
       if (!state.blessingsDiscovered || typeof state.blessingsDiscovered !== 'object') state.blessingsDiscovered = {};  // v119 기연
@@ -15420,7 +15423,8 @@
     const list = $('graveyard-list');
     const summary = $('graveyard-summary');
     if (!list) return;
-    const fallen = (state.fallenSwords || []).slice().reverse();  // 최신 무덤 먼저
+    // 최신 무덤 먼저 — 재련 버튼이 원본 인덱스를 참조하도록 {f, idx} 쌍으로 보존 (v374)
+    const fallen = (state.fallenSwords || []).map((f, idx) => ({ f, idx })).reverse();
     if (summary) {
       const unmarked = Math.max(0, (state.totalDestroyed || 0) - fallen.length);
       summary.textContent = fallen.length
@@ -15433,7 +15437,7 @@
     }
     const formNames = { '직': '곧은', '곡': '굽은', '중': '무거운', '속': '빠른' };
     // 이름·명문은 팔레트 생성이지만 import(백업/클라우드) 유래일 수 있어 전부 escapeHtml (v275 규율)
-    list.innerHTML = fallen.map(f => {
+    list.innerHTML = fallen.map(({ f, idx }) => {
       const elegy = generateElegy(f).map(l => escapeHtml(l)).join('<br>');
       const ins = (f.inscriptions || []).map(escapeHtml).join(' · ');
       return '<div class="grave-item" style="padding:10px 8px;border-bottom:1px solid var(--line);cursor:pointer">' +
@@ -15448,8 +15452,46 @@
         '</div>' +
         (ins ? '<div style="margin-top:3px;font-size:10px;color:var(--accent);opacity:0.7;letter-spacing:2px">' + ins + '</div>' : '') +
         '<div class="grave-elegy" style="display:none;margin-top:8px;padding:8px 10px;border-left:2px solid var(--line);color:var(--dim);font-size:11px;line-height:2.1;letter-spacing:2px">' + elegy + '</div>' +
+        // v374 재련 — 검 없음 상태에서만 무덤의 검을 다시 벼릴 수 있다 (무덤당 1회)
+        (f.reforged
+          ? '<div style="margin-top:6px;font-size:10px;color:var(--safe);letter-spacing:2px;opacity:0.8">재련 — 이 무덤의 검은 다시 벼려졌다</div>'
+          : (!state.hasSword
+            ? '<button class="grave-reforge-btn" data-grave-idx="' + idx + '"' + (state.shards < reforgeCost(f.level) ? ' disabled' : '') +
+              ' style="margin-top:8px;padding:7px 14px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:10px;letter-spacing:3px;cursor:pointer">다시 벼리기 · ' + reforgeCost(f.level) + ' 조각</button>'
+            : '')) +
       '</div>';
     }).join('');
+  }
+  // === v374 再鍊(재련) — 무덤에서 검을 다시 벼리다 ===
+  // v373 검총을 박물관에서 *결정의 장소*로: 파괴(도박의 대가) → 애도(v373) → 재기.
+  // 융검(v92: 봉인 검 2자루 합성)의 무덤 측 대응 — 잃은 그 검의 형·혼 절반을 이어 새출발.
+  // 시작 강화는 일반 startBonus 그대로 (점수 인플레이션 0) — 값은 조각을 *소비*하는 서사 선택.
+  const REFORGE_TUNING = { base: 60, perLevel: 3 };  // 비용 = base + 무덤 강화도 × perLevel (새 검 50보다 프리미엄)
+  function reforgeCost(level) { return REFORGE_TUNING.base + (level || 0) * REFORGE_TUNING.perLevel; }
+  function reforgeSword(graveIdx) {
+    if (challenge || rescueWindow || voidPending) return;  // 도전/회수 중 차단 (sealSword와 동일 규율)
+    if (state.hasSword) return;
+    const f = (state.fallenSwords || [])[graveIdx];
+    if (!f || f.reforged) return;  // 무덤당 1회 — 한 죽음에 한 번의 재기
+    const cost = reforgeCost(f.level);
+    if (state.shards < cost) { log('조각 부족 — 재련 ' + cost + ' 필요 (보유 ' + state.shards + ')', 'destroy'); return; }
+    state.shards -= cost;
+    f.reforged = true;
+    newSword();
+    // 그 검이다 — 형은 무덤의 형 그대로 (選形 의식 생략), 혼의 절반이 돌아온다
+    if (f.form) state.currentSword.form = f.form;
+    state.currentSword.soul = Math.max(state.currentSword.soul || 0, Math.floor((f.soul || 0) / 2));
+    if (!state.currentSword.inscriptions.includes('재련')) state.currentSword.inscriptions.push('재련');
+    state.currentSword.reforgedFrom = f.name || null;  // 무덤 혈통 — 회고/一代記 (봉인 시 보존)
+    checkInscriptions();
+    $('graveyard-modal').classList.remove('active');
+    SFX.forge();
+    spawnLegacyRays(18);
+    log('재련 — ' + (f.name || '무명') + '의 무덤에서 검을 다시 벼렸다 (조각 -' + cost + ')', 'success');
+    recordEvent('재련 ' + (f.name || '무명'));
+    setTimeout(() => announceInscription('재련', (f.name || '무명') + ' — 부러진 검이 다시 일어섰다'), 500);
+    save();
+    render();
   }
 
   function generateBiography(sword) {
@@ -15477,6 +15519,11 @@
     let fusionLine = '';
     if (Array.isArray(sword.fusedFrom) && sword.fusedFrom.length === 2) {
       fusionLine = '두 검 「' + sword.fusedFrom[0] + '」과 「' + sword.fusedFrom[1] + '」의 혼을 이어 태어났다.';
+    }
+    // v374 재련 — 무덤에서 다시 벼려진 검의 혈통 (reforgedFrom 보존 파생, 효과 0)
+    let reforgeLine = '';
+    if (sword.reforgedFrom) {
+      reforgeLine = '부러진 검 「' + sword.reforgedFrom + '」의 무덤에서 다시 벼려졌다.';
     }
     // 2. 정점 성취
     let peak;
@@ -15533,7 +15580,7 @@
       const dn = DESTINIES.find(x => x.key === sword.destiny);
       if (dn) destinyLine = '타고난 천명 「' + dn.label + '」을 이루었다.';
     }
-    return formOpening + ' ' + (fusionLine ? fusionLine + ' ' : '') + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + (destinyLine ? destinyLine + ' ' : '') + ending;
+    return formOpening + ' ' + (fusionLine ? fusionLine + ' ' : '') + (reforgeLine ? reforgeLine + ' ' : '') + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + (destinyLine ? destinyLine + ' ' : '') + ending;
   }
 
   // === 일생시 — 도 검 봉인 시 일생을 4행 시구로 응축 ===
@@ -15835,6 +15882,7 @@
       playerSeal: state.currentSword.playerSeal || state.playerSeal || '',  // v344 篆刻 — doSeal과 동기 (전당 검도 인장 보존)
       bornTod: state.currentSword.bornTod || null,  // v344 時生 — 빚어진 시각 보존 (회고·一代記)
       fusedFrom: state.currentSword.fusedFrom || null,  // v344 혈통 — 융합 혈통 보존
+      reforgedFrom: state.currentSword.reforgedFrom || null,  // v374 재련 — 무덤 혈통 보존 (doSeal과 동기)
     });
     bumpStat('wayReached');
     grantEternity();  // v225 무극 — 도 검 전당도 영겁 +1
@@ -15997,6 +16045,7 @@
     { key: '선',   label: '백 대를 잇는 신선의 검',          verse: '백 대의 계보가 한 검에 흐른다',     trigger: () => false },
     { key: '연일섬', label: '열 번의 일섬을 한 검에 새긴 자', verse: '열 번이 한 흐름이 되었다',           trigger: () => false },
     { key: '설욕', label: '숙적을 베어냈다',                verse: '깊은 원한이 한 번의 일섬으로 갚아졌다', trigger: () => false },
+    { key: '재련', label: '무덤에서 다시 벼려졌다',           verse: '부러진 자리에서 다시 일어선 칼',        trigger: () => false },
   ];
 
   function grantInscription(key) {
@@ -16787,6 +16836,7 @@
       kigen: (userKigen && userKigen.trim()) ? userKigen.trim() : null,  // v158 기언
       bornTod: state.currentSword.bornTod || null,  // v252 時生 — 빚어진 시각
       fusedFrom: state.currentSword.fusedFrom || null,  // v255 혈통 — 융합 혈통
+      reforgedFrom: state.currentSword.reforgedFrom || null,  // v374 재련 — 무덤 혈통
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -17300,6 +17350,7 @@
       (s.birthStatement ? '<div style="margin:14px 0;padding:12px;background:rgba(168,184,200,0.04);border-left:2px solid rgba(168,184,200,0.4);font-size:10.5px;line-height:1.8;letter-spacing:2px;color:var(--fg);font-style:italic"><div style="color:var(--dim);font-size:9px;letter-spacing:3px;margin-bottom:5px;font-style:normal">기 념 — 탄생</div>' + s.birthStatement + '</div>' : '') +
       // v255 혈통 — 융합으로 태어난 검의 혈통
       (Array.isArray(s.fusedFrom) && s.fusedFrom.length === 2 ? '<div style="text-align:center;color:#c8a8d8;font-size:10px;letter-spacing:2px;padding:4px 0">혈통 — ' + s.fusedFrom[0] + ' + ' + s.fusedFrom[1] + ' 의 융합</div>' : '') +
+      (s.reforgedFrom ? '<div style="text-align:center;color:#c8a8a0;font-size:10px;letter-spacing:2px;padding:4px 0">재련 — ' + s.reforgedFrom + ' 의 무덤에서 다시 벼려짐</div>' : '') +  // v374
       // v139 一代記 — 자동 일대기 narrative
       '<div style="margin:14px 0;padding:14px 12px;background:rgba(212,175,55,0.025);border-left:2px solid rgba(212,175,55,0.4);font-size:11px;line-height:1.9;letter-spacing:1.5px;color:var(--fg);font-style:italic">' +
         '<div style="color:var(--dim);font-size:9px;letter-spacing:3px;margin-bottom:6px;font-style:normal">일 대 기</div>' +
@@ -18138,6 +18189,9 @@
   });
   // 무덤 클릭 → 만가 펼침/접힘 (이벤트 위임 — 리스트는 렌더마다 재생성되므로 부모에 1회 부착)
   $('graveyard-list').addEventListener('click', (e) => {
+    // v374 재련 버튼 — 만가 토글보다 먼저 분기 (버튼 클릭이 펼침으로 오인되지 않게)
+    const rf = e.target.closest('.grave-reforge-btn');
+    if (rf) { reforgeSword(parseInt(rf.dataset.graveIdx, 10)); return; }
     const item = e.target.closest('.grave-item');
     if (!item) return;
     const el = item.querySelector('.grave-elegy');
