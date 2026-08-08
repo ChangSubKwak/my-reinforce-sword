@@ -1227,3 +1227,27 @@ test('v378 방하: UI·통계·정규화 와이어링', () => {
   const lostIdx = rg.indexOf("' · 전손'");
   assert.ok(relIdx >= 0 && lostIdx > relIdx, '후장 분기가 전손보다 먼저');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v379 走馬燈 — 와이어링 무결성 (침묵의 5초에 일생이 흐르는지)
+// ─────────────────────────────────────────────────────────────
+test('v379 주마등: showVoid가 방금 매장된 무덤으로만 발동 + endVoid 정리', () => {
+  const body = afterDecl('function showVoid(', 8000);
+  assert.match(body, /flashGrave && flashGrave\.rescued === null\) spawnLifeFlashes\(flashGrave, totalSec\)/,
+    '이 파괴로 매장된 무덤(rescued 미확정)일 때만 발동');
+  const endBody = afterDecl('function endVoid(rescued, released) {', 3400);
+  assert.match(endBody, /clearLifeFlashes\(\)/, '조기 종료(회수/도박/방하) 시 예약 조각 정리');
+});
+
+test('v379 주마등: 설정 존중·창 닫힘 가드·용량 제한·사후명 보존', () => {
+  const body = afterDecl('function spawnLifeFlashes(', 2600);
+  assert.match(body, /getSetting\('reduceMotion'\)\) return/, 'v228 設 모션 감소 존중');
+  assert.match(body, /if \(!rescueWindow\) return/, '창이 닫힌 뒤 예약분 실행 차단');
+  assert.match(body, /frags\.slice\(0, maxN - 1\)\.concat\(frags\[frags\.length - 1\]\)/,
+    '윈도우 길이 초과 시 잘라도 사후명(마지막)은 유지');
+  assert.match(body, /137\.5/, '황금각 결정적 배치 (Math.random 배치 아님 — 겹침 최소화)');
+  const clearBody = afterDecl('function clearLifeFlashes() {', 400);
+  assert.match(clearBody, /querySelectorAll\('\.life-flash'\)/, '잔여 DOM 조각 제거');
+  assert.match(clearBody, /clearTimeout/, '예약 타이머 해제');
+  assert.ok(html.includes('.life-flash'), '.life-flash 기반 CSS 존재');
+});

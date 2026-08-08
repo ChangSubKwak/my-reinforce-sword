@@ -1841,3 +1841,31 @@ test('v378 generateElegy: 방하(후장)는 전손·회수와 구분되는 세 �
   // 구 세이브 무덤 (released 필드 없음) — 기존 분기 그대로
   assert.ok(!fns.generateElegy({ ...grave, rescued: true }).some(l => l.includes('후하게')), '구 무덤 하위호환');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v379 走馬燈 — 죽어가는 검의 일생 조각 (순수 빌더)
+// ─────────────────────────────────────────────────────────────
+test('v379 buildLifeFlashFragments: 결정적 일생 조각 + 사후명은 언제나 마지막', () => {
+  const { buildLifeFlashFragments } = loadFunctions(['buildLifeFlashFragments']);
+  const rich = {
+    name: '직운', form: '직', level: 12, bornTod: '밤', enhanceAttempts: 30, slainCount: 7,
+    scars: 2, inscriptions: ['백련', '강체', '회마', '초인', '각성', '서약'],
+    oath: { name: '무방', broken: true },
+  };
+  const frags = buildLifeFlashFragments(rich);
+  assert.deepStrictEqual(frags, buildLifeFlashFragments(rich), '결정적 (재호출 동일)');
+  assert.strictEqual(frags[frags.length - 1], '— 직운 —', '사후명이 마지막 조각 (죽음의 순간에 무덤의 이름이 먼저 보인다)');
+  assert.ok(frags.includes('깊은 밤에 태어나'), '時生 조각');
+  assert.ok(frags.includes('곧은 검'), '형 조각');
+  assert.ok(frags.includes('담금질 30번'), '단련 조각');
+  assert.ok(frags.includes('그림자 7을 베다'), '무훈 조각');
+  assert.ok(frags.includes('각흔 2'), '흉터 조각');
+  assert.ok(frags.some(s => s.includes('「무방」의 맹세') && s.includes('깨어진')), '깨어진 맹세 조각 (v376 결합)');
+  // 명문은 최대 4개까지만 (5·6번째는 잘림)
+  assert.ok(frags.includes('백련') && frags.includes('초인'), '명문 1~4번째 포함');
+  assert.ok(!frags.includes('각성') && !frags.includes('서약'), '명문 5번째부터 잘림');
+  // 최소/손상 데이터 — 최소한 사후명 조각은 존재 (무명 fallback)
+  // (sandbox 배열은 호스트와 prototype이 달라 deepStrictEqual 불가 — JSON 비교)
+  assert.strictEqual(JSON.stringify(buildLifeFlashFragments({})), JSON.stringify(['— 무명 —']), '빈 무덤도 사후명 하나');
+  assert.strictEqual(buildLifeFlashFragments(null).length, 0, 'null 안전');
+});

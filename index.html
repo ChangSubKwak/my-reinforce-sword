@@ -1104,6 +1104,17 @@
   }
   #rescue-release:hover { color: var(--fg); border-color: var(--dim); }
   @media (prefers-reduced-motion: reduce) { #rescue-release { transition: none; } }
+  /* v379 走馬燈 — 죽어가는 검의 일생 조각 (회수 원 주변을 스쳐가는 글자들) */
+  .life-flash {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    white-space: nowrap;
+    letter-spacing: 3px;
+    font-family: 'Noto Serif KR', serif;
+    opacity: 0;
+    z-index: 4;
+  }
 
   /* 통계 바 */
   #stats {
@@ -12543,6 +12554,9 @@
   // === 파괴 후 회수 윈도우 ===
   function showVoid(destroyedLevel) {
     voidPending = false;  // v368 — rescueWindow가 이제 game-over 가드를 인계받음
+    // v379 走馬燈 — 죽어가는 검의 일생이 5초의 침묵 속을 스쳐간다.
+    // 방금 매장된 무덤(v373 recordFallenSword가 showVoid보다 먼저 실행됨)에서 일생 조각을 읽는다.
+    const flashGrave = (state.fallenSwords || [])[(state.fallenSwords || []).length - 1];
     const shardReward = rescueShards(destroyedLevel);
     voidEl.classList.add('active');
     swordWrap.style.opacity = 0;
@@ -12570,6 +12584,8 @@
         ringCircle.style.strokeDashoffset = '289';
       });
     }
+    // v379 走馬燈 — 이 파괴로 매장된 무덤일 때만 (rescued 미확정 = 방금 그 검)
+    if (flashGrave && flashGrave.rescued === null) spawnLifeFlashes(flashGrave, totalSec);
 
     let rescued = false;
     let lastTickSec = Math.ceil(timeLeft);  // v282 — 초 단위 카운트다운 틱 사운드
@@ -12700,7 +12716,66 @@
     save();
   }
 
+  // === v379 走馬燈(주마등) — 죽어가는 검의 일생이 눈앞을 스친다 ===
+  // 회수 윈도우(본질의 침묵)에 그 검의 *삶*을 흘려보낸다 — 줍기/도박/방하(v378)의 결정이
+  // 숫자가 아니라 한 일생을 마주한 결정이 되도록. 마지막 조각은 사후명(v373) — 죽음의 순간에
+  // 무덤의 이름이 먼저 보인다. 메커니즘 효과 0, 전부 매장 스냅샷 파생.
+  function buildLifeFlashFragments(f) {
+    if (!f) return [];
+    const frags = [];
+    const todWord = ({ '아침': '아침에 태어나', '낮': '한낮에 태어나', '저녁': '저녁에 태어나', '밤': '깊은 밤에 태어나' })[f.bornTod];
+    if (todWord) frags.push(todWord);
+    const formWord = ({ '직': '곧은 검', '곡': '굽은 검', '중': '무거운 검', '속': '빠른 검' })[f.form];
+    if (formWord) frags.push(formWord);
+    if ((f.enhanceAttempts || 0) > 0) frags.push('담금질 ' + f.enhanceAttempts + '번');
+    if ((f.slainCount || 0) > 0) frags.push('그림자 ' + f.slainCount + '을 베다');
+    (f.inscriptions || []).slice(0, 4).forEach(k => frags.push(k));
+    if ((f.scars || 0) > 0) frags.push('각흔 ' + f.scars);
+    if (f.oath && f.oath.name) frags.push('「' + f.oath.name + '」의 맹세' + (f.oath.broken ? ' — 깨어진' : ''));
+    frags.push('— ' + (f.name || '무명') + ' —');  // 사후명은 언제나 마지막
+    return frags;
+  }
+  let lifeFlashTimers = [];
+  function clearLifeFlashes() {
+    lifeFlashTimers.forEach(t => clearTimeout(t));
+    lifeFlashTimers = [];
+    document.querySelectorAll('.life-flash').forEach(el => el.remove());
+  }
+  function spawnLifeFlashes(f, totalSec) {
+    if (getSetting('reduceMotion')) return;  // v228 設 존중
+    const frags = buildLifeFlashFragments(f);
+    if (!frags.length) return;
+    // 윈도우 길이에 맞춰 개수 제한 — 잘려도 사후명(마지막)은 항상 유지
+    const maxN = Math.max(2, Math.floor((totalSec - 1.0) / 0.5));
+    const shown = frags.length > maxN ? frags.slice(0, maxN - 1).concat(frags[frags.length - 1]) : frags;
+    shown.forEach((text, i) => {
+      lifeFlashTimers.push(setTimeout(() => {
+        if (!rescueWindow) return;  // 창이 이미 닫혔으면 중단 (조기 회수/방하)
+        const isLast = i === shown.length - 1;
+        const el = document.createElement('div');
+        el.className = 'life-flash';
+        el.textContent = text;
+        // 황금각(137.5°) 분산 — 결정적 배치, 겹침 최소화. 회수 원(중앙) 주변 타원 궤도.
+        const angle = (i * 137.5) % 360;
+        const radius = 96 + (i % 3) * 28;
+        el.style.left = 'calc(50% + ' + Math.round(Math.cos(angle * Math.PI / 180) * radius) + 'px)';
+        el.style.top = 'calc(45% + ' + Math.round(Math.sin(angle * Math.PI / 180) * radius * 0.55) + 'px)';
+        el.style.fontSize = (isLast ? 13 : 10) + 'px';
+        el.style.color = isLast ? 'var(--accent)' : 'var(--dim)';
+        voidEl.appendChild(el);
+        el.animate([
+          { opacity: 0 },
+          { opacity: isLast ? 0.9 : 0.55, offset: 0.3 },
+          { opacity: isLast ? 0.9 : 0.55, offset: 0.7 },
+          { opacity: 0 }
+        ], { duration: isLast ? 1800 : 1400, easing: 'ease-in-out' });
+        setTimeout(() => el.remove(), isLast ? 1900 : 1500);
+      }, 400 + i * 500));
+    });
+  }
+
   function endVoid(rescued, released) {
+    clearLifeFlashes();  // v379 — 조기 종료 시 예약된 주마등 조각 정리
     voidEl.classList.remove('active');
     swordWrap.style.opacity = 1;
     setRescueBodyClass(false);  // v182 水鏡 restore
