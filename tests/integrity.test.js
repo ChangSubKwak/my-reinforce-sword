@@ -1406,3 +1406,32 @@ test('v384 겁: 표시·방어 와이어링', () => {
   assert.match(nb, /Array\.isArray\(state\.eras\)/, '연대기 배열 보정');
   assert.match(nb, /try \{ state\.eraStart = eraSnapshot\(\); \} catch/, '개막 스냅샷 — sandbox 안전 내부 try');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v385 劍士傳 — 대장장이 족자 와이어링 (단일 진원 수집·XSS·다운로드)
+// ─────────────────────────────────────────────────────────────
+test('v385 검사전: 수집은 단일 진원 헬퍼로 + 세션 전 층위 결합', () => {
+  const cb = afterDecl('function collectSmithData() {', 2400);
+  assert.match(cb, /allSealedSwords\(\)/, '계보는 봉인+전당 단일 진원 순회 (v350류 누락 방지)');
+  assert.match(cb, /getPersonas\(\)/, '페르소나');
+  assert.match(cb, /getActiveSchools\(\)/, '유파');
+  assert.match(cb, /generatePlayerTitle\(\)/, '호(v141)');
+  assert.match(cb, /collectionHighlight\(/, '대표검 (v250 재사용)');
+  assert.match(cb, /state\.nemesesSlain/, '설욕(v372) 결합');
+  assert.match(cb, /oathsKept/, '서약(v376) 결합');
+  assert.match(cb, /luckAct/, '천칭(v382) 결합');
+  assert.match(cb, /state\.eras/, '겁 연대기(v384) 결합');
+});
+
+test('v385 검사전: 렌더·메뉴·다운로드 와이어링 + XSS 경계', () => {
+  const sb = afterDecl('function buildSmithScrollSVG() {', 4500);
+  assert.match(sb, /buildSmithScrollLines\(/, '순수 조립부 경유 (조립 로직 테스트 가능)');
+  assert.match(sb, /wrapText\(/, '장문 줄바꿈 (v381 재사용)');
+  assert.match(sb, /escapeHtml\(/, '텍스트 이스케이프 (import 유래 검명 SVG 주입 차단)');
+  assert.ok(html.includes('id="btn-export-smith"'), '메뉴 검사전 버튼');
+  assert.match(js, /\$\('btn-export-smith'\)\.addEventListener/, '버튼 핸들러');
+  const ex = afterDecl('function exportSmithScroll() {', 1400);
+  assert.match(ex, /image\/svg\+xml/, 'SVG Blob 다운로드');
+  assert.match(ex, /revokeObjectURL/, 'URL 정리');
+  assert.match(ex, /try \{/, '실패 안전');
+});

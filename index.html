@@ -2932,6 +2932,7 @@
   <button id="btn-backup">진행도 백업 (파일)</button>
   <button id="btn-restore">진행도 복원 (파일)</button>
   <button id="btn-export-sword">현재 검 SVG 저장</button>
+  <button id="btn-export-smith">검사전 족자 저장</button>
   <input type="file" id="restore-file-input" accept=".json,application/json" style="display:none">
   <button id="btn-reset">초 기 화</button>
 </div>
@@ -17964,6 +17965,110 @@
       '<text x="' + (W / 2) + '" y="' + (H - 26) + '" text-anchor="middle" font-size="7" fill="#968d80" letter-spacing="3">검 강화 — ' + (state.swordGeneration || 1) + '代의 계보에서</text>' +
       '</svg>';
   }
+  // === v385 劍士傳(검사전) — 대장장이의 족자 ===
+  // v381이 검 한 자루의 족자라면 이것은 대장장이 자신의 일대기 — 호·페르소나·계보·무훈·
+  // 설욕·서약·천칭·유파·겁의 연대기·세월을 한 장에 응축. 데이터 수집(collectSmithData)과
+  // 줄 조립(buildSmithScrollLines, 순수)을 분리해 조립 로직을 테스트로 잠근다. 효과 0.
+  function collectSmithData() {
+    const s = state.stats || {};
+    const all = allSealedSwords();
+    const best = collectionHighlight(all, sw => sw.level || 0);
+    return {
+      title: generatePlayerTitle(),
+      personas: getPersonas().map(p => p.name),
+      sealed: (state.sealedSwords || []).length,
+      enshrined: (state.enshrined || []).length,
+      ways: s.wayReached || 0,
+      generation: state.swordGeneration || 0,
+      slain: state.totalSlain || 0,
+      destroyed: state.totalDestroyed || 0,
+      demons: s.slainDemon || 0,
+      yaksha: s.yakshaSlain || 0,
+      revenges: state.nemesesSlain || 0,
+      oathsKept: s.oathsKept || 0,
+      oathsBroken: s.oathsBroken || 0,
+      luckDelta: (s.luckExp > 0) ? ((s.luckAct || 0) - (s.luckExp || 0)) : null,
+      schools: getActiveSchools(),
+      eras: (state.eras || []).slice(-3),
+      eraIdx: (state.eras || []).length + 1,
+      playTime: formatPlayTime(state.totalPlayTimeMs || 0),
+      bestSword: best ? { name: best.name || makeSwordName(best.form, best.inscriptions || [], best.level || 0), level: best.level || 0, form: best.form, inscriptions: best.inscriptions || [], playerSeal: best.playerSeal || '' } : null,
+    };
+  }
+  function buildSmithScrollLines(d) {
+    // 순수 조립 — {t, size, fill, gap, ls} 배열. 이룬 것만 말한다 (0/빈 항목 침묵).
+    if (!d) return [];
+    const lines = [];
+    const push = (t, size, fill, gap, ls) => lines.push({ t, size, fill, gap: gap || 0, ls: ls == null ? 2 : ls });
+    if (d.personas && d.personas.length) push(d.personas.join(' · '), 9, '#e8c454', 6);
+    push('봉인 ' + (d.sealed || 0) + '자루 · 전당 ' + (d.enshrined || 0) + ' · 도 ' + (d.ways || 0) + '회 · ' + (d.generation || 0) + '대', 9.5, '#f0ece0', 14);
+    const feats = [];
+    if (d.slain > 0) feats.push('그림자 ' + d.slain);
+    if (d.demons > 0) feats.push('검귀 ' + d.demons);
+    if (d.yaksha > 0) feats.push('야차 ' + d.yaksha);
+    if (d.revenges > 0) feats.push('설욕 ' + d.revenges);
+    if (feats.length) push(feats.join(' · '), 9, '#c8b8a0', 8);
+    if ((d.oathsKept || 0) > 0 || (d.oathsBroken || 0) > 0) push('서약 — 지킴 ' + (d.oathsKept || 0) + ' · 파계 ' + (d.oathsBroken || 0), 9, '#c8b8d8', 8);
+    if (typeof d.luckDelta === 'number') push('천칭 — ' + (d.luckDelta >= 0 ? '+' : '') + d.luckDelta.toFixed(1) + ' · ' + luckWord(d.luckDelta).word + ' 검사', 9, '#a8c0d8', 8);
+    if (d.schools && d.schools.length) push('유파 — ' + d.schools.join(' · '), 9, '#a8c8d8', 8);
+    if (d.bestSword) push('대표검 — ' + d.bestSword.name + ' +' + d.bestSword.level, 10, '#fff5c0', 14);
+    (d.eras || []).forEach((e, i) => push('제 ' + (e.idx || '?') + ' 겁 — ' + describeEra(e), 8.5, '#968d80', i === 0 ? 14 : 5, 1));
+    push('제 ' + (d.eraIdx || 1) + ' 겁을 걷는 중 · 세월 ' + (d.playTime || ''), 8.5, '#968d80', 10, 1);
+    return lines;
+  }
+  function buildSmithScrollSVG() {
+    const d = collectSmithData();
+    const W = 320;
+    // 대표검 figure (없으면 현재 검, 그것도 없으면 생략)
+    const figSword = d.bestSword || (state.hasSword && state.currentSword ? { form: state.currentSword.form, level: state.level, inscriptions: state.currentSword.inscriptions || [], playerSeal: state.currentSword.playerSeal || '' } : null);
+    const headerH = 96;
+    const figH = figSword ? 190 : 10;
+    let y = headerH + figH;
+    let textSVG = '';
+    buildSmithScrollLines(d).forEach(L => {
+      y += L.gap + L.size + 4;
+      wrapText(L.t, 26).forEach((seg, i) => {
+        if (i > 0) y += L.size + 4;
+        textSVG += '<text x="' + (W / 2) + '" y="' + y.toFixed(1) + '" text-anchor="middle" font-size="' + L.size + '" fill="' + L.fill + '" letter-spacing="' + L.ls + '" font-family="\'Noto Serif KR\', serif">' + escapeHtml(seg) + '</text>';
+      });
+    });
+    const H = Math.round(y + 58);
+    let figSVG = '';
+    if (figSword) {
+      const body = buildSwordBody(figSword.level || 0, figSword.form, figSword.playerSeal || '');
+      const kanji = getPrimaryKanji(figSword.inscriptions || []);
+      const kanjiSVG = kanji ? '<text x="50" y="80" text-anchor="middle" font-size="10" fill="' + kanji.c + '" opacity="0.9" font-family="serif" font-weight="700">' + kanji.k + '</text>' : '';
+      figSVG = '<g transform="translate(' + (W / 2 - 50) + ', ' + headerH + ') scale(0.9)">' + body + kanjiSVG + '</g>';
+    }
+    const defsEl = document.querySelector('#sword-svg defs');
+    const defs = defsEl ? defsEl.outerHTML : '';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" width="' + (W * 2) + '" height="' + (H * 2) + '">' + defs +
+      '<rect width="' + W + '" height="' + H + '" fill="#1f1a14"/>' +
+      '<rect x="8" y="8" width="' + (W - 16) + '" height="' + (H - 16) + '" fill="none" stroke="#3a322a" stroke-width="1"/>' +
+      '<rect x="12" y="12" width="' + (W - 24) + '" height="' + (H - 24) + '" fill="none" stroke="rgba(232,196,84,0.25)" stroke-width="0.6"/>' +
+      '<text x="' + (W / 2) + '" y="54" text-anchor="middle" font-size="20" fill="#e8c454" letter-spacing="7" font-family="\'Noto Serif KR\', serif">' + escapeHtml(d.title) + '</text>' +
+      '<text x="' + (W / 2) + '" y="76" text-anchor="middle" font-size="8" fill="#968d80" letter-spacing="6">검 사 전 · 劍士傳</text>' +
+      figSVG + textSVG +
+      '<text x="' + (W / 2) + '" y="' + (H - 24) + '" text-anchor="middle" font-size="7" fill="#968d80" letter-spacing="3">검 강화 — ' + new Date().toISOString().slice(0, 10) + '</text>' +
+      '</svg>';
+  }
+  function exportSmithScroll() {
+    try {
+      const svg = buildSmithScrollSVG();
+      const title = generatePlayerTitle().replace(/\s+/g, '');
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '검사전_' + title + '_' + new Date().toISOString().slice(0, 10) + '.svg';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+      log('검사전 족자 다운로드 — ' + title, 'success');
+    } catch (e) {
+      log('족자 생성 실패', 'destroy');
+    }
+  }
   let lastDetailSword = null;  // 회고 모달이 현재 보고 있는 검 (족자 내보내기용)
   function exportSwordScroll(s) {
     if (!s) return;
@@ -18907,6 +19012,11 @@
   // v381 검전 — 회고 모달의 검을 족자로 내보내기
   $('btn-export-scroll').addEventListener('click', () => {
     exportSwordScroll(lastDetailSword);
+  });
+  // v385 검사전 — 대장장이의 족자
+  $('btn-export-smith').addEventListener('click', () => {
+    exportSmithScroll();
+    $('menu-drop').classList.remove('open');
   });
   // v376 서약 — 맹세 버튼/계율 선택 와이어링
   $('btn-oath').addEventListener('click', () => {

@@ -1998,3 +1998,37 @@ test('v384 describeEra: 연대기 한 줄 — 이룬 것만 · 빈 시대 · 결
   assert.strictEqual(describeEra(null), '', 'null 안전');
   assert.strictEqual(describeEra(full === full ? { generations: 7, ways: 2, sealed: 5, slain: 30, destroyed: 3 } : null), full, '결정적');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v385 劍士傳 — 대장장이 족자 줄 조립 (순수)
+// ─────────────────────────────────────────────────────────────
+test('v385 buildSmithScrollLines: 이룬 것만 말한다 — 섹션 포함/침묵·결정적', () => {
+  const fns = loadFunctions(['buildSmithScrollLines', 'luckWord', 'describeEra']);
+  const rich = {
+    personas: ['귀살자', '서약자'], sealed: 12, enshrined: 2, ways: 3, generation: 20,
+    slain: 88, demons: 4, yaksha: 1, revenges: 2, oathsKept: 3, oathsBroken: 1,
+    luckDelta: -3.4, schools: ['직류', '속류'],
+    eras: [{ idx: 1, generations: 5, ways: 1, sealed: 4, slain: 30, destroyed: 2 }],
+    eraIdx: 2, playTime: '3시간',
+    bestSword: { name: '직도', level: 15 },
+  };
+  const lines = fns.buildSmithScrollLines(rich);
+  const all = lines.map(l => l.t).join(' | ');
+  assert.ok(all.includes('귀살자 · 서약자'), '페르소나');
+  assert.ok(all.includes('봉인 12자루 · 전당 2 · 도 3회 · 20대'), '계보 요약');
+  assert.ok(all.includes('그림자 88 · 검귀 4 · 야차 1 · 설욕 2'), '무훈 (전 항목)');
+  assert.ok(all.includes('서약 — 지킴 3 · 파계 1'), '서약 결산');
+  assert.ok(all.includes('천칭 — -3.4') && all.includes('하늘이 빚진'), '천칭 (v382 어휘 재사용)');
+  assert.ok(all.includes('유파 — 직류 · 속류'), '유파');
+  assert.ok(all.includes('대표검 — 직도 +15'), '대표검');
+  assert.ok(all.includes('제 1 겁 —') && all.includes('제 2 겁을 걷는 중'), '겁의 연대기 + 현재 겁');
+  // 이루지 못한 항목은 침묵 (신규 플레이어 족자가 0 나열이 되지 않게)
+  const bare = fns.buildSmithScrollLines({ sealed: 0, enshrined: 0, ways: 0, generation: 1, eras: [], eraIdx: 1, playTime: '1분' });
+  const bareAll = bare.map(l => l.t).join(' | ');
+  assert.ok(!bareAll.includes('그림자') && !bareAll.includes('서약') && !bareAll.includes('천칭') && !bareAll.includes('유파') && !bareAll.includes('대표검'), '빈 항목 전부 침묵');
+  assert.ok(bareAll.includes('봉인 0자루'), '계보 요약은 항상 (0이어도 정직)');
+  // luckDelta 0도 표시 (고른 바람 — null만 침묵)
+  assert.ok(fns.buildSmithScrollLines({ luckDelta: 0, eras: [], eraIdx: 1 }).map(l => l.t).join('').includes('고른 바람'), 'delta 0 ≠ 무기록');
+  assert.strictEqual(fns.buildSmithScrollLines(null).length, 0, 'null 안전');
+  assert.strictEqual(JSON.stringify(fns.buildSmithScrollLines(rich)), JSON.stringify(fns.buildSmithScrollLines(rich)), '결정적');
+});
