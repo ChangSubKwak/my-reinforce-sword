@@ -1724,3 +1724,25 @@ test('v374 generateBiography: 재련 검은 무덤 혈통 줄이 나타나고 �
   assert.match(both, /혼을 이어 태어났다/, '융합 줄 보존');
   assert.match(both, /무덤에서 다시 벼려졌다/, '재련 줄 공존');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v375 招影 — 그림자를 부른다 (순수 함수)
+// ─────────────────────────────────────────────────────────────
+test('v375 summonNemesisChance/SUMMON_TUNING: 원한은 향을 맡는다 + 인플레이션 차단 잠금', () => {
+  const deps = {
+    NEMESIS_TUNING: extractConst('NEMESIS_TUNING'),
+    SUMMON_TUNING: extractConst('SUMMON_TUNING'),
+  };
+  const fns = loadFunctions(['summonNemesisChance', 'nemesisReturnChance'], deps);
+  const T = deps.SUMMON_TUNING;
+  assert.ok(T.rewardMul > 0 && T.rewardMul < 1, '불려온 그림자 전리품 절반(' + T.rewardMul + ') — 소환 farming 차단');
+  assert.ok(T.nemesisBias > 0, '소환 bias 양수 — 설욕의 능동 추구가 실제로 유리');
+  assert.ok(T.nemesisCap < 1, '숙적 응답 cap < 1 — 소환이 숙적 확정 버튼이 되지 않음');
+  for (let w = 1; w <= 20; w++) {
+    assert.ok(fns.summonNemesisChance(w) >= fns.nemesisReturnChance(w), w + '승: 소환 응답 ≥ 자연 재등장');
+    assert.ok(fns.summonNemesisChance(w) <= T.nemesisCap + 1e-9, w + '승: cap 준수');
+    if (w > 1) assert.ok(fns.summonNemesisChance(w) >= fns.summonNemesisChance(w - 1), '원한 깊을수록 응답 단조');
+  }
+  // cap 전 구간에선 bias 정확 가산
+  assert.ok(Math.abs(fns.summonNemesisChance(1) - (fns.nemesisReturnChance(1) + T.nemesisBias)) < 1e-9, 'bias 정확 가산');
+});

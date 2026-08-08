@@ -2149,6 +2149,21 @@
     filter: drop-shadow(0 0 18px rgba(208, 72, 48, 0.6));
     animation-duration: 1.2s;  /* 타입별 호흡 애니를 조급하게 — 원한의 조바심 */
   }
+  /* v373/v374 검총 무덤 카드 — hover 피드백·부드러운 만가 펼침·reduced-motion 존중
+     (ui-ux-pro-max 원칙: 클릭 요소 hover 전환 150-300ms, 상태 변화 즉발 금지) */
+  .grave-item { transition: background 0.2s ease; }
+  .grave-item:hover { background: rgba(232, 196, 84, 0.04); }
+  .grave-elegy { animation: grave-elegy-in 0.25s ease; }
+  @keyframes grave-elegy-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+  .grave-reforge-btn { transition: background 0.2s ease, border-color 0.2s ease; }
+  .grave-reforge-btn:hover:not(:disabled) { background: rgba(232, 196, 84, 0.12); }
+  .grave-reforge-btn:disabled { opacity: 0.35; cursor: default; }
+  .fusion-item { transition: background 0.2s ease; }
+  .fusion-item:hover { background: rgba(232, 196, 84, 0.05); }
+  @media (prefers-reduced-motion: reduce) {
+    .grave-item, .grave-reforge-btn, .fusion-item { transition: none; }
+    .grave-elegy { animation: none; }
+  }
   /* v41 검귀 SVG (얼굴/발톱) */
   #demon-detail {
     position: absolute;
@@ -3379,6 +3394,10 @@
       <div class="recipe-text">점복<small>조각 15 · 다음 강화 전조 100% 정확</small></div>
       <button class="recipe-btn" data-recipe="divinationstone">만 들 기</button>
     </div>
+    <div class="recipe">
+      <div class="recipe-text">초영<small>조각 15 · 그림자를 부른다 — 전리품 절반 · 원한은 향을 맡는다</small></div>
+      <button class="recipe-btn" data-recipe="summon">부 르 기</button>
+    </div>
     <button class="modal-close" data-close>닫 기</button>
   </div>
 </div>
@@ -4264,6 +4283,7 @@
       rescued: 0, rescueFailed: 0,
       sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0,
       downgraded: 0,  // v105 落 — 하락 누적
+      summoned: 0,  // v375 초영 — 그림자를 부른 횟수
     },
     seenHelp: false,
   };
@@ -4585,7 +4605,7 @@
       if (!state.gambleStats || typeof state.gambleStats !== 'object') state.gambleStats = { win: 0, lose: 0 };  // v219
       if (typeof state.eternityPoints !== 'number') state.eternityPoints = 0;  // v225
       // stats — 기본 sub-key 병합 (구 저장본에 신규 key 누락 시 baseline 보정)
-      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0 };
+      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0 };
       state.stats = Object.assign({}, DEFAULT_STATS, (state.stats && typeof state.stats === 'object') ? state.stats : {});
     } catch (e) {}
   }
@@ -12847,7 +12867,14 @@
     return null;
   }
 
-  function maybeTriggerChallenge() {
+  // v375 초영 — 그림자를 부르는 능동 도전. forced=true(조합소 초영)면 spawn 롤만 우회하고
+  // 가드(검 보유/최소 강화/중복)·名 100% 우선순위·이후 파이프라인은 전부 동일 경로.
+  const SUMMON_TUNING = { rewardMul: 0.5, nemesisBias: 0.35, nemesisCap: 0.9 };  // 전리품 절반 · 원한은 향을 맡는다
+  function summonNemesisChance(wins) {
+    // 소환 시 숙적 응답 확률 — 자연 재등장(nemesisReturnChance)에 bias 가산, cap 미만 유지
+    return Math.min(SUMMON_TUNING.nemesisCap, nemesisReturnChance(wins) + SUMMON_TUNING.nemesisBias);
+  }
+  function maybeTriggerChallenge(forced) {
     if (!state.hasSword) return;
     if (state.level < CHALLENGE_MIN_LEVEL) return;
     if (challenge) return;
@@ -12856,12 +12883,13 @@
     if (foe) { triggerNamedFoe(foe); return; }
     const seasonMul = getSeason().challengeMul;
     const chance = Math.min(CHALLENGE_MAX_CHANCE, (CHALLENGE_BASE_CHANCE + state.level * CHALLENGE_LEVEL_BONUS) * seasonMul * solarChallengeMul());
-    if (Math.random() >= chance) return;
+    if (!forced && Math.random() >= chance) return;
     // v372 숙적 — spawn 롤을 통과한 도전을 확률로 '대체' (총 도전 빈도 불변).
     // 원한(wins)이 깊을수록 자주 돌아오고, 강도는 저장된 값 그대로 (재롤 없음 — 그 놈이 그 놈).
+    // v375 초영 — 부른 도전이면 숙적 응답에 bias 가산 (설욕을 능동적으로 추구 가능)
     let type, strength, reward, isNemesis = false;
     const nem = state.nemesis;
-    if (nem && Math.random() < nemesisReturnChance(nem.wins)) {
+    if (nem && Math.random() < (forced ? summonNemesisChance(nem.wins) : nemesisReturnChance(nem.wins))) {
       isNemesis = true;
       type = SHADOW_TYPES.find(t => t.key === nem.typeKey) || SHADOW_TYPES[0];
       strength = nem.strength;
@@ -12930,8 +12958,13 @@
     // v212 休 — 주말 도전 보상 ×1.05
     const wmul = weekendChallengeMul();
     if (wmul !== 1) reward = Math.floor(reward * wmul);
+    // v375 초영 — 불려나온 그림자의 전리품은 절반 (배수 캐스케이드 *마지막*에 적용 —
+    // 반토막이 다시 배수로 부풀지 않게). 소환 farming 조각 인플레이션 차단:
+    // 소환의 가치는 조각이 아니라 명문·魂·학파·설욕·천명 진행이다.
+    if (forced) reward = Math.floor(reward * SUMMON_TUNING.rewardMul);
     const origin = isNemesis ? nem.origin : rollShadowOrigin();
     challenge = { strength, reward, type, origin };
+    if (forced) challenge.summoned = true;  // v375 — 도전 화면 안내용 표식
     if (isNemesis) {
       // v372 — 스냅샷 보관 (도전 자체는 휘발성 유지, 영구 기록은 state.nemesis가 담당)
       challenge.isNemesis = true;
@@ -13925,7 +13958,11 @@
     const nemesisNote = challenge.isNemesis
       ? '<span style="color:var(--danger);font-size:11px;letter-spacing:2px">너를 ' + challenge.nemesisWins + '번 이긴 그림자가 돌아왔다 — 베어내면 설욕이다</span><br>'
       : '';
-    const typeNote = nemesisNote + (t.desc
+    // v375 초영 — 불려나온 그림자 안내 (전리품 절반 트레이드를 결정 전에 명시)
+    const summonNote = challenge.summoned
+      ? '<span style="color:var(--dim);font-size:10px;letter-spacing:2px">불려나온 그림자 — 전리품이 얇다</span><br>'
+      : '';
+    const typeNote = nemesisNote + summonNote + (t.desc
       ? '<span style="color:var(--accent);font-size:11px">' + t.desc + '</span><br>'
       : '');
     // 검 강도 vs 그림자 강도 막대 비교
@@ -15451,13 +15488,13 @@
           '<span>' + (f.ts ? formatTimeAgo(f.ts) : '') + '</span>' +
         '</div>' +
         (ins ? '<div style="margin-top:3px;font-size:10px;color:var(--accent);opacity:0.7;letter-spacing:2px">' + ins + '</div>' : '') +
-        '<div class="grave-elegy" style="display:none;margin-top:8px;padding:8px 10px;border-left:2px solid var(--line);color:var(--dim);font-size:11px;line-height:2.1;letter-spacing:2px">' + elegy + '</div>' +
+        '<div class="grave-elegy" style="display:none;margin-top:8px;padding:8px 10px;border-left:2px solid var(--line);color:var(--dim);font-size:12px;line-height:2.1;letter-spacing:2px">' + elegy + '</div>' +
         // v374 재련 — 검 없음 상태에서만 무덤의 검을 다시 벼릴 수 있다 (무덤당 1회)
         (f.reforged
           ? '<div style="margin-top:6px;font-size:10px;color:var(--safe);letter-spacing:2px;opacity:0.8">재련 — 이 무덤의 검은 다시 벼려졌다</div>'
           : (!state.hasSword
             ? '<button class="grave-reforge-btn" data-grave-idx="' + idx + '"' + (state.shards < reforgeCost(f.level) ? ' disabled' : '') +
-              ' style="margin-top:8px;padding:7px 14px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:10px;letter-spacing:3px;cursor:pointer">다시 벼리기 · ' + reforgeCost(f.level) + ' 조각</button>'
+              ' style="margin-top:8px;padding:10px 18px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:11px;letter-spacing:3px;cursor:pointer">다시 벼리기 · ' + reforgeCost(f.level) + ' 조각</button>'
             : '')) +
       '</div>';
     }).join('');
@@ -17162,6 +17199,16 @@
       check: () => !state.hasSword,
       run: () => { newSword(); }
     },
+    summon: {  // v375 초영 — 그림자를 부른다 (100% 수동적이던 도전 차원에 첫 능동 결정)
+      cost: 15,
+      check: () => state.hasSword && state.level >= CHALLENGE_MIN_LEVEL && !challenge && !rescueWindow,
+      msg: '초영 — 검광이 어둠을 부른다',
+      run: () => {
+        bumpStat('summoned');
+        $('forge-modal').classList.remove('active');
+        setTimeout(() => maybeTriggerChallenge(true), 450);
+      }
+    },
   };
 
   function updateForgeButtons() {
@@ -17184,7 +17231,7 @@
       state.shards -= r.cost;
       r.run();
       SFX.forge();
-      log('만들었다', 'success');
+      log(r.msg || '만들었다', 'success');
       save();
       render();
       updateForgeButtons();
@@ -18976,6 +19023,7 @@
       row('강화 하락', fmtNum(s.downgraded || 0) + ' 회', s.downgraded > 0 ? '#c8a8a0' : 'var(--dim)') +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">그 림 자</div>' +
       row('나타난 그림자', fmtNum(s.challengesAppeared || 0) + ' 회', 'var(--dim)') +
+      ((s.summoned || 0) > 0 ? row('초영 — 부른 그림자', fmtNum(s.summoned) + ' 회', '#a8c0d8') : '') +  // v375
       bar('그림자', fmtNum(s.slainNormal || 0) + ' 회', slainMax) +
       bar('도망 그림자', fmtNum(s.slainFlee || 0) + ' 회', slainMax, '#aac0c8') +
       bar('강철 그림자', fmtNum(s.slainSteel || 0) + ' 회', slainMax, '#888aa8') +

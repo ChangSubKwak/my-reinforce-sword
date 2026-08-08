@@ -719,6 +719,16 @@ v373 검총을 박물관에서 **결정의 장소**로 전환 — 파괴(v372 �
 - **UI**: 검총 무덤 항목에 "다시 벼리기 · N 조각" 버튼 (검 없음 && 미재련 시; 조각 부족이면 disabled) / 재련된 무덤은 "다시 벼려졌다" 표기 (무덤은 남는다 — 죽음은 사실). 위임 핸들러가 만가 토글보다 먼저 분기.
 - 테스트: logic 2건(비용 단일 진원·단조·프리미엄 / 一代記 혈통 줄) + integrity 3건(가드 4중·newSword 경유 / 혈통 보존·sanitize / UI 와이어링·비용 단일 진원).
 
+### v375 招影(초영) — 그림자를 부른다
+
+一閃(도전) 차원의 첫 **능동 결정**. 기존 도전은 100% 수동(강화 성공 후 랜덤 spawn) — 특히 숙적(v372) 설욕은 기다림 외에 방법이 없었다. 조합소 레시피 `초영`(조각 15)으로 그림자를 부른다.
+
+- **경로**: `maybeTriggerChallenge(forced)` — forced=true면 **spawn 롤만 우회**, 가드(검 보유/`CHALLENGE_MIN_LEVEL`/도전·회수 중복)·名 100% 우선·이후 파이프라인(숙적 대체·보상 캐스케이드·대치 예지) 전부 동일 경로. 레시피 `check`가 4중 가드 (`hasSword && level >= CHALLENGE_MIN_LEVEL && !challenge && !rescueWindow`).
+- **인플레이션 차단**: 불려온 그림자의 전리품은 **절반** (`SUMMON_TUNING.rewardMul 0.5`, 배수 캐스케이드 *마지막*에 적용 — 반토막이 다시 배수로 부풀지 않게). 소환 farming으로 조각을 벌 수 없음 — 소환의 가치는 명문(회마/초인)·魂·학파(단마)·설욕·천명(slay 계열) *진행*이다. 도전 화면에 "전리품이 얇다" 안내 (결정 전 명시).
+- **원한은 향을 맡는다**: 소환 시 숙적 응답 확률 = `summonNemesisChance(wins)` = min(cap 0.9, 자연 재등장 + bias 0.35) — **설욕을 능동적으로 추구 가능** (v372 완결). 단 확정 버튼은 아님 (cap < 1). 트레이드: 소환 설욕은 전리품 절반, 자연 재등장 설욕은 원한 배율 온전.
+- **UI/통계**: 조합소 `.recipe` 블록 + `recipes.summon` (관례상 두 곳; cost는 recipes 숫자 리터럴 — 라벨 drift 테스트가 잠금). `stats.summoned` (state 기본값 + DEFAULT_STATS + 記錄 행). recipes에 선택적 `msg` 필드 추가 (generic 핸들러 log 커스텀).
+- **디자인 (ui-ux-pro-max 스킬 적용)**: 흑금 팔레트·자간 미학은 유지하되 범용 원칙 채택 — 검총/융검 카드 hover 전환 0.2s, 만가 펼침 0.25s 페이드(즉발 상태 변화 금지), 재련 버튼 터치 타깃 확대(padding 10px 18px), 만가 본문 12px(가독), `prefers-reduced-motion` 전부 존중.
+
 ### 봉인 균형 곡선 (참고)
 
 | 검 강화도 | 봉인 보상 (조각) |
@@ -758,6 +768,7 @@ v373 검총을 박물관에서 **결정의 장소**로 전환 — 파괴(v372 �
 | `NEMESIS_TUNING` | 宿敵 (v372) | 재등장 확률(base 0.15/승당 +0.05/cap 0.35)·원한 보상 배율(승당 +0.35/cap 2.5)·설욕 魂 |
 | `FALLEN_TUNING` | 劍塚 (v373) | 무덤 수 상한 (cap 30 — 초과 시 가장 오래된 무덤부터 잊힘, 저장 크기) |
 | `REFORGE_TUNING` | 再鍊 (v374) | 재련 비용 (base 60 + 무덤 강화도 × 3 — 새 검 50보다 프리미엄 유지) |
+| `SUMMON_TUNING` | 招影 (v375) | 소환 전리품 배율(0.5 — farming 차단)·숙적 응답 bias(+0.35)/cap(0.9). 비용은 `recipes.summon.cost(15)` |
 | `SWORD_FORMS{}` | 검의 형 | 형별 successBonus / destroyReduce / costMul / rewardMul / fleeFree |
 | `recipes.whetstone.cost = 8` | 砥石 | 다음 강화 +25% 성공 |
 | `recipes.spiritstone.cost = 25` | 靈石 | 다음 강화 파괴 차단 |

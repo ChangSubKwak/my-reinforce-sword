@@ -968,7 +968,7 @@ test('v372 숙적: slay 실패(비차단)에서 탄생, 성공에서 설욕 — 
 });
 
 test('v372 숙적: 재등장은 spawn 롤 통과 후 대체 (도전 총 빈도 인플레이션 없음)', () => {
-  const body = afterDecl('function maybeTriggerChallenge() {', 9000);
+  const body = afterDecl('function maybeTriggerChallenge(forced) {', 9000);
   const rollIdx = body.indexOf('Math.random() >= chance) return');
   const nemIdx = body.indexOf('nemesisReturnChance(');
   assert.ok(rollIdx >= 0 && nemIdx > rollIdx, '숙적 분기는 기존 spawn 롤 이후 (빈도 불변)');
@@ -1064,4 +1064,35 @@ test('v374 재련: 검총 UI에 버튼 렌더 + 위임 핸들러가 reforgeSword
   assert.match(rg, /grave-reforge-btn/, '무덤 항목에 재련 버튼 렌더');
   assert.match(rg, /reforgeCost\(f\.level\)/, '버튼 라벨 비용 = 실제 비용 (단일 진원, 하드코딩 drift 방지)');
   assert.match(js, /reforgeSword\(parseInt\(rf\.dataset\.graveIdx, 10\)\)/, '위임 핸들러 → reforgeSword');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v375 招影 — 그림자를 부른다 (능동 도전 · 소환 farming 인플레이션 차단)
+// ─────────────────────────────────────────────────────────────
+test('v375 초영: maybeTriggerChallenge(forced)는 spawn 롤만 우회 (가드·名 우선순위 보존)', () => {
+  const body = afterDecl('function maybeTriggerChallenge(forced) {', 10000);
+  const guardIdx = body.indexOf('if (!state.hasSword) return');
+  const foeIdx = body.indexOf('pendingNamedFoe()');
+  const rollIdx = body.indexOf('!forced && Math.random() >= chance) return');
+  assert.ok(guardIdx >= 0, '검 보유 가드는 forced에도 유효');
+  assert.ok(foeIdx > guardIdx, '名 100% spawn이 소환보다 우선 (기존 규칙 보존)');
+  assert.ok(rollIdx > foeIdx, 'forced는 spawn 롤만 우회');
+  assert.match(body, /forced \? summonNemesisChance\(nem\.wins\) : nemesisReturnChance\(nem\.wins\)/,
+    '소환 시 숙적 응답 bias (원한은 향을 맡는다 — 설욕의 능동 추구)');
+  // 전리품 절반은 모든 배수 캐스케이드 *이후* (반토막이 다시 배수로 부풀지 않게)
+  const weekendIdx = body.indexOf('weekendChallengeMul');
+  const halfIdx = body.indexOf('SUMMON_TUNING.rewardMul');
+  assert.ok(weekendIdx >= 0 && halfIdx > weekendIdx, '절반 적용은 배수 캐스케이드 마지막');
+  assert.match(body, /challenge\.summoned = true/, '소환 표식 (도전 화면 안내용)');
+});
+
+test('v375 초영: 레시피 가드·표시·통계·도전 화면 안내 와이어링', () => {
+  assert.ok(html.includes('data-recipe="summon"'), '조합소 초영 레시피 HTML 존재');
+  assert.match(js, /summon:\s*\{[\s\S]{0,500}?check: \(\) => state\.hasSword && state\.level >= CHALLENGE_MIN_LEVEL && !challenge && !rescueWindow/,
+    '레시피 가드 4중 (검 보유·최소 강화·도전/회수 중 차단)');
+  assert.match(js, /bumpStat\('summoned'\)/, '초영 통계 집계');
+  assert.match(js, /maybeTriggerChallenge\(true\)/, '소환 강제 트리거');
+  assert.match(js, /challenge\.summoned\s*\n?\s*\?/, '도전 화면에 전리품 절반 안내 (결정 전 명시)');
+  const ds = js.match(/const DEFAULT_STATS = \{[^}]*\}/);
+  assert.ok(ds && /summoned: 0/.test(ds[0]), 'DEFAULT_STATS에 summoned 병합 기본값 (구 저장본 보정)');
 });
