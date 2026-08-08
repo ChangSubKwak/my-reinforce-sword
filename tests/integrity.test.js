@@ -1312,3 +1312,36 @@ test('v381 검전: 회고 모달 스태시·버튼·다운로드 와이어링', 
   assert.match(ex, /revokeObjectURL/, 'Blob URL 정리 (누수 방지)');
   assert.match(ex, /try \{/, '실패 안전 (족자 생성 오류가 게임을 깨지 않음)');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v382 天秤 — 와이어링 무결성 (굴림 지점·보존·표시가 실제 경로에 연결됐는지)
+// ─────────────────────────────────────────────────────────────
+test('v382 천칭: 원장은 실제 굴림과 같은 확률·같은 판정으로 기록', () => {
+  const body = afterDecl('function enhance() {', 30000);
+  const recIdx = body.indexOf('recordLuck(successChance, roll < successChance)');
+  const branchIdx = body.indexOf('if (roll < successChance) {');
+  assert.ok(recIdx >= 0, '굴림 직후 원장 기록 (단일 진원 successChance — 표시≠실제 드리프트 불가)');
+  assert.ok(branchIdx > recIdx, '기록은 성공 분기 진입 전 (분기 내 조기 return에도 누락 없음)');
+});
+
+test('v382 천칭: 원장 보존 (봉인·殿堂·무덤) + 숫자 강제 + DEFAULT_STATS', () => {
+  const pushes = (js.match(/luckExp: state\.currentSword\.luckExp \|\| 0/g) || []).length;
+  assert.strictEqual(pushes, 2, '봉인·殿堂 양쪽 push에 원장 보존 (field-set 대칭과 이중 잠금)');
+  const rec = afterDecl('function recordFallenSword(', 1800);
+  assert.match(rec, /luckExp: cs\.luckExp \|\| 0/, '무덤에도 운 결산 보존 (만가)');
+  const nb = afterDecl('function normalizeState() {', 40000);
+  assert.match(nb, /typeof sw\.luckExp !== 'number' \|\| !isFinite\(sw\.luckExp\)/, '검 원장 숫자 강제 (문자열 오염 → + 연산 붕괴 방지)');
+  assert.match(nb, /typeof state\.stats\.luckExp !== 'number'/, '평생 원장 숫자 강제');
+  const ds = js.match(/const DEFAULT_STATS = \{[^}]*\}/);
+  assert.ok(ds && /luckExp: 0/.test(ds[0]) && /luckAct: 0/.test(ds[0]), 'DEFAULT_STATS 병합 기본값');
+});
+
+test('v382 천칭: 표시 결합 — 記錄·회고·족자·페르소나', () => {
+  const rs = js.match(/function renderStats\(\)\s*\{[\s\S]*?\n  \}/);
+  assert.ok(rs && rs[0].includes('luckDelta(s)'), '記錄 모달 평생 운 행');
+  assert.match(js, /천칭 — ' \+ \(ld >= 0 \? '\+' : ''\)/, '회고/족자 운 결산 표시');
+  const scroll = afterDecl('function buildScrollSVG(', 8000);
+  assert.match(scroll, /luckWord\(ld\)\.word/, '족자에도 운 결산 (v381 전 층위 결합 규율)');
+  const gp = js.match(/function getPersonas\(\)\s*\{[\s\S]*?\n  \}/);
+  assert.ok(gp && /천행/.test(gp[0]) && /역풍/.test(gp[0]), '천행/역풍 페르소나 (±5 임계)');
+});

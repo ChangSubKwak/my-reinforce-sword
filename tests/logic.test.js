@@ -735,7 +735,8 @@ test('generateVerse: 형 없으면 이름 없는 검', () => {
 // v50 getPersonas — 플레이어 페르소나 (스탯 임계)
 // ─────────────────────────────────────────────────────────────
 function personaNames(st) {
-  return loadFunctions(['getPersonas'], { state: st }).getPersonas().map(p => p.name);
+  // v382 — getPersonas가 천칭(luckDelta) 참조 → 함께 추출
+  return loadFunctions(['getPersonas', 'luckDelta'], { state: st }).getPersonas().map(p => p.name);
 }
 test('getPersonas: 무성취 → 초보', () => {
   assert.ok(personaNames({ stats: {}, sealedSwords: [], bestLevel: 0 }).some(x => x.includes('초보')));
@@ -1888,4 +1889,48 @@ test('v381 wrapText: 한국어 줄바꿈 — 상한 준수·글자 무손실·�
   assert.strictEqual(wrapText('', 10).length, 0, '빈 문자열 → 빈 배열');
   assert.strictEqual(wrapText(null, 10).length, 0, 'null 안전');
   assert.strictEqual(JSON.stringify(wrapText(long, 10)), JSON.stringify(wrapText(long, 10)), '결정적 (재호출 동일)');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v382 天秤 — 운의 원장 (순수 함수)
+// ─────────────────────────────────────────────────────────────
+test('v382 luckDelta/luckWord: 운 결산 — 임계·중립·안전 + recordLuck 기대 clamp', () => {
+  const fns = loadFunctions(['luckDelta', 'luckWord', 'recordLuck'], { state: { currentSword: null, stats: null } });
+  // delta 계산 + 결측 안전
+  assert.strictEqual(fns.luckDelta({ luckExp: 10.5, luckAct: 13 }), 2.5, '실제 - 기대');
+  assert.strictEqual(fns.luckDelta({}), 0, '무기록 검 → 0 (구 세이브 하위호환)');
+  assert.strictEqual(fns.luckDelta(null), 0, 'null 안전');
+  // 어휘 임계 (±1 미풍 / ±3 하늘 / 중립)
+  assert.match(fns.luckWord(3).word, /하늘이 총애한/);
+  assert.match(fns.luckWord(1.2).word, /바람이 등을 민/);
+  assert.match(fns.luckWord(0).word, /고른 바람/);
+  assert.match(fns.luckWord(-1.2).word, /바람을 거스른/);
+  assert.match(fns.luckWord(-3).word, /하늘이 빚진/);
+  // 경계 일관 — 단조 (더 큰 delta가 더 낮은 등급 어휘로 떨어지지 않음)
+  assert.notStrictEqual(fns.luckWord(0.9).word, fns.luckWord(1).word, '±1 경계 분리');
+  // recordLuck — 보너스 누적으로 확률>1이어도 기대는 1로 clamp (정직한 저울)
+  const st = { currentSword: { luckExp: 0, luckAct: 0 }, stats: { luckExp: 0, luckAct: 0 } };
+  const fns2 = loadFunctions(['recordLuck'], { state: st });
+  fns2.recordLuck(1.4, true);
+  assert.strictEqual(st.currentSword.luckExp, 1, '기대 clamp ≤1');
+  assert.strictEqual(st.currentSword.luckAct, 1, '성공 집계');
+  assert.strictEqual(st.stats.luckExp, 1, '평생 원장 동시 기록');
+  fns2.recordLuck(0.25, false);
+  assert.strictEqual(st.currentSword.luckExp, 1.25, '기대 누적');
+  assert.strictEqual(st.currentSword.luckAct, 1, '실패는 실제 미증가');
+});
+
+test('v382 만가/一代記: 운의 결산 줄 — 불운/총애/중립 침묵·무기록 하위호환', () => {
+  const fnsE = loadFunctions(['generateElegy', 'deriveTemperament']);
+  const grave = { form: '속', level: 6, enhanceAttempts: 12, slainCount: 1, rescued: false };
+  assert.ok(fnsE.generateElegy({ ...grave, luckExp: 8, luckAct: 5 }).some(l => l.includes('바람은 끝내 그의 편이 아니었다')), '만가 — 불운의 검');
+  assert.ok(fnsE.generateElegy({ ...grave, luckExp: 5, luckAct: 8 }).some(l => l.includes('총애조차 부러짐을 막지는 못했다')), '만가 — 총애받고도 부러짐');
+  assert.ok(!fnsE.generateElegy({ ...grave, luckExp: 5, luckAct: 5.5 }).some(l => l.includes('바람은') || l.includes('총애조차')), '중립(±2 미만)은 침묵');
+  assert.ok(!fnsE.generateElegy(grave).some(l => l.includes('총애')), '무기록 구 무덤 하위호환');
+  const DESTINIES = extractConst('DESTINIES');
+  const fnsB = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { DESTINIES, NAMED_FOES: extractConst('NAMED_FOES') });
+  const base = { form: '직', level: 9, inscriptions: [], slainCount: 0, soul: 0, scars: 0, stars: {}, name: '천행검' };
+  assert.match(fnsB.generateBiography({ ...base, luckExp: 6, luckAct: 9 }), /운이 그의 등을 밀어주었다/, '一代記 — 행운');
+  assert.match(fnsB.generateBiography({ ...base, luckExp: 9, luckAct: 6 }), /운은 그의 편이 아니었으나/, '一代記 — 불운');
+  assert.ok(!/운이 그의|운은 그의/.test(fnsB.generateBiography(base)), '무기록 검 불변');
 });

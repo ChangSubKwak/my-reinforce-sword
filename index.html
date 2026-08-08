@@ -4363,6 +4363,7 @@
       summoned: 0,  // v375 초영 — 그림자를 부른 횟수
       oathsSworn: 0, oathsKept: 0, oathsBroken: 0,  // v376 서약 — 맹세/지킴/파계 누적
       released: 0,  // v378 방하 — 조각을 놓아준 횟수
+      luckExp: 0, luckAct: 0,  // v382 천칭 — 평생 운의 원장 (기대 확률 합 / 실제 성공 수)
     },
     seenHelp: false,
   };
@@ -4616,6 +4617,9 @@
           sw.oath.name = (typeof sw.oath.name === 'string') ? stripTags(sw.oath.name).slice(0, 8) : '';
           sw.oath.broken = sw.oath.broken === true;
         } else if (sw.oath != null) sw.oath = null;
+        // v382 천칭 — 운 원장 숫자 강제 (문자열 오염 시 recordLuck의 + 연산이 문자열 연결로 붕괴)
+        if (typeof sw.luckExp !== 'number' || !isFinite(sw.luckExp)) sw.luckExp = 0;
+        if (typeof sw.luckAct !== 'number' || !isFinite(sw.luckAct)) sw.luckAct = 0;
         // v370o 봉인 검 level도 범위 강제 — 손상 import의 level=999가 계보 SVG·"가장 강한 검"
         // 표시를 깨고 sealReward 표시를 폭주시키는 것 방지 (표시 전용이라 검 필드 sanitize에 동봉).
         if (sw.level != null) sw.level = clampInt(sw.level, 0, MAX_LEVEL);
@@ -4650,6 +4654,9 @@
             f.oath.name = (typeof f.oath.name === 'string') ? stripTags(f.oath.name).slice(0, 8) : '';
             f.oath.broken = f.oath.broken === true;
           } else if (f.oath != null) f.oath = null;
+          // v382 천칭 — 무덤의 운 원장도 숫자 강제
+          if (typeof f.luckExp !== 'number' || !isFinite(f.luckExp)) f.luckExp = 0;
+          if (typeof f.luckAct !== 'number' || !isFinite(f.luckAct)) f.luckAct = 0;
         });
       }
       // v377 설욕록 — 손상/크래프트 import 방어 (검총 가드와 동일 패턴: 비어있으면 외부 상수 참조 0)
@@ -4709,8 +4716,11 @@
       if (!state.gambleStats || typeof state.gambleStats !== 'object') state.gambleStats = { win: 0, lose: 0 };  // v219
       if (typeof state.eternityPoints !== 'number') state.eternityPoints = 0;  // v225
       // stats — 기본 sub-key 병합 (구 저장본에 신규 key 누락 시 baseline 보정)
-      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0, oathsSworn: 0, oathsKept: 0, oathsBroken: 0, released: 0 };
+      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0, oathsSworn: 0, oathsKept: 0, oathsBroken: 0, released: 0, luckExp: 0, luckAct: 0 };
       state.stats = Object.assign({}, DEFAULT_STATS, (state.stats && typeof state.stats === 'object') ? state.stats : {});
+      // v382 천칭 — 평생 운 원장 숫자 강제 (오염 시 + 연산 붕괴 방지)
+      if (typeof state.stats.luckExp !== 'number' || !isFinite(state.stats.luckExp)) state.stats.luckExp = 0;
+      if (typeof state.stats.luckAct !== 'number' || !isFinite(state.stats.luckAct)) state.stats.luckAct = 0;
     } catch (e) {}
   }
 
@@ -12211,6 +12221,35 @@
     ).join('');
   }
 
+  // === v382 天秤(천칭) — 운의 원장 ===
+  // 이 게임의 본질은 확률 도박인데, 체감("25%인데 4연속 실패!")과 실제 운 사이를 비추는
+  // 거울이 없었다. 매 강화 굴림마다 기대(확률 합)와 실제(성공 수)를 원장에 적는다 —
+  // 검마다 + 평생. 순수 기록/서사 (메커니즘 효과 0) — 도박 게임의 확률 정직성.
+  function recordLuck(chance, succeeded) {
+    chance = Math.min(1, Math.max(0, chance || 0));  // 보너스 누적으로 1 초과 시 기대도 1로 (정직한 저울)
+    const cs = state.currentSword;
+    if (cs) {
+      cs.luckExp = (typeof cs.luckExp === 'number' ? cs.luckExp : 0) + chance;
+      cs.luckAct = (typeof cs.luckAct === 'number' ? cs.luckAct : 0) + (succeeded ? 1 : 0);
+    }
+    if (state.stats) {
+      state.stats.luckExp = (typeof state.stats.luckExp === 'number' ? state.stats.luckExp : 0) + chance;
+      state.stats.luckAct = (typeof state.stats.luckAct === 'number' ? state.stats.luckAct : 0) + (succeeded ? 1 : 0);
+    }
+  }
+  function luckDelta(o) {
+    if (!o) return 0;
+    return (o.luckAct || 0) - (o.luckExp || 0);
+  }
+  function luckWord(delta) {
+    // 결산 어휘 — 임계 ±1(미풍) / ±3(하늘). 중립 구간은 고른 바람.
+    if (delta >= 3) return { word: '하늘이 총애한', color: '#fff5c0' };
+    if (delta >= 1) return { word: '바람이 등을 민', color: '#c8e6a0' };
+    if (delta <= -3) return { word: '하늘이 빚진', color: '#e6a0a0' };
+    if (delta <= -1) return { word: '바람을 거스른', color: '#c8a8a0' };
+    return { word: '고른 바람의', color: null };
+  }
+
   // === v91 覺悟 — 강화 마음가짐 (휘발성, 새로고침 시 平常) ===
   // 원작 "다음 한 번만 더" 도박 충동에 *결정 차원*을 부여.
   const RESOLVE = {
@@ -12290,6 +12329,7 @@
     const roll = (useDivination && divinationLockedSuccessRoll !== null)
       ? divinationLockedSuccessRoll
       : Math.random();
+    recordLuck(successChance, roll < successChance);  // v382 천칭 — 기대와 실제를 함께 적는다
     if (roll < successChance) {
       // 성공 (v107 連)
       if (adversityReady) { adversityReady = false; announceInscription('역전', '역경을 넘어 강화에 성공했다'); }
@@ -15722,6 +15762,12 @@
         ? '깨어진 「' + f.oath.name + '」의 맹세를 안고 잠들었다'
         : '「' + f.oath.name + '」의 맹세를 지킨 채 부러졌다');
     }
+    // v382 천칭 — 부러진 검의 운 결산 (±2부터만 — 고른 바람은 침묵)
+    if (typeof f.luckExp === 'number' && f.luckExp > 0) {
+      const ld = (f.luckAct || 0) - (f.luckExp || 0);
+      if (ld <= -2) lines.push('바람은 끝내 그의 편이 아니었다');
+      else if (ld >= 2) lines.push('바람의 총애조차 부러짐을 막지는 못했다');
+    }
     const lv = f.level || 0;
     lines.push('+' + lv + '에서 +' + (lv + 1) + '을 바라다 부러졌다' + (f.resolve === 'focus' ? ' — 일심, 모든 것을 걸었던 참이었다' : ''));
     if (f.released === true) lines.push('조각은 바람에 놓아 보냈다 — 후하게 장사지낸 무덤');
@@ -15746,6 +15792,8 @@
       bornTod: cs.bornTod || null,
       resolve: resolveMode || 'normal',  // 죽는 순간의 각오 (保身은 파괴 0이라 평상/일심만 실재)
       oath: cs.oath ? { key: cs.oath.key, name: cs.oath.name, broken: cs.oath.broken === true } : null,  // v376 — 맹세를 안은 채 부러짐
+      luckExp: cs.luckExp || 0,  // v382 천칭 — 부러진 검의 운 결산 (만가)
+      luckAct: cs.luckAct || 0,
       rescued: null,
       ts: Date.now(),
     };
@@ -15934,6 +15982,13 @@
         ? '「' + sword.oath.name + '」의 맹세를 스스로 깨었다.'
         : '「' + sword.oath.name + '」의 맹세를 끝까지 지켰다.';
     }
+    // v382 천칭 — 운의 결산 (보존된 원장 파생, 효과 0; ±2부터만 언급 — 고른 바람은 침묵)
+    let luckLine = '';
+    if (typeof sword.luckExp === 'number' && sword.luckExp > 0) {
+      const ld = (sword.luckAct || 0) - (sword.luckExp || 0);
+      if (ld >= 2) luckLine = '운이 그의 등을 밀어주었다.';
+      else if (ld <= -2) luckLine = '운은 그의 편이 아니었으나, 여기까지 왔다.';
+    }
     // 2. 정점 성취
     let peak;
     if (ins.includes('도')) peak = '주인의 손에서 도에 이르렀다.';
@@ -15989,7 +16044,7 @@
       const dn = DESTINIES.find(x => x.key === sword.destiny);
       if (dn) destinyLine = '타고난 천명 「' + dn.label + '」을 이루었다.';
     }
-    return formOpening + ' ' + (fusionLine ? fusionLine + ' ' : '') + (reforgeLine ? reforgeLine + ' ' : '') + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + (oathLine ? oathLine + ' ' : '') + (destinyLine ? destinyLine + ' ' : '') + ending;
+    return formOpening + ' ' + (fusionLine ? fusionLine + ' ' : '') + (reforgeLine ? reforgeLine + ' ' : '') + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + (oathLine ? oathLine + ' ' : '') + (luckLine ? luckLine + ' ' : '') + (destinyLine ? destinyLine + ' ' : '') + ending;
   }
 
   // === 일생시 — 도 검 봉인 시 일생을 4행 시구로 응축 ===
@@ -16293,6 +16348,8 @@
       fusedFrom: state.currentSword.fusedFrom || null,  // v344 혈통 — 융합 혈통 보존
       reforgedFrom: state.currentSword.reforgedFrom || null,  // v374 재련 — 무덤 혈통 보존 (doSeal과 동기)
       oath: state.currentSword.oath || null,  // v376 서약 — doSeal과 동기 (전당 검도 맹세 보존)
+      luckExp: state.currentSword.luckExp || 0,  // v382 천칭 — doSeal과 동기
+      luckAct: state.currentSword.luckAct || 0,  // v382 천칭 — doSeal과 동기
     });
     bumpStat('wayReached');
     grantEternity();  // v225 무극 — 도 검 전당도 영겁 +1
@@ -17255,6 +17312,8 @@
       fusedFrom: state.currentSword.fusedFrom || null,  // v255 혈통 — 융합 혈통
       reforgedFrom: state.currentSword.reforgedFrom || null,  // v374 재련 — 무덤 혈통
       oath: state.currentSword.oath || null,  // v376 서약 — 맹세와 그 운명 (kept/broken은 broken 필드)
+      luckExp: state.currentSword.luckExp || 0,  // v382 천칭 — 운의 원장 (기대)
+      luckAct: state.currentSword.luckAct || 0,  // v382 천칭 — 운의 원장 (실제)
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -17749,6 +17808,11 @@
     if (s.oath && s.oath.name) push('서약 「' + s.oath.name + '」 — ' + (s.oath.broken ? '스스로 깨었다' : '끝까지 지켰다'), 9, s.oath.broken ? '#d04830' : '#6a9a6a', 14);
     if (Array.isArray(s.fusedFrom) && s.fusedFrom.length === 2) push('혈통 — ' + s.fusedFrom[0] + ' + ' + s.fusedFrom[1], 8.5, '#c8a8d8', 10);
     if (s.reforgedFrom) push('재련 — ' + s.reforgedFrom + '의 무덤에서', 8.5, '#c8a8a0', 10);
+    // v382 천칭 — 운의 결산도 족자에 (새 정체성 층위는 족자에 결합 — v381 규율)
+    if (typeof s.luckExp === 'number' && s.luckExp > 0) {
+      const ld = (s.luckAct || 0) - (s.luckExp || 0);
+      push('천칭 — ' + (ld >= 0 ? '+' : '') + ld.toFixed(1) + ' · ' + luckWord(ld).word + ' 검', 8.5, '#a8c0d8', 10);
+    }
     // 레이아웃 — 제목/검 그림 아래로 본문을 흘리고, 총 높이는 내용에 맞춰 동적
     const headerH = 92, swordH = 205;
     let y = headerH + swordH;
@@ -17881,6 +17945,13 @@
       // v255 혈통 — 융합으로 태어난 검의 혈통
       (Array.isArray(s.fusedFrom) && s.fusedFrom.length === 2 ? '<div style="text-align:center;color:#c8a8d8;font-size:10px;letter-spacing:2px;padding:4px 0">혈통 — ' + s.fusedFrom[0] + ' + ' + s.fusedFrom[1] + ' 의 융합</div>' : '') +
       (s.reforgedFrom ? '<div style="text-align:center;color:#c8a8a0;font-size:10px;letter-spacing:2px;padding:4px 0">재련 — ' + s.reforgedFrom + ' 의 무덤에서 다시 벼려짐</div>' : '') +  // v374
+      // v382 천칭 — 이 검의 운 결산 (원장 보존 검만)
+      (function() {
+        if (typeof s.luckExp !== 'number' || !(s.luckExp > 0)) return '';
+        const ld = luckDelta(s);
+        const w = luckWord(ld);
+        return '<div style="text-align:center;color:' + (w.color || 'var(--dim)') + ';font-size:10px;letter-spacing:2px;padding:4px 0">천칭 — ' + (ld >= 0 ? '+' : '') + ld.toFixed(1) + ' · ' + w.word + ' 검</div>';
+      })() +
       // v139 一代記 — 자동 일대기 narrative
       '<div style="margin:14px 0;padding:14px 12px;background:rgba(212,175,55,0.025);border-left:2px solid rgba(212,175,55,0.4);font-size:11px;line-height:1.9;letter-spacing:1.5px;color:var(--fg);font-style:italic">' +
         '<div style="color:var(--dim);font-size:9px;letter-spacing:3px;margin-bottom:6px;font-style:normal">일 대 기</div>' +
@@ -19392,6 +19463,10 @@
     if ((s.stalemate || 0) >= 5) personas.push({ name: '평화의 검사', desc: '대치로 그림자를 거듭 돌려보낸 자' });
     if ((state.nemesesSlain || 0) >= 2) personas.push({ name: '복수자', desc: '숙적을 거듭 갚아낸 자' });  // v372
     if (((state.stats && state.stats.oathsKept) || 0) >= 3) personas.push({ name: '서약자', desc: '맹세를 거듭 지켜낸 자' });  // v376
+    // v382 천칭 — 평생 운의 결산 페르소나 (±5 임계)
+    const lifeLuck = luckDelta(state.stats);
+    if (lifeLuck >= 5) personas.push({ name: '천행', desc: '기대를 웃도는 운을 걸어온 자' });
+    else if (lifeLuck <= -5) personas.push({ name: '역풍', desc: '운을 거슬러 검을 벼려온 자' });
     if ((s.downgraded || 0) >= 15) personas.push({ name: '단련의 인내자', desc: '거듭 하락하여도 다시 두드린다' });
     if (state.sealedSwords && state.sealedSwords.length === 0 && (state.bestLevel || 0) >= 8) {
       personas.push({ name: '집착자', desc: '한 자루의 검을 깊이 키운다' });
@@ -19524,6 +19599,13 @@
       bar('성공률', rate + '% (' + fmtNum(s.enhanceSuccess || 0) + '/' + fmtNum(s.enhanceAttempts || 0) + ')',
           100, 'var(--safe)').replace(/>(\d+)% \(/, '><span style="font-size:10px">$1% (') +
       row('강화 시도', fmtNum(s.enhanceAttempts || 0) + ' 회') +
+      // v382 천칭 — 평생 운의 원장 (기대 대비 실제, ± 판정 어휘)
+      (function() {
+        if (!(s.luckExp > 0)) return '';
+        const ld = luckDelta(s);
+        const w = luckWord(ld);
+        return row('천칭 (운의 원장)', (ld >= 0 ? '+' : '') + ld.toFixed(1) + ' — ' + w.word + ' 검사', w.color || 'var(--dim)');
+      })() +
       row('강화 하락', fmtNum(s.downgraded || 0) + ' 회', s.downgraded > 0 ? '#c8a8a0' : 'var(--dim)') +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">그 림 자</div>' +
       row('나타난 그림자', fmtNum(s.challengesAppeared || 0) + ' 회', 'var(--dim)') +
