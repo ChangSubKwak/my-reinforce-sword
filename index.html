@@ -16,6 +16,13 @@
 <meta name="twitter:title" content="검 — 강화의 도">
 <meta name="twitter:description" content="다음 한 번만 더. 검을 강화하고 봉인하여 도에 이르는 미니멀 강화 시뮬레이션.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231f1a14'/%3E%3Ctext x='16' y='23' font-size='22' text-anchor='middle' fill='%23e8c454' font-family='serif'%3E%E5%8A%8D%3C/text%3E%3C/svg%3E">
+<!-- v393 書體 — 게임 전체(133처)가 선언해 온 Noto Serif KR을 실제로 로드.
+     지금까지는 로컬 설치 기기 밖에서 전부 폴백 세리프로 렌더되어, 흑금 서예 미학의
+     의도된 활자가 한 번도 실체화된 적이 없었다. display=swap — 로드 전엔 기존 폴백
+     그대로 (FOIT 없음), file://·오프라인에선 조용히 폴백 (기존 동작과 동일). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200;400;700&display=swap">
 <!-- v82+ Supabase 클라이언트 (최신 stable) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>

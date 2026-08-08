@@ -48,7 +48,7 @@ npm test
 
 ## 아키텍처 — 단일 파일 단일 IIFE
 
-전체 게임이 `index.html` 하나에 들어있다. CSS / SVG 검 / JS 모두 인라인. JS는 `(function(){...})()` IIFE로 감싸 전역 오염 없음. 의존성 0, 빌드 0, CDN 0.
+전체 게임이 `index.html` 하나에 들어있다. CSS / SVG 검 / JS 모두 인라인. JS는 `(function(){...})()` IIFE로 감싸 전역 오염 없음. 빌드 0, npm 의존성은 서버(express)뿐. CDN은 선택적 향상 2종만 — Supabase(v82 클라우드)와 Noto Serif KR 서체(v393) — 둘 다 오프라인/file://에서 조용히 폴백 (게임 로직 무의존).
 
 ### 핵심 상태 (`state`)
 
@@ -894,6 +894,15 @@ v389가 부활시킨 검없음 상태는 수백 버전 동안 실전 도달이 �
 - **`.github/workflows/ci.yml`**: push/PR(main) 시 Node **20/22/24 매트릭스**에서 `npm ci` → `lint:parse` → `npm test`. README 배지.
 - **테스트 이식성**: `npm test`의 glob(`tests/**/*.test.js`)은 **Node 21+ 전용**이라 `engines >= 18` 선언과 모순 (Node 18/20에선 테스트가 아예 안 돌았음) → **파일 명시 열거**로 교체 (pure/logic/integrity/load/simulation).
 - **열거 무결성 잠금**: 새 `*.test.js`를 만들고 스크립트에 안 넣으면 *조용히 실행되지 않는* 함정 → integrity 테스트가 tests/ 디렉토리와 스크립트 열거를 대조 + glob 미사용 + CI 워크플로 존재·내용 검증. **새 테스트 파일 추가 시 `package.json` test 스크립트에도 추가할 것** (잊으면 이 테스트가 잡는다).
+- 후속: 기존 `test.yml`(v366, Node 20 고정)이 세션 첫 커밋의 glob 변경으로 **세션 내내 전 push 실패** 중이었음을 Actions 확인에서 발견 — v392 열거가 치유, 중복 워크플로 제거로 `ci.yml` 단일화. 교훈: **테스트 실행 방식을 바꾸면 `.github/workflows` 동반 확인 + push 후 Actions 상태 확인.**
+
+### v393 書體(서체) — 의도된 활자의 실체화
+
+게임 전체 **133처**가 `'Noto Serif KR'`을 선언하지만 **로드하는 코드는 0처**였다 — 로컬 설치 기기 밖에서는 흑금 서예 미학의 활자가 전부 폴백 세리프로 렌더되어 온 것. head에 Google Fonts 링크(preconnect ×2 + `display=swap`, 두께 200/400/700 — 대형 한자·본문·새김) 추가.
+
+- **폴백 동일성**: `display=swap`이라 로드 전·오프라인·file://에서는 기존 폴백 그대로 (FOIT 없음, 동작 변화 0).
+- **한계 (기록)**: 검전/검사전 **내보낸 SVG 족자**는 독립 파일이라 웹폰트를 로드하지 않음 — 보는 기기의 세리프로 렌더 (기존과 동일, 게임 내 표시는 이제 의도 서체).
+- 테스트: integrity 1건 (링크·swap·두께·preconnect + 선언 광범위성 회귀 감지).
 
 ### 봉인 균형 곡선 (참고)
 

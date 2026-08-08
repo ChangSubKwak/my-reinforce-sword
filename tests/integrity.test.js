@@ -1642,6 +1642,19 @@ test('v392 관문: npm test가 모든 테스트 파일을 열거 + CI 워크플�
   assert.ok(ci.includes('npm run lint:parse') && ci.includes('npm test'), 'CI가 parse+전체 스위트 실행');
 });
 
+// ─────────────────────────────────────────────────────────────
+// v393 書體 — 의도된 활자의 실체화 (선언 133처 vs 로드 0처이던 결함)
+// ─────────────────────────────────────────────────────────────
+test('v393 서체: Noto Serif KR을 실제로 로드 — 선언만 하고 로드 안 하던 회귀 차단', () => {
+  assert.match(html, /fonts\.googleapis\.com\/css2\?family=Noto\+Serif\+KR/, '서체 로드 링크 존재');
+  assert.match(html, /display=swap/, 'FOIT 없음 — 로드 전엔 폴백 그대로 (오프라인 동일)');
+  assert.match(html, /wght@200;400;700/, '실사용 두께(대형 한자 200 · 본문 400 · 새김 700) 포함');
+  assert.match(html, /rel="preconnect" href="https:\/\/fonts\.gstatic\.com" crossorigin/, 'preconnect (로드 지연 최소화)');
+  // 서체 선언이 실제로 광범위한지 (로드가 무의미해지는 선언 제거 회귀 감지)
+  const decls = (html.match(/Noto Serif KR/g) || []).length;
+  assert.ok(decls > 50, 'Noto Serif KR 선언 광범위 (현재 ' + decls + '처)');
+});
+
 test('v387 간결: menu-core 태깅 — 필수만, 과잉 태깅 금지', () => {
   const coreCount = (html.match(/class="menu-core"/g) || []).length;
   assert.ok(coreCount >= 8 && coreCount <= 13, '핵심 버튼 8~13개 (현재 ' + coreCount + ') — 전부 태깅하면 간결이 무의미');
