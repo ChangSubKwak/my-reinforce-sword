@@ -953,3 +953,44 @@ test('세이브 호환: sanitizeSword가 inscriptions 배열 강제 (sealed/ensh
 test('makeSwordName: gameover 호출이 정규 3-arg (단일 인자 TypeError 회귀 차단)', () => {
   assert.doesNotMatch(js, /makeSwordName\(sw\)/, 'makeSwordName(sw) 단일 인자 호출 없음');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v372 宿敵 — 와이어링 무결성 (탄생/재등장/설욕/보정이 실제 경로에 연결됐는지)
+// ─────────────────────────────────────────────────────────────
+test('v372 숙적: slay 실패(비차단)에서 탄생, 성공에서 설욕 — 양쪽 훅 존재', () => {
+  const body = afterDecl('function slay() {', 12000);
+  const noteIdx = body.indexOf('noteNemesisDefeat(c)');
+  const levelDownIdx = body.indexOf('state.level = Math.max(0, state.level - 1)');
+  assert.ok(noteIdx >= 0, 'slay 실패 분기에 noteNemesisDefeat 훅');
+  assert.ok(levelDownIdx >= 0 && noteIdx > levelDownIdx,
+    '탄생은 검 단계가 실제로 꺾인 뒤 (보호권 차단 시 제외 — 진 것이 아니다)');
+  assert.match(body, /resolveNemesisSlain\(c, finalReward\)/, 'slay 성공 분기에 설욕 훅');
+});
+
+test('v372 숙적: 재등장은 spawn 롤 통과 후 대체 (도전 총 빈도 인플레이션 없음)', () => {
+  const body = afterDecl('function maybeTriggerChallenge() {', 9000);
+  const rollIdx = body.indexOf('Math.random() >= chance) return');
+  const nemIdx = body.indexOf('nemesisReturnChance(');
+  assert.ok(rollIdx >= 0 && nemIdx > rollIdx, '숙적 분기는 기존 spawn 롤 이후 (빈도 불변)');
+  assert.match(body, /pendingNamedFoe\(\)/, '이름 있는 적 100% spawn이 숙적보다 우선 (기존 규칙 보존)');
+  assert.match(body, /challenge\.isNemesis = true/, '도전 객체에 숙적 스냅샷 표시');
+});
+
+test('v372 숙적: normalizeState가 손상 import를 방어 (강도 cap·이름 태그 제거·원한 범위)', () => {
+  const body = afterDecl('function normalizeState() {', 20000);
+  assert.match(body, /state\.nemesis && typeof state\.nemesis === 'object'/, 'nemesis 형태 검증');
+  assert.match(body, /n\.strength = clampInt\(n\.strength, 1, MAX_LEVEL\)/,
+    '강도 cap = MAX_LEVEL (설욕 불가능 고착 방지)');
+  assert.match(body, /n\.name\.replace\(\/\[<>\]\/g, ''\)/, '이름 태그 문자 제거 (v370m XSS 경계 일관)');
+  assert.match(body, /state\.nemesesSlain = clampInt\(state\.nemesesSlain, 0\)/, '설욕 누적 정수 강제');
+});
+
+test('v372 숙적: 설욕 명문 존재 + 원한 표식이 render에 연결', () => {
+  assert.match(js, /key: '설욕'/, 'INSCRIPTIONS에 설욕 명문 (verse 포함 — v20 규율)');
+  const resolveBody = afterDecl('function resolveNemesisSlain(', 900);
+  assert.match(resolveBody, /state\.nemesis = null/, '설욕 시 원한 해소');
+  assert.match(resolveBody, /grantInscription\('설욕'\)/, '설욕 명문 부여');
+  const renderBody = afterDecl('function render() {', 2500);
+  assert.match(renderBody, /renderNemesisMark\(\)/, 'render가 원한 표식 갱신');
+  assert.ok(html.includes('id="nemesis-mark"'), '#nemesis-mark 요소 존재');
+});

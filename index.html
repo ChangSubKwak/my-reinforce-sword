@@ -133,6 +133,21 @@
   }
   #way-counter.active { display: block; }
 
+  /* v372 숙적 — 우상단 원한 표식 (숙적이 살아있는 동안만) */
+  #nemesis-mark {
+    position: fixed;
+    top: 68px;
+    right: 18px;
+    font-size: 9px;
+    color: var(--danger);
+    letter-spacing: 3px;
+    opacity: 0;
+    transition: opacity 2s;
+    pointer-events: none;
+    z-index: 25;
+  }
+  #nemesis-mark.active { opacity: 0.7; }
+
   #season-mark {
     position: fixed;
     top: 14px;
@@ -2128,6 +2143,12 @@
     border-radius: 50%;
     box-shadow: 26px 0 0 rgba(232, 168, 255, 0.95), 0 0 14px rgba(168, 88, 232, 0.9), 26px 0 14px rgba(168, 88, 232, 0.9);
   }
+  /* v372 숙적 — 되돌아온 그림자. 타입 실루엣(normal/flee/steel) 위에 핏빛 원한 아우라를 겹침.
+     box-shadow를 덮지 않도록 filter로 가산 (기존 타입 시각 보존). */
+  #shadow-form.nemesis-type {
+    filter: drop-shadow(0 0 18px rgba(208, 72, 48, 0.6));
+    animation-duration: 1.2s;  /* 타입별 호흡 애니를 조급하게 — 원한의 조바심 */
+  }
   /* v41 검귀 SVG (얼굴/발톱) */
   #demon-detail {
     position: absolute;
@@ -2763,6 +2784,7 @@
 <div id="gen-mark"></div>
 <div id="path-progress" title="행 — 검의 길 진행도"></div>
 <div id="way-counter"></div>
+<div id="nemesis-mark" title="숙적 — 너를 이긴 그림자가 기다린다"></div>
 <button id="menu-toggle" title="메뉴" aria-label="메뉴" aria-haspopup="true" aria-expanded="false">≡</button>
 <div id="menu-drop">
   <div class="menu-section">기록</div>
@@ -4210,6 +4232,8 @@
     endingShown: false,      // v84 — 聖 엔딩 컷씬 1회만 발동
     shadowOriginsSlain: {},  // v30 — 학파별 베어낸 수 (영구)
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
+    nemesis: null,  // v372 숙적 — 나를 이기고 이름을 얻은 그림자 {name, origin, typeKey, strength, wins}
+    nemesesSlain: 0,  // v372 숙적 — 설욕(숙적 처치) 누적 (영구)
     heritageInscription: null,  // v33 — 도 검 봉인 후 다음 검에 전수될 명문 (1개)
     guardianIdx: null,  // v52 — 수호자로 지정된 봉인 검의 인덱스 (선택적)
     recentLog: [],  // v75 — 최근 액션 기록 (최대 10건, 최신순)
@@ -4446,6 +4470,18 @@
         (Array.isArray(state.sealedSwords) ? state.sealedSwords : []).forEach(fixPS);
         (Array.isArray(state.enshrined) ? state.enshrined : []).forEach(fixPS); }
       if (!state.foesSlain || typeof state.foesSlain !== 'object') state.foesSlain = {};
+      // v372 숙적 — 손상/크래프트 import 방어: 형태 검증 + 이름 태그 제거 + 강도/원한 범위 강제.
+      // strength는 MAX_LEVEL cap — 숙적은 언젠가 반드시 벨 수 있어야 한다 (설욕 불가능 고착 방지).
+      if (state.nemesis && typeof state.nemesis === 'object') {
+        const n = state.nemesis;
+        n.origin = ORIGIN_KEYS.includes(n.origin) ? n.origin : ORIGIN_KEYS[0];
+        n.typeKey = (n.typeKey === 'flee' || n.typeKey === 'steel') ? n.typeKey : 'normal';
+        n.strength = clampInt(n.strength, 1, MAX_LEVEL);
+        n.wins = clampInt(n.wins, 1, 99);
+        n.name = (typeof n.name === 'string' && n.name) ? n.name.replace(/[<>]/g, '').slice(0, 8) : '';
+        if (!n.name) n.name = makeNemesisName(n.origin, n.typeKey);
+      } else state.nemesis = null;
+      state.nemesesSlain = clampInt(state.nemesesSlain, 0);
       if (!Array.isArray(state.enshrined)) state.enshrined = [];  // v118 전당
       // v370m XSS 경계 방어 — 검의 사용자 텍스트(검명/血統/메모/기언)는 회고·계보·詩集 등에서
       // innerHTML에 raw 삽입됨. 외부 백업/클라우드 import(cross-user)로 < > 포함 텍스트가 들어오면
@@ -5721,6 +5757,7 @@
     applyGeneration();  // v123 계보
     renderSanctumRow();  // v121 결계
     renderWayCounter();
+    renderNemesisMark();  // v372 숙적 — 우상단 원한 표식
     renderGuardianDisplay();
     renderDestiny();  // v93 천명
     renderAdversity();  // v96 厄運轉機
@@ -12506,6 +12543,99 @@
     return '흉험한';
   }
 
+  // === v372 숙적(宿敵) — 나를 이긴 그림자가 이름을 얻는다 ===
+  // "다음 한 번만 더" 도박 드라마의 반대편 서사. 기존엔 베기 실패로 검이 꺾여도 그 그림자는
+  // 흔적 없이 휘발됐다(휘발성 challenge 설계). 이제 검 단계를 실제로 꺾은 그림자(일반/도망/강철만 —
+  // 검귀·야차·이름 있는 적은 각자의 길)는 이름을 얻고 state.nemesis로 영구화되어, 이후 도전의
+  // 일부로 되돌아온다. 이길수록 강해지고(cap MAX_LEVEL — 설욕 불가능 고착 방지) 원한 배율로 보상이
+  // 쌓인다. 베어내면 설욕 — 명문 + 해소. 숙적은 한 번에 하나 (원한은 하나로 족하다).
+  // 등장 빈도는 기존 도전 spawn 롤을 '대체'하므로 총 도전 횟수 인플레이션 없음.
+  const NEMESIS_ORIGIN_CHAR = { '야류': '월', '무류': '무', '골류': '백', '염류': '염' };
+  const NEMESIS_TYPE_CHAR = { normal: '영', flee: '풍', steel: '갑' };
+  const NEMESIS_TUNING = {
+    returnBase: 0.15,    // 재등장 기본 확률 (spawn 통과한 도전을 대체)
+    returnPerWin: 0.05,  // 원한 1승당 재등장 확률 가산
+    returnCap: 0.35,     // 재등장 확률 상한
+    grudgePerWin: 0.35,  // 원한 1승당 보상 배율 가산
+    grudgeCap: 2.5,      // 원한 보상 배율 상한 (점수 인플레이션 차단)
+    soulOnRevenge: 8,    // 설욕 시 영혼 가산
+  };
+  // 학파 글자 + 그림자 유형 글자 → 결정적 2자 이름 (예: 야류 도망 그림자 = '월풍')
+  function makeNemesisName(origin, typeKey) {
+    return (NEMESIS_ORIGIN_CHAR[origin] || '흑') + (NEMESIS_TYPE_CHAR[typeKey] || '영');
+  }
+  function nemesisReturnChance(wins) {
+    return Math.min(NEMESIS_TUNING.returnCap, NEMESIS_TUNING.returnBase + wins * NEMESIS_TUNING.returnPerWin);
+  }
+  function nemesisGrudgeMul(wins) {
+    return Math.min(NEMESIS_TUNING.grudgeCap, 1 + wins * NEMESIS_TUNING.grudgePerWin);
+  }
+  // 베기 실패로 검 단계가 실제로 꺾였을 때만 호출 (보호권 차단 시엔 진 것이 아니다) — slay() 실패 분기 전용
+  function noteNemesisDefeat(c) {
+    if (!c || !c.type) return;
+    if (c.isNemesis && state.nemesis) {
+      // 원한 심화 — 더 강해져 돌아온다
+      const n = state.nemesis;
+      n.wins++;
+      n.strength = Math.min(MAX_LEVEL, n.strength + 1);
+      log('숙적 ' + n.name + '이 더 강해져 떠났다 (원한 ' + n.wins + '승)', 'destroy');
+      setTimeout(() => {
+        inscribeQueue.push({ key: '숙', label: '숙적 ' + n.name + ' — 원한이 깊어졌다 · ' + n.wins + '승' });
+        if (!inscribeRunning) runInscribeQueue();
+      }, 900);
+      return;
+    }
+    if (state.nemesis) return;  // 원한은 하나로 족하다
+    if (c.type.isNamed || c.type.isDemon || c.type.isYaksha) return;
+    const typeKey = (c.type.key === 'flee' || c.type.key === 'steel') ? c.type.key : 'normal';
+    const origin = ORIGIN_KEYS.includes(c.origin) ? c.origin : ORIGIN_KEYS[0];
+    state.nemesis = {
+      name: makeNemesisName(origin, typeKey),
+      origin, typeKey,
+      strength: Math.min(MAX_LEVEL, Math.max(1, c.strength)),
+      wins: 1,
+    };
+    log('그림자가 너를 이기고 이름을 얻었다 — 숙적 ' + state.nemesis.name, 'destroy');
+    setTimeout(() => {
+      if (!state.nemesis) return;
+      inscribeQueue.push({ key: '숙', label: '숙적 탄생 — ' + state.nemesis.name + ' · 언젠가 돌아온다' });
+      if (!inscribeRunning) runInscribeQueue();
+    }, 900);
+    maybeMilestone('firstNemesis', '숙적', '너를 이긴 그림자는 잊지 않는다 — 이름을 얻고 돌아온다');
+  }
+  // 숙적 처치 — 설욕. slay() 성공 분기 전용 (보상 조각은 호출자의 기존 흐름이 이미 지급).
+  function resolveNemesisSlain(c, finalReward) {
+    if (!c.isNemesis) return;
+    const name = c.nemesisName || (state.nemesis && state.nemesis.name) || '숙적';
+    const wins = c.nemesisWins || (state.nemesis && state.nemesis.wins) || 1;
+    state.nemesis = null;
+    state.nemesesSlain = (state.nemesesSlain || 0) + 1;
+    addSoul(NEMESIS_TUNING.soulOnRevenge);
+    grantInscription('설욕');
+    recordEvent('숙적 ' + name + ' 설욕 +' + finalReward);
+    // 큰 의식 — 검귀 컷씬 오버레이 재활용 (v90 이름 있는 적과 동일 패턴)
+    const dso = $('demon-slay-overlay');
+    if (dso) {
+      const dk = $('demon-slay-kanji'); if (dk) dk.textContent = '설욕';
+      $('demon-slay-msg').textContent = '숙적 ' + name + '을 베어냈다 · 원한 ' + wins + '승을 갚았다 · 조각 +' + fmtNum(finalReward);
+      dso.classList.remove('active');
+      void dso.offsetWidth;
+      dso.classList.add('active');
+      setTimeout(() => dso.classList.remove('active'), 2500);
+    }
+    burstParticles('#d04830', 30);
+    setTimeout(() => burstParticles('#d4af37', 20), 200);
+  }
+  // 우상단 원한 표식 — 숙적이 있는 동안만 (render마다 갱신)
+  function renderNemesisMark() {
+    const el = $('nemesis-mark');
+    if (!el) return;
+    const n = state.nemesis;
+    if (!n) { el.classList.remove('active'); el.textContent = ''; return; }
+    el.textContent = '숙적 ' + n.name + ' · ' + n.wins + '승';
+    el.classList.add('active');
+  }
+
   // === 일섬 — 도전 (휘발성, 저장 안 함) ===
   const CHALLENGE_BASE_CHANCE = 0.13;
   const CHALLENGE_LEVEL_BONUS = 0.018;
@@ -12682,23 +12812,35 @@
     const seasonMul = getSeason().challengeMul;
     const chance = Math.min(CHALLENGE_MAX_CHANCE, (CHALLENGE_BASE_CHANCE + state.level * CHALLENGE_LEVEL_BONUS) * seasonMul * solarChallengeMul());
     if (Math.random() >= chance) return;
-    const type = rollShadowType();
+    // v372 숙적 — spawn 롤을 통과한 도전을 확률로 '대체' (총 도전 빈도 불변).
+    // 원한(wins)이 깊을수록 자주 돌아오고, 강도는 저장된 값 그대로 (재롤 없음 — 그 놈이 그 놈).
+    let type, strength, reward, isNemesis = false;
+    const nem = state.nemesis;
+    if (nem && Math.random() < nemesisReturnChance(nem.wins)) {
+      isNemesis = true;
+      type = SHADOW_TYPES.find(t => t.key === nem.typeKey) || SHADOW_TYPES[0];
+      strength = nem.strength;
+      reward = Math.floor(challengeReward(strength) * type.rewardMul * nemesisGrudgeMul(nem.wins));
+    } else {
+      type = rollShadowType();
+    }
     // v183 대치 — 직전 대치로 이번 그림자 type 미리 보임
     if (state.stalematePending) {
       state.stalematePending = false;
       setTimeout(() => {
-        inscribeQueue.push({ key: '영', label: '예지 — ' + type.name + '이 다가왔다' });
+        inscribeQueue.push({ key: '영', label: '예지 — ' + (isNemesis ? '숙적 ' + nem.name : type.name) + '이 다가왔다' });
         if (!inscribeRunning) runInscribeQueue();
       }, 200);
       save();
     }
-    let strength, reward;
-    if (type.isDemon) {
-      strength = state.bestLevel + 5;
-      reward = strength * 7;
-    } else {
-      strength = Math.max(1, Math.floor(rollChallengeStrength() * type.strengthMul) + (type.strengthAdd || 0));
-      reward = Math.floor(challengeReward(strength) * type.rewardMul);
+    if (!isNemesis) {
+      if (type.isDemon) {
+        strength = state.bestLevel + 5;
+        reward = strength * 7;
+      } else {
+        strength = Math.max(1, Math.floor(rollChallengeStrength() * type.strengthMul) + (type.strengthAdd || 0));
+        reward = Math.floor(challengeReward(strength) * type.rewardMul);
+      }
     }
     // 形 + 魂 + 수호자 보너스
     const f = getForm();
@@ -12743,8 +12885,14 @@
     // v212 休 — 주말 도전 보상 ×1.05
     const wmul = weekendChallengeMul();
     if (wmul !== 1) reward = Math.floor(reward * wmul);
-    const origin = rollShadowOrigin();
+    const origin = isNemesis ? nem.origin : rollShadowOrigin();
     challenge = { strength, reward, type, origin };
+    if (isNemesis) {
+      // v372 — 스냅샷 보관 (도전 자체는 휘발성 유지, 영구 기록은 state.nemesis가 담당)
+      challenge.isNemesis = true;
+      challenge.nemesisName = nem.name;
+      challenge.nemesisWins = nem.wins;
+    }
     bumpStat('challengesAppeared');
     bumpDaily('challenge', 1);  // v94 천시
     maybeMilestone('firstChallenge', '그림자', '그림자가 나타났습니다 — 베거나 도망치세요');
@@ -12753,13 +12901,13 @@
     setTimeout(() => {
       if (challenge) whisperFromAncestor(state.currentSword.form);
     }, 1200);
-    if (type.isDemon) {
+    if (type.isDemon || challenge.isNemesis) {
       const stage = $('stage');
       stage.classList.remove('darken');
       void stage.offsetWidth;
       stage.classList.add('darken');
       setTimeout(() => stage.classList.remove('darken'), 800);
-      screenShake(true);  // 검귀 등장 — 큰 흔들림
+      screenShake(type.isDemon);  // 검귀는 큰 흔들림, 숙적(v372)은 작은 흔들림 + 어둠 펄스
     }
     showChallenge();
   }
@@ -13708,6 +13856,7 @@
     else if (t.key === 'steel') shadowForm.classList.add('steel-type');
     else if (t.key === 'demon') shadowForm.classList.add('demon-type');
     else if (t.key === 'yaksha') shadowForm.classList.add('yaksha-type');  // v184
+    if (challenge.isNemesis) shadowForm.classList.add('nemesis-type');  // v372 숙적 — 핏빛 원한 아우라 (타입 실루엣 위에 겹침)
     // v41/v58 그림자 종류별 SVG 디테일 토글
     const demonDetail = $('demon-detail');
     if (demonDetail) demonDetail.classList.toggle('active', t.key === 'demon');
@@ -13717,7 +13866,9 @@
     if (steelDetail) steelDetail.style.display = t.key === 'steel' ? 'block' : 'none';
     const normalDetail = $('normal-detail');
     if (normalDetail) normalDetail.style.display = t.key === 'normal' ? 'block' : 'none';
-    shadowStrength.textContent = shadowTier(challenge.strength) + ' ' + (challenge.origin ? challenge.origin + ' ' : '') + t.name + ' · 강도 +' + challenge.strength;  // v251 影格
+    shadowStrength.textContent = challenge.isNemesis
+      ? '숙적 ' + challenge.nemesisName + ' · ' + shadowTier(challenge.strength) + ' ' + (challenge.origin || '') + ' ' + t.name + ' · 강도 +' + challenge.strength  // v372
+      : shadowTier(challenge.strength) + ' ' + (challenge.origin ? challenge.origin + ' ' : '') + t.name + ' · 강도 +' + challenge.strength;  // v251 影格
     // 베기 버튼에 보상 표시
     const slayRewardLabel = $('slay-reward-label');
     if (slayRewardLabel) slayRewardLabel.textContent = '+' + fmtNum(slayGrantAmount(challenge.reward)) + ' 조각';  // v244 연참 반영
@@ -13725,9 +13876,13 @@
       ? '<span style="color:var(--safe)">충분히 강하다 — 한 번에 베어진다</span>'
       : '<span style="color:var(--danger)">검이 약하다 — 흔들릴 수 있다</span>'
         + '<br><span style="font-size:10px;color:var(--dim);letter-spacing:1px">실패 시 보호권 ' + shakeGuardCost(challenge.strength) + '개로 차단 (보유 ' + state.protections + ')</span>';
-    const typeNote = t.desc
-      ? '<span style="color:var(--accent);font-size:11px">' + t.desc + '</span><br>'
+    // v372 숙적 — 원한의 무게 안내 (이름은 shadowStrength의 textContent로만 표시 — innerHTML 미경유)
+    const nemesisNote = challenge.isNemesis
+      ? '<span style="color:var(--danger);font-size:11px;letter-spacing:2px">너를 ' + challenge.nemesisWins + '번 이긴 그림자가 돌아왔다 — 베어내면 설욕이다</span><br>'
       : '';
+    const typeNote = nemesisNote + (t.desc
+      ? '<span style="color:var(--accent);font-size:11px">' + t.desc + '</span><br>'
+      : '');
     // 검 강도 vs 그림자 강도 막대 비교
     const swordPct = Math.min(100, (state.level / MAX_LEVEL) * 100);
     const shadowPct = Math.min(100, (challenge.strength / MAX_LEVEL) * 100);
@@ -13815,7 +13970,7 @@
       // 逃影: 베기 시 회피 확률
       if (c.type.slayEvade && Math.random() < c.type.slayEvade) {
         bumpStat('evaded');
-        log(c.type.name + ' 도망쳤다', 'fail');
+        log((c.isNemesis ? '숙적 ' + c.nemesisName + ' — 또 ' : c.type.name + ' ') + '도망쳤다', 'fail');  // v372 숙적은 도망쳐도 원한 유지
         challengeEl.classList.remove('active');
         swordWrap.style.opacity = 1;
         levelBadge.style.opacity = 1;
@@ -13958,6 +14113,8 @@
           setTimeout(() => burstParticles('#d4af37', 30), 200);
         }
       }
+      // v372 숙적 설욕 — 원한 해소 + 명문 + 컷씬
+      if (c.isNemesis) resolveNemesisSlain(c, finalReward);
       checkInscriptions();
       checkStars();  // v116 칠성
       setTimeout(() => checkScrolls(), 400);  // v124 고문서
@@ -14007,6 +14164,7 @@
         screenShake(false);  // 베기 실패 — 작은 흔들림
         inscribeQueue.push({ key: '실', label: '베기 실패 · 검 단계 -1' });
         if (!inscribeRunning) runInscribeQueue();
+        noteNemesisDefeat(c);  // v372 숙적 — 검을 실제로 꺾은 그림자만 이름을 얻는다 (보호권 차단 시 제외)
       }
       setTimeout(() => { save(); render(); }, 500);
     }
@@ -14022,6 +14180,7 @@
     state.shards -= cost;
     bumpStat('fled');
     log(cost ? ('도망 (조각 -' + cost + ')') : '바람처럼 도망', 'fail');
+    if (challenge.isNemesis) log('숙적 ' + challenge.nemesisName + '은 기억한다 — 다시 온다', 'destroy');  // v372
     setTimeout(() => showConsolation('flee'), 600);  // v143 慰
     clearSlayStreak();  // v125 연참 — 도망 시 리셋
     endChallenge();
@@ -15697,6 +15856,7 @@
     { key: '칠성', label: '북두칠성이 깃든 검',              verse: '일곱 별이 한 검에 모였다',           trigger: () => false },
     { key: '선',   label: '백 대를 잇는 신선의 검',          verse: '백 대의 계보가 한 검에 흐른다',     trigger: () => false },
     { key: '연일섬', label: '열 번의 일섬을 한 검에 새긴 자', verse: '열 번이 한 흐름이 되었다',           trigger: () => false },
+    { key: '설욕', label: '숙적을 베어냈다',                verse: '깊은 원한이 한 번의 일섬으로 갚아졌다', trigger: () => false },
   ];
 
   function grantInscription(key) {
@@ -18473,6 +18633,7 @@
     if ((state.totalDestroyed || 0) >= 10) personas.push({ name: '도박꾼', desc: '많은 검을 잃었지만 계속 도전한다' });
     if ((s.fled || 0) >= 10) personas.push({ name: '바람의 검', desc: '도전에서 자주 물러난다' });
     if ((s.stalemate || 0) >= 5) personas.push({ name: '평화의 검사', desc: '대치로 그림자를 거듭 돌려보낸 자' });
+    if ((state.nemesesSlain || 0) >= 2) personas.push({ name: '복수자', desc: '숙적을 거듭 갚아낸 자' });  // v372
     if ((s.downgraded || 0) >= 15) personas.push({ name: '단련의 인내자', desc: '거듭 하락하여도 다시 두드린다' });
     if (state.sealedSwords && state.sealedSwords.length === 0 && (state.bestLevel || 0) >= 8) {
       personas.push({ name: '집착자', desc: '한 자루의 검을 깊이 키운다' });
@@ -18616,6 +18777,9 @@
       row('도망 그림자에게 놓침', fmtNum(s.evaded || 0) + ' 회', 'var(--dim)') +
       row('도전에서 도망', fmtNum(s.fled || 0) + ' 회', 'var(--dim)') +
       (s.stalemate > 0 ? row('대치 (평화의 길)', fmtNum(s.stalemate) + ' 회', '#5878b8') : '') +
+      // v372 숙적 — 현재 원한 + 설욕 누적 (이름은 고정 팔레트 생성 + normalizeState 태그 제거라 innerHTML 안전)
+      (state.nemesis ? row('숙적 (살아있다)', state.nemesis.name + ' · 강도 +' + state.nemesis.strength + ' · 원한 ' + state.nemesis.wins + '승', 'var(--danger)') : '') +
+      ((state.nemesesSlain || 0) > 0 ? row('설욕', fmtNum(state.nemesesSlain) + ' 회', '#fff5c0') : '') +
       // v256 學派 — 그림자 출신별 처치 + 斷魔 진척 (기존 shadowOriginsSlain 노출)
       (function() {
         const os = state.shadowOriginsSlain || {};

@@ -687,6 +687,17 @@ Web Audio API 기반 실시간 반응 사운드스케이프. 외부 파일 0, �
 - **v251 影格 (`shadowTier(strength)`)**: 그림자 강도 등급 형용(여린/굳센/강대한/흉험한). 도전 표시 + 斬 베기 페이드. 적 측 정체성.
 - **v252 時生 (`bornTod`)**: 검이 빚어진 시각(朝/晝/夕/夜, `getTimeOfDay` 재사용). `newSword`에서 기록 → `doSeal` 보존 → 회고 時生 + 一代記 개막 문장. 신규 검만(하위호환).
 
+### v372 宿敵 — 나를 이긴 그림자가 이름을 얻는다
+
+도박 드라마의 반대편 서사. 기존엔 베기 실패로 검이 꺾여도 그 그림자는 휘발됐다(휘발성 challenge 설계) — 이제 검 단계를 **실제로 꺾은** 그림자(보호권 차단 시 제외)가 이름을 얻고 `state.nemesis`로 영구화된다.
+
+- **탄생** (`noteNemesisDefeat`, slay 실패 분기): 일반/도망/강철만 — 검귀·야차·名은 각자의 길. 숙적은 한 번에 하나. 이름은 `makeNemesisName(origin, typeKey)` — 학파 글자(야류=월/무류=무/골류=백/염류=염) + 유형 글자(영/풍/갑), 결정적 12조합.
+- **재등장** (`maybeTriggerChallenge`): 기존 spawn 롤 **통과 후 대체** (총 도전 빈도 불변). 확률 `nemesisReturnChance(wins)` = min(0.35, 0.15+wins×0.05). 강도는 저장값 그대로 (재롤 없음), 보상 = 기본×`nemesisGrudgeMul(wins)` = min(2.5, 1+wins×0.35) → 이후 기존 보상 캐스케이드 전부 적용. 名 100% spawn이 우선.
+- **원한 심화**: 숙적에게 또 지면 wins+1, strength+1 (cap `MAX_LEVEL` — 설욕 불가능 고착 방지). 도망(slayEvade)·flee·대치·새로고침으로는 원한 불변.
+- **설욕** (`resolveNemesisSlain`, slay 성공 분기): `nemesis=null`, `nemesesSlain++`, 魂+8, `설욕` 명문(서사, 효과 0), 검귀 컷씬 재활용.
+- **UI**: `#nemesis-mark` 우상단 원한 표식 (`renderNemesisMark`, render마다) / 도전 화면 `nemesis-type` 핏빛 아우라 + 원한 안내 / 記錄 모달 숙적·설욕 행 + `복수자` 페르소나.
+- **튜닝**: `NEMESIS_TUNING` 단일 진원 (returnBase/returnPerWin/returnCap/grudgePerWin/grudgeCap/soulOnRevenge). 세이브: 키 추가만(호환 ✅), `normalizeState`가 강도 cap·이름 태그 제거·범위 강제. 테스트: logic(이름 결정성·단조·cap) + integrity(훅 와이어링 4건).
+
 ### 봉인 균형 곡선 (참고)
 
 | 검 강화도 | 봉인 보상 (조각) |
@@ -723,6 +734,7 @@ Web Audio API 기반 실시간 반응 사운드스케이프. 외부 파일 0, �
 | `protectCost(lv)` | 방지권 | 강화 단계별 방지권 비용 계단 함수 |
 | `rescueShards(level)` | 회수 | 파괴된 검에서 회수 가능 조각 (`max(3, floor(lv^2 * 0.7))` — 저레벨 최소 3 하한) |
 | `SHADOW_TYPES[]` | 影 변종 | weight·강도Mul·보상Mul·특수 메커니즘 (slayEvade 등) |
+| `NEMESIS_TUNING` | 宿敵 (v372) | 재등장 확률(base 0.15/승당 +0.05/cap 0.35)·원한 보상 배율(승당 +0.35/cap 2.5)·설욕 魂 |
 | `SWORD_FORMS{}` | 검의 형 | 형별 successBonus / destroyReduce / costMul / rewardMul / fleeFree |
 | `recipes.whetstone.cost = 8` | 砥石 | 다음 강화 +25% 성공 |
 | `recipes.spiritstone.cost = 25` | 靈石 | 다음 강화 파괴 차단 |

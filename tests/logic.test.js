@@ -1603,3 +1603,49 @@ test('getPrimaryKanji: 名 보스 처치 명문 coverage + 기존 표시 불변'
   // 아무것도 없으면 null
   assert.strictEqual(getPrimaryKanji([]), null, '명문 없으면 null');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v372 宿敵 — 나를 이긴 그림자가 이름을 얻는다 (순수 함수)
+// ─────────────────────────────────────────────────────────────
+test('v372 makeNemesisName: 학파×유형 결정적 2자 이름 + 미지 입력 fallback', () => {
+  const deps = {
+    NEMESIS_ORIGIN_CHAR: extractConst('NEMESIS_ORIGIN_CHAR'),
+    NEMESIS_TYPE_CHAR: extractConst('NEMESIS_TYPE_CHAR'),
+  };
+  const mk = loadFunctions(['makeNemesisName'], deps).makeNemesisName;
+  const origins = Object.keys(deps.NEMESIS_ORIGIN_CHAR);
+  const types = Object.keys(deps.NEMESIS_TYPE_CHAR);
+  assert.strictEqual(origins.length, 4, '4학파 전원 이름 글자 보유');
+  assert.deepStrictEqual(types.sort(), ['flee', 'normal', 'steel'],
+    '숙적 대상 유형은 일반/도망/강철만 (검귀·야차·名은 각자의 길)');
+  const seen = new Set();
+  origins.forEach(o => types.forEach(t => {
+    const name = mk(o, t);
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(name.length, 2, o + '×' + t + ' → 2자 이름');
+    seen.add(name);
+  }));
+  assert.strictEqual(seen.size, origins.length * types.length, '12 조합 전부 서로 다른 이름 (결정적·무충돌)');
+  // 손상 입력도 안전한 fallback 이름
+  assert.strictEqual(mk('없는학파', 'normal').length, 2, '미지 학파 fallback');
+  assert.strictEqual(mk('야류', '없는유형').length, 2, '미지 유형 fallback');
+});
+
+test('v372 nemesisReturnChance/nemesisGrudgeMul: 원한 단조 증가 + cap (점수·빈도 인플레이션 차단)', () => {
+  const deps = { NEMESIS_TUNING: extractConst('NEMESIS_TUNING') };
+  const fns = loadFunctions(['nemesisReturnChance', 'nemesisGrudgeMul'], deps);
+  const T = deps.NEMESIS_TUNING;
+  // 재등장 확률: 1승 = base + perWin, 단조 증가, cap 고정
+  assert.ok(Math.abs(fns.nemesisReturnChance(1) - (T.returnBase + T.returnPerWin)) < 1e-9);
+  for (let w = 1; w < 20; w++) {
+    assert.ok(fns.nemesisReturnChance(w + 1) >= fns.nemesisReturnChance(w), '재등장 확률 단조');
+  }
+  assert.strictEqual(fns.nemesisReturnChance(99), T.returnCap, '재등장 확률 cap');
+  assert.ok(T.returnCap < 1.0, '숙적이 도전을 독점하지 않음 (cap < 1)');
+  // 원한 보상 배율: 1승 = 1 + perWin, 단조 증가, cap 고정
+  assert.ok(Math.abs(fns.nemesisGrudgeMul(1) - (1 + T.grudgePerWin)) < 1e-9);
+  for (let w = 1; w < 20; w++) {
+    assert.ok(fns.nemesisGrudgeMul(w + 1) >= fns.nemesisGrudgeMul(w), '보상 배율 단조');
+  }
+  assert.strictEqual(fns.nemesisGrudgeMul(99), T.grudgeCap, '보상 배율 cap (인플레이션 차단)');
+});
