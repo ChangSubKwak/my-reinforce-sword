@@ -698,6 +698,17 @@ Web Audio API 기반 실시간 반응 사운드스케이프. 외부 파일 0, �
 - **UI**: `#nemesis-mark` 우상단 원한 표식 (`renderNemesisMark`, render마다) / 도전 화면 `nemesis-type` 핏빛 아우라 + 원한 안내 / 記錄 모달 숙적·설욕 행 + `복수자` 페르소나.
 - **튜닝**: `NEMESIS_TUNING` 단일 진원 (returnBase/returnPerWin/returnCap/grudgePerWin/grudgeCap/soulOnRevenge). 세이브: 키 추가만(호환 ✅), `normalizeState`가 강도 cap·이름 태그 제거·범위 강제. 테스트: logic(이름 결정성·단조·cap) + integrity(훅 와이어링 4건).
 
+### v373 劍塚(검총) — 부러진 검은 무덤을 얻는다
+
+v372(나를 이긴 그림자가 이름을 얻는다)의 대구 — *나에게 진 검도 이름을 얻는다*. 봉인/전당 검은 22개 필드 + 一代記·遺言·일생시의 두터운 서사 계층을 갖지만, 핵심 드라마인 **파괴**는 `totalDestroyed` 정수 하나만 남기고 검의 일생을 소멸시켰다 (명명은 봉인 시점 의식이라 파괴 검은 무명으로 죽었음). 메커니즘 효과 0 — 순수 서사.
+
+- **매장** (`recordFallenSword`, enhance 파괴 분기·showVoid 전): currentSword 스냅샷(level/form/inscriptions/soul/slainCount/enhanceAttempts/scars/bornTod/각오/ts)을 `state.fallenSwords`에 push. cap 30 (`FALLEN_TUNING.cap`) — 초과 시 가장 오래된 무덤부터 잊힘. `totalDestroyed`가 여전히 권위 카운터.
+- **사후명** (`makePosthumousName(form, level)`): 형 접두 + 죽음의 격 (`FALLEN_TIER_CHAR` 진/절/쇄/운/통 — 塵/折/碎/殞/慟, 강화 tier 구획과 동일 경계 `fallenTier`). 결정적 2자, 4형×5격 20조합 무충돌. `recentLog`도 사후명 포함 (기존: 강화도 숫자만).
+- **회수 확정** (`endVoid`): 마지막 무덤의 `rescued: null → true/false` 확정 + `검총에 한 자루가 묻혔다` log + `firstGrave` 마일스톤 (발견성). 保身은 파괴 0이라 각오는 평상/일심만 실재.
+- **만가** (`generateElegy(f)`): 탄생(時生 v252)·담금질/베기·성정(v247 `deriveTemperament` 재사용)·각흔·부러진 지점(+N에서 +N+1)·일심 각오·회수 결과를 결정적 파생 행으로. 봉인 검 一代記/遺言의 파괴 측 대응물.
+- **UI**: 메뉴 `검총` (전당 바로 아래 — 영광/상실 쌍) → `#graveyard-modal` (`renderGraveyard`, 최신 무덤 먼저, 클릭 시 만가 펼침, 전부 `escapeHtml`). 記錄 모달 「가장 높은 무덤」 행 (`collectionHighlight` 재사용).
+- **세이브/방어**: 키 추가만 (호환 ✅). `normalizeState`가 배열·레벨 cap·태그 제거·상한 강제 + 오염된 사후명 결정적 재생성. **빈 배열이면 외부 상수 참조 0** — 격리 sandbox 행위 테스트(load.test.js) 호환 패턴 (nemesis 가드와 동일). 테스트: logic 2건(사후명 결정성·경계 / 만가 결정성·안전) + integrity 4건(스냅샷 순서·회수 확정·보정·UI 와이어링).
+
 ### 봉인 균형 곡선 (참고)
 
 | 검 강화도 | 봉인 보상 (조각) |
@@ -735,6 +746,7 @@ Web Audio API 기반 실시간 반응 사운드스케이프. 외부 파일 0, �
 | `rescueShards(level)` | 회수 | 파괴된 검에서 회수 가능 조각 (`max(3, floor(lv^2 * 0.7))` — 저레벨 최소 3 하한) |
 | `SHADOW_TYPES[]` | 影 변종 | weight·강도Mul·보상Mul·특수 메커니즘 (slayEvade 등) |
 | `NEMESIS_TUNING` | 宿敵 (v372) | 재등장 확률(base 0.15/승당 +0.05/cap 0.35)·원한 보상 배율(승당 +0.35/cap 2.5)·설욕 魂 |
+| `FALLEN_TUNING` | 劍塚 (v373) | 무덤 수 상한 (cap 30 — 초과 시 가장 오래된 무덤부터 잊힘, 저장 크기) |
 | `SWORD_FORMS{}` | 검의 형 | 형별 successBonus / destroyReduce / costMul / rewardMul / fleeFree |
 | `recipes.whetstone.cost = 8` | 砥石 | 다음 강화 +25% 성공 |
 | `recipes.spiritstone.cost = 25` | 靈石 | 다음 강화 파괴 차단 |

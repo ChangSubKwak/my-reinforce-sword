@@ -2832,6 +2832,7 @@
     <button id="btn-trial">시련</button>
   </div>
   <button id="btn-enshrined">🏛 전당</button>
+  <button id="btn-graveyard">검총 (부러진 검들)</button>
   <button id="btn-foes">처치 보고서</button>
   <button id="btn-blessings">기연 발견</button>
   <button id="btn-shrine">신사</button>
@@ -3896,6 +3897,20 @@
   </div>
 </div>
 
+<!-- v373 검총 — 부러진 검들의 무덤 -->
+<div class="modal" id="graveyard-modal">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mtitle-graveyard" style="max-width: 440px;">
+    <h2 id="mtitle-graveyard">검 총</h2>
+    <p id="graveyard-summary" class="modal-progress"></p>
+    <div id="graveyard-list" style="max-height: 400px; overflow-y: auto; padding: 4px 2px; margin-top:8px"></div>
+    <p style="font-size:10px;color:var(--dim);margin-top:10px;line-height:1.7;letter-spacing:2px">
+      부러진 검은 사후명을 얻고 이곳에 잠든다.<br>
+      무덤을 누르면 만가가 읽힌다.
+    </p>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
 <!-- v94 천시 일일 도전 모달 -->
 <div class="modal" id="daily-modal">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mtitle-35" style="max-width: 400px;">
@@ -4234,6 +4249,7 @@
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
     nemesis: null,  // v372 숙적 — 나를 이기고 이름을 얻은 그림자 {name, origin, typeKey, strength, wins}
     nemesesSlain: 0,  // v372 숙적 — 설욕(숙적 처치) 누적 (영구)
+    fallenSwords: [],  // v373 검총 — 부러진 검들의 무덤 (최대 FALLEN_TUNING.cap, 오래된 것부터 잊힘)
     heritageInscription: null,  // v33 — 도 검 봉인 후 다음 검에 전수될 명문 (1개)
     guardianIdx: null,  // v52 — 수호자로 지정된 봉인 검의 인덱스 (선택적)
     recentLog: [],  // v75 — 최근 액션 기록 (최대 10건, 최신순)
@@ -4507,6 +4523,22 @@
       // userSeal(印, v187): buildSealSVG가 각 글자를 <text>에 raw 삽입 → innerHTML.
       // 배열 가드만으론 원소 문자열이 import로 오염될 수 있어 태그문자 제거.
       if (Array.isArray(state.userSeal)) state.userSeal = state.userSeal.map(stripTags);
+      // v373 검총 — 손상/크래프트 import 방어: 배열·항목 형태·레벨 범위·태그 제거·상한 강제.
+      // 사후명이 비었거나 오염됐으면 결정적으로 재생성 (form+level에서 언제나 복원 가능).
+      // 빈 배열이면 외부 상수 참조 0 (nemesis 가드와 동일 패턴 — 격리 sandbox 행위 테스트 호환).
+      if (!Array.isArray(state.fallenSwords)) state.fallenSwords = [];
+      state.fallenSwords = state.fallenSwords.filter(f => f && typeof f === 'object');
+      if (state.fallenSwords.length > 0) {
+        if (state.fallenSwords.length > FALLEN_TUNING.cap) state.fallenSwords.splice(0, state.fallenSwords.length - FALLEN_TUNING.cap);
+        state.fallenSwords.forEach(f => {
+          f.level = clampInt(f.level, 0, MAX_LEVEL);
+          if (!Array.isArray(f.inscriptions)) f.inscriptions = [];
+          f.inscriptions = f.inscriptions.map(stripTags);
+          f.name = (typeof f.name === 'string' && f.name) ? stripTags(f.name).slice(0, 8) : '';
+          if (!f.name) f.name = makePosthumousName(f.form, f.level);
+          if (f.rescued !== true && f.rescued !== false) f.rescued = null;
+        });
+      }
       if (!state.blessingsDiscovered || typeof state.blessingsDiscovered !== 'object') state.blessingsDiscovered = {};  // v119 기연
       if (!state.erasEntered || typeof state.erasEntered !== 'object') state.erasEntered = {};  // v120 기원
       if (typeof state.swordGeneration !== 'number') state.swordGeneration = state.sealedSwords ? state.sealedSwords.length : 0;  // v123 계보 — 기존 사용자는 봉인된 검 수로 추정 초기화
@@ -12237,7 +12269,10 @@
         shatterSword();  // v134 砕散 — SVG 산산조각 비산
         SFX.destroy();
         screenShake(true);  // 검 파괴 — 큰 흔들림
-        recordEvent('검 파괴 (+' + destroyedLevel + ')');
+        // v373 검총 — 일생 데이터가 newSword()로 덮어써지기 전, 부러진 검을 스냅샷해 매장.
+        // 파괴 검은 봉인과 달리 이름이 없다 — 여기서 결정적 사후명을 얻는다.
+        const fallen = recordFallenSword(destroyedLevel);
+        recordEvent('검 파괴 ' + fallen.name + ' (+' + destroyedLevel + ')');
         maybeMilestone('firstDestroy', '부서짐', '검이 부서졌습니다 — 5초 안에 조각을 주우세요');
         // v134: showVoid을 살짝 지연시켜 산산조각 비주얼이 먼저 보이게 (검집 동시 등장 시 시각 충돌 회피)
         voidPending = true;  // v368 — 350ms 갭 동안 game-over 보류 (회수창 우선 표시)
@@ -12477,6 +12512,13 @@
       inscribeQueue.push({ key: '실', label: '검을 잃었다 · 새 검을 만드세요' });
       setTimeout(() => showConsolation('rescueFail'), 1200);  // v143 慰
       if (!inscribeRunning) runInscribeQueue();
+    }
+    // v373 검총 — 방금 부러진 검의 무덤에 회수 결과를 확정 (만가의 마지막 행이 여기서 정해진다)
+    const grave = (state.fallenSwords || [])[(state.fallenSwords || []).length - 1];
+    if (grave && grave.rescued === null) {
+      grave.rescued = !!rescued;
+      log('검총에 한 자루가 묻혔다 — ' + grave.name, 'info');
+      maybeMilestone('firstGrave', '총', '부러진 검이 검총에 잠들었다 — 메뉴 · 검총에서 무덤을 볼 수 있다');
     }
     save();
     render();
@@ -15312,6 +15354,104 @@
     if (drops <= 5) return '여러 번 무너지고 다시 선, 기복의 검이었다.';
     return '수없이 무너지고도 끝내 다시 일어선 검이었다.';
   }
+  // === v373 劍塚(검총) — 부러진 검은 무덤을 얻는다 ===
+  // 봉인 검(계보)·전당 검은 22개 필드와 一代記·遺言·일생시의 두터운 서사 계층을 갖지만,
+  // 이 게임의 핵심 드라마인 *파괴*는 totalDestroyed 정수 하나만 남기고 검의 일생을 소멸시켰다.
+  // 파괴 순간의 검을 스냅샷해 사후명(諡)을 새기고 검총에 묻는다 — v372 숙적(나를 이긴
+  // 그림자가 이름을 얻는다)의 대구: 나에게 진 검도 이름을 얻는다. 메커니즘 효과 0 (순수 서사).
+  const FALLEN_TUNING = { cap: 30 };  // 무덤 수 상한 — 초과 시 가장 오래된 무덤부터 잊힘 (저장 크기)
+  const FALLEN_TIER_CHAR = ['진', '절', '쇄', '운', '통'];  // 塵/折/碎/殞/慟 — 죽음의 격 (티끌→통곡)
+  function fallenTier(level) {
+    // 강화 tier 구획(v40: 0-2/3-5/6-9/10-13/14-15)과 동일 — 높이 오른 죽음일수록 격이 무겁다
+    if (level >= 14) return 4;
+    if (level >= 10) return 3;
+    if (level >= 6) return 2;
+    if (level >= 3) return 1;
+    return 0;
+  }
+  function makePosthumousName(form, level) {
+    // 명명(askName)은 봉인 시점 의식이라 파괴된 검은 무명으로 죽었다 — 죽어서야 얻는 결정적 2자
+    return (form || '무') + FALLEN_TIER_CHAR[fallenTier(level || 0)];
+  }
+  function generateElegy(f) {
+    // 만가 — 봉인 검의 一代記/遺言에 대응하는, 부러진 검을 위한 애도. 결정적 파생 (성정 v247 재사용).
+    if (!f) return [];
+    const lines = [];
+    const formWord = ({ '직': '곧은', '곡': '굽은', '중': '무거운', '속': '빠른' })[f.form] || '이름 없는';
+    const todWord = ({ '아침': '아침에', '낮': '한낮에', '저녁': '저녁에', '밤': '깊은 밤에' })[f.bornTod] || '';
+    lines.push((todWord ? todWord + ' ' : '') + '태어난 ' + formWord + ' 검 하나');
+    const att = f.enhanceAttempts || 0, slain = f.slainCount || 0;
+    if (slain > 0 && att > 0) lines.push(att + '번의 담금질을 견디고 그림자 ' + slain + '을 베었다');
+    else if (att > 0) lines.push(att + '번의 담금질을 견뎠다');
+    else lines.push('담금질의 기록 없이 잠들었다');
+    const temp = deriveTemperament(f);
+    if (temp.key !== 'wa' && temp.line) lines.push(temp.line);
+    if ((f.scars || 0) > 0) lines.push('각흔 ' + f.scars + ' — 그만큼의 파괴를 이미 견뎠었다');
+    const lv = f.level || 0;
+    lines.push('+' + lv + '에서 +' + (lv + 1) + '을 바라다 부러졌다' + (f.resolve === 'focus' ? ' — 일심, 모든 것을 걸었던 참이었다' : ''));
+    if (f.rescued === true) lines.push('다섯 호흡 안에, 남긴 조각은 거두어졌다');
+    else if (f.rescued === false) lines.push('조각마저 어둠 속에 남았다');
+    return lines;
+  }
+  function recordFallenSword(destroyedLevel) {
+    // 파괴 분기에서 showVoid 전에 호출 — currentSword가 newSword()로 덮어써지기 전 스냅샷.
+    // rescued는 null(미확정)로 매장하고 endVoid가 회수 결과를 확정한다.
+    const cs = state.currentSword || {};
+    if (!Array.isArray(state.fallenSwords)) state.fallenSwords = [];
+    const f = {
+      name: makePosthumousName(cs.form, destroyedLevel),
+      level: destroyedLevel,
+      form: cs.form || null,
+      inscriptions: (cs.inscriptions || []).slice(),
+      soul: cs.soul || 0,
+      slainCount: cs.slainCount || 0,
+      enhanceAttempts: cs.enhanceAttempts || 0,
+      scars: cs.scars || 0,
+      bornTod: cs.bornTod || null,
+      resolve: resolveMode || 'normal',  // 죽는 순간의 각오 (保身은 파괴 0이라 평상/일심만 실재)
+      rescued: null,
+      ts: Date.now(),
+    };
+    state.fallenSwords.push(f);
+    if (state.fallenSwords.length > FALLEN_TUNING.cap) state.fallenSwords.splice(0, state.fallenSwords.length - FALLEN_TUNING.cap);
+    return f;
+  }
+  function renderGraveyard() {
+    const list = $('graveyard-list');
+    const summary = $('graveyard-summary');
+    if (!list) return;
+    const fallen = (state.fallenSwords || []).slice().reverse();  // 최신 무덤 먼저
+    if (summary) {
+      const unmarked = Math.max(0, (state.totalDestroyed || 0) - fallen.length);
+      summary.textContent = fallen.length
+        ? '무덤 ' + fallen.length + '기' + (unmarked > 0 ? ' · 기록 이전에 무명으로 스러진 ' + unmarked + '자루' : '')
+        : '';
+    }
+    if (!fallen.length) {
+      list.innerHTML = '<div style="text-align:center;color:var(--dim);padding:30px 10px;font-size:12px;letter-spacing:3px;line-height:2.2">아직 무덤이 없다<br>부러짐 없이 걷는 길이거나, 길의 처음이거나</div>';
+      return;
+    }
+    const formNames = { '직': '곧은', '곡': '굽은', '중': '무거운', '속': '빠른' };
+    // 이름·명문은 팔레트 생성이지만 import(백업/클라우드) 유래일 수 있어 전부 escapeHtml (v275 규율)
+    list.innerHTML = fallen.map(f => {
+      const elegy = generateElegy(f).map(l => escapeHtml(l)).join('<br>');
+      const ins = (f.inscriptions || []).map(escapeHtml).join(' · ');
+      return '<div class="grave-item" style="padding:10px 8px;border-bottom:1px solid var(--line);cursor:pointer">' +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
+          '<span style="color:var(--fg);letter-spacing:3px;font-size:14px">' + escapeHtml(f.name || '무명') + '</span>' +
+          '<span style="color:var(--danger);font-size:11px;letter-spacing:2px">+' + (f.level || 0) + ' 에서 부러짐</span>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;margin-top:3px;font-size:10px;color:var(--dim);letter-spacing:2px">' +
+          '<span>' + (formNames[f.form] || '형 미정') + (f.slainCount ? ' · 그림자 ' + f.slainCount : '') +
+            (f.rescued === true ? ' · 조각 거둠' : (f.rescued === false ? ' · 전손' : '')) + '</span>' +
+          '<span>' + (f.ts ? formatTimeAgo(f.ts) : '') + '</span>' +
+        '</div>' +
+        (ins ? '<div style="margin-top:3px;font-size:10px;color:var(--accent);opacity:0.7;letter-spacing:2px">' + ins + '</div>' : '') +
+        '<div class="grave-elegy" style="display:none;margin-top:8px;padding:8px 10px;border-left:2px solid var(--line);color:var(--dim);font-size:11px;line-height:2.1;letter-spacing:2px">' + elegy + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
   function generateBiography(sword) {
     if (!sword) return '';
     const form = sword.form;
@@ -17990,6 +18130,19 @@
     $('rubbings-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
+  // v373 검총 — 부러진 검들의 무덤
+  $('btn-graveyard').addEventListener('click', () => {
+    renderGraveyard();
+    $('graveyard-modal').classList.add('active');
+    $('menu-drop').classList.remove('open');
+  });
+  // 무덤 클릭 → 만가 펼침/접힘 (이벤트 위임 — 리스트는 렌더마다 재생성되므로 부모에 1회 부착)
+  $('graveyard-list').addEventListener('click', (e) => {
+    const item = e.target.closest('.grave-item');
+    if (!item) return;
+    const el = item.querySelector('.grave-elegy');
+    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  });
   // v148 紀程 모달 — 여정 timeline
   $('btn-journey').addEventListener('click', () => {
     renderJourney();
@@ -18794,6 +18947,13 @@
       (((state.gambleStats && (state.gambleStats.win || state.gambleStats.lose)) ?
         row('도 회수 도박', fmtNum(state.gambleStats.win || 0) + '승 ' + fmtNum(state.gambleStats.lose || 0) + '패', '#d4af37') : '')) +
       row('검 파괴', fmtNum(state.totalDestroyed || 0) + ' 회', 'var(--danger)') +
+      // v373 검총 — 가장 높이 올랐다 부러진 검 (collectionHighlight 재사용; 이름은 팔레트 생성 + normalizeState 태그 제거)
+      (function() {
+        const fallenList = state.fallenSwords || [];
+        if (!fallenList.length) return '';
+        const deepest = collectionHighlight(fallenList, f => f.level || 0);
+        return deepest ? row('가장 높은 무덤', escapeHtml(deepest.name || '무명') + ' +' + (deepest.level || 0), '#c8a8a0') : '';
+      })() +
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">정 점</div>' +
       row('검 판매', fmtNum(s.sealed || 0) + ' 회') +
       row('도 달성', fmtNum(s.wayReached || 0) + ' 회', '#fff5c0') +

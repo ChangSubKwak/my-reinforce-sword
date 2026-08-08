@@ -994,3 +994,43 @@ test('v372 숙적: 설욕 명문 존재 + 원한 표식이 render에 연결', ()
   assert.match(renderBody, /renderNemesisMark\(\)/, 'render가 원한 표식 갱신');
   assert.ok(html.includes('id="nemesis-mark"'), '#nemesis-mark 요소 존재');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v373 劍塚 — 와이어링 무결성 (스냅샷/회수 확정/보정/UI가 실제 경로에 연결됐는지)
+// ─────────────────────────────────────────────────────────────
+test('v373 검총: 파괴 분기가 showVoid 전에 검을 스냅샷 (일생 데이터 소멸 전 매장)', () => {
+  const body = afterDecl('function enhance() {', 30000);
+  const fallenIdx = body.indexOf('recordFallenSword(destroyedLevel)');
+  const voidIdx = body.indexOf('showVoid(destroyedLevel)');
+  assert.ok(fallenIdx >= 0, '파괴 분기에 recordFallenSword 훅');
+  assert.ok(voidIdx > fallenIdx, '스냅샷은 회수창보다 먼저 (currentSword 덮어쓰기 전)');
+  // recentLog가 사후명을 담음 (기존: 강화도 숫자만 남던 익명 기록)
+  assert.match(body, /recordEvent\('검 파괴 ' \+ fallen\.name/, '일지에 사후명 기록');
+});
+
+test('v373 검총: endVoid가 회수 결과를 무덤에 확정 + 첫 매장 마일스톤', () => {
+  const body = afterDecl('function endVoid(rescued) {', 2500);
+  assert.match(body, /grave\.rescued = !!rescued/, '회수 결과 확정 (만가의 마지막 행)');
+  assert.match(body, /grave\.rescued === null/, '이중 확정 방지 가드 (null일 때만)');
+  assert.match(body, /maybeMilestone\('firstGrave'/, '첫 매장 안내 (검총 발견성)');
+});
+
+test('v373 검총: normalizeState가 손상 import를 방어 (배열·레벨 cap·태그 제거·상한)', () => {
+  const body = afterDecl('function normalizeState() {', 26000);
+  assert.match(body, /Array\.isArray\(state\.fallenSwords\)/, 'fallenSwords 배열 보정');
+  assert.match(body, /f\.level = clampInt\(f\.level, 0, MAX_LEVEL\)/, '무덤 레벨 범위 강제');
+  assert.match(body, /FALLEN_TUNING\.cap/, '무덤 수 상한 강제 (import 폭주 차단)');
+  assert.match(body, /f\.name = makePosthumousName\(f\.form, f\.level\)/, '오염된 사후명 결정적 재생성');
+});
+
+test('v373 검총: 모달·메뉴·핸들러 와이어링 + recordFallenSword 내부 (cap·사후명·XSS 경계)', () => {
+  assert.ok(html.includes('id="graveyard-modal"'), '#graveyard-modal 존재');
+  assert.ok(html.includes('id="btn-graveyard"'), '메뉴 검총 버튼 존재');
+  assert.match(js, /\$\('btn-graveyard'\)\.addEventListener/, '검총 버튼 핸들러');
+  const rec = afterDecl('function recordFallenSword(', 1400);
+  assert.match(rec, /makePosthumousName\(/, '매장 시 사후명 부여');
+  assert.match(rec, /FALLEN_TUNING\.cap/, '상한 초과 시 가장 오래된 무덤부터 잊힘');
+  const rg = afterDecl('function renderGraveyard() {', 3500);
+  assert.match(rg, /generateElegy\(/, '무덤마다 만가 렌더');
+  assert.match(rg, /escapeHtml\(/, 'import 유래 문자열 이스케이프 (v275 XSS 경계 일관)');
+});

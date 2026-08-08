@@ -1649,3 +1649,47 @@ test('v372 nemesisReturnChance/nemesisGrudgeMul: 원한 단조 증가 + cap (점
   }
   assert.strictEqual(fns.nemesisGrudgeMul(99), T.grudgeCap, '보상 배율 cap (인플레이션 차단)');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v373 劍塚 — 부러진 검은 무덤을 얻는다 (순수 함수)
+// ─────────────────────────────────────────────────────────────
+test('v373 makePosthumousName/fallenTier: 형×죽음의 격 결정적 사후명 + 경계', () => {
+  const deps = { FALLEN_TIER_CHAR: extractConst('FALLEN_TIER_CHAR') };
+  const fns = loadFunctions(['makePosthumousName', 'fallenTier'], deps);
+  assert.strictEqual(deps.FALLEN_TIER_CHAR.length, 5, '죽음의 격 5단계');
+  // tier 경계 — 강화 tier 구획(v40: 0-2/3-5/6-9/10-13/14-15)과 동일
+  [[0, 0], [2, 0], [3, 1], [5, 1], [6, 2], [9, 2], [10, 3], [13, 3], [14, 4], [15, 4]].forEach(([lv, t]) =>
+    assert.strictEqual(fns.fallenTier(lv), t, '+' + lv + ' → 격 ' + t));
+  // 결정적 2자 이름, 4형 × 5격 전 조합 무충돌
+  const seen = new Set();
+  ['직', '곡', '중', '속'].forEach(f => [0, 3, 6, 10, 14].forEach(lv => {
+    const name = fns.makePosthumousName(f, lv);
+    assert.strictEqual(name.length, 2, f + '+' + lv + ' → 2자 사후명');
+    assert.strictEqual(name, fns.makePosthumousName(f, lv), '결정적 (재호출 동일)');
+    seen.add(name);
+  }));
+  assert.strictEqual(seen.size, 20, '4형 × 5격 = 20 사후명 전부 상이');
+  // 형 미정/손상 입력도 안전한 fallback 이름
+  assert.strictEqual(fns.makePosthumousName(null, 5)[0], '무', '형 미정 → 무 접두');
+  assert.strictEqual(fns.makePosthumousName(undefined, undefined).length, 2, '전부 미정도 2자');
+});
+
+test('v373 generateElegy: 만가 결정적 생성 + 회수 결과/각오 반영 + 최소 데이터 안전', () => {
+  const fns = loadFunctions(['generateElegy', 'deriveTemperament']);
+  const full = { form: '직', level: 8, enhanceAttempts: 20, slainCount: 6, scars: 2, soul: 40, bornTod: '밤', resolve: 'focus', rescued: false };
+  const lines = fns.generateElegy(full);
+  assert.ok(Array.isArray(lines) && lines.length >= 4, '만가 4행 이상');
+  assert.deepStrictEqual(lines, fns.generateElegy(full), '결정적 (재호출 동일)');
+  assert.ok(lines.some(l => l.includes('+8에서 +9')), '부러진 도박의 정확한 지점');
+  assert.ok(lines.some(l => l.includes('일심')), '一心 각오가 만가에 남음');
+  assert.ok(lines.some(l => l.includes('조각마저')), '전손의 애도');
+  assert.ok(lines.some(l => l.includes('각흔 2')), '견뎌온 각흔 반영');
+  // 회수 성공 변형
+  assert.ok(fns.generateElegy({ ...full, rescued: true }).some(l => l.includes('거두어졌다')), '회수 성공 행');
+  // 미확정(null)은 회수 행 생략 (회수창 진행 중 스냅샷)
+  const pending = fns.generateElegy({ ...full, rescued: null });
+  assert.ok(!pending.some(l => l.includes('거두어졌다') || l.includes('조각마저')), '미확정 시 회수 행 없음');
+  // 최소/손상 데이터도 크래시 없이 만가 생성 (구 세이브·import 방어)
+  assert.ok(fns.generateElegy({}).length >= 2, '빈 무덤도 만가 존재');
+  assert.strictEqual(fns.generateElegy(null).length, 0, 'null 안전');
+});
