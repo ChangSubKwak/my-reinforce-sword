@@ -1956,3 +1956,45 @@ test('v383 buildDefeatMessage: 격 형용 + 숙적 탄생/심화 결합 + 결정
   // 결정적
   assert.strictEqual(buildDefeatMessage(c, null), buildDefeatMessage(c, null), '결정적 (재호출 동일)');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v384 劫 — 시대의 연대기 (순수 함수)
+// ─────────────────────────────────────────────────────────────
+test('v384 currentEraSummary: 개막 스냅샷 대비 증분 + 음수 clamp + 겁 번호', () => {
+  const st = {
+    eraStart: { ts: 1000, generation: 5, sealed: 3, ways: 1, slain: 40, destroyed: 2 },
+    eras: [{}, {}],  // 이미 저문 2겁 → 진행 중은 제3겁
+    swordGeneration: 9, stats: { wayReached: 2 }, totalSlain: 55, totalDestroyed: 4,
+  };
+  const fns = loadFunctions(['currentEraSummary', 'eraSnapshot'], { state: st, allSealedSwords: () => new Array(6) });
+  const e = fns.currentEraSummary();
+  assert.strictEqual(e.idx, 3, '겁 번호 = 아카이브 수 + 1');
+  assert.strictEqual(e.generations, 4, '빚은 검 증분');
+  assert.strictEqual(e.sealed, 3, '계보 증분 (봉인+전당 단일 진원)');
+  assert.strictEqual(e.ways, 1, '도 증분');
+  assert.strictEqual(e.slain, 15, '베어냄 증분');
+  assert.strictEqual(e.destroyed, 2, '부러짐 증분');
+  // 손상 스냅샷(미래값)이어도 음수 없음
+  st.eraStart.slain = 999;
+  assert.strictEqual(fns.currentEraSummary().slain, 0, '음수 델타 clamp');
+  // 스냅샷 없으면 null (구 세이브 첫 로드 — normalizeState가 개막)
+  st.eraStart = null;
+  assert.strictEqual(fns.currentEraSummary(), null, '무스냅샷 안전');
+});
+
+test('v384 describeEra: 연대기 한 줄 — 이룬 것만 · 빈 시대 · 결정적', () => {
+  const { describeEra } = loadFunctions(['describeEra']);
+  const full = describeEra({ generations: 7, ways: 2, sealed: 5, slain: 30, destroyed: 3 });
+  assert.ok(full.includes('검 7자루를 빚었다'), '빚은 검');
+  assert.ok(full.includes('도에 2번 이르렀다'), '도');
+  assert.ok(full.includes('5자루를 계보에 남겼다'), '계보');
+  assert.ok(full.includes('그림자 30을 베었다'), '무훈');
+  assert.ok(full.includes('3자루가 부러졌다'), '부러짐');
+  // 이루지 못한 항목은 침묵
+  const modest = describeEra({ generations: 2, ways: 0, sealed: 0, slain: 4, destroyed: 0 });
+  assert.ok(!modest.includes('도에') && !modest.includes('계보에') && !modest.includes('부러졌다'), '0 항목 생략');
+  // 빈 시대
+  assert.match(describeEra({ generations: 0, slain: 0 }), /짧은 시대였다/, '빈 시대 문구');
+  assert.strictEqual(describeEra(null), '', 'null 안전');
+  assert.strictEqual(describeEra(full === full ? { generations: 7, ways: 2, sealed: 5, slain: 30, destroyed: 3 } : null), full, '결정적');
+});

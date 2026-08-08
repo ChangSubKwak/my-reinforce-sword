@@ -1378,3 +1378,31 @@ test('v383 꺾임: 승리 컷씬 3처가 패배 변형을 방어적으로 해제
   assert.ok(ds && /defeats: 0/.test(ds[0]), 'DEFAULT_STATS에 defeats 병합 기본값');
   assert.match(js, /SFX\.defeat\b/, 'SFX 카탈로그에 defeat 존재');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v384 劫 — 와이어링 무결성 (커밋 지점·표시·방어)
+// ─────────────────────────────────────────────────────────────
+test('v384 겁: 아카이브 커밋은 재시작 시 1회 — newSword 전 (첫 검은 새 겁의 것)', () => {
+  const rb = afterDecl('function restartFromGameOver() {', 1200);
+  const archIdx = rb.indexOf('archiveEra()');
+  const newIdx = rb.indexOf('newSword()');
+  assert.ok(archIdx >= 0 && newIdx > archIdx, '재시작 → 매장 → 새 검 순서');
+  const ab = afterDecl('function archiveEra() {', 900);
+  assert.match(ab, /ERA_TUNING\.cap/, '겁 수 상한 (오래된 시대부터 잊힘)');
+  assert.match(ab, /state\.eraStart = eraSnapshot\(\)/, '매장 직후 새 겁 개막 스냅샷');
+  // showGameOver는 표시만 (커밋 없음 — 새로고침 이중 아카이브 방지). 슬라이스를 함수 경계에서 절단.
+  let gb = afterDecl('function showGameOver() {', 3200);
+  const gbEnd = gb.indexOf('function restartFromGameOver');
+  if (gbEnd >= 0) gb = gb.slice(0, gbEnd);
+  assert.match(gb, /currentEraSummary\(\)/, '게임오버 화면에 저무는 겁 요약');
+  assert.doesNotMatch(gb, /archiveEra\(\)/, '표시 지점에서 커밋 금지 (이중 아카이브 방지)');
+});
+
+test('v384 겁: 표시·방어 와이어링', () => {
+  assert.ok(html.includes('id="gameover-era"'), '게임오버 겁 표시 요소');
+  const rs = js.match(/function renderStats\(\)\s*\{[\s\S]*?\n  \}/);
+  assert.ok(rs && rs[0].includes('겁 의  연 대 기') && rs[0].includes('describeEra(e)'), '記錄 모달 연대기 섹션');
+  const nb = afterDecl('function normalizeState() {', 44000);
+  assert.match(nb, /Array\.isArray\(state\.eras\)/, '연대기 배열 보정');
+  assert.match(nb, /try \{ state\.eraStart = eraSnapshot\(\); \} catch/, '개막 스냅샷 — sandbox 안전 내부 try');
+});

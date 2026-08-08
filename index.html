@@ -4173,6 +4173,7 @@
 <div id="gameover-overlay">
   <div id="gameover-mu">무</div>
   <div id="gameover-title">길의 끝</div>
+  <div id="gameover-era" style="font-size:11px;color:var(--accent);letter-spacing:2px;margin:8px auto 2px;opacity:0.85;max-width:420px;line-height:1.8"></div>
   <div id="gameover-journey"></div>
   <div id="gameover-swords"></div>
   <div id="gameover-msg">
@@ -4353,6 +4354,8 @@
     nemesesSlain: 0,  // v372 숙적 — 설욕(숙적 처치) 누적 (영구)
     nemesesArchive: [],  // v377 설욕록 — 갚아낸 숙적들의 기록 {name, origin, typeKey, strength, wins, ts} (cap NEMESIS_TUNING.archiveCap)
     fallenSwords: [],  // v373 검총 — 부러진 검들의 무덤 (최대 FALLEN_TUNING.cap, 오래된 것부터 잊힘)
+    eras: [],       // v384 劫 — 저문 시대들의 연대기 (게임 오버마다 아카이브, cap ERA_TUNING.cap)
+    eraStart: null, // v384 劫 — 진행 중인 겁의 개막 스냅샷 {ts, generation, sealed, ways, slain, destroyed}
     heritageInscription: null,  // v33 — 도 검 봉인 후 다음 검에 전수될 명문 (1개)
     guardianIdx: null,  // v52 — 수호자로 지정된 봉인 검의 인덱스 (선택적)
     recentLog: [],  // v75 — 최근 액션 기록 (최대 10건, 최신순)
@@ -4665,6 +4668,20 @@
           if (typeof f.luckExp !== 'number' || !isFinite(f.luckExp)) f.luckExp = 0;
           if (typeof f.luckAct !== 'number' || !isFinite(f.luckAct)) f.luckAct = 0;
         });
+      }
+      // v384 劫 — 연대기 방어 + 첫 도입 시 개막 스냅샷 (기존 세이브는 지금부터 기록 시작)
+      if (!Array.isArray(state.eras)) state.eras = [];
+      state.eras = state.eras.filter(e => e && typeof e === 'object');
+      if (state.eras.length > 0) {
+        if (state.eras.length > ERA_TUNING.cap) state.eras.splice(0, state.eras.length - ERA_TUNING.cap);
+        state.eras.forEach((e, i) => {
+          ['idx', 'generations', 'sealed', 'ways', 'slain', 'destroyed'].forEach(k => { e[k] = clampInt(e[k], 0); });
+          if (!e.idx) e.idx = i + 1;
+        });
+      }
+      if (!state.eraStart || typeof state.eraStart !== 'object') {
+        // 격리 sandbox(행위 테스트)에는 eraSnapshot 의존이 없으므로 내부 try — 실제 런타임에선 항상 성공
+        try { state.eraStart = eraSnapshot(); } catch (e2) { state.eraStart = null; }
       }
       // v377 설욕록 — 손상/크래프트 import 방어 (검총 가드와 동일 패턴: 비어있으면 외부 상수 참조 0)
       if (!Array.isArray(state.nemesesArchive)) state.nemesesArchive = [];
@@ -17190,6 +17207,62 @@
 
   // === 게임 오버 — 검 없음 + 새 검 빚을 조각도 없음 ===
   let gameOverShown = false;
+  // === v384 劫(겁) — 시대의 연대기 ===
+  // 검이 죽으면 검총(v373), 숙적이 죽으면 설욕록(v377) — 그런데 가장 큰 죽음인 *시대의 끝*
+  // (게임 오버)은 무(無)로 사라졌다. 각 게임 오버를 하나의 겁으로 아카이브: 그 시대에 빚은 검·
+  // 도달한 도·베어낸 그림자가 영구히 남는다. 메커니즘 효과 0 (시련의 혼 v89은 불변).
+  const ERA_TUNING = { cap: 20 };  // 보존할 겁 수 상한 (초과 시 오래된 시대부터 잊힘)
+  function eraSnapshot() {
+    return {
+      ts: Date.now(),
+      generation: state.swordGeneration || 0,
+      sealed: allSealedSwords().length,  // 봉인+전당 (단일 진원 순회)
+      ways: (state.stats && state.stats.wayReached) || 0,
+      slain: state.totalSlain || 0,
+      destroyed: state.totalDestroyed || 0,
+    };
+  }
+  function currentEraSummary() {
+    // 진행 중인 겁의 요약 — 시작 스냅샷 대비 증분 (게임오버 화면 표시용, 아카이브 전 계산만)
+    const s0 = state.eraStart;
+    if (!s0 || typeof s0 !== 'object') return null;
+    const now = eraSnapshot();
+    const d = (a, b) => Math.max(0, (a || 0) - (b || 0));  // 손상 스냅샷(미래값)에도 음수 방지
+    return {
+      idx: (state.eras || []).length + 1,
+      startTs: s0.ts || 0,
+      endTs: now.ts,
+      generations: d(now.generation, s0.generation),
+      sealed: d(now.sealed, s0.sealed),
+      ways: d(now.ways, s0.ways),
+      slain: d(now.slain, s0.slain),
+      destroyed: d(now.destroyed, s0.destroyed),
+    };
+  }
+  function describeEra(e) {
+    // 연대기 한 줄 (순수·결정적) — 이룬 것만 말한다
+    if (!e) return '';
+    if ((e.generations || 0) <= 0 && (e.slain || 0) <= 0) return '짧은 시대였다 — 남긴 것이 많지 않다';
+    const parts = [];
+    parts.push('검 ' + Math.max(1, e.generations || 0) + '자루를 빚었다');
+    if ((e.ways || 0) > 0) parts.push('도에 ' + e.ways + '번 이르렀다');
+    if ((e.sealed || 0) > 0) parts.push(e.sealed + '자루를 계보에 남겼다');
+    if ((e.slain || 0) > 0) parts.push('그림자 ' + e.slain + '을 베었다');
+    if ((e.destroyed || 0) > 0) parts.push(e.destroyed + '자루가 부러졌다');
+    return parts.join(' · ');
+  }
+  function archiveEra() {
+    // 겁의 매장 — restartFromGameOver(새 시대의 개막)가 유일한 커밋 지점
+    const e = currentEraSummary();
+    if (!Array.isArray(state.eras)) state.eras = [];
+    if (e) {
+      state.eras.push(e);
+      if (state.eras.length > ERA_TUNING.cap) state.eras.splice(0, state.eras.length - ERA_TUNING.cap);
+      log('제 ' + e.idx + ' 겁이 저물었다 — 연대기에 기록된다', 'info');
+    }
+    state.eraStart = eraSnapshot();  // 새 겁 개막
+  }
+
   function isStuck() {
     const shardsNum = (typeof state.shards === 'number' && !isNaN(state.shards)) ? state.shards : 0;
     const hasSwordBool = state.hasSword === true;
@@ -17247,10 +17320,16 @@
       '<div><span class="label">베어낸 그림자</span>' + (state.totalSlain || 0) + '</div>' +
       '<div><span class="label">검 파괴</span>' + (state.totalDestroyed || 0) + '</div>';
 
+    // v384 劫 — 저무는 시대의 연대기 (아카이브는 재시작 시 커밋 — 여기선 표시만)
+    const era = currentEraSummary();
+    const eraEl = $('gameover-era');
+    if (eraEl) eraEl.textContent = era ? ('제 ' + era.idx + ' 겁이 저문다 — ' + describeEra(era)) : '';
+
     $('gameover-overlay').classList.add('active');
   }
   function restartFromGameOver() {
     // '처음부터' 재시작 — 현재 자원 초기화, 메타 진행(계보/통계/유파/始祖)은 영구 보존
+    archiveEra();  // v384 劫 — 저문 시대를 연대기에 매장, 새 겁 개막 (newSword 전 — 첫 검은 새 겁의 것)
     state.shards = NEWSWORD_COST;
     state.protections = 0;
     state.whetstones = 0;
@@ -19680,6 +19759,17 @@
       row('도 달성', fmtNum(s.wayReached || 0) + ' 회', '#fff5c0') +
       ((s.oathsSworn || 0) > 0 ? row('서약', fmtNum(s.oathsKept || 0) + ' 지킴 · ' + fmtNum(s.oathsBroken || 0) + ' 파계', '#c8b8d8') : '') +  // v376
       row('세월 (누적)', formatPlayTime(state.totalPlayTimeMs || 0), '#a8c0d8') +  // v174
+      // v384 劫 — 겁의 연대기 (저문 시대들, 최근 먼저)
+      (function() {
+        const eras = state.eras || [];
+        if (!eras.length) return '';
+        return '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">겁 의  연 대 기</div>' +
+          eras.slice().reverse().map(e =>
+            '<div style="padding:5px 6px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:1px;display:flex;justify-content:space-between;gap:10px">' +
+              '<span style="color:var(--dim);white-space:nowrap">제 ' + (e.idx || '?') + ' 겁</span>' +
+              '<span style="color:var(--fg);text-align:right">' + describeEra(e) + '</span>' +
+            '</div>').join('');
+      })() +
       (function() {
         // v163 투장 — 챔피언 표시
         const champ = getChampionInfo();
