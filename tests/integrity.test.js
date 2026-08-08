@@ -987,7 +987,7 @@ test('v372 숙적: normalizeState가 손상 import를 방어 (강도 cap·이름
 
 test('v372 숙적: 설욕 명문 존재 + 원한 표식이 render에 연결', () => {
   assert.match(js, /key: '설욕'/, 'INSCRIPTIONS에 설욕 명문 (verse 포함 — v20 규율)');
-  const resolveBody = afterDecl('function resolveNemesisSlain(', 900);
+  const resolveBody = afterDecl('function resolveNemesisSlain(', 2200);
   assert.match(resolveBody, /state\.nemesis = null/, '설욕 시 원한 해소');
   assert.match(resolveBody, /grantInscription\('설욕'\)/, '설욕 명문 부여');
   const renderBody = afterDecl('function render() {', 2500);
@@ -1149,4 +1149,41 @@ test('v376 서약: 명문·UI·시한 와이어링', () => {
   const renderBody = afterDecl('function render() {', 3000);
   assert.match(renderBody, /renderOathButton\(\)/, 'render가 맹세 버튼/상태 갱신');
   assert.match(js, /swearOath\(item\.dataset\.oath\)/, '계율 선택 위임 핸들러');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v377 影史 — 와이어링 무결성 (설욕록 캡처 순서·도감 커버리지·상성 단일 진원)
+// ─────────────────────────────────────────────────────────────
+test('v377 설욕록: 아카이브 push는 state.nemesis 소거 *전* (origin/strength 소실 방지)', () => {
+  const body = afterDecl('function resolveNemesisSlain(', 2200);
+  const pushIdx = body.indexOf('state.nemesesArchive.push(');
+  const nullIdx = body.indexOf('state.nemesis = null');
+  assert.ok(pushIdx >= 0, '설욕록 push 훅');
+  assert.ok(nullIdx > pushIdx, '캡처는 원한 해소보다 먼저 (nem.origin/strength가 null 이후엔 소실)');
+  assert.match(body, /NEMESIS_TUNING\.archiveCap/, '설욕록 cap 강제 (오래된 것부터 잊힘)');
+});
+
+test('v377 영사: 도감이 그림자 세계 5부를 모두 커버 + 종 목록은 배열 순회 (신규 변종 자동 포함)', () => {
+  const body = afterDecl('function renderShadowLore() {', 7000);
+  assert.match(body, /SHADOW_TYPES\.map\(/, '종 목록은 SHADOW_TYPES 직접 순회 — 새 변종 추가 시 도감 자동 갱신');
+  assert.match(body, /yakshaSlain/, '야차 (밤 한정 별종) 포함');
+  assert.match(body, /ORIGIN_KEYS\.map\(/, '학파 4종 순회');
+  assert.match(body, /NAMED_FOES\.filter\(/, '名 처치 진척 요약');
+  assert.match(body, /FORM_AFFINITY/, '형상극 상성 전역 공개 (도감의 보상 = 지식)');
+  // 상성 배수는 상수 보간 — 하드코딩 ×1.25/×0.85가 AFFINITY_*_MUL과 drift하는 것 차단 (v349 규율)
+  assert.match(body, /AFFINITY_FAVORED_MUL/, '강함 배수 상수 보간');
+  assert.match(body, /AFFINITY_WEAKNESS_MUL/, '약함 배수 상수 보간');
+  assert.doesNotMatch(body, /×1\.25|×0\.85/, '상성 배수 하드코딩 없음');
+  assert.match(body, /nemesesArchive/, '설욕록 표시');
+  assert.match(body, /escapeHtml\(/, 'import 유래 이름 이스케이프 (v275 규율)');
+});
+
+test('v377 영사: 모달·메뉴·정규화 와이어링', () => {
+  assert.ok(html.includes('id="shadowlore-modal"'), '#shadowlore-modal 존재');
+  assert.ok(html.includes('id="btn-shadowlore"'), '메뉴 영사 버튼 존재');
+  assert.match(js, /\$\('btn-shadowlore'\)\.addEventListener/, '영사 버튼 핸들러');
+  const nb = afterDecl('function normalizeState() {', 34000);
+  assert.match(nb, /Array\.isArray\(state\.nemesesArchive\)/, '설욕록 배열 보정');
+  assert.match(nb, /a\.strength = clampInt\(a\.strength, 1, MAX_LEVEL\)/, '설욕록 강도 범위 강제');
+  assert.match(nb, /a\.name = makeNemesisName\(a\.origin, a\.typeKey\)/, '오염된 이름 결정적 재생성');
 });

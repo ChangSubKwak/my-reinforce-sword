@@ -739,6 +739,14 @@ v373 검총을 박물관에서 **결정의 장소**로 전환 — 파괴(v372 �
 - **운명 기록**: 봉인·전당 push 양쪽 `oath` 보존 (field-set 대칭 잠금) + 무덤(`recordFallenSword`)에도 — 一代記 "맹세를 끝까지 지켰다/스스로 깨었다" 줄, 만가 "맹세를 지킨 채 부러졌다/깨어진 맹세를 안고 잠들었다" 행. `서약`/`파계` 명문 (서사). 파계 없는 봉인 = `oathsKept` (통계 3종 + 記錄 행 + `서약자` 페르소나 3지킴).
 - **방어**: `sanitizeSword`·fallen forEach에 oath shape 강제 + name stripTags (v370m). 테스트: logic 2건(계율 유일성·효과 필드 금지 / 만가·一代記 결합·무맹세 불변) + integrity 3건(위반 훅 5곳·순서 / 기록 보존·통계·sanitize / 명문·UI·시한).
 
+### v377 影史(영사) — 그림자 세계의 사서(史書)
+
+검 측은 계보·전당·검총·회고의 두터운 기록 체계를 갖췄지만 게임의 절반인 그림자 세계는 흩어진 카운터뿐이었다. 특히 **설욕한 숙적은 이름째 소멸** (`nemesis = null` + 카운터) — 검총(v373)이 파괴를 완결했듯 설욕록이 v372를 완결한다. 메커니즘 효과 0, 전부 기존 데이터 파생.
+
+- **설욕록** (`state.nemesesArchive`, cap `NEMESIS_TUNING.archiveCap(20)`): `resolveNemesisSlain`이 `state.nemesis` 소거 **전**에 {name, origin, typeKey, strength, wins, ts} 캡처 (순서가 integrity 테스트로 잠김 — null 이후엔 origin/strength 소실). `normalizeState` 방어: 검총 가드와 동일 "비어있으면 외부 상수 참조 0" 패턴 + 화이트리스트·범위·태그 제거·이름 결정적 재생성.
+- **영사 모달** (`renderShadowLore` / `#shadowlore-modal`, 메뉴 처치 보고서 아래): 5부 구성 — ① 그림자 종 (**`SHADOW_TYPES` 배열 직접 순회** — 새 변종 자동 포함, 테스트 잠금; 출몰%·처치 수) + 야차 ② 학파 4종 (whisper 시구 + 처치 + 단마 진척) ③ 名 처치 진척 요약 (상세는 처치 보고서) ④ **형상극 상성 전역 공개** — 도전 화면의 개별 라벨(v129)과 달리 4형 전체 표, 현재 검의 형 강조, 배수는 `AFFINITY_*_MUL` 상수 보간 (하드코딩 금지 테스트 잠금) ⑤ 숙적 현재 원한 + 설욕록 (최근 먼저, escapeHtml).
+- 테스트: logic 1건(normalizeState 행위 검증 — 손상 import 26항목 강제 보정: 필터·cap·화이트리스트·범위·태그) + integrity 3건(캡처 순서 / 도감 5부 커버리지·상성 단일 진원 / 모달·메뉴·정규화 와이어링).
+
 ### 봉인 균형 곡선 (참고)
 
 | 검 강화도 | 봉인 보상 (조각) |
@@ -775,7 +783,7 @@ v373 검총을 박물관에서 **결정의 장소**로 전환 — 파괴(v372 �
 | `protectCost(lv)` | 방지권 | 강화 단계별 방지권 비용 계단 함수 |
 | `rescueShards(level)` | 회수 | 파괴된 검에서 회수 가능 조각 (`max(3, floor(lv^2 * 0.7))` — 저레벨 최소 3 하한) |
 | `SHADOW_TYPES[]` | 影 변종 | weight·강도Mul·보상Mul·특수 메커니즘 (slayEvade 등) |
-| `NEMESIS_TUNING` | 宿敵 (v372) | 재등장 확률(base 0.15/승당 +0.05/cap 0.35)·원한 보상 배율(승당 +0.35/cap 2.5)·설욕 魂 |
+| `NEMESIS_TUNING` | 宿敵 (v372) | 재등장 확률(base 0.15/승당 +0.05/cap 0.35)·원한 보상 배율(승당 +0.35/cap 2.5)·설욕 魂·설욕록 cap(20, v377) |
 | `FALLEN_TUNING` | 劍塚 (v373) | 무덤 수 상한 (cap 30 — 초과 시 가장 오래된 무덤부터 잊힘, 저장 크기) |
 | `REFORGE_TUNING` | 再鍊 (v374) | 재련 비용 (base 60 + 무덤 강화도 × 3 — 새 검 50보다 프리미엄 유지) |
 | `SUMMON_TUNING` | 招影 (v375) | 소환 전리품 배율(0.5 — farming 차단)·숙적 응답 bias(+0.35)/cap(0.9). 비용은 `recipes.summon.cost(15)` |

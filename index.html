@@ -2865,6 +2865,7 @@
   <button id="btn-enshrined">🏛 전당</button>
   <button id="btn-graveyard">검총 (부러진 검들)</button>
   <button id="btn-foes">처치 보고서</button>
+  <button id="btn-shadowlore">영사 (그림자 도감)</button>
   <button id="btn-blessings">기연 발견</button>
   <button id="btn-shrine">신사</button>
   <button id="btn-duel">대국</button>
@@ -3946,6 +3947,18 @@
   </div>
 </div>
 
+<!-- v377 영사 — 그림자 세계의 사서 -->
+<div class="modal" id="shadowlore-modal">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mtitle-shadowlore" style="max-width: 460px;">
+    <h2 id="mtitle-shadowlore">영 사</h2>
+    <p style="font-size:10px;color:var(--dim);letter-spacing:2px;line-height:1.7">
+      그림자 세계의 사서 — 종 · 학파 · 이름 있는 적 · 형상극 · 설욕록
+    </p>
+    <div id="shadowlore-body" style="max-height: 420px; overflow-y: auto; padding: 0 2px; margin-top:6px"></div>
+    <button class="modal-close" data-close>닫 기</button>
+  </div>
+</div>
+
 <!-- v373 검총 — 부러진 검들의 무덤 -->
 <div class="modal" id="graveyard-modal">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mtitle-graveyard" style="max-width: 440px;">
@@ -4299,6 +4312,7 @@
     foesSlain: {},  // v90 — 이름 있는 적 처치 기록 (영구, key별 true)
     nemesis: null,  // v372 숙적 — 나를 이기고 이름을 얻은 그림자 {name, origin, typeKey, strength, wins}
     nemesesSlain: 0,  // v372 숙적 — 설욕(숙적 처치) 누적 (영구)
+    nemesesArchive: [],  // v377 설욕록 — 갚아낸 숙적들의 기록 {name, origin, typeKey, strength, wins, ts} (cap NEMESIS_TUNING.archiveCap)
     fallenSwords: [],  // v373 검총 — 부러진 검들의 무덤 (최대 FALLEN_TUNING.cap, 오래된 것부터 잊힘)
     heritageInscription: null,  // v33 — 도 검 봉인 후 다음 검에 전수될 명문 (1개)
     guardianIdx: null,  // v52 — 수호자로 지정된 봉인 검의 인덱스 (선택적)
@@ -4601,6 +4615,20 @@
             f.oath.name = (typeof f.oath.name === 'string') ? stripTags(f.oath.name).slice(0, 8) : '';
             f.oath.broken = f.oath.broken === true;
           } else if (f.oath != null) f.oath = null;
+        });
+      }
+      // v377 설욕록 — 손상/크래프트 import 방어 (검총 가드와 동일 패턴: 비어있으면 외부 상수 참조 0)
+      if (!Array.isArray(state.nemesesArchive)) state.nemesesArchive = [];
+      state.nemesesArchive = state.nemesesArchive.filter(a => a && typeof a === 'object');
+      if (state.nemesesArchive.length > 0) {
+        if (state.nemesesArchive.length > NEMESIS_TUNING.archiveCap) state.nemesesArchive.splice(0, state.nemesesArchive.length - NEMESIS_TUNING.archiveCap);
+        state.nemesesArchive.forEach(a => {
+          a.origin = ORIGIN_KEYS.includes(a.origin) ? a.origin : null;
+          a.typeKey = (a.typeKey === 'flee' || a.typeKey === 'steel') ? a.typeKey : 'normal';
+          a.strength = clampInt(a.strength, 1, MAX_LEVEL);
+          a.wins = clampInt(a.wins, 1, 99);
+          a.name = (typeof a.name === 'string' && a.name) ? stripTags(a.name).slice(0, 8) : '';
+          if (!a.name) a.name = makeNemesisName(a.origin, a.typeKey);
         });
       }
       if (!state.blessingsDiscovered || typeof state.blessingsDiscovered !== 'object') state.blessingsDiscovered = {};  // v119 기연
@@ -12733,6 +12761,7 @@
     grudgePerWin: 0.35,  // 원한 1승당 보상 배율 가산
     grudgeCap: 2.5,      // 원한 보상 배율 상한 (점수 인플레이션 차단)
     soulOnRevenge: 8,    // 설욕 시 영혼 가산
+    archiveCap: 20,      // v377 설욕록 — 보존할 갚아낸 숙적 수 상한 (초과 시 오래된 것부터 잊힘)
   };
   // 학파 글자 + 그림자 유형 글자 → 결정적 2자 이름 (예: 야류 도망 그림자 = '월풍')
   function makeNemesisName(origin, typeKey) {
@@ -12782,6 +12811,19 @@
     if (!c.isNemesis) return;
     const name = c.nemesisName || (state.nemesis && state.nemesis.name) || '숙적';
     const wins = c.nemesisWins || (state.nemesis && state.nemesis.wins) || 1;
+    // v377 설욕록 — 원한의 역사를 이름째 보존 (검총이 파괴를 완결했듯 설욕록이 숙적을 완결).
+    // state.nemesis를 비우기 *전*에 origin/strength까지 캡처해야 한다.
+    const nem = state.nemesis;
+    if (!Array.isArray(state.nemesesArchive)) state.nemesesArchive = [];
+    state.nemesesArchive.push({
+      name: name,
+      origin: (nem && nem.origin) || null,
+      typeKey: (nem && nem.typeKey) || 'normal',
+      strength: (nem && nem.strength) || c.strength || 1,
+      wins: wins,
+      ts: Date.now(),
+    });
+    if (state.nemesesArchive.length > NEMESIS_TUNING.archiveCap) state.nemesesArchive.splice(0, state.nemesesArchive.length - NEMESIS_TUNING.archiveCap);
     state.nemesis = null;
     state.nemesesSlain = (state.nemesesSlain || 0) + 1;
     addSoul(NEMESIS_TUNING.soulOnRevenge);
@@ -15648,6 +15690,74 @@
     save();
     render();
   }
+  // === v377 影史(영사) — 그림자 세계의 사서(史書) ===
+  // 검 측은 계보·전당·검총·회고의 두터운 기록 체계를 갖췄지만 게임의 절반인 그림자 세계는
+  // 흩어진 카운터뿐이었다. 종·학파·名·숙적·설욕록을 한 권으로 — 형상극 상성표도 여기서
+  // 전역 공개 (도감의 보상은 지식). 메커니즘 효과 0, 전부 기존 데이터 파생.
+  function renderShadowLore() {
+    const el = $('shadowlore-body');
+    if (!el) return;
+    const s = state.stats || {};
+    const slainOf = { normal: s.slainNormal || 0, flee: s.slainFlee || 0, steel: s.slainSteel || 0, demon: s.slainDemon || 0 };
+    const glyphOf = { normal: '影', flee: '逃', steel: '鋼', demon: '鬼' };
+    const head = (t) => '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:14px 0 6px">' + t + '</div>';
+    const card = (glyph, name, desc, meta) =>
+      '<div class="lore-card" style="display:flex;gap:12px;align-items:flex-start;padding:9px 8px;border-bottom:1px solid var(--line)">' +
+        '<div style="font-size:22px;color:var(--dim);width:30px;text-align:center;font-family:\'Noto Serif KR\',serif">' + glyph + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="color:var(--fg);font-size:12px;letter-spacing:3px">' + name + '</div>' +
+          '<div style="color:var(--dim);font-size:10px;letter-spacing:1px;margin-top:2px;line-height:1.7">' + desc + '</div>' +
+        '</div>' +
+        '<div style="color:var(--accent);font-size:10px;letter-spacing:2px;white-space:nowrap">' + meta + '</div>' +
+      '</div>';
+    // 1. 그림자 종 — SHADOW_TYPES 배열 직접 순회 (새 변종 자동 포함)
+    let html = head('그 림 자  종');
+    html += SHADOW_TYPES.map(t =>
+      card(glyphOf[t.key] || '影', t.name, t.desc, '출몰 ' + Math.round(t.weight * 100) + '% · 베어냄 ' + fmtNum(slainOf[t.key] || 0))
+    ).join('');
+    html += card('夜', '야차', '밤에만 나타나는 자주색 그림자 — 달빛 아래의 별종', '밤 한정 · 베어냄 ' + fmtNum(s.yakshaSlain || 0));
+    // 2. 학파 — 출신별 처치 + 단마 진척
+    const os = state.shadowOriginsSlain || {};
+    const doneOrigins = ORIGIN_KEYS.filter(k => (os[k] || 0) > 0).length;
+    html += head('학 파');
+    html += ORIGIN_KEYS.map(k => card(k[0], k, SHADOW_ORIGINS[k].whisper, '베어냄 ' + fmtNum(os[k] || 0))).join('');
+    html += '<div style="color:' + (doneOrigins >= ORIGIN_KEYS.length ? '#fff5c0' : 'var(--dim)') + ';font-size:10px;letter-spacing:2px;padding:6px 8px">단마 진척 — ' +
+      (doneOrigins >= ORIGIN_KEYS.length ? '네 학파를 모두 베었다' : doneOrigins + ' / ' + ORIGIN_KEYS.length + ' 학파') + '</div>';
+    // 3. 名 요약 (상세는 처치 보고서)
+    const foesDone = NAMED_FOES.filter(f => state.foesSlain && state.foesSlain[f.key]).length;
+    html += head('이 름  있 는  적') +
+      '<div style="color:var(--dim);font-size:10px;letter-spacing:2px;padding:4px 8px 8px;line-height:1.8">강화도 마일스톤마다 나타나는 일회성 강적 — ' +
+      '<span style="color:var(--accent)">' + foesDone + ' / ' + NAMED_FOES.length + ' 처치</span> · 상세는 메뉴 「처치 보고서」</div>';
+    // 4. 형상극 — 상성 전역 공개 (배수는 상수 보간 — v349 단일 진원 규율)
+    const typeName = (key) => { const t = SHADOW_TYPES.find(x => x.key === key); return t ? t.name : key; };
+    const curForm = state.hasSword && state.currentSword && state.currentSword.form;
+    html += head('형 상 극');
+    html += Object.keys(FORM_AFFINITY).map(f => {
+      const aff = FORM_AFFINITY[f];
+      const mine = curForm === f;
+      return '<div style="display:flex;gap:10px;padding:6px 8px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:2px;' + (mine ? 'background:rgba(232,196,84,0.05)' : '') + '">' +
+        '<span style="color:' + (mine ? 'var(--accent)' : 'var(--fg)') + ';width:44px">' + f + (mine ? ' ◂' : '') + '</span>' +
+        '<span style="color:#c8e6a0">강함 · ' + typeName(aff.favored) + ' (×' + AFFINITY_FAVORED_MUL + ')</span>' +
+        '<span style="color:#e6a0a0">약함 · ' + typeName(aff.weakness) + ' (×' + AFFINITY_WEAKNESS_MUL + ')</span>' +
+      '</div>';
+    }).join('');
+    // 5. 숙적 — 현재 원한 + 설욕록 (이름은 팔레트 생성 + normalizeState 태그 제거지만 import 유래 가능 — escapeHtml)
+    html += head('숙 적 · 설 욕 록');
+    if (state.nemesis) {
+      html += card('怨', escapeHtml(state.nemesis.name), '살아있는 원한 — ' + (state.nemesis.origin || '') + ' 출신',
+        '강도 +' + state.nemesis.strength + ' · ' + state.nemesis.wins + '승');
+    }
+    const arc = (state.nemesesArchive || []).slice().reverse();  // 최근 설욕 먼저
+    if (arc.length) {
+      html += arc.map(a =>
+        card('雪', escapeHtml(a.name), (a.origin ? a.origin + ' 출신 — ' : '') + '원한 ' + a.wins + '승을 갚아냈다',
+          '강도 +' + (a.strength || 1) + (a.ts ? ' · ' + formatTimeAgo(a.ts) : ''))
+      ).join('');
+    } else if (!state.nemesis) {
+      html += '<div style="text-align:center;color:var(--dim);font-size:11px;letter-spacing:3px;padding:16px 8px;line-height:2">아직 원한도 설욕도 없다<br>너를 이긴 그림자가 이름을 얻으면, 여기 기록된다</div>';
+    }
+    el.innerHTML = html;
+  }
 
   function generateBiography(sword) {
     if (!sword) return '';
@@ -18366,6 +18476,12 @@
   $('btn-graveyard').addEventListener('click', () => {
     renderGraveyard();
     $('graveyard-modal').classList.add('active');
+    $('menu-drop').classList.remove('open');
+  });
+  // v377 영사 — 그림자 세계의 사서
+  $('btn-shadowlore').addEventListener('click', () => {
+    renderShadowLore();
+    $('shadowlore-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
   // v376 서약 — 맹세 버튼/계율 선택 와이어링

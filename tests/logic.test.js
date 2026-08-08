@@ -1783,3 +1783,44 @@ test('v376 만가/一代記: 맹세의 운명(지킴/파계)이 서술에 결합
     /「일도」의 맹세를 스스로 깨었다/, '一代記 — 파계');
   assert.ok(!/맹세를/.test(fnsB.generateBiography(base)), '一代記 — 무맹세 검 불변');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v377 影史 — 설욕록 normalizeState 행위 검증 (손상 import 강제 보정)
+// ─────────────────────────────────────────────────────────────
+test('v377 normalizeState: 설욕록 손상 import 방어 — 배열·화이트리스트·범위·태그·cap', () => {
+  const junk = [null, 'corrupt', 42];
+  const bad = { name: '<img onerror=x>월풍', origin: '없는류', typeKey: 'demon', strength: 999, wins: -5, ts: 'x' };
+  const filler = Array.from({ length: 25 }, (_, i) => ({ name: '영' + i, origin: '야류', typeKey: 'normal', strength: 3, wins: 1, ts: 1 }));
+  const st = { nemesesArchive: junk.concat([bad], filler) };
+  const deps = {
+    state: st, assignDestiny: () => {}, MAX_LEVEL: 15,
+    NEMESIS_TUNING: extractConst('NEMESIS_TUNING'),
+    NEMESIS_ORIGIN_CHAR: extractConst('NEMESIS_ORIGIN_CHAR'),
+    NEMESIS_TYPE_CHAR: extractConst('NEMESIS_TYPE_CHAR'),
+    ORIGIN_KEYS: Object.keys(extractConst('SHADOW_ORIGINS')),
+  };
+  const fns = loadFunctions(['normalizeState', 'makeNemesisName'], deps);
+  fns.normalizeState();
+  const cap = deps.NEMESIS_TUNING.archiveCap;
+  assert.ok(cap >= 10, 'archiveCap 상수 존재 (현재 ' + cap + ')');
+  assert.strictEqual(st.nemesesArchive.length, cap, '비객체 필터 + cap 강제 (26 → ' + cap + ')');
+  // cap이 오래된 것부터 잊음 → bad 항목(앞쪽)이 잘렸으면 살아남은 첫 항목으로 검증 불가 —
+  // 26 - cap = 6 제거이므로 bad(index 0)는 잘림. 보정 규칙은 남은 항목의 shape로 검증.
+  st.nemesesArchive.forEach(a => {
+    assert.ok(a && typeof a === 'object', '객체만 생존');
+    assert.ok(a.name && !/[<>]/.test(a.name) && a.name.length <= 8, '이름 태그 제거·길이 제한');
+    assert.ok(a.wins >= 1 && a.wins <= 99, 'wins 범위');
+    assert.ok(a.strength >= 1 && a.strength <= 15, 'strength 범위');
+    assert.ok(['normal', 'flee', 'steel'].includes(a.typeKey), 'typeKey 화이트리스트');
+  });
+  // 손상 항목이 잘리지 않는 소량 케이스 — bad 단독 보정 검증
+  const st2 = { nemesesArchive: [Object.assign({}, bad)] };
+  const fns2 = loadFunctions(['normalizeState', 'makeNemesisName'], Object.assign({}, deps, { state: st2 }));
+  fns2.normalizeState();
+  const a2 = st2.nemesesArchive[0];
+  assert.ok(!/[<>]/.test(a2.name), '태그 문자 제거');
+  assert.strictEqual(a2.origin, null, '미지 학파 → null');
+  assert.strictEqual(a2.typeKey, 'normal', '미지 유형 → normal');
+  assert.strictEqual(a2.strength, 15, 'strength cap = MAX_LEVEL');
+  assert.strictEqual(a2.wins, 1, 'wins 하한 1');
+});
