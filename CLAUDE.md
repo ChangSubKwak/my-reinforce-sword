@@ -66,7 +66,7 @@ npm test
 // sealedSwords 항목에 v15에서 verse, slainCount 추가됨
 ```
 
-`level`은 현재 검 강화도(0~MAX). `hasSword=false`는 파괴 후 새 검을 빚기 전 상태 — 강화 버튼 잠기고 조합소만 동작. `sealedSwords`는 자발적으로 봉인한 검의 계보 (검 한 자루의 *생애* 기록). `currentSword`는 현재 검의 일대기 — 봉인 시 `sealedSwords`로 옮겨지고 새 검 시작 시 리셋. `localStorage[SAVE_KEY]`에 매 액션 후 `save()`. `load()`는 `Object.assign`으로 기본값 병합 후 `sealedSwords` / `currentSword.inscriptions` 배열 형변환 보정.
+`level`은 현재 검 강화도(0~MAX). `hasSword=false`는 파괴 후 새 검을 빚기 전 상태 — 강화 버튼이 "새 검 빚기" 모드로 전환되고 융검/재련의 길이 열림 (조합소는 검없음에서 입장 차단, v390). `sealedSwords`는 자발적으로 봉인한 검의 계보 (검 한 자루의 *생애* 기록). `currentSword`는 현재 검의 일대기 — 봉인 시 `sealedSwords`로 옮겨지고 새 검 시작 시 리셋. `localStorage[SAVE_KEY]`에 매 액션 후 `save()`. `load()`는 `Object.assign`으로 기본값 병합 후 `sealedSwords` / `currentSword.inscriptions` 배열 형변환 보정.
 
 ### 강화 테이블 (`TABLE`)
 
@@ -113,7 +113,7 @@ UI 흐름: `showChallenge`는 `swordWrap.opacity=0`로 검 stage 숨기고 `#cha
 
 자발적 종결 차원. `state.level >= SEAL_MIN_LEVEL(3)` 일 때 조합소에서 봉인 가능 → 검이 `state.sealedSwords`에 들어가고, `sealReward(lv) = floor(lv^1.65 * 3) + lv` 만큼 조각 환원, 새 검 자동 생성. 새 검의 시작 단계는 `startBonus() = min(6, floor(legacyStrength() / 25))` — 누적 강기에 따른 작은 영구 보너스. `START_BONUS_CAP=6`으로 점수 인플레이션 차단.
 
-`newSword()`는 봉인 후와 조합소 `newsword` 레시피 양쪽에서 호출되는 통합 진입점 — 시작 보너스 일관 적용. `bestLevel`도 여기서 함께 갱신.
+`newSword()`는 봉인 후·메인 화면 새 검 빚기(newsword 모드)·융검·재련·게임오버 재시작에서 호출되는 통합 진입점 — 시작 보너스 일관 적용. `bestLevel`도 여기서 함께 갱신. (조합소 `newsword` 레시피는 v390에서 제거 — 조합소 입장이 검없음에서 차단되어 도달 불가였던 죽은 UI.)
 
 가드: `sealSword()` 초입에 `if (challenge || rescueWindow) return;` — 도전/회수 활성 중 봉인 차단.
 
@@ -867,6 +867,16 @@ v381 검전이 *검 한 자루*의 족자라면 이것은 **대장장이 자신�
 - **간결 모드 정합**: 안내 문구가 숨겨진 메뉴(검총·리더보드)로 사용자를 보내던 것 → 두 버튼 `.menu-core` 승격 (검총 = 파괴 서사의 종착점 = 본질; menu-core 13개 — 상한 내). 도움말에 "간결 모드를 끄면 깊은 선택지" 안내 추가.
 - **기타 드리프트**: 서약 시한(강화 3회) 미고지 → 버튼/모달 명시 · 보신 desc에 '하락 절반' 누락 → 반영(aria 동기) · 단축키 Enter 미표기(도움말/key-hint/README/게임오버 버튼) · 영사 '출몰 %'가 야차 선점 롤 무시 → "(야차 외)" + 야차 확률 명시 · 게임오버 재시작 주석 ESC→Enter · README 현행화(3길/3택/길의 끝 규칙/간결 모드 기본/기록의 전당/족자).
 - **규율**: 규칙을 바꾸는 커밋은 그 규칙을 전제한 문구·기능(검없음 흐름 6곳)도 함께 감사할 것 — 문구와 규칙이 어긋나면 한쪽은 반드시 옮긴다.
+
+### v390 監査 3차 — 부활한 검없음 상태의 상호작용 검증 (신규 기능 0)
+
+v389가 부활시킨 검없음 상태는 수백 버전 동안 실전 도달이 없었다 — 그 사이의 시스템들이 이 상태를 처리하는지 집중 감사, 결함 9건(med 4 / low 5) 전량 수정.
+
+- **[MED] 함정 경계**: isStuck이 "길이 있다"(조각≥50)며 유도한 지출이, 유산 시작 +1~+2 검(첫 강화 유료)에선 정확히-소진 시 클릭 한 번 뒤 케이스 2 즉사 → `forgeLeavesStuck(cost)` (newSword와 동일 시작 공식 + `enhanceCost` 단일 진원) + 지출 3처(새 검/융검/재련) `confirm` 경고. 재련은 `f.reforged` 커밋 *전*에 경고.
+- **[MED] 키보드**: Space/Enter가 `enhance()` 직접 호출이라 검없음(newsword 모드)에서 완전 무반응 (key-hint 약속 위반) → newsword 모드는 `btnEnhance.click()` 경유. / 게임오버 Enter가 같은 keydown으로 전역 단축키에 흘러 **재시작+즉시 강화 1회 이중 발화** (유산 +6 시작이면 첫 Enter에 10% 파괴) → `stopImmediatePropagation`.
+- **[MED] 신사**: 검없음에서 유일하게 남은 조각 유출구 — 헌사로 여비(50)를 잃으면 다음 1초 틱에 무경고 길의 끝 → 여비 잠식 시 confirm.
+- **[LOW]**: 조합소 `newsword` 레시피는 입장 차단과 상호 배타라 영구 도달 불가 → 제거 (메인 버튼 단일 진입점) / 검없음 분기에서 점복 토글만 disarm 누락 (armed가 새 검 첫 강화에 헛소모) / 정진·1시간 마일스톤이 검없음에서 주지 않는 보상을 표시 → 조각 폴백 / 유령 상수(`FORGE_NEW_SWORD_*`) 폴백 → `NEWSWORD_COST` 단일 진원 / isStuck 융검·재련 분기는 현행 비용에선 첫 줄에 포괄 — 비용 변경 대비 안전망으로 유지 (주석 명시).
+- **이상 없음 확인**: 1초 interval류·render 전 경로(hasSword 가드)·초영 450ms 재검증·도전/회수·자동 시스템·v373→재련 실전 흐름 — 좀비 currentSword가 화면에 새는 곳 없음.
 
 ### 봉인 균형 곡선 (참고)
 

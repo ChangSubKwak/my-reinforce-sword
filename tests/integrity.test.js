@@ -290,7 +290,7 @@ test('slay는 보상 분기 전에 challenge를 즉시 null로 잠금 (더블클
 // 融劍도 보상-변이 행동 더블파이어 클래스: fuseSwords는 splice+과금 전에 hasSword로 잠근다.
 // newSword()가 hasSword=true를 동기 설정 → 두 번째 클릭은 차단(이중 splice/이중 과금 방지).
 test('fuseSwords는 splice/과금 전에 hasSword로 재진입 차단 (이중 융검 방지)', () => {
-  const body = afterDecl('function fuseSwords() {', 1100);
+  const body = afterDecl('function fuseSwords() {', 1800);
   const guardIdx = body.indexOf('if (state.hasSword) return');
   const spliceIdx = body.indexOf('state.sealedSwords.splice');
   const costIdx = body.indexOf('state.shards -= FUSION_COST');
@@ -1583,6 +1583,44 @@ test('v389: 게임오버 도구 초기화 완전성 + 안내 문구 현행화', 
   // 검총·리더보드가 간결 모드에서도 보임 (안내 문구가 숨겨진 메뉴로 보내던 결함)
   assert.match(html, /id="btn-graveyard" class="menu-core"/, '검총 — 파괴 서사의 종착점은 본질');
   assert.match(html, /id="btn-leaderboard" class="menu-core"/, '리더보드 — 도달 안내 문구의 목적지');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v390 감사 3차 — 부활한 검없음 상태의 상호작용 결함 수정 잠금
+// ─────────────────────────────────────────────────────────────
+test('v390: 함정 경계 경고 — 정확히-소진 지출이 클릭 한 번 뒤 길의 끝이 되지 않게', () => {
+  const fb = afterDecl('function forgeLeavesStuck(', 700);
+  assert.match(fb, /startBonus\(\) \+ trialStartLevelBonus\(\)/, '예상 시작 강화 — newSword와 동일 공식');
+  assert.match(fb, /lv < 1 \|\| lv >= SEAL_MIN_LEVEL\) return false/, '+0(첫 강화 무료)·+3+(팔 수 있음)는 함정 아님');
+  assert.match(fb, /enhanceCost\(lv, \{ floor: true \}\)/, '강화비 단일 진원 비교');
+  const warns = (js.match(/forgeLeavesStuck\(\w+(?:\.\w+)*\) && !confirm\(FORGE_TRAP_WARN\)/g) || []).length
+    + (js.match(/forgeLeavesStuck\(NEWSWORD_COST\) && !confirm\(FORGE_TRAP_WARN\)/g) || []).length
+    + (js.match(/forgeLeavesStuck\(FUSION_COST\) && !confirm\(FORGE_TRAP_WARN\)/g) || []).length
+    + (js.match(/forgeLeavesStuck\(cost\) && !confirm\(FORGE_TRAP_WARN\)/g) || []).length;
+  const sites = (js.match(/!confirm\(FORGE_TRAP_WARN\)\) return/g) || []).length;
+  assert.strictEqual(sites, 3, '지출 3처(새 검/융검/재련) 전부 경고 (현재 ' + sites + ')');
+  // 재련은 f.reforged 커밋 전에 경고 (취소해도 무덤이 잠기지 않게)
+  const rf = afterDecl('function reforgeSword(', 1400);
+  const warnIdx = rf.indexOf('FORGE_TRAP_WARN');
+  const commitIdx = rf.indexOf('f.reforged = true');
+  assert.ok(warnIdx >= 0 && commitIdx > warnIdx, '재련 경고는 무덤 잠금 전');
+});
+
+test('v390: 검없음 상태 상호작용 — 키보드/신사/점복/정진/단일 진원', () => {
+  // 키보드로 새 검 빚기 (enhance 직접 호출이 무시되던 결함 — key-hint 약속 이행)
+  assert.match(js, /btnEnhance\.dataset\.mode === 'newsword'\) btnEnhance\.click\(\)/, 'Space/Enter — newsword 모드는 버튼 경유');
+  // 게임오버 Enter 이중 발화 차단
+  assert.match(js, /stopImmediatePropagation\(\)/, '게임오버 Enter — 재시작+강화 이중 발화 차단');
+  // 신사 헌사 — 검없음 여비 경고
+  const db = afterDecl('function donateToShrine(', 1200);
+  assert.match(db, /!state\.hasSword && \(state\.shards - d\.cost\) < NEWSWORD_COST/, '검없음 여비 잠식 헌사 경고');
+  // 검없음 분기에서 점복 토글도 잠금 (armed 헛소모 차단)
+  assert.match(js, /dc\.disabled = true; dc\.checked = false/, '검없음 — 점복 disarm');
+  // 정진/1시간 마일스톤 — 검없음 폴백 (주지 않는 보상 표시 드리프트)
+  assert.match(js, /state\.shards \+= 30;  \/\/ v390/, '정진 3시간 검없음 폴백');
+  // 죽은 조합소 newsword 레시피 제거 + 미정의 상수 폴백 제거
+  assert.ok(!html.includes('data-recipe="newsword"'), '도달 불가 newsword 레시피 제거 (메인 버튼이 단일 진입점)');
+  assert.doesNotMatch(js, /FORGE_NEW_SWORD_COST/, '미정의 상수 폴백 제거 (NEWSWORD_COST 단일 진원)');
 });
 
 test('v387 간결: menu-core 태깅 — 필수만, 과잉 태깅 금지', () => {
