@@ -1666,6 +1666,34 @@ test('v394 서버: no-store 금지 — 조건부 재검증(304)이 살아 있어
   // (express.static 재도입 금지는 기존 v332 전용 테스트가 커버 — 주석 속 언급까지 잡는 중복 검사는 두지 않는다)
 });
 
+// ─────────────────────────────────────────────────────────────
+// v395 常在 — PWA (설치형·오프라인) 무결성
+// ─────────────────────────────────────────────────────────────
+test('v395 PWA: 서버 라우트 3종이 캐치올보다 먼저 + SW는 network-first', () => {
+  const path = require('node:path');
+  const server = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  const catchAllIdx = server.indexOf("app.get('*'");
+  ['/sw.js', '/manifest.webmanifest', '/icon.svg'].forEach(route => {
+    const idx = server.indexOf("app.get('" + route + "'");
+    assert.ok(idx >= 0, route + ' 라우트 존재');
+    assert.ok(idx < catchAllIdx, route + ' 라우트가 캐치올보다 먼저 (아니면 index.html이 대신 나감)');
+  });
+  // SW 전략 — network-first (온라인 동작 불변, 오프라인만 폴백): 낡은 버전 고착 사고 구조적 차단
+  assert.match(server, /fetch\(req\)\.then/, 'SW — 항상 네트워크 먼저');
+  assert.match(server, /catch\(\(\) => caches\.match\('\/'\)\)/, 'SW — 오프라인일 때만 캐시 폴백');
+  assert.match(server, /origin !== self\.location\.origin\) return/, 'SW — CDN(서체/Supabase) 불관여');
+  assert.match(server, /caches\.delete/, 'SW — 구 캐시 정리 (activate)');
+  assert.match(server, /req\.mode === 'navigate'/, 'SW — 내비게이션 응답만 캐시 갱신');
+});
+
+test('v395 PWA: 클라이언트 등록 — manifest 링크 + 프로토콜 가드 (file:// 무변화)', () => {
+  assert.ok(html.includes('rel="manifest" href="/manifest.webmanifest"'), 'manifest 링크');
+  assert.ok(html.includes('name="theme-color" content="#1f1a14"'), 'theme-color (설치 앱 크롬 색)');
+  assert.match(js, /'serviceWorker' in navigator && \(location\.protocol === 'https:' \|\| location\.hostname === 'localhost'\)/,
+    'SW 등록 프로토콜 가드 — file:// 더블클릭 실행은 기존 그대로');
+  assert.match(js, /register\('\/sw\.js'\)\.catch/, '등록 실패는 조용히 (향상일 뿐 필수 아님)');
+});
+
 test('v387 간결: menu-core 태깅 — 필수만, 과잉 태깅 금지', () => {
   const coreCount = (html.match(/class="menu-core"/g) || []).length;
   assert.ok(coreCount >= 8 && coreCount <= 13, '핵심 버튼 8~13개 (현재 ' + coreCount + ') — 전부 태깅하면 간결이 무의미');

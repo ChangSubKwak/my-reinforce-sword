@@ -20,6 +20,9 @@
      지금까지는 로컬 설치 기기 밖에서 전부 폴백 세리프로 렌더되어, 흑금 서예 미학의
      의도된 활자가 한 번도 실체화된 적이 없었다. display=swap — 로드 전엔 기존 폴백
      그대로 (FOIT 없음), file://·오프라인에선 조용히 폴백 (기존 동작과 동일). -->
+<!-- v395 常在 — PWA: 설치형(홈 화면) + 오프라인. manifest/sw는 서버 인라인 라우트 (v332 비노출 원칙) -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#1f1a14">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200;400;700&display=swap">
@@ -20551,6 +20554,14 @@
   // === 시작 ===
   load();
   document.body.classList.add('stage-minimal');  // UI 재설계 1b — 무대 배너를 검 정보 패널로 일원화 (reversible)
+
+  // v395 常在 — PWA 등록: http(s) 서빙일 때만 (file:// 더블클릭 실행은 기존 그대로 무변화).
+  // SW는 network-first라 온라인 동작 불변 — 오프라인일 때만 마지막 성공 응답 폴백.
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});  // 실패는 조용히 — 향상일 뿐 필수 아님
+    });
+  }
 
   // 페이지 가시성 — 탭 숨김 시 ambient drone fade out. 표시되면 재개.
   // 다른 탭에서 게임이 들리는 잡음 제거 + 모바일 배터리 절약.
