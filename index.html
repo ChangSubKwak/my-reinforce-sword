@@ -118,10 +118,23 @@
   body.season-autumn { background: radial-gradient(ellipse at 50% 30%, #3a2a1c 0%, #221710 80%); }
   body.season-winter { background: radial-gradient(ellipse at 50% 30%, #232a30 0%, #161a1f 80%); }
   /* v80 도 도달 카운터 (우측 상단, season-mark 옆) */
-  #way-counter {
+  /* v380 corner-stack — 우상단 마커 스택 (좌표 손배치 대체 — 겹침 구조적 차단) */
+  #corner-stack {
     position: fixed;
     top: 14px;
-    right: 60px;
+    right: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    z-index: 25;
+    pointer-events: none;
+    max-width: 46vw;
+  }
+  #corner-stack .corner-row { display: flex; gap: 12px; align-items: baseline; }
+  /* 내용 없는 마커는 자리·gap도 차지하지 않게 (스택 자동 압축) */
+  #corner-stack .corner-row > :empty, #corner-stack > div:empty { display: none; }
+  #way-counter {
     font-size: 11px;
     color: var(--accent);
     letter-spacing: 3px;
@@ -135,9 +148,6 @@
 
   /* v372 숙적 — 우상단 원한 표식 (숙적이 살아있는 동안만) */
   #nemesis-mark {
-    position: fixed;
-    top: 68px;
-    right: 18px;
     font-size: 9px;
     color: var(--danger);
     letter-spacing: 3px;
@@ -149,9 +159,6 @@
   #nemesis-mark.active { opacity: 0.7; }
 
   #season-mark {
-    position: fixed;
-    top: 14px;
-    right: 18px;
     font-size: 11px;
     color: var(--dim);
     letter-spacing: 5px;
@@ -263,9 +270,6 @@
   }
   /* v177 절기 — 우측 상단 절기 한자 */
   #solar-term-mark {
-    position: fixed;
-    top: 14px;
-    right: 110px;
     font-size: 11px;
     color: rgba(212, 175, 55, 0.72);
     letter-spacing: 5px;
@@ -341,9 +345,6 @@
     100% { background: var(--bg); }
   }
   #weather-mark {
-    position: fixed;
-    top: 14px;
-    right: 90px;
     font-size: 12px;
     color: rgba(168, 184, 200, 0);
     pointer-events: none;
@@ -443,9 +444,6 @@
     transition: background 4s ease;
   }
   #tod-mark {
-    position: fixed;
-    top: 32px;
-    right: 60px;
     font-size: 9px;
     color: var(--dim);
     letter-spacing: 3px;
@@ -574,9 +572,6 @@
 
   /* v120 기원 — 시대 마크 (우측 상단, season-mark 위) */
   #era-mark {
-    position: fixed;
-    top: 32px;
-    right: 18px;
     font-size: 10px;
     color: var(--dim);
     letter-spacing: 4px;
@@ -609,9 +604,6 @@
 
   /* v165 行 — 전체 path 진행도 (우측 상단) */
   #path-progress {
-    position: fixed;
-    top: 68px;
-    right: 18px;
     font-size: 9px;
     color: rgba(212, 175, 55, 0.5);
     letter-spacing: 3px;
@@ -633,9 +625,6 @@
 
   /* v123 계보 — 세대 카운터 (era-mark 아래) */
   #gen-mark {
-    position: fixed;
-    top: 50px;
-    right: 18px;
     font-size: 9px;
     color: var(--dim);
     letter-spacing: 3px;
@@ -1063,7 +1052,7 @@
   #rescue-gamble {
     position: absolute;
     bottom: -78px;
-    left: 50%;
+    left: calc(50% - 72px);  /* v380 — 방하와 좌우 나란히 (세로 쌓기가 아래 UI와 겹치던 것 해소) */
     transform: translateX(-50%);
     padding: 8px 18px;
     background: rgba(40, 12, 12, 0.85);
@@ -1083,13 +1072,14 @@
     color: #ffd0c8;
     box-shadow: 0 0 14px rgba(192,57,43,0.5);
   }
-  /* v378 放下 — 놓아줌: 도박(핏빛 탐욕)의 반대색 — 무채색의 고요 */
+  /* v378 放下 — 놓아줌: 도박(핏빛 탐욕)의 반대색 — 무채색의 고요.
+     v380 — 도박과 좌우 나란히 (세로 -134px 쌓기가 스테이지 아래 버튼 영역과 겹치던 것 해소) */
   #rescue-release {
     position: absolute;
-    bottom: -134px;
-    left: 50%;
+    bottom: -78px;
+    left: calc(50% + 72px);
     transform: translateX(-50%);
-    padding: 6px 16px;
+    padding: 8px 16px;
     background: transparent;
     border: 1px solid var(--line);
     border-radius: 2px;
@@ -1481,7 +1471,7 @@
   /* 도혼 — 봉인된 검의 시구가 떠오른다 */
   #ancestor-whisper {
     position: fixed;
-    top: 80px;
+    top: 150px;  /* v380 — corner-stack(마커 스택) 아래로 — 겹침 방지 */
     right: 18px;
     max-width: 200px;
     font-size: 10px;
@@ -2838,16 +2828,25 @@
 </style>
 </head>
 <body>
-<div id="season-mark"></div>
-<div id="solar-term-mark" title="절기"></div>
-<div id="era-mark"></div>
+<!-- v380 corner-stack — 우상단 마커들의 좌표 손배치(top/right 픽셀)를 flex 스택으로 전환.
+     기존엔 way-counter가 weather/solar 위를 덮고 nemesis-mark와 path-progress가 같은 좌표에
+     겹치는 등 텍스트 충돌 다발 → 컨테이너가 배치를 관리, 겹침이 구조적으로 불가능 -->
+<div id="corner-stack">
+  <div class="corner-row">
+    <div id="solar-term-mark" title="절기"></div>
+    <div id="weather-mark"></div>
+    <div id="tod-mark"></div>
+    <div id="season-mark"></div>
+  </div>
+  <div class="corner-row">
+    <div id="era-mark"></div>
+    <div id="gen-mark"></div>
+  </div>
+  <div id="way-counter"></div>
+  <div id="path-progress" title="행 — 검의 길 진행도"></div>
+  <div id="nemesis-mark" title="숙적 — 너를 이긴 그림자가 기다린다"></div>
+</div>
 <div id="meditation-mark">좌</div>
-<div id="weather-mark"></div>
-<div id="tod-mark"></div>
-<div id="gen-mark"></div>
-<div id="path-progress" title="행 — 검의 길 진행도"></div>
-<div id="way-counter"></div>
-<div id="nemesis-mark" title="숙적 — 너를 이긴 그림자가 기다린다"></div>
 <button id="menu-toggle" title="메뉴" aria-label="메뉴" aria-haspopup="true" aria-expanded="false">≡</button>
 <div id="menu-drop">
   <div class="menu-section">기록</div>
@@ -12755,11 +12754,16 @@
         const el = document.createElement('div');
         el.className = 'life-flash';
         el.textContent = text;
-        // 황금각(137.5°) 분산 — 결정적 배치, 겹침 최소화. 회수 원(중앙) 주변 타원 궤도.
-        const angle = (i * 137.5) % 360;
-        const radius = 96 + (i % 3) * 28;
-        el.style.left = 'calc(50% + ' + Math.round(Math.cos(angle * Math.PI / 180) * radius) + 'px)';
-        el.style.top = 'calc(45% + ' + Math.round(Math.sin(angle * Math.PI / 180) * radius * 0.55) + 'px)';
+        // v380 — 좌우 측면 사다리 배치 (결정적): 회수 원·카운트다운·버튼이 있는 중앙
+        // 세로축을 완전히 비운다 (v379 초판 타원 궤도는 원 문구와 겹칠 수 있었음 — 겹침 제보 수정).
+        if (isLast) {
+          el.style.left = '50%';
+          el.style.top = '78%';  // 사후명만 중앙 정면 — 원 아래·버튼 위 빈 띠
+        } else {
+          const row = Math.floor(i / 2);
+          el.style.left = (i % 2 === 0) ? 'calc(50% - min(150px, 36%))' : 'calc(50% + min(150px, 36%))';
+          el.style.top = (20 + row * 12) + '%';
+        }
         el.style.fontSize = (isLast ? 13 : 10) + 'px';
         el.style.color = isLast ? 'var(--accent)' : 'var(--dim)';
         voidEl.appendChild(el);
@@ -15770,7 +15774,7 @@
       const elegy = generateElegy(f).map(l => escapeHtml(l)).join('<br>');
       const ins = (f.inscriptions || []).map(escapeHtml).join(' · ');
       return '<div class="grave-item" style="padding:10px 8px;border-bottom:1px solid var(--line);cursor:pointer">' +
-        '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
+        '<div style="display:flex;flex-wrap:wrap;gap:2px 8px;justify-content:space-between;align-items:baseline">' +
           '<span style="color:var(--fg);letter-spacing:3px;font-size:14px">' + escapeHtml(f.name || '무명') + '</span>' +
           '<span style="color:var(--danger);font-size:11px;letter-spacing:2px">+' + (f.level || 0) + ' 에서 부러짐</span>' +
         '</div>' +
@@ -15834,7 +15838,7 @@
     const glyphOf = { normal: '影', flee: '逃', steel: '鋼', demon: '鬼' };
     const head = (t) => '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:14px 0 6px">' + t + '</div>';
     const card = (glyph, name, desc, meta) =>
-      '<div class="lore-card" style="display:flex;gap:12px;align-items:flex-start;padding:9px 8px;border-bottom:1px solid var(--line)">' +
+      '<div class="lore-card" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;padding:9px 8px;border-bottom:1px solid var(--line)">' +
         '<div style="font-size:22px;color:var(--dim);width:30px;text-align:center;font-family:\'Noto Serif KR\',serif">' + glyph + '</div>' +
         '<div style="flex:1;min-width:0">' +
           '<div style="color:var(--fg);font-size:12px;letter-spacing:3px">' + name + '</div>' +

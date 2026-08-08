@@ -1245,9 +1245,41 @@ test('v379 주마등: 설정 존중·창 닫힘 가드·용량 제한·사후명
   assert.match(body, /if \(!rescueWindow\) return/, '창이 닫힌 뒤 예약분 실행 차단');
   assert.match(body, /frags\.slice\(0, maxN - 1\)\.concat\(frags\[frags\.length - 1\]\)/,
     '윈도우 길이 초과 시 잘라도 사후명(마지막)은 유지');
-  assert.match(body, /137\.5/, '황금각 결정적 배치 (Math.random 배치 아님 — 겹침 최소화)');
+  // v380 — 좌우 측면 사다리 (중앙 세로축의 원·카운트다운·버튼과 겹침 구조적 차단, 결정적 배치)
+  assert.match(body, /min\(150px, 36%\)/, '좌우 측면 사다리 배치 — 중앙 축 비움 (겹침 제보 수정)');
+  assert.match(body, /i % 2/, '좌우 교대 결정적 배치 (Math.random 배치 아님)');
+  assert.doesNotMatch(body, /137\.5/, '타원 궤도(중앙 침범 위험) 제거됨');
   const clearBody = afterDecl('function clearLifeFlashes() {', 400);
   assert.match(clearBody, /querySelectorAll\('\.life-flash'\)/, '잔여 DOM 조각 제거');
   assert.match(clearBody, /clearTimeout/, '예약 타이머 해제');
   assert.ok(html.includes('.life-flash'), '.life-flash 기반 CSS 존재');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v380 corner-stack — 우상단 마커 겹침 구조적 차단 (좌표 손배치 → flex 스택)
+// ─────────────────────────────────────────────────────────────
+test('v380 corner-stack: 우상단 마커 전원이 스택 안 + fixed 좌표 손배치 잔존 없음', () => {
+  // 겹침의 근원: way-counter(right:60)가 weather(90)/solar(110)를 덮고,
+  // nemesis-mark와 path-progress가 정확히 같은 좌표(top:68/right:18)에 겹치던 손배치.
+  const stackM = html.match(/<div id="corner-stack">[\s\S]*?\n<\/div>/);
+  assert.ok(stackM, '#corner-stack 컨테이너 존재');
+  const CORNER_IDS = ['solar-term-mark', 'weather-mark', 'tod-mark', 'season-mark',
+    'era-mark', 'gen-mark', 'way-counter', 'path-progress', 'nemesis-mark'];
+  CORNER_IDS.forEach(id => {
+    assert.ok(stackM[0].includes('id="' + id + '"'), id + '가 corner-stack 안에 배치');
+    // CSS에서 개별 fixed 좌표가 재유입되면 스택과 이중 배치 → 겹침 재발
+    const cssM = html.match(new RegExp('#' + id + '\\s*\\{[^}]*\\}'));
+    assert.ok(cssM, '#' + id + ' CSS 존재');
+    assert.doesNotMatch(cssM[0], /position:\s*fixed/, '#' + id + ' fixed 좌표 손배치 잔존 (겹침 재발 위험)');
+  });
+  assert.match(html, /#corner-stack \{[^}]*flex-direction: column/, '스택은 세로 flex (배치는 컨테이너가 관리)');
+  // 도혼 속삭임은 스택 아래로 (top:80 시절 마커 행과 겹치던 것)
+  const whisperCss = html.match(/#ancestor-whisper \{[^}]*\}/);
+  assert.ok(whisperCss && /top:\s*150px/.test(whisperCss[0]), 'ancestor-whisper는 스택 아래 (150px)');
+  // 회수창 버튼 좌우 배치 — 세로 쌓기(-134px)가 스테이지 아래 UI와 겹치던 것
+  const gambleCss = html.match(/#rescue-gamble \{[^}]*\}/);
+  const releaseCss = html.match(/#rescue-release \{[^}]*\}/);
+  assert.ok(gambleCss && /calc\(50% - 72px\)/.test(gambleCss[0]), '도박 버튼 좌측 나란히');
+  assert.ok(releaseCss && /calc\(50% \+ 72px\)/.test(releaseCss[0]) && /bottom: -78px/.test(releaseCss[0]),
+    '방하 버튼 우측 나란히 (같은 띠 — 아래 UI 침범 없음)');
 });

@@ -765,7 +765,17 @@ v373 검총을 박물관에서 **결정의 장소**로 전환 — 파괴(v372 �
 - **연출** (`spawnLifeFlashes` / `.life-flash`): 회수 원 주변 타원 궤도에 **황금각(137.5°) 결정적 배치** (랜덤 아님 — 겹침 최소화), 0.5s 간격 stagger, 각 1.4s 페이드 (사후명은 1.8s·accent색·13px). 윈도우 길이(`totalSec` — 속류/冬/守 보너스 반영)에 맞춰 개수 제한하되 잘려도 사후명은 유지.
 - **가드 3중**: `getSetting('reduceMotion')` (v228 設) / `!rescueWindow` (조기 회수·방하 후 예약분 차단) / `endVoid` 첫 줄 `clearLifeFlashes()` (타이머 해제 + 잔여 DOM 제거).
 - **발동 조건**: showVoid에서 `flashGrave.rescued === null` — *이 파괴로 매장된* 무덤일 때만.
-- 테스트: logic 1건(조각 결정성·순서·명문 cap·fallback — sandbox 배열은 host와 prototype이 달라 JSON 비교) + integrity 2건(발동 조건·정리 / 설정 존중·가드·용량·황금각).
+- 테스트: logic 1건(조각 결정성·순서·명문 cap·fallback — sandbox 배열은 host와 prototype이 달라 JSON 비교) + integrity 2건(발동 조건·정리 / 설정 존중·가드·용량·배치).
+
+### v380 corner-stack — 텍스트 겹침 구조적 해소 (좌표 손배치 → flex 스택)
+
+사용자 제보("텍스트끼리 겹침") 대응. 원인: 우상단 마커들이 `position:fixed` + top/right 픽셀 손배치로 누적되어 — way-counter(right:60)가 weather(90)/solar(110)를 덮고, **nemesis-mark와 path-progress가 정확히 같은 좌표**(top:68/right:18)에 겹침. 개별 픽셀 조정 대신 구조 전환:
+
+- **`#corner-stack`**: 우상단 마커 9종(solar/weather/tod/season 1행 + era/gen 2행 + way-counter/path-progress/nemesis-mark 세로)을 flex column 스택으로 — **겹침이 구조적으로 불가능**, 비활성 마커는 `:empty` 규칙으로 자리도 차지 안 함 (자동 압축). 개별 CSS의 `position:fixed` 좌표 제거 (재유입은 integrity 테스트가 차단). `#ancestor-whisper`는 스택 아래(top:150px)로.
+- **회수창 버튼 좌우 배치**: 방하(v378)를 도박 아래 세로 쌓기(-134px — 스테이지 아래 UI 침범)에서 도박과 **같은 띠 좌우 나란히** (`calc(50% ∓ 72px)`)로.
+- **주마등 사다리 배치**: v379 초판 타원 궤도(회수 원·카운트다운과 근접)를 **좌우 측면 사다리**로 — 중앙 세로축(원·문구·버튼)을 완전히 비움, `min(150px, 36%)` 반응형, 사후명만 원 아래 빈 띠(78%) 중앙. 결정적 배치 유지.
+- **카드 wrap**: 영사 lore-card·검총 헤더 행에 `flex-wrap` — 좁은 화면에서 이름/메타가 밀려 겹치는 대신 줄바꿈.
+- **신규 UI 규율**: 우상단 상시 마커를 새로 추가할 땐 좌표 손배치 금지 — `#corner-stack`에 넣을 것. 테스트: integrity 1건 (9종 스택 소속 + fixed 좌표 잔존 금지 + whisper/버튼 배치 잠금).
 
 ### 봉인 균형 곡선 (참고)
 
