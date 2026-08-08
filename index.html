@@ -4375,6 +4375,7 @@
       released: 0,  // v378 방하 — 조각을 놓아준 횟수
       luckExp: 0, luckAct: 0,  // v382 천칭 — 평생 운의 원장 (기대 확률 합 / 실제 성공 수)
       defeats: 0,  // v383 꺾임 — 베기 실패로 검이 꺾인 횟수 (승리만 세던 비대칭 해소)
+      destExp: 0, destAct: 0, nearMisses: 0,  // v386 구사일생 — 생사의 원장 (파괴 기대/실제/터럭 차 생환)
     },
     seenHelp: false,
   };
@@ -4631,6 +4632,8 @@
         // v382 천칭 — 운 원장 숫자 강제 (문자열 오염 시 recordLuck의 + 연산이 문자열 연결로 붕괴)
         if (typeof sw.luckExp !== 'number' || !isFinite(sw.luckExp)) sw.luckExp = 0;
         if (typeof sw.luckAct !== 'number' || !isFinite(sw.luckAct)) sw.luckAct = 0;
+        // v386 구사일생 — closestCall은 0~1 범위 숫자 또는 부재 (부재 = 무기록)
+        if (sw.closestCall != null && (typeof sw.closestCall !== 'number' || !isFinite(sw.closestCall) || sw.closestCall < 0 || sw.closestCall > 1)) sw.closestCall = null;
         // v370o 봉인 검 level도 범위 강제 — 손상 import의 level=999가 계보 SVG·"가장 강한 검"
         // 표시를 깨고 sealReward 표시를 폭주시키는 것 방지 (표시 전용이라 검 필드 sanitize에 동봉).
         if (sw.level != null) sw.level = clampInt(sw.level, 0, MAX_LEVEL);
@@ -4668,6 +4671,7 @@
           // v382 천칭 — 무덤의 운 원장도 숫자 강제
           if (typeof f.luckExp !== 'number' || !isFinite(f.luckExp)) f.luckExp = 0;
           if (typeof f.luckAct !== 'number' || !isFinite(f.luckAct)) f.luckAct = 0;
+          if (f.closestCall != null && (typeof f.closestCall !== 'number' || !isFinite(f.closestCall) || f.closestCall < 0 || f.closestCall > 1)) f.closestCall = null;  // v386
         });
       }
       // v384 劫 — 연대기 방어 + 첫 도입 시 개막 스냅샷 (기존 세이브는 지금부터 기록 시작)
@@ -4741,11 +4745,15 @@
       if (!state.gambleStats || typeof state.gambleStats !== 'object') state.gambleStats = { win: 0, lose: 0 };  // v219
       if (typeof state.eternityPoints !== 'number') state.eternityPoints = 0;  // v225
       // stats — 기본 sub-key 병합 (구 저장본에 신규 key 누락 시 baseline 보정)
-      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0, oathsSworn: 0, oathsKept: 0, oathsBroken: 0, released: 0, luckExp: 0, luckAct: 0, defeats: 0 };
+      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0, oathsSworn: 0, oathsKept: 0, oathsBroken: 0, released: 0, luckExp: 0, luckAct: 0, defeats: 0, destExp: 0, destAct: 0, nearMisses: 0 };
       state.stats = Object.assign({}, DEFAULT_STATS, (state.stats && typeof state.stats === 'object') ? state.stats : {});
       // v382 천칭 — 평생 운 원장 숫자 강제 (오염 시 + 연산 붕괴 방지)
       if (typeof state.stats.luckExp !== 'number' || !isFinite(state.stats.luckExp)) state.stats.luckExp = 0;
       if (typeof state.stats.luckAct !== 'number' || !isFinite(state.stats.luckAct)) state.stats.luckAct = 0;
+      // v386 구사일생 — 생사 원장 숫자 강제
+      if (typeof state.stats.destExp !== 'number' || !isFinite(state.stats.destExp)) state.stats.destExp = 0;
+      if (typeof state.stats.destAct !== 'number' || !isFinite(state.stats.destAct)) state.stats.destAct = 0;
+      if (typeof state.stats.nearMisses !== 'number' || !isFinite(state.stats.nearMisses)) state.stats.nearMisses = 0;
     } catch (e) {}
   }
 
@@ -12275,6 +12283,38 @@
     if (delta <= -1) return { word: '바람을 거스른', color: '#c8a8a0' };
     return { word: '고른 바람의', color: null };
   }
+  // === v386 九死一生(구사일생) — 생사의 원장 ===
+  // 천칭(v382)은 성공의 운만 적었다 — 가장 격렬한 RNG 감정은 파괴인데. 파괴 기대(확률 합) vs
+  // 실제 부러짐을 원장에 적고, *죽음이 터럭 차이로 비껴간 순간*(near-miss)을 그 자리에서 알린다.
+  // 지금까지 "파괴 20%를 피했다"는 완전한 침묵이었다. 메커니즘 효과 0 — 확률 정직성의 완결.
+  const NEARMISS_TUNING = { margin: 0.02 };  // 구사일생 판정 — 파괴 임계와 굴림의 차이 2% 미만
+  function recordDeathLedger(deathChance, died) {
+    // 파괴가 굴림에 실제로 걸려 있던 판(강화 실패)마다 호출 — 차단(영석/보신/결계/보호권)이면 0
+    deathChance = Math.min(1, Math.max(0, deathChance || 0));
+    if (state.stats) {
+      state.stats.destExp = (typeof state.stats.destExp === 'number' ? state.stats.destExp : 0) + deathChance;
+      state.stats.destAct = (typeof state.stats.destAct === 'number' ? state.stats.destAct : 0) + (died ? 1 : 0);
+    }
+  }
+  function checkNearMiss(deathChance, failRoll) {
+    if (!(deathChance > 0)) return;
+    const margin = failRoll - deathChance;
+    if (margin < 0 || margin >= NEARMISS_TUNING.margin) return;
+    if (state.stats) state.stats.nearMisses = (typeof state.stats.nearMisses === 'number' ? state.stats.nearMisses : 0) + 1;
+    const cs = state.currentSword;
+    if (cs) cs.closestCall = Math.min(typeof cs.closestCall === 'number' ? cs.closestCall : 1, margin);
+    log('구사일생 — 죽음이 ' + (margin * 100).toFixed(1) + '% 차이로 비껴갔다', 'info');
+    inscribeQueue.push({ key: '생', label: '구사일생 · 죽음이 ' + (margin * 100).toFixed(1) + '% 차이로 비껴갔다' });
+    if (!inscribeRunning) runInscribeQueue();
+  }
+  function deathLedgerWord(delta) {
+    // delta = 실제 - 기대 (양수 = 기대보다 많이 부러짐 = 가혹)
+    if (delta >= 1.5) return { word: '하늘이 가혹했다', color: '#e6a0a0' };
+    if (delta >= 0.5) return { word: '칼끝이 자주 미끄러졌다', color: '#c8a8a0' };
+    if (delta <= -1.5) return { word: '죽음이 비껴 다녔다', color: '#fff5c0' };
+    if (delta <= -0.5) return { word: '바람이 칼을 지켰다', color: '#c8e6a0' };
+    return { word: '저울이 고요했다', color: null };
+  }
 
   // === v91 覺悟 — 강화 마음가짐 (휘발성, 새로고침 시 平常) ===
   // 원작 "다음 한 번만 더" 도박 충동에 *결정 차원*을 부여.
@@ -12488,10 +12528,13 @@
         ? sanctumAbsorbedDestroy(lv)  // v342 단일 진원 — 표시(sanctumAbsorbedShow)와 동일
         : 0;
       const effectiveDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul) + sanctumDestroyAbsorbed;
+      // v386 구사일생 — 이 굴림에서 파괴가 실제로 걸려 있었는가 (보호권 armed면 0 — 걸리지 않음)
+      const deathPossible = useProtect ? 0 : effectiveDestroy;
       if (failRoll < effectiveDestroy && !useProtect) {
         // v119 열반 — 파괴 직전 1% 확률로 유지로 변환
         const nirvana = BLESSINGS.find(b => b.key === '열반');
         if (nirvana && Math.random() < nirvana.chance) {
+          recordDeathLedger(deathPossible, false);  // v386 — 열반 생환: 기대는 적되 실제 죽음 0 (행운으로 결산)
           const first = recordBlessing('열반');
           showBlessing(nirvana, first);
           log('기연 — 열반 · 파괴를 넘어 살아남았다', 'success');
@@ -12508,6 +12551,7 @@
           return;
         }
         // 파괴
+        recordDeathLedger(deathPossible, true);  // v386 — 생사의 원장 (실제 죽음)
         if (successStreak >= 3) log('연 ' + successStreak + '회 streak 종료 — 검이 부서졌다', 'destroy');
         failStreak = 0; adversityReady = false; resolveOmen('destroy');  // v102
         clearStreak();
@@ -12545,6 +12589,8 @@
         }
       } else if (failRoll < effectiveDestroy + effectiveDowngrade && !useProtect) {
         // 하락 (v105 落)
+        recordDeathLedger(deathPossible, false);  // v386 생사의 원장
+        checkNearMiss(deathPossible, failRoll);   // v386 — 파괴 임계를 터럭 차이로 넘겼는가
         if (successStreak >= 3) log('연 ' + successStreak + '회 streak 종료 — 하락', 'fail');
         failStreak++; checkAdversity(); resolveOmen('hold');  // v102 (하락도 hold 오멘)
         clearStreak();
@@ -12562,6 +12608,8 @@
         else SFX.enhanceFail();
       } else {
         // 유지 (또는 방지권 발동)
+        recordDeathLedger(deathPossible, false);  // v386 생사의 원장
+        checkNearMiss(deathPossible, failRoll);   // v386 구사일생
         if (successStreak >= 3) log('연 ' + successStreak + '회 streak 종료 — 유지', 'fail');
         clearStreak();
         failStreak++; checkAdversity(); resolveOmen('hold');  // v102
@@ -15817,6 +15865,10 @@
       if (ld <= -2) lines.push('바람은 끝내 그의 편이 아니었다');
       else if (ld >= 2) lines.push('바람의 총애조차 부러짐을 막지는 못했다');
     }
+    // v386 구사일생 — 한 번은 살아남았던 검이 끝내 부러짐 (기억의 무게)
+    if (typeof f.closestCall === 'number' && f.closestCall < 1) {
+      lines.push('한 번은 터럭 차이로 살아남았었다');
+    }
     const lv = f.level || 0;
     lines.push('+' + lv + '에서 +' + (lv + 1) + '을 바라다 부러졌다' + (f.resolve === 'focus' ? ' — 일심, 모든 것을 걸었던 참이었다' : ''));
     if (f.released === true) lines.push('조각은 바람에 놓아 보냈다 — 후하게 장사지낸 무덤');
@@ -15843,6 +15895,7 @@
       oath: cs.oath ? { key: cs.oath.key, name: cs.oath.name, broken: cs.oath.broken === true } : null,  // v376 — 맹세를 안은 채 부러짐
       luckExp: cs.luckExp || 0,  // v382 천칭 — 부러진 검의 운 결산 (만가)
       luckAct: cs.luckAct || 0,
+      closestCall: (typeof cs.closestCall === 'number') ? cs.closestCall : null,  // v386 — 한 번은 터럭 차이로 살았던 검
       rescued: null,
       ts: Date.now(),
     };
@@ -16037,6 +16090,10 @@
       const ld = (sword.luckAct || 0) - (sword.luckExp || 0);
       if (ld >= 2) luckLine = '운이 그의 등을 밀어주었다.';
       else if (ld <= -2) luckLine = '운은 그의 편이 아니었으나, 여기까지 왔다.';
+    }
+    // v386 구사일생 — 터럭 차이의 생환 기억 (closestCall 보존 파생, 효과 0)
+    if (typeof sword.closestCall === 'number' && sword.closestCall < 1) {
+      luckLine = (luckLine ? luckLine + ' ' : '') + '한 번은 죽음이 터럭 하나 차이로 비껴갔다.';
     }
     // 2. 정점 성취
     let peak;
@@ -16399,6 +16456,7 @@
       oath: state.currentSword.oath || null,  // v376 서약 — doSeal과 동기 (전당 검도 맹세 보존)
       luckExp: state.currentSword.luckExp || 0,  // v382 천칭 — doSeal과 동기
       luckAct: state.currentSword.luckAct || 0,  // v382 천칭 — doSeal과 동기
+      closestCall: (typeof state.currentSword.closestCall === 'number') ? state.currentSword.closestCall : null,  // v386 — doSeal과 동기
     });
     bumpStat('wayReached');
     grantEternity();  // v225 무극 — 도 검 전당도 영겁 +1
@@ -17425,6 +17483,7 @@
       oath: state.currentSword.oath || null,  // v376 서약 — 맹세와 그 운명 (kept/broken은 broken 필드)
       luckExp: state.currentSword.luckExp || 0,  // v382 천칭 — 운의 원장 (기대)
       luckAct: state.currentSword.luckAct || 0,  // v382 천칭 — 운의 원장 (실제)
+      closestCall: (typeof state.currentSword.closestCall === 'number') ? state.currentSword.closestCall : null,  // v386 구사일생
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -17924,6 +17983,10 @@
       const ld = (s.luckAct || 0) - (s.luckExp || 0);
       push('천칭 — ' + (ld >= 0 ? '+' : '') + ld.toFixed(1) + ' · ' + luckWord(ld).word + ' 검', 8.5, '#a8c0d8', 10);
     }
+    // v386 구사일생 — 터럭 차이의 생환도 족자에
+    if (typeof s.closestCall === 'number' && s.closestCall < 1) {
+      push('구사일생 — 죽음과 ' + (s.closestCall * 100).toFixed(1) + '% 차이', 8.5, '#c8e6a0', 10);
+    }
     // 레이아웃 — 제목/검 그림 아래로 본문을 흘리고, 총 높이는 내용에 맞춰 동적
     const headerH = 92, swordH = 205;
     let y = headerH + swordH;
@@ -17988,6 +18051,8 @@
       oathsKept: s.oathsKept || 0,
       oathsBroken: s.oathsBroken || 0,
       luckDelta: (s.luckExp > 0) ? ((s.luckAct || 0) - (s.luckExp || 0)) : null,
+      deathDelta: (s.destExp > 0) ? ((s.destAct || 0) - (s.destExp || 0)) : null,  // v386
+      nearMisses: s.nearMisses || 0,  // v386
       schools: getActiveSchools(),
       eras: (state.eras || []).slice(-3),
       eraIdx: (state.eras || []).length + 1,
@@ -18007,9 +18072,11 @@
     if (d.demons > 0) feats.push('검귀 ' + d.demons);
     if (d.yaksha > 0) feats.push('야차 ' + d.yaksha);
     if (d.revenges > 0) feats.push('설욕 ' + d.revenges);
+    if ((d.nearMisses || 0) > 0) feats.push('구사일생 ' + d.nearMisses);  // v386
     if (feats.length) push(feats.join(' · '), 9, '#c8b8a0', 8);
     if ((d.oathsKept || 0) > 0 || (d.oathsBroken || 0) > 0) push('서약 — 지킴 ' + (d.oathsKept || 0) + ' · 파계 ' + (d.oathsBroken || 0), 9, '#c8b8d8', 8);
     if (typeof d.luckDelta === 'number') push('천칭 — ' + (d.luckDelta >= 0 ? '+' : '') + d.luckDelta.toFixed(1) + ' · ' + luckWord(d.luckDelta).word + ' 검사', 9, '#a8c0d8', 8);
+    if (typeof d.deathDelta === 'number') push('파괴 천칭 — ' + (d.deathDelta >= 0 ? '+' : '') + d.deathDelta.toFixed(1) + ' · ' + deathLedgerWord(d.deathDelta).word, 9, '#c8a8a0', 8);  // v386
     if (d.schools && d.schools.length) push('유파 — ' + d.schools.join(' · '), 9, '#a8c8d8', 8);
     if (d.bestSword) push('대표검 — ' + d.bestSword.name + ' +' + d.bestSword.level, 10, '#fff5c0', 14);
     (d.eras || []).forEach((e, i) => push('제 ' + (e.idx || '?') + ' 겁 — ' + describeEra(e), 8.5, '#968d80', i === 0 ? 14 : 5, 1));
@@ -19857,6 +19924,14 @@
       (((state.gambleStats && (state.gambleStats.win || state.gambleStats.lose)) ?
         row('도 회수 도박', fmtNum(state.gambleStats.win || 0) + '승 ' + fmtNum(state.gambleStats.lose || 0) + '패', '#d4af37') : '')) +
       row('검 파괴', fmtNum(state.totalDestroyed || 0) + ' 회', 'var(--danger)') +
+      // v386 구사일생 — 생사의 원장 (파괴 기대 vs 실제 + 터럭 차 생환)
+      (function() {
+        if (!(s.destExp > 0)) return '';
+        const dd = (s.destAct || 0) - (s.destExp || 0);
+        const w = deathLedgerWord(dd);
+        return row('파괴 천칭', '기대 ' + s.destExp.toFixed(1) + ' · 실제 ' + fmtNum(s.destAct || 0) + ' — ' + w.word, w.color || 'var(--dim)') +
+          ((s.nearMisses || 0) > 0 ? row('구사일생', fmtNum(s.nearMisses) + ' 회', '#c8e6a0') : '');
+      })() +
       // v373 검총 — 가장 높이 올랐다 부러진 검 (collectionHighlight 재사용; 이름은 팔레트 생성 + normalizeState 태그 제거)
       (function() {
         const fallenList = state.fallenSwords || [];

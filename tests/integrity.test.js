@@ -1435,3 +1435,37 @@ test('v385 검사전: 렌더·메뉴·다운로드 와이어링 + XSS 경계', (
   assert.match(ex, /revokeObjectURL/, 'URL 정리');
   assert.match(ex, /try \{/, '실패 안전');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v386 九死一生 — 와이어링 무결성 (실제 굴림 결합·보존·표시)
+// ─────────────────────────────────────────────────────────────
+test('v386 생사 원장: 실패 4분기(열반/파괴/하락/유지) 전부 기록 — 누락 없는 저울', () => {
+  const body = afterDecl('function enhance() {', 34000);
+  assert.match(body, /const deathPossible = useProtect \? 0 : effectiveDestroy/,
+    '기대는 실제 굴림과 같은 effectiveDestroy (보호권 armed면 0 — 걸리지 않은 판)');
+  const ledgerCalls = (body.match(/recordDeathLedger\(deathPossible, (true|false)\)/g) || []);
+  assert.strictEqual(ledgerCalls.length, 4, '열반·파괴·하락·유지 4분기 전부 기록 (현재 ' + ledgerCalls.length + ') — 한 분기라도 빠지면 저울이 기움');
+  assert.strictEqual(ledgerCalls.filter(c => c.includes('true')).length, 1, '실제 죽음은 파괴 분기 하나뿐');
+  const nearCalls = (body.match(/checkNearMiss\(deathPossible, failRoll\)/g) || []).length;
+  assert.strictEqual(nearCalls, 2, '구사일생 판정은 생존 2분기(하락/유지)에서');
+});
+
+test('v386 생사 원장: closestCall 보존 3처 + 숫자 방어 + 표시 결합', () => {
+  const pushes = (js.match(/closestCall: \(typeof state\.currentSword\.closestCall === 'number'\)/g) || []).length;
+  assert.strictEqual(pushes, 2, '봉인·殿堂 push 보존 (field-set 대칭과 이중 잠금)');
+  const rec = afterDecl('function recordFallenSword(', 2200);
+  assert.match(rec, /closestCall: \(typeof cs\.closestCall === 'number'\)/, '무덤에도 생환 기억 보존');
+  const nb = afterDecl('function normalizeState() {', 48000);
+  assert.match(nb, /sw\.closestCall != null && \(typeof sw\.closestCall !== 'number'/, '검 closestCall 범위 강제');
+  assert.match(nb, /typeof state\.stats\.destExp !== 'number'/, '평생 생사 원장 숫자 강제');
+  const ds = js.match(/const DEFAULT_STATS = \{[^}]*\}/);
+  assert.ok(ds && /destExp: 0/.test(ds[0]) && /nearMisses: 0/.test(ds[0]), 'DEFAULT_STATS 병합 기본값');
+  // 표시 — 記錄 파괴 천칭 + 검전/검사전 족자 결합 (v381 전 층위 규율)
+  const rs = js.match(/function renderStats\(\)\s*\{[\s\S]*?\n  \}/);
+  assert.ok(rs && rs[0].includes('deathLedgerWord(dd)'), '記錄 파괴 천칭 행');
+  const scroll = afterDecl('function buildScrollSVG(', 9000);
+  assert.match(scroll, /s\.closestCall/, '검전 족자에 구사일생 (전 층위 규율)');
+  const smith = afterDecl('function buildSmithScrollLines(', 3200);
+  assert.match(smith, /deathLedgerWord\(d\.deathDelta\)/, '검사전에 파괴 천칭');
+  assert.match(smith, /구사일생 ' \+ d\.nearMisses/, '검사전 무훈에 구사일생');
+});

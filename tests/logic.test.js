@@ -2003,7 +2003,7 @@ test('v384 describeEra: 연대기 한 줄 — 이룬 것만 · 빈 시대 · 결
 // v385 劍士傳 — 대장장이 족자 줄 조립 (순수)
 // ─────────────────────────────────────────────────────────────
 test('v385 buildSmithScrollLines: 이룬 것만 말한다 — 섹션 포함/침묵·결정적', () => {
-  const fns = loadFunctions(['buildSmithScrollLines', 'luckWord', 'describeEra']);
+  const fns = loadFunctions(['buildSmithScrollLines', 'luckWord', 'describeEra', 'deathLedgerWord']);  // v386 — 파괴 천칭 의존 추가
   const rich = {
     personas: ['귀살자', '서약자'], sealed: 12, enshrined: 2, ways: 3, generation: 20,
     slain: 88, demons: 4, yaksha: 1, revenges: 2, oathsKept: 3, oathsBroken: 1,
@@ -2031,4 +2031,62 @@ test('v385 buildSmithScrollLines: 이룬 것만 말한다 — 섹션 포함/침�
   assert.ok(fns.buildSmithScrollLines({ luckDelta: 0, eras: [], eraIdx: 1 }).map(l => l.t).join('').includes('고른 바람'), 'delta 0 ≠ 무기록');
   assert.strictEqual(fns.buildSmithScrollLines(null).length, 0, 'null 안전');
   assert.strictEqual(JSON.stringify(fns.buildSmithScrollLines(rich)), JSON.stringify(fns.buildSmithScrollLines(rich)), '결정적');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v386 九死一生 — 생사의 원장 (순수 함수)
+// ─────────────────────────────────────────────────────────────
+test('v386 deathLedgerWord/recordDeathLedger: 생사 결산 어휘 + 기대 clamp', () => {
+  const fns = loadFunctions(['deathLedgerWord']);
+  // delta = 실제 - 기대: 양수 = 기대보다 많이 부러짐(가혹), 음수 = 죽음이 비껴감(행운)
+  assert.match(fns.deathLedgerWord(2).word, /하늘이 가혹했다/);
+  assert.match(fns.deathLedgerWord(0.7).word, /칼끝이 자주 미끄러졌다/);
+  assert.match(fns.deathLedgerWord(0).word, /저울이 고요했다/);
+  assert.match(fns.deathLedgerWord(-0.7).word, /바람이 칼을 지켰다/);
+  assert.match(fns.deathLedgerWord(-2).word, /죽음이 비껴 다녔다/);
+  // recordDeathLedger — 기대 clamp + 실제 집계 (사망/생존)
+  const st = { stats: { destExp: 0, destAct: 0 } };
+  const { recordDeathLedger } = loadFunctions(['recordDeathLedger'], { state: st });
+  recordDeathLedger(0.2, false);
+  recordDeathLedger(1.7, true);  // 오염된 확률>1도 기대는 1로
+  assert.ok(Math.abs(st.stats.destExp - 1.2) < 1e-9, '기대 누적 + clamp ≤1');
+  assert.strictEqual(st.stats.destAct, 1, '실제 죽음 집계');
+});
+
+test('v386 checkNearMiss: 터럭 차 판정 — 임계·경계·closestCall 최솟값 갱신', () => {
+  const T = extractConst('NEARMISS_TUNING');
+  const mk = () => ({
+    state: { stats: { nearMisses: 0 }, currentSword: {} },
+    inscribeQueue: [], inscribeRunning: true, runInscribeQueue: () => {}, log: () => {},
+    NEARMISS_TUNING: T,
+  });
+  let deps = mk();
+  const { checkNearMiss } = loadFunctions(['checkNearMiss'], deps);
+  // 임계 안 (margin 0.01 < 0.02) → 기록
+  checkNearMiss(0.20, 0.21);
+  assert.strictEqual(deps.state.stats.nearMisses, 1, '구사일생 집계');
+  assert.ok(Math.abs(deps.state.currentSword.closestCall - 0.01) < 1e-9, 'closestCall 기록');
+  // 더 아슬한 순간 → 최솟값 갱신 / 덜 아슬하면 유지
+  checkNearMiss(0.20, 0.204);
+  assert.ok(Math.abs(deps.state.currentSword.closestCall - 0.004) < 1e-9, '더 아슬한 순간으로 갱신');
+  checkNearMiss(0.20, 0.215);
+  assert.ok(Math.abs(deps.state.currentSword.closestCall - 0.004) < 1e-9, '덜 아슬하면 유지');
+  // 임계 밖 / 파괴 불가능(0) / 음수 margin(실제로는 파괴 — 호출 안 되지만 방어)
+  const before = deps.state.stats.nearMisses;
+  checkNearMiss(0.20, 0.30);
+  checkNearMiss(0, 0.001);
+  checkNearMiss(0.20, 0.15);
+  assert.strictEqual(deps.state.stats.nearMisses, before, '임계 밖·불가능·음수는 침묵');
+});
+
+test('v386 만가/一代記: 터럭 차 생환의 기억 — 보존 검·무기록 하위호환', () => {
+  const fnsE = loadFunctions(['generateElegy', 'deriveTemperament']);
+  const grave = { form: '직', level: 10, enhanceAttempts: 20, slainCount: 3, rescued: true };
+  assert.ok(fnsE.generateElegy({ ...grave, closestCall: 0.004 }).some(l => l.includes('한 번은 터럭 차이로 살아남았었다')), '만가 — 생환 기억');
+  assert.ok(!fnsE.generateElegy(grave).some(l => l.includes('터럭 차이로 살아남')), '무기록 무덤 침묵');
+  const DESTINIES = extractConst('DESTINIES');
+  const fnsB = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { DESTINIES, NAMED_FOES: extractConst('NAMED_FOES') });
+  const base = { form: '중', level: 11, inscriptions: [], slainCount: 0, soul: 0, scars: 0, stars: {}, name: '중검' };
+  assert.match(fnsB.generateBiography({ ...base, closestCall: 0.01 }), /죽음이 터럭 하나 차이로 비껴갔다/, '一代記 — 생환 기억');
+  assert.ok(!/터럭 하나 차이/.test(fnsB.generateBiography(base)), '무기록 검 불변');
 });
