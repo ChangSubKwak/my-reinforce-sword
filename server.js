@@ -25,7 +25,10 @@ app.use((req, res, next) => {
 //  단일 index.html이고 Supabase는 외부 CDN·파비콘은 data-URI라 다른 로컬 자산이 없으므로
 //  소스/문서/스키마 노출을 막기 위해 index.html만 서빙한다.)
 app.get('*', (_req, res) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  // v394 — 기존의 저장-금지 지시어가 sendFile의 ETag/Last-Modified 조건부 재검증(304)까지
+  // 차단해 재방문마다 전량(엣지 br 기준 ~288KB) 재전송되던 결함. no-cache는 "캐시하되 매 방문
+  // 재검증" — 미변경이면 304 ~0바이트, 갱신 배포 시 즉시 전파 (기존 신선도 보장 동일).
+  res.setHeader('Cache-Control', 'no-cache');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 

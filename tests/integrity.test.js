@@ -1655,6 +1655,17 @@ test('v393 서체: Noto Serif KR을 실제로 로드 — 선언만 하고 로드
   assert.ok(decls > 50, 'Noto Serif KR 선언 광범위 (현재 ' + decls + '처)');
 });
 
+// ─────────────────────────────────────────────────────────────
+// v394 재방문 경량화 — 서버 캐시 정책 (라이브 실측 기반)
+// ─────────────────────────────────────────────────────────────
+test('v394 서버: no-store 금지 — 조건부 재검증(304)이 살아 있어야 재방문이 가볍다', () => {
+  const path = require('node:path');
+  const server = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  assert.ok(!server.includes('no-store'), 'no-store는 ETag 304 재검증까지 차단 — 재방문마다 전량 재전송 (v394 실측 288KB)');
+  assert.match(server, /Cache-Control', 'no-cache'/, 'no-cache — 캐시하되 매 방문 재검증 (갱신 즉시 전파 + 미변경 304)');
+  // (express.static 재도입 금지는 기존 v332 전용 테스트가 커버 — 주석 속 언급까지 잡는 중복 검사는 두지 않는다)
+});
+
 test('v387 간결: menu-core 태깅 — 필수만, 과잉 태깅 금지', () => {
   const coreCount = (html.match(/class="menu-core"/g) || []).length;
   assert.ok(coreCount >= 8 && coreCount <= 13, '핵심 버튼 8~13개 (현재 ' + coreCount + ') — 전부 태깅하면 간결이 무의미');
