@@ -4135,6 +4135,7 @@
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="detail-name" style="max-width: 420px;">
     <h2 id="detail-name">검</h2>
     <div id="detail-body" style="font-size:12px;line-height:1.9;letter-spacing:2px;color:var(--fg)"></div>
+    <button id="btn-export-scroll" style="width:100%;margin-top:10px;padding:10px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:11px;letter-spacing:4px;cursor:pointer" title="이 검의 일생 전체를 세로 족자 SVG로 저장">검 전  족 자  저 장</button>
     <button class="modal-close" data-close>닫 기</button>
   </div>
 </div>
@@ -17708,7 +17709,109 @@
       .replace('display:block;margin:0 auto 12px', 'display:block;margin:0 auto');
   }
 
+  // === v381 劍傳(검전) — 한 자루의 일생을 족자로 ===
+  // 세션에 걸쳐 쌓인 검의 정체성(성정·솔성·서약·혈통·재련·일생시·유언)은 모달 안에만
+  // 갇혀 있었다 — 전부를 한 장의 세로 족자 SVG로 응축해 게임 밖으로 내보낸다 (공유 가능한
+  // 유물). v77(검 그림만)의 완전판. 메커니즘 효과 0.
+  function wrapText(text, maxChars) {
+    // 한국어 줄바꿈 — 공백 우선, 공백 없는 장문은 글자 단위 강제 분할 (결정적)
+    const words = String(text || '').trim().split(/\s+/).filter(Boolean);
+    const lines = [];
+    let cur = '';
+    words.forEach(w => {
+      const cand = cur ? cur + ' ' + w : w;
+      if (cand.length > maxChars && cur) { lines.push(cur); cur = w; } else { cur = cand; }
+      while (cur.length > maxChars) { lines.push(cur.slice(0, maxChars)); cur = cur.slice(maxChars); }
+    });
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  function buildScrollSVG(s) {
+    const ins = s.inscriptions || [];
+    const name = s.name || makeSwordName(s.form, ins, s.level || 0);
+    const formWord = ({ '직': '곧은 검', '곡': '굽은 검', '중': '무거운 검', '속': '빠른 검' })[s.form] || '이름 없는 검';
+    const W = 300;
+    // 본문 줄 수집 — {t(이스케이프됨), size, fill, gap(위 여백), ls(자간)}
+    const lines = [];
+    const push = (t, size, fill, gap, ls) => lines.push({ t: escapeHtml(t), size, fill, gap: gap || 0, ls: ls == null ? 2 : ls });
+    const temp = deriveTemperament(s);
+    const nature = deriveNaturePath(s);
+    push(formWord + ' · +' + (s.level || 0) + ' · 혼 ' + (s.soul || 0), 9, '#968d80', 6);
+    if (temp && temp.key !== 'wa') push('성정 — ' + temp.name + (nature && nature.name ? ' · ' + nature.name : ''), 9, '#968d80', 5);
+    if (ins.length) wrapText(ins.join(' · '), 26).forEach((l, i) => push(l, 9, '#e8c454', i === 0 ? 14 : 5));
+    wrapText(generateBiography(s), 22).forEach((l, i) => push(l, 10, '#f0ece0', i === 0 ? 18 : 7));
+    if (Array.isArray(s.verse) && s.verse.length) {
+      push('일 생 시', 8, '#968d80', 18, 5);
+      s.verse.forEach(v => push(String(v), 10, '#fff5c0', 8));
+    }
+    const last = generateLastWords(s);
+    if (last) wrapText('"' + last + '"', 22).forEach((l, i) => push(l, 9.5, '#c8b8a0', i === 0 ? 16 : 6));
+    if (s.oath && s.oath.name) push('서약 「' + s.oath.name + '」 — ' + (s.oath.broken ? '스스로 깨었다' : '끝까지 지켰다'), 9, s.oath.broken ? '#d04830' : '#6a9a6a', 14);
+    if (Array.isArray(s.fusedFrom) && s.fusedFrom.length === 2) push('혈통 — ' + s.fusedFrom[0] + ' + ' + s.fusedFrom[1], 8.5, '#c8a8d8', 10);
+    if (s.reforgedFrom) push('재련 — ' + s.reforgedFrom + '의 무덤에서', 8.5, '#c8a8a0', 10);
+    // 레이아웃 — 제목/검 그림 아래로 본문을 흘리고, 총 높이는 내용에 맞춰 동적
+    const headerH = 92, swordH = 205;
+    let y = headerH + swordH;
+    let textSVG = '';
+    lines.forEach(L => {
+      y += L.gap + L.size + 4;
+      textSVG += '<text x="' + (W / 2) + '" y="' + y.toFixed(1) + '" text-anchor="middle" font-size="' + L.size + '" fill="' + L.fill + '" letter-spacing="' + L.ls + '" font-family="\'Noto Serif KR\', serif">' + L.t + '</text>';
+    });
+    // 일생 그래프 (levelHistory 궤적)
+    const h = Array.isArray(s.levelHistory) ? s.levelHistory : [];
+    let chartSVG = '';
+    if (h.length >= 2) {
+      const cw = 200, ch = 34, cx = (W - cw) / 2, cy = y + 24;
+      const maxL = Math.max.apply(null, h.concat([MAX_LEVEL]));
+      let pts = '';
+      h.forEach((v, i) => { pts += (i ? ' ' : '') + (cx + i * (cw / (h.length - 1))).toFixed(1) + ',' + (cy + ch - ((v || 0) / maxL) * ch).toFixed(1); });
+      chartSVG = '<polyline points="' + pts + '" fill="none" stroke="rgba(232,196,84,0.7)" stroke-width="1"/>' +
+        '<text x="' + (W / 2) + '" y="' + (cy + ch + 13) + '" text-anchor="middle" font-size="7" fill="#968d80" letter-spacing="3">일생 — 강화도 궤적</text>';
+      y = cy + ch + 16;
+    }
+    const H = Math.round(y + 60);
+    // 검 그림 (100x200 좌표계 중앙 배치) + 정점 명문 마크 + 한자 새김 — buildDetailSwordSVG 내용물 재사용
+    const body = buildSwordBody(s.level || 0, s.form, s.playerSeal || '');
+    const wayMark = ins.includes('도') ? '<line x1="50" y1="20" x2="50" y2="138" stroke="#fff5c0" stroke-width="1.6" opacity="0.85"/>' : '';
+    const demonMark = ins.includes('귀참') ? '<circle cx="50" cy="22" r="1.8" fill="#c0392b" opacity="0.9"/>' : '';
+    const honestMark = ins.includes('본') ? '<polygon points="50,12 51.5,14 50,16 48.5,14" fill="#6a8a9a" opacity="0.7"/>' : '';
+    const kanji = getPrimaryKanji(ins);
+    const kanjiSVG = kanji ? '<text x="50" y="80" text-anchor="middle" font-size="10" fill="' + kanji.c + '" opacity="0.9" font-family="serif" font-weight="700">' + kanji.k + '</text>' : '';
+    const defsEl = document.querySelector('#sword-svg defs');
+    const defs = defsEl ? defsEl.outerHTML : '';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" width="' + (W * 2) + '" height="' + (H * 2) + '">' + defs +
+      '<rect width="' + W + '" height="' + H + '" fill="#1f1a14"/>' +
+      '<rect x="8" y="8" width="' + (W - 16) + '" height="' + (H - 16) + '" fill="none" stroke="#3a322a" stroke-width="1"/>' +
+      '<rect x="12" y="12" width="' + (W - 24) + '" height="' + (H - 24) + '" fill="none" stroke="rgba(232,196,84,0.25)" stroke-width="0.6"/>' +
+      '<text x="' + (W / 2) + '" y="52" text-anchor="middle" font-size="22" fill="#e8c454" letter-spacing="8" font-family="\'Noto Serif KR\', serif">' + escapeHtml(name) + '</text>' +
+      '<text x="' + (W / 2) + '" y="74" text-anchor="middle" font-size="8" fill="#968d80" letter-spacing="6">검 전 · 劍 傳</text>' +
+      '<g transform="translate(' + (W / 2 - 50) + ', ' + headerH + ')">' + body + wayMark + demonMark + honestMark + kanjiSVG + '</g>' +
+      textSVG + chartSVG +
+      '<text x="' + (W / 2) + '" y="' + (H - 26) + '" text-anchor="middle" font-size="7" fill="#968d80" letter-spacing="3">검 강화 — ' + (state.swordGeneration || 1) + '代의 계보에서</text>' +
+      '</svg>';
+  }
+  let lastDetailSword = null;  // 회고 모달이 현재 보고 있는 검 (족자 내보내기용)
+  function exportSwordScroll(s) {
+    if (!s) return;
+    try {
+      const svg = buildScrollSVG(s);
+      const fname = (s.name || makeSwordName(s.form, s.inscriptions || [], s.level || 0)).replace(/\s+/g, '');
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '검전_' + fname + '_+' + (s.level || 0) + '.svg';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+      log('검전 족자 다운로드 — ' + fname, 'success');
+    } catch (e) {
+      log('족자 생성 실패', 'destroy');
+    }
+  }
+
   function showSwordDetail(s, index) {
+    lastDetailSword = s;  // v381 검전 — 족자 내보내기 버튼이 참조
     const ins = s.inscriptions || [];
     const formLabel = ({ '직': '강직', '곡': '유연', '중': '무거움', '속': '빠름' })[s.form] || '없음';
     $('detail-name').textContent = s.name || ('검 #' + index);
@@ -18619,6 +18722,10 @@
     renderShadowLore();
     $('shadowlore-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
+  });
+  // v381 검전 — 회고 모달의 검을 족자로 내보내기
+  $('btn-export-scroll').addEventListener('click', () => {
+    exportSwordScroll(lastDetailSword);
   });
   // v376 서약 — 맹세 버튼/계율 선택 와이어링
   $('btn-oath').addEventListener('click', () => {

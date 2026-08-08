@@ -1283,3 +1283,32 @@ test('v380 corner-stack: 우상단 마커 전원이 스택 안 + fixed 좌표 �
   assert.ok(releaseCss && /calc\(50% \+ 72px\)/.test(releaseCss[0]) && /bottom: -78px/.test(releaseCss[0]),
     '방하 버튼 우측 나란히 (같은 띠 — 아래 UI 침범 없음)');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v381 劍傳 — 족자 내보내기 와이어링 (일생 전 층위 결합·XSS 경계·다운로드)
+// ─────────────────────────────────────────────────────────────
+test('v381 검전: 족자 빌더가 검 일생의 전 층위를 결합 + XSS 경계', () => {
+  const body = afterDecl('function buildScrollSVG(', 7000);
+  // 세션에 걸쳐 쌓인 정체성 층위가 족자에 전부 결합되는지 (한 층위라도 빠지면 서사 유실)
+  ['escapeHtml(', 'wrapText(', 'generateBiography(', 'generateLastWords(',
+   'deriveTemperament(', 'deriveNaturePath(', 'buildSwordBody(', 'getPrimaryKanji(']
+    .forEach(fn => assert.ok(body.includes(fn), '족자가 ' + fn + ' 결합'));
+  assert.match(body, /s\.verse/, '일생시(도 검) 포함');
+  assert.match(body, /s\.oath/, '서약 운명(v376) 포함');
+  assert.match(body, /levelHistory/, '강화도 궤적(v51) 포함');
+  assert.match(body, /reforgedFrom/, '재련 혈통(v374) 포함');
+  assert.match(body, /fusedFrom/, '융합 혈통(v92) 포함');
+  // 이름·서사는 escapeHtml 경유 (import 유래 검명이 SVG 마크업 주입되는 것 차단)
+  assert.match(body, /escapeHtml\(name\)/, '검명 이스케이프 (v275/v370m 규율)');
+});
+
+test('v381 검전: 회고 모달 스태시·버튼·다운로드 와이어링', () => {
+  const sd = afterDecl('function showSwordDetail(', 400);
+  assert.match(sd, /lastDetailSword = s/, '회고 모달이 보고 있는 검을 스태시 (족자 버튼용)');
+  assert.ok(html.includes('id="btn-export-scroll"'), '회고 모달에 족자 저장 버튼');
+  assert.match(js, /exportSwordScroll\(lastDetailSword\)/, '버튼 → 족자 내보내기');
+  const ex = afterDecl('function exportSwordScroll(', 1400);
+  assert.match(ex, /image\/svg\+xml/, 'SVG Blob 다운로드 (v77 패턴)');
+  assert.match(ex, /revokeObjectURL/, 'Blob URL 정리 (누수 방지)');
+  assert.match(ex, /try \{/, '실패 안전 (족자 생성 오류가 게임을 깨지 않음)');
+});

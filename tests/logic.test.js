@@ -1869,3 +1869,23 @@ test('v379 buildLifeFlashFragments: 결정적 일생 조각 + 사후명은 언�
   assert.strictEqual(JSON.stringify(buildLifeFlashFragments({})), JSON.stringify(['— 무명 —']), '빈 무덤도 사후명 하나');
   assert.strictEqual(buildLifeFlashFragments(null).length, 0, 'null 안전');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v381 劍傳 — 족자 줄바꿈 (순수 함수)
+// ─────────────────────────────────────────────────────────────
+test('v381 wrapText: 한국어 줄바꿈 — 상한 준수·글자 무손실·강제 분할·결정적', () => {
+  const { wrapText } = loadFunctions(['wrapText']);
+  const long = '검은 평범한 한 생을 살았다 그러나 그 평범함이 곧 하나의 길이었다';
+  const lines = wrapText(long, 10);
+  assert.ok(lines.length >= 3, '여러 줄로 분할 (현재 ' + lines.length + '줄)');
+  lines.forEach(l => assert.ok(l.length <= 10, '줄당 상한 준수: "' + l + '"'));
+  assert.strictEqual(lines.join('').replace(/\s+/g, ''), long.replace(/\s+/g, ''), '글자 무손실 (SVG 족자에서 서사 유실 방지)');
+  // 공백 없는 초장문 — 글자 단위 강제 분할
+  const forced = wrapText('가'.repeat(25), 10);
+  assert.strictEqual(forced.length, 3, '25자 → 10+10+5');
+  assert.ok(forced.every(l => l.length <= 10), '강제 분할도 상한 준수');
+  // 경계·안전
+  assert.strictEqual(wrapText('', 10).length, 0, '빈 문자열 → 빈 배열');
+  assert.strictEqual(wrapText(null, 10).length, 0, 'null 안전');
+  assert.strictEqual(JSON.stringify(wrapText(long, 10)), JSON.stringify(wrapText(long, 10)), '결정적 (재호출 동일)');
+});
