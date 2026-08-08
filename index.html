@@ -2164,6 +2164,22 @@
     .grave-item, .grave-reforge-btn, .fusion-item { transition: none; }
     .grave-elegy { animation: none; }
   }
+  /* v376 서약 — 맹세 버튼(제안: 점선 / 확정: 실선) + 계율 카드 hover */
+  #btn-oath {
+    width: 100%; margin-top: 6px; padding: 10px;
+    background: transparent; border: 1px dashed var(--line); color: var(--dim);
+    font-family: inherit; font-size: 11px; letter-spacing: 3px; cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  #btn-oath:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  #btn-oath:disabled { cursor: default; border-style: solid; color: var(--accent); opacity: 0.75; }
+  #btn-oath.oath-broken:disabled { color: var(--danger); border-color: rgba(208, 72, 48, 0.4); }
+  .oath-item {
+    padding: 12px 14px; border: 1px solid var(--line); margin-bottom: 8px; cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .oath-item:hover { border-color: var(--accent); background: rgba(232, 196, 84, 0.05); }
+  @media (prefers-reduced-motion: reduce) { #btn-oath, .oath-item { transition: none; } }
   /* v41 검귀 SVG (얼굴/발톱) */
   #demon-detail {
     position: absolute;
@@ -3346,6 +3362,7 @@
     <button id="btn-enhance">강 &nbsp; 화</button>
     <button id="btn-seal-direct" title="검을 팔아 조각을 얻습니다">검  팔 기<span class="seal-reward" id="seal-reward-label"></span></button>
     <button id="btn-fusion" style="display:none" title="봉인된 검 둘을 합쳐 새 검으로">융검  ·  검 둘을 합친다</button>
+    <button id="btn-oath" style="display:none" title="이 검의 일생에 계율 하나를 건다 — 어기면 파계가 기록된다"></button>
   </div>
 
   <div id="key-hint" style="text-align:center;font-size:9px;color:var(--dim);letter-spacing:2px;opacity:0.5;padding:4px 0">
@@ -3916,6 +3933,19 @@
   </div>
 </div>
 
+<!-- v376 서약 — 검 일생의 맹세 -->
+<div class="modal" id="oath-modal">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mtitle-oath" style="max-width: 400px;">
+    <h2 id="mtitle-oath">서 약</h2>
+    <p style="font-size:11px;color:var(--dim);letter-spacing:2px;line-height:1.9">
+      이 검의 일생에 계율 하나를 건다.<br>
+      어길 수는 있다 — 파계가 기록될 뿐.
+    </p>
+    <div id="oath-list" style="margin-top:10px"></div>
+    <button class="modal-close" data-close>맹 세 하 지  않 는 다</button>
+  </div>
+</div>
+
 <!-- v373 검총 — 부러진 검들의 무덤 -->
 <div class="modal" id="graveyard-modal">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mtitle-graveyard" style="max-width: 440px;">
@@ -4284,6 +4314,7 @@
       sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0,
       downgraded: 0,  // v105 落 — 하락 누적
       summoned: 0,  // v375 초영 — 그림자를 부른 횟수
+      oathsSworn: 0, oathsKept: 0, oathsBroken: 0,  // v376 서약 — 맹세/지킴/파계 누적
     },
     seenHelp: false,
   };
@@ -4532,6 +4563,11 @@
         if (typeof sw.kigen === 'string') sw.kigen = stripTags(sw.kigen);
         if (Array.isArray(sw.fusedFrom)) sw.fusedFrom = sw.fusedFrom.map(stripTags);
         if (typeof sw.reforgedFrom === 'string') sw.reforgedFrom = stripTags(sw.reforgedFrom);  // v374 재련 혈통
+        // v376 서약 — oath shape 강제 + name 태그 제거 (만가/一代記가 innerHTML로 읽음)
+        if (sw.oath && typeof sw.oath === 'object') {
+          sw.oath.name = (typeof sw.oath.name === 'string') ? stripTags(sw.oath.name).slice(0, 8) : '';
+          sw.oath.broken = sw.oath.broken === true;
+        } else if (sw.oath != null) sw.oath = null;
         // v370o 봉인 검 level도 범위 강제 — 손상 import의 level=999가 계보 SVG·"가장 강한 검"
         // 표시를 깨고 sealReward 표시를 폭주시키는 것 방지 (표시 전용이라 검 필드 sanitize에 동봉).
         if (sw.level != null) sw.level = clampInt(sw.level, 0, MAX_LEVEL);
@@ -4560,6 +4596,11 @@
           if (!f.name) f.name = makePosthumousName(f.form, f.level);
           if (f.rescued !== true && f.rescued !== false) f.rescued = null;
           f.reforged = f.reforged === true;  // v374 재련 — 1회성 플래그 boolean 강제
+          // v376 서약 — 무덤의 oath도 동일 shape 강제 (만가가 innerHTML로 읽음)
+          if (f.oath && typeof f.oath === 'object') {
+            f.oath.name = (typeof f.oath.name === 'string') ? stripTags(f.oath.name).slice(0, 8) : '';
+            f.oath.broken = f.oath.broken === true;
+          } else if (f.oath != null) f.oath = null;
         });
       }
       if (!state.blessingsDiscovered || typeof state.blessingsDiscovered !== 'object') state.blessingsDiscovered = {};  // v119 기연
@@ -4605,7 +4646,7 @@
       if (!state.gambleStats || typeof state.gambleStats !== 'object') state.gambleStats = { win: 0, lose: 0 };  // v219
       if (typeof state.eternityPoints !== 'number') state.eternityPoints = 0;  // v225
       // stats — 기본 sub-key 병합 (구 저장본에 신규 key 누락 시 baseline 보정)
-      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0 };
+      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0, oathsSworn: 0, oathsKept: 0, oathsBroken: 0 };
       state.stats = Object.assign({}, DEFAULT_STATS, (state.stats && typeof state.stats === 'object') ? state.stats : {});
     } catch (e) {}
   }
@@ -5813,6 +5854,7 @@
     renderSanctumRow();  // v121 결계
     renderWayCounter();
     renderNemesisMark();  // v372 숙적 — 우상단 원한 표식
+    renderOathButton();  // v376 서약 — 맹세 제안/상태 표시
     renderGuardianDisplay();
     renderDestiny();  // v93 천명
     renderAdversity();  // v96 厄運轉機
@@ -12039,6 +12081,73 @@
   // 회수창(#void z-index auto)은 game-over(#gameover-overlay z-index 500)보다 먼저/위에 떠야 함.
   // showVoid가 setTimeout으로 확실히 해제 + 모듈 변수(reload 시 false 리셋)라 soft-lock 불가.
 
+  // === v376 誓約(서약) — 검 한 자루의 일생에 거는 맹세 ===
+  // 각오(v91)가 강화 1회의 전술이라면 서약은 검 일생의 계율 — "다음 한 번만 더" 도박 충동의
+  // 반대편, 자발적 제약. 어기는 것을 막지 않는다: 어기면 파계(破戒)가 기록될 뿐 (자유 + 대가).
+  // 메커니즘 효과 0 — 지킨 맹세는 명문·一代記·만가의 명예, 깬 맹세는 파계 명문. 점수 인플레이션 없음.
+  const OATHS = [
+    { key: 'nofallback', name: '무방', desc: '방지권을 쓰지 않는다' },
+    { key: 'noflee', name: '불퇴', desc: '물러서지 않는다 — 도망도 대치도 없다' },
+    { key: 'nostone', name: '맨손', desc: '숫돌도 영석도 없이 벼린다' },
+    { key: 'wayonly', name: '일도', desc: '도(+15)에 이르기 전에는 팔지 않는다' },
+  ];
+  const OATH_MAX_ATTEMPTS = 3;  // 맹세 가능 시한 — 늦은 맹세는 맹세가 아니다 (강화 3회 미만)
+  function canSwearOath() {
+    return !!(state.hasSword && state.currentSword && !state.currentSword.oath
+      && (state.currentSword.enhanceAttempts || 0) < OATH_MAX_ATTEMPTS
+      && !challenge && !rescueWindow);
+  }
+  function swearOath(key) {
+    if (!canSwearOath()) return;
+    const def = OATHS.find(o => o.key === key);
+    if (!def) return;
+    // name 동봉 — 만가(v373)/一代記가 OATHS 룩업 없이 읽는다 (봉인/무덤 기록의 자기완결)
+    state.currentSword.oath = { key: def.key, name: def.name, broken: false };
+    bumpStat('oathsSworn');
+    grantInscription('서약');
+    log('서약 — 「' + def.name + '」 ' + def.desc, 'success');
+    $('oath-modal').classList.remove('active');
+    save();
+    render();
+  }
+  function breakOath(key) {
+    const o = state.hasSword && state.currentSword && state.currentSword.oath;
+    if (!o || o.key !== key || o.broken) return;
+    o.broken = true;
+    bumpStat('oathsBroken');
+    grantInscription('파계');
+    log('파계 — 「' + o.name + '」의 맹세가 깨어졌다', 'destroy');
+    save();
+  }
+  function renderOathButton() {
+    const btn = $('btn-oath');
+    if (!btn) return;
+    const o = state.hasSword && state.currentSword && state.currentSword.oath;
+    if (o) {
+      btn.style.display = '';
+      btn.disabled = true;
+      btn.textContent = o.broken ? '파계 · 「' + o.name + '」의 맹세는 깨어졌다' : '서약 · 「' + o.name + '」 — 맹세는 살아있다';
+      btn.classList.toggle('oath-broken', o.broken === true);
+    } else if (canSwearOath()) {
+      btn.style.display = '';
+      btn.disabled = false;
+      btn.textContent = '서 약 — 이 검에 맹세를 건다';
+      btn.classList.remove('oath-broken');
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+  function renderOathModal() {
+    const list = $('oath-list');
+    if (!list) return;
+    list.innerHTML = OATHS.map(o =>
+      '<div class="oath-item" data-oath="' + o.key + '">' +
+        '<div style="color:var(--accent);font-size:14px;letter-spacing:4px">' + o.name + '</div>' +
+        '<div style="color:var(--dim);font-size:11px;letter-spacing:2px;margin-top:4px;line-height:1.7">' + o.desc + '</div>' +
+      '</div>'
+    ).join('');
+  }
+
   // === v91 覺悟 — 강화 마음가짐 (휘발성, 새로고침 시 平常) ===
   // 원작 "다음 한 번만 더" 도박 충동에 *결정 차원*을 부여.
   const RESOLVE = {
@@ -12082,9 +12191,9 @@
 
     // 비용 차감
     state.shards -= actualCost;
-    if (useProtect) { state.protections -= pCost; state.currentSword.protectsUsed = (state.currentSword.protectsUsed || 0) + 1; }
-    if (useWhet) state.whetstones--;
-    if (useSpirit) state.spiritstones--;
+    if (useProtect) { state.protections -= pCost; state.currentSword.protectsUsed = (state.currentSword.protectsUsed || 0) + 1; breakOath('nofallback'); }  // v376 무방
+    if (useWhet) { state.whetstones--; breakOath('nostone'); }  // v376 맨손
+    if (useSpirit) { state.spiritstones--; breakOath('nostone'); }  // v376 맨손
     if (useDivination) { state.divinationStones--; log('점복 — 전조가 진실이 되었다', 'success'); }
     state.currentSword.enhanceAttempts++;
     const prevAttempts = (state.stats && state.stats.enhanceAttempts) || 0;  // v120 기원 전환 감지용
@@ -14261,6 +14370,7 @@
     }
     state.shards -= cost;
     bumpStat('fled');
+    breakOath('noflee');  // v376 불퇴 — 물러섬은 도망도 대치도 포함
     log(cost ? ('도망 (조각 -' + cost + ')') : '바람처럼 도망', 'fail');
     if (challenge.isNemesis) log('숙적 ' + challenge.nemesisName + '은 기억한다 — 다시 온다', 'destroy');  // v372
     setTimeout(() => showConsolation('flee'), 600);  // v143 慰
@@ -14288,6 +14398,7 @@
     const soulGain = c.namedFoeKey ? 12 : (c.type.isDemon ? 10 : 5);
     if (typeof addSoul === 'function') addSoul(soulGain);
     bumpStat('stalemate');
+    breakOath('noflee');  // v376 불퇴 — 대치(양보)도 물러섬이다
     state.stalematePending = true;  // 다음 challenge spawn 시 그림자 type 미리 보임
     log('대치 — 그림자에게 양보 (조각 -' + cost + ', 영혼 +' + soulGain + ', 다음 영을 미리 본다)', 'success');
     // 시각: 그림자가 깊이 절하며 사라짐
@@ -15427,6 +15538,12 @@
     const temp = deriveTemperament(f);
     if (temp.key !== 'wa' && temp.line) lines.push(temp.line);
     if ((f.scars || 0) > 0) lines.push('각흔 ' + f.scars + ' — 그만큼의 파괴를 이미 견뎠었다');
+    // v376 서약 — 맹세를 안은 채 부러진 검 (지킨 채 죽음은 명예, 깨어진 맹세는 회한)
+    if (f.oath && f.oath.name) {
+      lines.push(f.oath.broken
+        ? '깨어진 「' + f.oath.name + '」의 맹세를 안고 잠들었다'
+        : '「' + f.oath.name + '」의 맹세를 지킨 채 부러졌다');
+    }
     const lv = f.level || 0;
     lines.push('+' + lv + '에서 +' + (lv + 1) + '을 바라다 부러졌다' + (f.resolve === 'focus' ? ' — 일심, 모든 것을 걸었던 참이었다' : ''));
     if (f.rescued === true) lines.push('다섯 호흡 안에, 남긴 조각은 거두어졌다');
@@ -15449,6 +15566,7 @@
       scars: cs.scars || 0,
       bornTod: cs.bornTod || null,
       resolve: resolveMode || 'normal',  // 죽는 순간의 각오 (保身은 파괴 0이라 평상/일심만 실재)
+      oath: cs.oath ? { key: cs.oath.key, name: cs.oath.name, broken: cs.oath.broken === true } : null,  // v376 — 맹세를 안은 채 부러짐
       rescued: null,
       ts: Date.now(),
     };
@@ -15562,6 +15680,13 @@
     if (sword.reforgedFrom) {
       reforgeLine = '부러진 검 「' + sword.reforgedFrom + '」의 무덤에서 다시 벼려졌다.';
     }
+    // v376 서약 — 맹세의 운명 (지킴/파계, oath 보존 파생, 효과 0)
+    let oathLine = '';
+    if (sword.oath && sword.oath.name) {
+      oathLine = sword.oath.broken
+        ? '「' + sword.oath.name + '」의 맹세를 스스로 깨었다.'
+        : '「' + sword.oath.name + '」의 맹세를 끝까지 지켰다.';
+    }
     // 2. 정점 성취
     let peak;
     if (ins.includes('도')) peak = '주인의 손에서 도에 이르렀다.';
@@ -15617,7 +15742,7 @@
       const dn = DESTINIES.find(x => x.key === sword.destiny);
       if (dn) destinyLine = '타고난 천명 「' + dn.label + '」을 이루었다.';
     }
-    return formOpening + ' ' + (fusionLine ? fusionLine + ' ' : '') + (reforgeLine ? reforgeLine + ' ' : '') + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + (destinyLine ? destinyLine + ' ' : '') + ending;
+    return formOpening + ' ' + (fusionLine ? fusionLine + ' ' : '') + (reforgeLine ? reforgeLine + ' ' : '') + peak + ' ' + (tempLine ? tempLine + ' ' : '') + (natureLine ? natureLine + ' ' : '') + notable + ' ' + (oathLine ? oathLine + ' ' : '') + (destinyLine ? destinyLine + ' ' : '') + ending;
   }
 
   // === 일생시 — 도 검 봉인 시 일생을 4행 시구로 응축 ===
@@ -15920,6 +16045,7 @@
       bornTod: state.currentSword.bornTod || null,  // v344 時生 — 빚어진 시각 보존 (회고·一代記)
       fusedFrom: state.currentSword.fusedFrom || null,  // v344 혈통 — 융합 혈통 보존
       reforgedFrom: state.currentSword.reforgedFrom || null,  // v374 재련 — 무덤 혈통 보존 (doSeal과 동기)
+      oath: state.currentSword.oath || null,  // v376 서약 — doSeal과 동기 (전당 검도 맹세 보존)
     });
     bumpStat('wayReached');
     grantEternity();  // v225 무극 — 도 검 전당도 영겁 +1
@@ -16083,6 +16209,8 @@
     { key: '연일섬', label: '열 번의 일섬을 한 검에 새긴 자', verse: '열 번이 한 흐름이 되었다',           trigger: () => false },
     { key: '설욕', label: '숙적을 베어냈다',                verse: '깊은 원한이 한 번의 일섬으로 갚아졌다', trigger: () => false },
     { key: '재련', label: '무덤에서 다시 벼려졌다',           verse: '부러진 자리에서 다시 일어선 칼',        trigger: () => false },
+    { key: '서약', label: '맹세를 건 검',                    verse: '칼날보다 단단한 것은 스스로에게 건 말이다', trigger: () => false },
+    { key: '파계', label: '맹세를 깬 검',                    verse: '깨어진 맹세도 검의 일부가 되었다',       trigger: () => false },
   ];
 
   function grantInscription(key) {
@@ -16812,6 +16940,9 @@
   function sealSword() {
     if (challenge || rescueWindow) return;
     if (!state.hasSword || state.level < minSealLevel()) return;
+    // v376 서약 일도 — 도 이르기 전의 매각 행위 자체가 위반. 막지 않는다 —
+    // 파계가 새겨진 채 팔릴 뿐. ins 캡처 *전*에 새겨 봉인 기록에 남긴다.
+    if (state.level < MAX_LEVEL) breakOath('wayonly');
     const lv = state.level;
     const ins = (state.currentSword.inscriptions || []).slice();
     const form = state.currentSword.form || null;
@@ -16854,6 +16985,8 @@
     const trialsBefore = TRIALS.filter(t => trialUnlocked(t.key)).map(t => t.key);
     // v117 사도 — 봉인 전 4도 상태 추적
     const fourWaysBefore = hasFourWays();
+    // v376 서약 — 맹세를 지킨 채 일생 완주 (파계 없이 봉인)
+    if (state.currentSword.oath && !state.currentSword.oath.broken) bumpStat('oathsKept');
     state.sealedSwords.push({
       level: lv, inscriptions: ins, form,
       enhanceAttempts: state.currentSword.enhanceAttempts || 0,  // v313 단련 — 검의 단련 노고 보존
@@ -16874,6 +17007,7 @@
       bornTod: state.currentSword.bornTod || null,  // v252 時生 — 빚어진 시각
       fusedFrom: state.currentSword.fusedFrom || null,  // v255 혈통 — 융합 혈통
       reforgedFrom: state.currentSword.reforgedFrom || null,  // v374 재련 — 무덤 혈통
+      oath: state.currentSword.oath || null,  // v376 서약 — 맹세와 그 운명 (kept/broken은 broken 필드)
     });
     // v89 잠금 해제된 시련 알림
     const newlyUnlocked = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
@@ -18234,6 +18368,16 @@
     $('graveyard-modal').classList.add('active');
     $('menu-drop').classList.remove('open');
   });
+  // v376 서약 — 맹세 버튼/계율 선택 와이어링
+  $('btn-oath').addEventListener('click', () => {
+    if (!canSwearOath()) return;
+    renderOathModal();
+    $('oath-modal').classList.add('active');
+  });
+  $('oath-list').addEventListener('click', (e) => {
+    const item = e.target.closest('.oath-item');
+    if (item) swearOath(item.dataset.oath);
+  });
   // 무덤 클릭 → 만가 펼침/접힘 (이벤트 위임 — 리스트는 렌더마다 재생성되므로 부모에 1회 부착)
   $('graveyard-list').addEventListener('click', (e) => {
     // v374 재련 버튼 — 만가 토글보다 먼저 분기 (버튼 클릭이 펼침으로 오인되지 않게)
@@ -18888,6 +19032,7 @@
     if ((s.fled || 0) >= 10) personas.push({ name: '바람의 검', desc: '도전에서 자주 물러난다' });
     if ((s.stalemate || 0) >= 5) personas.push({ name: '평화의 검사', desc: '대치로 그림자를 거듭 돌려보낸 자' });
     if ((state.nemesesSlain || 0) >= 2) personas.push({ name: '복수자', desc: '숙적을 거듭 갚아낸 자' });  // v372
+    if (((state.stats && state.stats.oathsKept) || 0) >= 3) personas.push({ name: '서약자', desc: '맹세를 거듭 지켜낸 자' });  // v376
     if ((s.downgraded || 0) >= 15) personas.push({ name: '단련의 인내자', desc: '거듭 하락하여도 다시 두드린다' });
     if (state.sealedSwords && state.sealedSwords.length === 0 && (state.bestLevel || 0) >= 8) {
       personas.push({ name: '집착자', desc: '한 자루의 검을 깊이 키운다' });
@@ -19059,6 +19204,7 @@
       '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:10px 0 4px">정 점</div>' +
       row('검 판매', fmtNum(s.sealed || 0) + ' 회') +
       row('도 달성', fmtNum(s.wayReached || 0) + ' 회', '#fff5c0') +
+      ((s.oathsSworn || 0) > 0 ? row('서약', fmtNum(s.oathsKept || 0) + ' 지킴 · ' + fmtNum(s.oathsBroken || 0) + ' 파계', '#c8b8d8') : '') +  // v376
       row('세월 (누적)', formatPlayTime(state.totalPlayTimeMs || 0), '#a8c0d8') +  // v174
       (function() {
         // v163 투장 — 챔피언 표시

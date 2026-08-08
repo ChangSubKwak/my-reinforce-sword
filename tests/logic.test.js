@@ -1746,3 +1746,40 @@ test('v375 summonNemesisChance/SUMMON_TUNING: 원한은 향을 맡는다 + 인�
   // cap 전 구간에선 bias 정확 가산
   assert.ok(Math.abs(fns.summonNemesisChance(1) - (fns.nemesisReturnChance(1) + T.nemesisBias)) < 1e-9, 'bias 정확 가산');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v376 誓約 — 검 일생의 맹세 (순수 함수/상수)
+// ─────────────────────────────────────────────────────────────
+test('v376 OATHS: 4계율 key/name 유일 + 효과 필드 없음 (순수 서사 — 점수 인플레이션 0)', () => {
+  const OATHS = extractConst('OATHS');
+  assert.strictEqual(OATHS.length, 4, '계율 4종');
+  const keys = new Set(OATHS.map(o => o.key));
+  const names = new Set(OATHS.map(o => o.name));
+  assert.strictEqual(keys.size, 4, 'key 유일');
+  assert.strictEqual(names.size, 4, 'name 유일');
+  OATHS.forEach(o => {
+    assert.ok(o.key && o.name && o.desc, o.key + ': key/name/desc 필수');
+    // 보너스/배수 필드가 생기면 서약이 최적화 대상이 됨 — 순수 서사 계약 잠금
+    const extra = Object.keys(o).filter(k => !['key', 'name', 'desc'].includes(k));
+    assert.deepStrictEqual(extra, [], o.key + ': 효과 필드 금지 (현재: ' + extra.join(',') + ')');
+  });
+});
+
+test('v376 만가/一代記: 맹세의 운명(지킴/파계)이 서술에 결합, 무맹세 검은 불변', () => {
+  const fnsE = loadFunctions(['generateElegy', 'deriveTemperament']);
+  const grave = { form: '직', level: 8, enhanceAttempts: 10, slainCount: 2, rescued: false };
+  // 지킨 채 부러짐 vs 깨어진 맹세 vs 무맹세
+  assert.ok(fnsE.generateElegy({ ...grave, oath: { name: '무방', broken: false } })
+    .some(l => l.includes('「무방」의 맹세를 지킨 채 부러졌다')), '만가 — 지킨 맹세');
+  assert.ok(fnsE.generateElegy({ ...grave, oath: { name: '불퇴', broken: true } })
+    .some(l => l.includes('깨어진 「불퇴」의 맹세')), '만가 — 깨어진 맹세');
+  assert.ok(!fnsE.generateElegy(grave).some(l => l.includes('맹세')), '만가 — 무맹세 검 불변');
+  const DESTINIES = extractConst('DESTINIES');
+  const fnsB = loadFunctions(['generateBiography', 'deriveTemperament', 'deriveNaturePath'], { DESTINIES, NAMED_FOES: extractConst('NAMED_FOES') });
+  const base = { form: '곡', level: 7, inscriptions: [], slainCount: 0, soul: 0, scars: 0, stars: {}, name: '곡류검' };
+  assert.match(fnsB.generateBiography({ ...base, oath: { name: '맨손', broken: false } }),
+    /「맨손」의 맹세를 끝까지 지켰다/, '一代記 — 지킨 맹세');
+  assert.match(fnsB.generateBiography({ ...base, oath: { name: '일도', broken: true } }),
+    /「일도」의 맹세를 스스로 깨었다/, '一代記 — 파계');
+  assert.ok(!/맹세를/.test(fnsB.generateBiography(base)), '一代記 — 무맹세 검 불변');
+});

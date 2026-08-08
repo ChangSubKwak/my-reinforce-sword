@@ -1096,3 +1096,57 @@ test('v375 초영: 레시피 가드·표시·통계·도전 화면 안내 와이
   const ds = js.match(/const DEFAULT_STATS = \{[^}]*\}/);
   assert.ok(ds && /summoned: 0/.test(ds[0]), 'DEFAULT_STATS에 summoned 병합 기본값 (구 저장본 보정)');
 });
+
+// ─────────────────────────────────────────────────────────────
+// v376 誓約 — 와이어링 무결성 (위반 훅 5곳·기록 보존·UI가 실제 경로에 연결됐는지)
+// ─────────────────────────────────────────────────────────────
+test('v376 서약: 위반 훅 5곳 — 방지권/숫돌/영석/도망/대치/조기 매각', () => {
+  // 무방 — 방지권 실제 소모 지점 (armed가 아니라 consumed)
+  assert.match(js, /state\.protections -= pCost;[^\n]*breakOath\('nofallback'\)/, '무방 — 방지권 소모 시');
+  // 맨손 — 숫돌·영석 소모 지점 2곳
+  const nostoneHooks = (js.match(/breakOath\('nostone'\)/g) || []).length;
+  assert.strictEqual(nostoneHooks, 2, '맨손 — 숫돌+영석 소모 2곳 (현재 ' + nostoneHooks + ')');
+  // 불퇴 — 도망과 대치 양쪽 (대치도 물러섬)
+  const fleeBody = afterDecl('function flee() {', 1200);
+  assert.match(fleeBody, /breakOath\('noflee'\)/, '불퇴 — flee');
+  const stBody = afterDecl('function stalemate() {', 1200);
+  assert.match(stBody, /breakOath\('noflee'\)/, '불퇴 — stalemate');
+  // 일도 — 도 이르기 전 매각. ins 캡처 *전*에 새겨야 봉인 기록에 파계가 남는다
+  const sealBody = afterDecl('function sealSword() {', 1200);
+  const brkIdx = sealBody.indexOf("breakOath('wayonly')");
+  const insIdx = sealBody.indexOf('const ins = ');
+  assert.ok(brkIdx >= 0 && insIdx > brkIdx, '일도 — 파계는 ins 캡처 전 (봉인 기록 포함)');
+  assert.match(sealBody, /state\.level < MAX_LEVEL\) breakOath\('wayonly'\)/, '일도 — 도 도달 매각은 위반 아님');
+});
+
+test('v376 서약: 기록 보존 (봉인·殿堂·무덤) + 지킴 통계 + sanitize', () => {
+  const oathPushes = (js.match(/oath: state\.currentSword\.oath \|\| null/g) || []).length;
+  assert.strictEqual(oathPushes, 2, '봉인·殿堂 양쪽 push에 oath 보존 (field-set 대칭 테스트와 이중 잠금)');
+  const rec = afterDecl('function recordFallenSword(', 1600);
+  assert.match(rec, /oath: cs\.oath \?/, '무덤에도 맹세 보존 (만가의 맹세 행)');
+  const dsBody = afterDecl('function doSeal(', 3000);
+  assert.match(dsBody, /oath && !state\.currentSword\.oath\.broken\) bumpStat\('oathsKept'\)/, '파계 없는 봉인 = 지킨 맹세');
+  const nb = afterDecl('function normalizeState() {', 30000);
+  assert.match(nb, /sw\.oath\.name = \(typeof sw\.oath\.name === 'string'\) \? stripTags\(sw\.oath\.name\)/, 'oath.name 태그 제거 (v370m)');
+  assert.match(nb, /f\.oath\.broken = f\.oath\.broken === true/, '무덤 oath.broken boolean 강제');
+  const ds = js.match(/const DEFAULT_STATS = \{[^}]*\}/);
+  assert.ok(ds && /oathsSworn: 0/.test(ds[0]) && /oathsKept: 0/.test(ds[0]) && /oathsBroken: 0/.test(ds[0]),
+    'DEFAULT_STATS에 서약 3종 병합 기본값');
+});
+
+test('v376 서약: 명문·UI·시한 와이어링', () => {
+  assert.match(js, /key: '서약'/, 'INSCRIPTIONS 서약 (verse 포함 — v20 규율)');
+  assert.match(js, /key: '파계'/, 'INSCRIPTIONS 파계');
+  const sw = afterDecl('function swearOath(', 1200);
+  assert.match(sw, /grantInscription\('서약'\)/, '맹세 시 서약 명문');
+  const bo = afterDecl('function breakOath(', 900);
+  assert.match(bo, /grantInscription\('파계'\)/, '위반 시 파계 명문');
+  const cs = afterDecl('function canSwearOath() {', 500);
+  assert.match(cs, /OATH_MAX_ATTEMPTS/, '맹세 시한 — 늦은 맹세는 맹세가 아니다');
+  assert.match(cs, /!challenge && !rescueWindow/, '도전/회수 중 맹세 차단 (동시성 규율)');
+  assert.ok(html.includes('id="btn-oath"'), '#btn-oath 존재');
+  assert.ok(html.includes('id="oath-modal"'), '#oath-modal 존재');
+  const renderBody = afterDecl('function render() {', 3000);
+  assert.match(renderBody, /renderOathButton\(\)/, 'render가 맹세 버튼/상태 갱신');
+  assert.match(js, /swearOath\(item\.dataset\.oath\)/, '계율 선택 위임 핸들러');
+});

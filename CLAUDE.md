@@ -729,6 +729,16 @@ v373 검총을 박물관에서 **결정의 장소**로 전환 — 파괴(v372 �
 - **UI/통계**: 조합소 `.recipe` 블록 + `recipes.summon` (관례상 두 곳; cost는 recipes 숫자 리터럴 — 라벨 drift 테스트가 잠금). `stats.summoned` (state 기본값 + DEFAULT_STATS + 記錄 행). recipes에 선택적 `msg` 필드 추가 (generic 핸들러 log 커스텀).
 - **디자인 (ui-ux-pro-max 스킬 적용)**: 흑금 팔레트·자간 미학은 유지하되 범용 원칙 채택 — 검총/융검 카드 hover 전환 0.2s, 만가 펼침 0.25s 페이드(즉발 상태 변화 금지), 재련 버튼 터치 타깃 확대(padding 10px 18px), 만가 본문 12px(가독), `prefers-reduced-motion` 전부 존중.
 
+### v376 誓約(서약) — 검 일생의 맹세
+
+"다음 한 번만 더" 도박 충동의 **반대편** — 자발적 제약. 각오(v91)가 강화 1회의 전술이라면 서약은 검 일생의 계율. **어기는 것을 막지 않는다** — 어기면 파계(破戒)가 기록될 뿐 (자유 + 대가, 검총/숙적과 같은 정직한 실패 미학). 메커니즘 효과 0.
+
+- **계율 4종** (`OATHS`, 검당 1개): `무방`(방지권 금지) / `불퇴`(도망·대치 금지) / `맨손`(숫돌·영석 금지) / `일도`(도 이르기 전 매각 금지). **효과 필드 금지가 테스트로 잠김** — 보너스가 생기면 서약이 최적화 대상이 되어 서사가 죽는다.
+- **맹세** (`swearOath`): 메인 화면 `#btn-oath`(점선 제안 → 실선 확정, 파계 시 danger색) → `#oath-modal` 4계율 카드. 시한 `OATH_MAX_ATTEMPTS(3)` — 강화 3회 미만만 (늦은 맹세는 맹세가 아니다 — 사후 맹세 게이밍 차단). `oath = {key, name, broken}` — **name 동봉**으로 만가/一代記가 OATHS 룩업 없이 자기완결.
+- **파계** (`breakOath`) 훅 5곳 — armed가 아니라 *실제 소모/행위* 시점: 방지권 소모(무방) / 숫돌·영석 소모 2곳(맨손) / flee·stalemate(불퇴 — 대치도 물러섬) / `sealSword` 초입 lv<MAX 매각(일도 — **ins 캡처 전**에 새겨 봉인 기록에 파계 포함).
+- **운명 기록**: 봉인·전당 push 양쪽 `oath` 보존 (field-set 대칭 잠금) + 무덤(`recordFallenSword`)에도 — 一代記 "맹세를 끝까지 지켰다/스스로 깨었다" 줄, 만가 "맹세를 지킨 채 부러졌다/깨어진 맹세를 안고 잠들었다" 행. `서약`/`파계` 명문 (서사). 파계 없는 봉인 = `oathsKept` (통계 3종 + 記錄 행 + `서약자` 페르소나 3지킴).
+- **방어**: `sanitizeSword`·fallen forEach에 oath shape 강제 + name stripTags (v370m). 테스트: logic 2건(계율 유일성·효과 필드 금지 / 만가·一代記 결합·무맹세 불변) + integrity 3건(위반 훅 5곳·순서 / 기록 보존·통계·sanitize / 명문·UI·시한).
+
 ### 봉인 균형 곡선 (참고)
 
 | 검 강화도 | 봉인 보상 (조각) |
@@ -769,6 +779,7 @@ v373 검총을 박물관에서 **결정의 장소**로 전환 — 파괴(v372 �
 | `FALLEN_TUNING` | 劍塚 (v373) | 무덤 수 상한 (cap 30 — 초과 시 가장 오래된 무덤부터 잊힘, 저장 크기) |
 | `REFORGE_TUNING` | 再鍊 (v374) | 재련 비용 (base 60 + 무덤 강화도 × 3 — 새 검 50보다 프리미엄 유지) |
 | `SUMMON_TUNING` | 招影 (v375) | 소환 전리품 배율(0.5 — farming 차단)·숙적 응답 bias(+0.35)/cap(0.9). 비용은 `recipes.summon.cost(15)` |
+| `OATHS[]` / `OATH_MAX_ATTEMPTS = 3` | 誓約 (v376) | 계율 4종 (효과 필드 금지 — 테스트 잠금) · 맹세 시한 (강화 3회 미만) |
 | `SWORD_FORMS{}` | 검의 형 | 형별 successBonus / destroyReduce / costMul / rewardMul / fleeFree |
 | `recipes.whetstone.cost = 8` | 砥石 | 다음 강화 +25% 성공 |
 | `recipes.spiritstone.cost = 25` | 靈石 | 다음 강화 파괴 차단 |
