@@ -4416,6 +4416,7 @@
       luckExp: 0, luckAct: 0,  // v382 천칭 — 평생 운의 원장 (기대 확률 합 / 실제 성공 수)
       defeats: 0,  // v383 꺾임 — 베기 실패로 검이 꺾인 횟수 (승리만 세던 비대칭 해소)
       destExp: 0, destAct: 0, nearMisses: 0,  // v386 구사일생 — 생사의 원장 (파괴 기대/실제/터럭 차 생환)
+      enshrined: 0,  // v397 리뷰 — 전당 진열 (매각이 아니므로 sealed와 분리, 주보 단조 누적에만 합산)
     },
     seenHelp: false,
   };
@@ -4445,10 +4446,13 @@
   function consumeDawnBonus() {
     if (dawnBonusCount > 0) dawnBonusCount--;
   }
-  function checkDawn() {
-    if (!state.lastPlayedTime) return;
-    const gap = Date.now() - state.lastPlayedTime;
-    if (gap < DAWN_GAP_MS) return;
+  function checkDawn(bootGapMs) {
+    // v396 감사 [16] — 부트 시퀀스의 save()들이 lastPlayedTime을 먼저 덮어써 gap이 0.6초가
+    // 되던 결함: 부트 직후 포착해 전달받은 gap을 우선 사용.
+    const gap = (typeof bootGapMs === 'number')
+      ? bootGapMs
+      : (state.lastPlayedTime ? Date.now() - state.lastPlayedTime : 0);
+    if (!gap || gap < DAWN_GAP_MS) return;
     // 4시간+ 부재 — 여명 의식
     showDawn(gap);
     dawnBonusCount = 3;
@@ -4684,6 +4688,18 @@
         // 봉인 검·전당 검의 inscriptions 배열 강제 — 손상/구버전/import 검이 비배열이면
         // renderInscriptions/makeSwordName 등의 .includes/.join이 크래시 (currentSword만 4365에서 보정됐음).
         if (!Array.isArray(sw.inscriptions)) sw.inscriptions = [];
+        // v396 감사 [8][28] — 무덤(fallenSwords)은 소독하면서 봉인·전당 검은 빼먹던 비대칭 해소:
+        // inscriptions 원소·verse 원소·birthStatement가 회고(showSwordDetail)·詩集·전람 innerHTML로
+        // raw 실행되던 XSS 잔존. bornTod는 화이트리스트 (파생 문장에 그대로 삽입됨).
+        sw.inscriptions = sw.inscriptions.map(stripTags);
+        if (sw.verse != null) {
+          if (Array.isArray(sw.verse)) sw.verse = sw.verse.slice(0, 8).map(stripTags);
+          else sw.verse = null;
+        }
+        if (sw.birthStatement != null) {
+          sw.birthStatement = (typeof sw.birthStatement === 'string') ? stripTags(sw.birthStatement).slice(0, 200) : null;
+        }
+        if (sw.bornTod != null && sw.bornTod !== '아침' && sw.bornTod !== '낮' && sw.bornTod !== '저녁' && sw.bornTod !== '밤') sw.bornTod = null;
       };
       state.sealedSwords.forEach(sanitizeSword);
       state.enshrined.forEach(sanitizeSword);
@@ -4760,6 +4776,26 @@
           if (typeof a.ts !== 'number' || !isFinite(a.ts)) a.ts = 0;  // v388 — formatTimeAgo NaN 방어
         });
       }
+      // v396 감사 [15] — 첨(v211) 결과 화이트리스트: import 유래 lastSenResult가 openSen에서
+      // raw innerHTML(kanji/verse/label)·style(color)로 삽입되던 XSS. SEN_REWARDS 원본 객체로
+      // 치환 (kanji+label 일치 우선, 불일치 시 폐기). null이면 외부 상수 참조 0 (sandbox 호환).
+      if (state.lastSenResult != null) {
+        const lr = state.lastSenResult;
+        const senMatch = (lr && typeof lr === 'object' && typeof lr.kanji === 'string')
+          ? (SEN_REWARDS.find(r => r.kanji === lr.kanji && r.label === lr.label) || SEN_REWARDS.find(r => r.kanji === lr.kanji))
+          : null;
+        state.lastSenResult = senMatch || null;
+      }
+      // v396 감사 [25] — daoTitle은 코드 어디서도 할당되지 않는 import 전용 필드: 오시·완일서·
+      // 검명편 innerHTML에 title/subtitle이 raw 삽입되던 XSS. 태그 제거 + 길이 강제.
+      if (state.daoTitle != null) {
+        if (typeof state.daoTitle === 'object') {
+          const dt = state.daoTitle;
+          dt.title = (typeof dt.title === 'string') ? stripTags(dt.title).slice(0, 16) : null;
+          dt.subtitle = (typeof dt.subtitle === 'string') ? stripTags(dt.subtitle).slice(0, 24) : null;
+          if (!dt.title) state.daoTitle = null;
+        } else state.daoTitle = null;
+      }
       if (!state.blessingsDiscovered || typeof state.blessingsDiscovered !== 'object') state.blessingsDiscovered = {};  // v119 기연
       if (!state.erasEntered || typeof state.erasEntered !== 'object') state.erasEntered = {};  // v120 기원
       if (typeof state.swordGeneration !== 'number') state.swordGeneration = state.sealedSwords ? state.sealedSwords.length : 0;  // v123 계보 — 기존 사용자는 봉인된 검 수로 추정 초기화
@@ -4778,6 +4814,7 @@
       if (state.swordWishSlay !== null && typeof state.swordWishSlay !== 'object') state.swordWishSlay = null;
       if (!state.records || typeof state.records !== 'object') state.records = {};  // v156
       if (!state.duelWins || typeof state.duelWins !== 'object') state.duelWins = {};  // v159
+      Object.keys(state.duelWins).forEach(k => { state.duelWins[k] = clampInt(state.duelWins[k], 0); });  // v396 [10] — 승수 정수 강제
       if (typeof state.ultimateAchieved !== 'boolean') state.ultimateAchieved = false;  // v170
       if (typeof state.ultimateAchievedAt !== 'number') state.ultimateAchievedAt = 0;
       if (typeof state.totalPlayTimeMs !== 'number') state.totalPlayTimeMs = 0;  // v174 세월
@@ -4805,7 +4842,7 @@
       if (!state.gambleStats || typeof state.gambleStats !== 'object') state.gambleStats = { win: 0, lose: 0 };  // v219
       if (typeof state.eternityPoints !== 'number') state.eternityPoints = 0;  // v225
       // stats — 기본 sub-key 병합 (구 저장본에 신규 key 누락 시 baseline 보정)
-      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0, oathsSworn: 0, oathsKept: 0, oathsBroken: 0, released: 0, luckExp: 0, luckAct: 0, defeats: 0, destExp: 0, destAct: 0, nearMisses: 0 };
+      const DEFAULT_STATS = { enhanceAttempts: 0, enhanceSuccess: 0, challengesAppeared: 0, slainNormal: 0, slainFlee: 0, slainSteel: 0, slainDemon: 0, fled: 0, evaded: 0, rescued: 0, rescueFailed: 0, sealed: 0, wayReached: 0, yakshaSlain: 0, stalemate: 0, downgraded: 0, summoned: 0, oathsSworn: 0, oathsKept: 0, oathsBroken: 0, released: 0, luckExp: 0, luckAct: 0, defeats: 0, destExp: 0, destAct: 0, nearMisses: 0, enshrined: 0 };
       state.stats = Object.assign({}, DEFAULT_STATS, (state.stats && typeof state.stats === 'object') ? state.stats : {});
       // v382 천칭 — 평생 운 원장 숫자 강제 (오염 시 + 연산 붕괴 방지)
       if (typeof state.stats.luckExp !== 'number' || !isFinite(state.stats.luckExp)) state.stats.luckExp = 0;
@@ -5373,15 +5410,28 @@
 
   function getAudio() {
     if (muted) return null;
-    if (audioCtx) return audioCtx;
+    if (audioCtx) {
+      // v396 감사 [19] — 제스처 없는 타이머 경로(여명 600ms·정시 종)가 만든 ctx는 autoplay
+      // 정책상 suspended로 고착 → 이후 모든 SFX·드론이 영원히 무음이던 결함. 호출마다 resume
+      // 시도 (제스처 경유 호출에서 성공).
+      if (audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (e) {} }
+      return audioCtx;
+    }
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return null;
       audioCtx = new Ctx();
+      if (audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (e) {} }  // v396 [19]
       setTimeout(startAmbient, 450);
       return audioCtx;
     } catch (e) { return null; }
   }
+  // v396 감사 [19] — 첫 사용자 제스처에서 suspended 오디오 확실히 복구 (모든 후속 SFX 회생)
+  ['click', 'keydown', 'touchstart'].forEach(evName => {
+    document.addEventListener(evName, () => {
+      if (audioCtx && audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (e) {} }
+    }, { capture: true, passive: true });
+  });
 
   function tone(freq, dur, type, vol, freqEnd) {
     const ctx = getAudio();
@@ -5564,6 +5614,7 @@
   // v122 점복 — 다음 강화의 random 롤을 미리 잠가둠 (omen이 100% 정확)
   let divinationLockedSuccessRoll = null;
   let divinationLockedFailRoll = null;
+  let divinationLockedLevel = null;  // v396 감사 — 잠금은 레벨 단위 (레벨이 바뀌면 새 잠금)
   function rollOmen() {
     // 현재 강화 단계의 주사위 방향을 ~80% 정확도로 예측 (v122 점복 사용 시 100%)
     const lv = state.level;
@@ -5575,6 +5626,10 @@
     const useDivination = divCheck && divCheck.checked && !divCheck.disabled && (state.divinationStones || 0) > 0;
     let successRoll, failRoll;
     if (useDivination) {
+      // v396 감사 — 레벨이 바뀌었으면 구 잠금 폐기 (같은 레벨에선 체크 토글로도 재롤 불가:
+      // 해제→재체크를 반복해 '서' 전조가 나올 때까지 리롤하는 확정 강화 exploit 차단)
+      if (divinationLockedLevel !== null && divinationLockedLevel !== lv) clearDivinationLock();
+      divinationLockedLevel = lv;
       successRoll = divinationLockedSuccessRoll !== null ? divinationLockedSuccessRoll : (divinationLockedSuccessRoll = Math.random());
       failRoll = divinationLockedFailRoll !== null ? divinationLockedFailRoll : (divinationLockedFailRoll = Math.random());
     } else {
@@ -5591,6 +5646,7 @@
   function clearDivinationLock() {
     divinationLockedSuccessRoll = null;
     divinationLockedFailRoll = null;
+    divinationLockedLevel = null;
   }
 
   function showOmen(omenType) {
@@ -6232,7 +6288,14 @@
   }
 
   // === 파티클 ===
+  // v396 감사 [21] — 모션 감소(v228) 설정을 WAAPI(el.animate) 입자 spawner에도 적용하는 공통
+  // 게이트: CSS 규칙(body.reduce-motion)은 CSS animation만 줄여, 가장 무거운 순간(도 도달
+  // 160개 입자·산산조각)이 저사양 약속을 어기고 원래 길이로 재생되던 결함.
+  function motionReduced() {
+    return typeof getSetting === 'function' && !!getSetting('reduceMotion');
+  }
   function burstParticles(color, count) {
+    if (motionReduced()) return;  // v396 [21]
     const rect = swordWrap.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
@@ -6257,6 +6320,7 @@
 
   // === v134 砕散 — 검 파괴 시 SVG 산산조각 비산 ===
   function shatterSword() {
+    if (motionReduced()) return;  // v396 [21]
     const rect = swordWrap.getBoundingClientRect();
     if (rect.width === 0) return;
     const cx = rect.left + rect.width / 2;
@@ -7068,6 +7132,7 @@
       enhanceAttempts: stats.enhanceAttempts || 0,
       enhanceSuccess: stats.enhanceSuccess || 0,
       sealed: (state.sealedSwords || []).length,
+      sealedCum: (stats.sealed || 0) + (stats.enshrined || 0),  // v396 [18] — 단조 누적 (전당 포함 · 융검 splice에도 불감소)
       slain: slain,
       wayReached: stats.wayReached || 0,
       swordGen: state.swordGeneration || 0,
@@ -7085,7 +7150,11 @@
       const diff = {
         enhanceAttempts: cur.enhanceAttempts - (snap.enhanceAttempts || 0),
         enhanceSuccess: cur.enhanceSuccess - (snap.enhanceSuccess || 0),
-        sealed: cur.sealed - (snap.sealed || 0),
+        // v396 감사 [18] — 배열 길이 스냅샷 차분은 전당 진열 누락 + 융검 splice로 음수화.
+        // 단조 카운터(sealedCum) 우선, 구 스냅샷(필드 부재)은 기존 차분에 음수 방어만.
+        sealed: (snap.sealedCum != null)
+          ? Math.max(0, cur.sealedCum - snap.sealedCum)
+          : Math.max(0, cur.sealed - (snap.sealed || 0)),
         slain: cur.slain - (snap.slain || 0),
         wayReached: cur.wayReached - (snap.wayReached || 0),
         swordGen: cur.swordGen - (snap.swordGen || 0),
@@ -7247,6 +7316,7 @@
   // 펜타토닉 (C-D-E-G-A) 2 옥타브
   const PENTATONIC = [262, 294, 330, 392, 440, 523, 587, 659, 784, 880];
   function playMeditationNote() {
+    if (document.hidden) return;  // v396 [20] — 숨은 탭에서 선율 내지 않음
     try {
       const a = getAudio && getAudio();
       if (!a) return;
@@ -9811,8 +9881,11 @@
     canvas.querySelectorAll('circle[data-idx]').forEach(circle => {
       circle.addEventListener('click', (e) => {
         const idx = parseInt(e.currentTarget.dataset.idx, 10);
+        // v396 감사 [9] — showSwordDetail(s, index) 시그니처: 숫자 인덱스를 검 객체 자리에 넘겨
+        // 회고 모달이 전면 오동작(제목 undefined·수호자 블록 오류·족자 스태시 오염)하던 결함.
+        if (isNaN(idx) || idx < 0 || idx >= (state.sealedSwords || []).length) return;
         $('constellation-modal').classList.remove('active');
-        if (typeof showSwordDetail === 'function') showSwordDetail(idx);
+        if (typeof showSwordDetail === 'function') showSwordDetail(state.sealedSwords[idx], idx + 1);
       });
     });
   }
@@ -10406,6 +10479,7 @@
     playHourlyBell(h);
   }
   function playHourlyBell(hour) {
+    if (document.hidden) return;  // v396 [20] — 숨은 탭에서 종 울리지 않음
     // 종 페이드 — "鐘 N時"
     const stage = $('stage');
     if (!stage) return;
@@ -12276,6 +12350,16 @@
   let voidPending = false;  // v368 — 파괴~showVoid(350ms) 전환 갭 동안 game-over가 회수창을 덮지 않게.
   // 회수창(#void z-index auto)은 game-over(#gameover-overlay z-index 500)보다 먼저/위에 떠야 함.
   // showVoid가 setTimeout으로 확실히 해제 + 모듈 변수(reload 시 false 리셋)라 soft-lock 불가.
+  let sealTransition = false;  // v396 감사 — 봉인 dissolve 800ms 창 동안 같은 검 이중 매각·매각된 검 강화 차단.
+  // doSeal 진입 시 set, newSword 완료(도 봉인은 동기, 일반 봉인은 800ms 타임아웃 끝)에 clear — setTimeout이 확실히 해제.
+  // v397 리뷰 — 정상 해제 사이의 어떤 예외(의식·컷씬·새 검 생성)라도 플래그를 영구 잠그면
+  // 강화·매각이 동시에 막혀 새로고침 외엔 복구 불가였다. 안전망 타이머가 반드시 되돌린다.
+  let sealTransitionTimer = null;
+  function armSealTransition() {
+    sealTransition = true;
+    if (sealTransitionTimer) clearTimeout(sealTransitionTimer);
+    sealTransitionTimer = setTimeout(() => { sealTransition = false; sealTransitionTimer = null; }, 5000);
+  }
 
   // === v376 誓約(서약) — 검 한 자루의 일생에 거는 맹세 ===
   // 각오(v91)가 강화 1회의 전술이라면 서약은 검 일생의 계율 — "다음 한 번만 더" 도박 충동의
@@ -12418,10 +12502,15 @@
   function enhance() {
     if (challenge || rescueWindow) return;
     if (voidPending) return;  // v388 감사 — 파괴~회수창 갭(v368) 동안 강화 차단 (키 auto-repeat 유출)
+    if (sealTransition) return;  // v396 감사 — 봉인 dissolve 창 동안 매각된 검 강화 차단
     if (!state.hasSword || state.level >= MAX_LEVEL) return;
     // v109 選形: 형 선택 모달 중이면 대기
     const formModal = $('form-select-modal');
     if (formModal && formModal.classList.contains('active')) return;
+    // v396 감사 — 명명(팔기 확정) 모달 중이면 대기: 충전(刹那) 잔여 타이머가 모달 아래에서
+    // 굴림을 실행해 매각 스냅샷과 어긋나는 것 차단 (2차 방어 — 1차는 cancelCharge)
+    const nameModal = $('name-modal');
+    if (nameModal && nameModal.classList.contains('active')) return;
     const lv = state.level;
     const t = TABLE[lv];
     const form = getForm();
@@ -12444,6 +12533,11 @@
     const echoDestroyBlock = !!(enhanceEcho && enhanceEcho.destroyBlock);
     const echoSoulBonus = (enhanceEcho && enhanceEcho.soulBonus) || 0;
     const successChance = successChanceNow();  // v240 단일 진원 — 잔향/砥/호흡부스트 consume 전 포착
+    // v396 감사 — 결계(v121): ×3 비용 차감 전에 캡처. 차감 후 maybeForceSanctumOff가 같은 강화의
+    // 굴림 전에 보호를 박탈하면 비용은 내고 파괴 차단은 못 받는 이중 과금이었다 (display≠actual).
+    const sanctumArmed = sanctumBlocksDestroy();
+    // v396 감사 — 유수(流水) 마지막 충전(charges 1→0)이 이번 굴림에도 적용되도록 consume 전 캡처
+    const wishDR = wishDestroyReduce();
     // 잔향 소비 (이 강화 시점에 사라짐)
     consumeEnhanceEcho();
 
@@ -12470,7 +12564,8 @@
     consumeLightningBonus();  // v147 뇌 — 다음 강화 +10% 1회 소모
     consumeWishEnhance();  // v155 한매 — 유언 강화 카운트 1 소모
     checkEraTransition(prevAttempts);  // v120 기원 — 새 시대 진입 감지
-    maybeForceSanctumOff();  // v121 결계 — 비용 차감 후 조각 부족 시 자동 해제
+    // v121 결계 자동 해제는 v396 감사로 굴림 분기 종료 후(각 exit의 save 직전)로 이동 —
+    // 이번 굴림은 sanctumArmed 캡처가 보호하고, 해제는 다음 강화부터 적용된다.
 
     // 첫 강화 시 검의 형 결정
     if (!state.currentSword.form) decideForm();
@@ -12593,6 +12688,7 @@
       checkDestiny();  // v93 천명 — 강화 성공 후 운명 점검
       bumpDaily('enhanceSuccess', 1);  // v94 천시
       bumpDaily('reachLevel', state.level);
+      maybeForceSanctumOff();  // v121 결계 — 조각 부족 시 자동 해제 (v396: 굴림 이후로 이동)
       save();
       render();
       maybeTriggerChallenge();
@@ -12612,9 +12708,9 @@
       // 약속하던 절기 파괴 감소를 실제 굴림이 무시했다(display≠actual). v263이 헬퍼엔 넣었으나 이
       // 인라인 사본을 못 고침. 단, 헬퍼 직접 호출은 불가 — 헬퍼가 state.spiritstones를 live 재계산하는데
       // 여기선 useSpirit 캡처 후 이미 차감됨 → 영석이 파괴를 못 막는 회귀가 됨. 그래서 항만 추가.
-      const effectiveDestroy = (useSpirit || echoDestroyBlock || sanctumBlocksDestroy()) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce() - weatherDestroyReduce() - wishDestroyReduce() - solarDestroyReduce()) * rsv.destroyMul);
+      const effectiveDestroy = (useSpirit || echoDestroyBlock || sanctumArmed) ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce - getScarDestroyReduce() - weatherDestroyReduce() - wishDR - solarDestroyReduce()) * rsv.destroyMul);
       // v121 결계: 파괴 차단 시 원래 destroy 확률을 downgrade로 흡수 (단순 안전이 아닌 비용 부과형 보호)
-      const sanctumDestroyAbsorbed = sanctumBlocksDestroy() && !useSpirit && !echoDestroyBlock
+      const sanctumDestroyAbsorbed = sanctumArmed && !useSpirit && !echoDestroyBlock
         ? sanctumAbsorbedDestroy(lv)  // v342 단일 진원 — 표시(sanctumAbsorbedShow)와 동일
         : 0;
       const effectiveDowngrade = Math.max(0, t.downgrade * rsv.downgradeMul) + sanctumDestroyAbsorbed;
@@ -12637,6 +12733,9 @@
           protectCheck.checked = false;
           if ($('whet-check')) $('whet-check').checked = false;
           if ($('spirit-check')) $('spirit-check').checked = false;
+          if ($('divination-check')) $('divination-check').checked = false;  // v396 감사 — 열반 분기만 점복 정리 누락 (소모된 잠금 잔존)
+          clearDivinationLock();
+          maybeForceSanctumOff();  // v121 결계 (v396: 굴림 이후로 이동)
           save(); render();
           return;
         }
@@ -12704,7 +12803,9 @@
         clearStreak();
         failStreak++; checkAdversity(); resolveOmen('hold');  // v102
         // v111 각흔: 방지권이 파괴 roll을 막아낸 경우 흉터 새김
-        const protectedFromDestroy = useProtect && failRoll < (useSpirit ? 0 : Math.max(0, (t.destroy - destroyReduce - schoolDestroyReduce() - guardianBonus().destroyReduce - adversityDestroyReduce) * rsv.destroyMul));
+        // v396 감사 — 실제 굴림과 동일한 effectiveDestroy 사용: 축약 재계산(각흔·절기·유수·잔향·결계
+        // 누락)이 파괴가 아니었던 롤에 흉터(-1% 영구, 메커니즘 효과 有)를 오부여하던 결함.
+        const protectedFromDestroy = useProtect && failRoll < effectiveDestroy;
         if (useProtect) {
           if (protectedFromDestroy) {
             log('순 — 방지권이 파괴를 막아냈다 (+' + state.level + ')', 'fail');
@@ -12743,6 +12844,7 @@
     setTimeout(() => tryBlessing('enhance'), 280);  // 천년송 등 일반 강화 후 이벤트
     recordLevelHistory();
     checkDestiny();  // v93 천명 — 강화 시도(횟수) 후 운명 점검
+    maybeForceSanctumOff();  // v121 결계 — 조각 부족 시 자동 해제 (v396: 굴림 이후로 이동)
     save();
     render();
   }
@@ -12759,6 +12861,7 @@
   function showVoid(destroyedLevel) {
     if (rescueWindow) return;  // v388 감사 — 창 재진입 차단 (겹친 창의 고아 타이머 → endVoid 이중 실행 방지)
     voidPending = false;  // v368 — rescueWindow가 이제 game-over 가드를 인계받음
+    if (typeof cancelCharge === 'function') cancelCharge();  // v396 감사 — 잔여 충전 타이머 방어적 제거
     // v379 走馬燈 — 죽어가는 검의 일생이 5초의 침묵 속을 스쳐간다.
     // 방금 매장된 무덤(v373 recordFallenSword가 showVoid보다 먼저 실행됨)에서 일생 조각을 읽는다.
     const flashGrave = (state.fallenSwords || [])[(state.fallenSwords || []).length - 1];
@@ -12783,6 +12886,10 @@
       // 즉시 리셋 (transition 없이)
       ringCircle.style.transition = 'none';
       ringCircle.style.strokeDashoffset = '0';
+      // v396 감사 [14] — 강제 reflow: display:none→flex 같은 프레임에 단일 rAF만으로는 0 상태가
+      // 한 번도 계산되지 않아 transition이 시작되지 않던 결함 (ring이 즉시 소진 상태로 고정 —
+      // 5초 침묵의 시간 흐름 시각화가 통째로 죽어 있었다). classList.add('active') 이후 순서 필수.
+      void ringCircle.getBoundingClientRect();
       // 다음 프레임에 totalSec 동안 289로 진행
       requestAnimationFrame(() => {
         ringCircle.style.transition = 'stroke-dashoffset ' + totalSec + 's linear';
@@ -13234,6 +13341,8 @@
   // v115 流逝 — 도전 그림자 자동 후퇴 (인내심 한계)
   let challengeTimer = null;
   let challengeDeadline = 0;
+  let pendingEndTimer = null;  // v396 감사 [4] — 지연 endChallenge(베기 900ms/대치 950ms)를 추적: 그 사이 스폰된 새 도전을 무단 파괴하지 않게 showChallenge에서 취소
+  let formDeferredChallenge = null;  // v396 감사 [29] — 형 선택 모달 중 스폰될 도전을 보류 (모달 z100이 도전 z5를 완전히 가림 — 키가 보이지 않는 도전에 작동하는 것 차단)
   const CHALLENGE_LIFESPAN_MS = 60000;  // 60초 후 그림자 자발 후퇴
 
   // v5: 그림자 종류 — 각 type은 시각·메커니즘·보상 변형
@@ -13286,8 +13395,10 @@
     return SHADOW_TYPES[0];
   }
   function rollChallengeStrength() {
-    const base = Math.max(1, Math.floor(state.bestLevel * 0.65));
-    return base + Math.floor(Math.random() * 4);
+    // v397 敵手 — 그림자는 「지금 든 검」을 기준으로 나온다 (강화도 -3 ~ +1).
+    // 이전 앵커는 최고 기록의 0.65배였다: 판정은 지금 검으로 하는데 강도는 지난 정점에서
+    // 굴리니, 검이 부서져 다시 빚는 구간에서 승산이 0으로 고정됐다 (어긋난 두 축).
+    return Math.max(1, state.level - 3 + Math.floor(Math.random() * 5));
   }
   function challengeReward(strength) {
     return Math.floor(strength * 4) + 6;
@@ -13300,14 +13411,21 @@
     { key: 'blackwind',  name: '흑풍', trigger: 5,  strength: 6,  reward: 80,   inscription: '풍참', desc: '검은 바람의 그림자',     narration: '흑풍을 잠재웠고',           verse: '흑풍을 잠재우고' },
     { key: 'silvermoon', name: '은월', trigger: 8,  strength: 10, reward: 180,  inscription: '월참', desc: '달의 한기를 두른 자',   narration: '은월을 베었고',             verse: '은월을 베고' },
     { key: 'thousand',   name: '천인', trigger: 11, strength: 13, reward: 350,  inscription: '인참', desc: '천 개의 칼날을 가진 자', narration: '천 개의 칼날을 갈랐고',     verse: '천 개의 칼날을 가르며' },
-    { key: 'demonemp',   name: '귀제', trigger: 13, strength: 16, reward: 700,  inscription: '제참', desc: '귀신을 다스리는 자',    narration: '귀제를 쓰러뜨렸고',         verse: '귀제를 쓰러뜨리고' },
-    { key: 'dragon',     name: '용',   trigger: 15, strength: 18, reward: 1500, inscription: '용참', desc: '하늘의 그림자',         narration: '전설의 용을 베어냈고',      verse: '용을 베어 하늘마저 가르고' }
+    // v397 敵手 — 귀제(16)·용(18)은 MAX_LEVEL(15)을 넘는 강도라 판정식이 참이 될 수 없었다.
+    // 제참·용참 명문과 700·1500 조각이 영구 미도달이었다 → 정점에서 넘어설 수 있는 값으로.
+    { key: 'demonemp',   name: '귀제', trigger: 13, strength: 14, reward: 700,  inscription: '제참', desc: '귀신을 다스리는 자',    narration: '귀제를 쓰러뜨렸고',         verse: '귀제를 쓰러뜨리고' },
+    { key: 'dragon',     name: '용',   trigger: 15, strength: 15, reward: 1500, inscription: '용참', desc: '하늘의 그림자',         narration: '전설의 용을 베어냈고',      verse: '용을 베어 하늘마저 가르고' }
   ];
   function pendingNamedFoe() {
     if (!state.foesSlain) state.foesSlain = {};
     if (!state.currentSword.foesEncountered) state.currentSword.foesEncountered = {};
+    // v397 敵手 — trigger는 「해금」(최고 기록), strength는 「대면」(지금 검) 조건.
+    // 名 승부는 주사위 없는 단판이라, 넘어설 수 없는 강화도에서 마주치게 하면
+    // 결정이 아니라 벌금이 된다 (물러남 3조각). 게다가 만남은 검 1자루당 1회 소모라
+    // 재건 중 기습당하면 그 검으로는 영영 그 보스를 벨 수 없었다.
     return NAMED_FOES.find(f =>
       state.bestLevel >= f.trigger
+      && state.level >= f.strength
       && !state.foesSlain[f.key]
       && !state.currentSword.foesEncountered[f.key]
     );
@@ -13327,6 +13445,13 @@
     // v263 절기 夏至 — 도전 보상 +10%
     const solarRMul = solarRewardMul();
     if (solarRMul !== 1) reward = Math.floor(reward * solarRMul);
+    // v396 감사 [5][6] — 名 보스도 「다음 슬레이」: 멸마·뇌신 배율 적용 (기존엔 적용도 소모도
+    // 안 되는 이중 불일치). 소모는 일반 도전과 동일하게 slay 성공 시점.
+    let usedMetsumao = false;
+    if (state.metsumaoCharges > 0) { reward = Math.floor(reward * 1.5); usedMetsumao = true; }
+    const wishSlayM = wishSlayRewardMul();
+    let usedWishSlay = false;
+    if (wishSlayM !== 1) { reward = Math.floor(reward * wishSlayM); usedWishSlay = true; }
     challenge = {
       strength: foe.strength,
       reward,
@@ -13334,6 +13459,8 @@
       origin: null,
       namedFoeKey: foe.key
     };
+    if (usedMetsumao) challenge.usedMetsumao = true;  // v396 [5]
+    if (usedWishSlay) challenge.usedWishSlay = true;  // v396 [6]
     state.currentSword.foesEncountered[foe.key] = true;
     bumpStat('challengesAppeared');
     bumpDaily('challenge', 1);  // v94 천시
@@ -13397,6 +13524,13 @@
     if (!state.hasSword) return;
     if (state.level < CHALLENGE_MIN_LEVEL) return;
     if (challenge) return;
+    // v396 감사 [29] — 형 선택 모달(필수 선택, z100)이 열려 있으면 도전을 보류하고
+    // 형 확정(applyFormChoice) 후 발화 — 완전히 가려진 도전에 Space/Esc가 몰래 작동하던 결함.
+    const fsModal = $('form-select-modal');
+    if (fsModal && fsModal.classList.contains('active')) {
+      formDeferredChallenge = { forced: !!forced };
+      return;
+    }
     // v90 이름 있는 적: 마일스톤 달성한 unslain 적이 있으면 100% spawn (검 1자루당 1회)
     const foe = pendingNamedFoe();
     if (foe) { triggerNamedFoe(foe); return; }
@@ -13427,7 +13561,11 @@
     }
     if (!isNemesis) {
       if (type.isDemon) {
-        strength = state.bestLevel + 5;
+        // v397 敵手 — 이전 강도(최고기록 + 5)는 「최고기록 >= 현재 강화도」 불변식 때문에
+        // 판정식이 결코 참이 될 수 없는 값이었다. 검귀는 한 번도 베어진 적이 없고
+        // 鬼斬 명문·검귀 컷씬·검명 접미가 통째로 도달 불가였다.
+        // 이제 지금 검보다 위로 치우치되 넘어설 수는 있다 (강화도 -1 ~ +3).
+        strength = Math.max(1, state.level - 1 + Math.floor(Math.random() * 5));
         reward = strength * 7;
       } else {
         strength = Math.max(1, Math.floor(rollChallengeStrength() * type.strengthMul) + (type.strengthAdd || 0));
@@ -13458,9 +13596,12 @@
     const affMul = affinityRewardMul(currentForm, type.key);
     if (affMul !== 1) reward = Math.floor(reward * affMul);
     // v138 쌍명 — 멸마 charge 활성 시 슬레이 ×1.5
+    // v396 감사 [5] — 배율은 spawn에 굽되(도전 화면 보상 표시와 일치) charge 소모는 slay *성공*
+    // 시점으로 이동: 도망/대치/회피/패배/자동후퇴 시 무보상 소실이 표시 「다음 슬레이」와 어긋났다.
+    let usedMetsumao = false;
     if (state.metsumaoCharges > 0) {
       reward = Math.floor(reward * 1.5);
-      state.metsumaoCharges--;
+      usedMetsumao = true;
     }
     // v147 천후 — 風 슬레이 보상 ×1.15
     const wMul = weatherSlayRewardMul();
@@ -13472,8 +13613,10 @@
     const todMul = todSlayRewardBonus();
     if (todMul !== 1) reward = Math.floor(reward * todMul);
     // v155 한매 — 뇌신 유언 슬레이 보상 ×1.2 (5회)
+    // v396 감사 [6] — 소모는 slay 성공 시점으로 (멸마와 동일 규칙 — 자체 주석 「슬레이 시점에 소비」 이행)
     const wishSlayM = wishSlayRewardMul();
-    if (wishSlayM !== 1) { reward = Math.floor(reward * wishSlayM); consumeWishSlay(); }
+    let usedWishSlay = false;
+    if (wishSlayM !== 1) { reward = Math.floor(reward * wishSlayM); usedWishSlay = true; }
     // v212 休 — 주말 도전 보상 ×1.05
     const wmul = weekendChallengeMul();
     if (wmul !== 1) reward = Math.floor(reward * wmul);
@@ -13483,6 +13626,8 @@
     if (forced) reward = Math.floor(reward * SUMMON_TUNING.rewardMul);
     const origin = isNemesis ? nem.origin : rollShadowOrigin();
     challenge = { strength, reward, type, origin };
+    if (usedMetsumao) challenge.usedMetsumao = true;  // v396 [5] — slay 성공 시 소모
+    if (usedWishSlay) challenge.usedWishSlay = true;  // v396 [6] — slay 성공 시 소모
     if (forced) challenge.summoned = true;  // v375 — 도전 화면 안내용 표식
     if (isNemesis) {
       // v372 — 스냅샷 보관 (도전 자체는 휘발성 유지, 영구 기록은 state.nemesis가 담당)
@@ -13646,6 +13791,7 @@
 
   // === v73 베기 보상 — 그림자 위치에서 검 stats로 조각 흐름 ===
   function spawnRewardShards(count) {
+    if (motionReduced()) return;  // v396 [21]
     const shadowEl = $('challenge-shadow');
     const statShards = $('stat-shards');
     if (!shadowEl || !statShards) return;
@@ -13678,6 +13824,7 @@
 
   // === v66 선대 강기 빛 모임 — 새 검 생성 시 사방에서 빛이 검으로 ===
   function spawnLegacyRays(count) {
+    if (motionReduced()) return;  // v396 [21]
     const rect = swordWrap.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
@@ -13707,6 +13854,7 @@
 
   // === v63 강화 merge 빛줄 — 사방에서 검으로 모임 ===
   function spawnMergeRays() {
+    if (motionReduced()) return;  // v396 [21]
     const rect = swordWrap.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
@@ -13764,12 +13912,18 @@
 
   // === v132 季氣 — 4계절 시그니처 파티클 (무대 전체) ===
   function spawnSeasonParticle() {
+    // v396 감사 [22] — v179 계운과 동일 3중 가드: 설정(particles) 존중 + 도전/회수/달빛 중 차단 +
+    // 동시 존재 cap. 기존엔 설정 OFF·오버레이 위에도 2.5~5.5초마다 무조건 입자가 생성됐다.
+    if (challenge || rescueWindow || moonGazing) return;
+    if (!getSetting('particles')) return;
+    if (document.querySelectorAll('.season-fall-particle').length >= 6) return;
     const stage = $('stage');
     if (!stage) return;
     const rect = stage.getBoundingClientRect();
     if (rect.width === 0) return;  // 화면에 없음
     const season = getSeason();
     const p = document.createElement('div');
+    p.className = 'season-fall-particle';  // v396 [22] — cap 집계용
     p.style.position = 'fixed';
     p.style.pointerEvents = 'none';
     p.style.zIndex = '1';  // 무대 위, UI 아래
@@ -13893,6 +14047,7 @@
   };
   let ambientPhraseTimer = null;
   function playAmbientPhrase() {
+    if (document.hidden) return;  // v396 [20] — 숨은 탭에서 소리 내지 않음 (visibilitychange 목적 이행)
     // 도전/파괴 중에는 양보 (crisis ambientMode)
     if (ambientMode === 'crisis' || ambientMode === 'way' || ambientMode === 'void') return;
     if (muted) return;
@@ -14265,6 +14420,7 @@
   }
   function checkMeditation() {
     // 조건: 검 있음, 도전/회수 없음, 모달 없음
+    if (document.hidden) return;  // v396 [20] — 숨은 탭에서 자동 명상 진입(→진공 멜로디) 차단
     if (!state.hasSword) return;
     if (challenge || rescueWindow) return;
     if (document.querySelector('.modal.active')) return;
@@ -14364,6 +14520,7 @@
   }
   function playTrueEmptyBell() {
     if (!inTrueEmptiness) return;
+    if (document.hidden) return;  // v396 [20] — 숨은 탭에서 종 울리지 않음
     const ctx = getAudio();
     if (!ctx) return;
     const now = ctx.currentTime;
@@ -14443,6 +14600,10 @@
   }, 1000);
 
   function showChallenge() {
+    // v396 감사 [4] — 직전 도전의 지연 endChallenge(베기 성공 900ms/대치 950ms)가 이 새 도전을
+    // challenge=null로 지우고 오버레이를 내리지 않게 취소. (그 사이 상태 저장은 새 도전을 스폰한
+    // enhance 경로의 save가 이미 수행 — 여기서 별도 save 불필요.)
+    if (pendingEndTimer) { clearTimeout(pendingEndTimer); pendingEndTimer = null; }
     const t = challenge.type;
     setChallengeBodyClass(true);  // v182 水鏡 hide
     updateStalemateButton();  // v183 대치
@@ -14622,6 +14783,9 @@
       state.shards += finalReward;
       state.totalSlain++;
       state.currentSword.slainCount++;
+      // v396 감사 [5][6] — 멸마·뇌신 charge는 「다음 슬레이」 약속대로 성공한 베기에서만 소모
+      if (c.usedMetsumao) state.metsumaoCharges = Math.max(0, (state.metsumaoCharges || 0) - 1);
+      if (c.usedWishSlay) consumeWishSlay();
       addSoul(6); // 베기 성공 +6
       // v125 연참 — 슬레이 streak 증가 + 단계별 보너스
       slayStreak++;
@@ -14745,7 +14909,7 @@
       }
       checkDestiny();  // v93 천명 — 베기 성공 후 운명 점검 (그림자/검귀/이름있는적)
       bumpDaily('slay', 1);  // v94 천시
-      setTimeout(() => { endChallenge(); save(); render(); }, 900);
+      pendingEndTimer = setTimeout(() => { pendingEndTimer = null; endChallenge(); save(); render(); }, 900);  // v396 [4] — 모듈 핸들 추적
     } else {
       // 베기 실패 — 검 흔들림
       clearSlayStreak();  // v125 연참 — 실패도 streak 리셋
@@ -14836,7 +15000,7 @@
         });
       }
     } catch(e) {}
-    setTimeout(() => endChallenge(), 950);
+    pendingEndTimer = setTimeout(() => { pendingEndTimer = null; endChallenge(); }, 950);  // v396 [4] — 모듈 핸들 추적
     save();
   }
   function updateStalemateButton() {
@@ -15068,6 +15232,12 @@
     setTimeout(() => SFX.formMotif(form, 1.0), 300);  // v130 音律 — 형 시그니처
     save();
     render();
+    // v396 감사 [29] — 형 선택 중 보류된 도전을 이제 발화 (모달이 닫혔으니 도전이 보인다)
+    if (formDeferredChallenge) {
+      const d = formDeferredChallenge;
+      formDeferredChallenge = null;
+      setTimeout(() => maybeTriggerChallenge(d.forced), 400);
+    }
   }
 
   function showFormSelectModal() {
@@ -16418,8 +16588,15 @@
           state.level++;
           if (state.level > state.bestLevel) state.bestLevel = state.level;
           if (state.level >= MAX_LEVEL) {
-            // 도 도달 트리거 처리는 일반 enhance 분기에 위임 — 여기서는 그냥 레벨만
+            // v396 감사 [3] — 「일반 enhance 분기에 위임」은 거짓 주석이었다: 용린 도달은 enhance
+            // 성공 분기를 다시 지나지 않아 탁본·최단 기록·엔딩이 전부 누락됐다. 여기서 직접 처리.
             checkInscriptions();
+            if (!state.firstWayReached) captureRubbing('firstWay');
+            updateRecord('minWayAttempts', state.currentSword.enhanceAttempts || 0);
+            if (!state.endingShown) {
+              state.endingShown = true;
+              setTimeout(() => playEnding(), 6500);
+            }
           }
           checkStars();
         }
@@ -16505,6 +16682,10 @@
         showBlessing(b, first);
         b.effect();
         log('기연 — ' + b.label + ' · ' + b.desc, 'success');
+        // v396 감사 [3] — effect가 상태를 바꿔도(용린 level++) 저장·표시가 안 따르던 결함:
+        // 배지·성공률·비용이 stale로 남고 새로고침 시 +1이 증발했다.
+        save();
+        render();
         return b;
       }
     }
@@ -16533,6 +16714,12 @@
     const verse = generateVerse(form, ins, lv, slainHere, 0, state.currentSword.soul || 0);
     // v388 감사 — 전당 진열도 지킨 맹세로 집계 (doSeal에만 있어 도 검(일도 완주)이 과소집계되던 결함)
     if (state.currentSword.oath && !state.currentSword.oath.broken) bumpStat('oathsKept');
+    // v396 감사 [12][18] — 전당 진열도 봉인의 한 형태: 단조 카운터(주보)와 시련의 혼
+    // 해제 알림에서 누락되지 않게 집계 (trialCount 통일과 동기).
+    // v397 리뷰 — 다만 진열은 매각이 아니다 (조각 0). sealed에 합치면 記錄의 「검 판매」·
+    // 봉인가 페르소나·칭호 임계가 과대 집계되므로 별도 카운터로 센다.
+    bumpStat('enshrined');
+    const trialsBefore = TRIALS.filter(t => trialUnlocked(t.key)).map(t => t.key);
     state.enshrined.push({
       level: lv, inscriptions: ins, form,
       enhanceAttempts: state.currentSword.enhanceAttempts || 0,  // v313 단련
@@ -16558,6 +16745,12 @@
       luckExp: state.currentSword.luckExp || 0,  // v382 천칭 — doSeal과 동기
       luckAct: state.currentSword.luckAct || 0,  // v382 천칭 — doSeal과 동기
       closestCall: (typeof state.currentSword.closestCall === 'number') ? state.currentSword.closestCall : null,  // v386 — doSeal과 동기
+    });
+    // v396 감사 [12] — 전당 진열로 열린 시련의 혼 알림 (doSeal과 동일 비교)
+    const newlyUnlockedEn = TRIALS.filter(t => trialUnlocked(t.key) && !trialsBefore.includes(t.key));
+    newlyUnlockedEn.forEach(t => {
+      log('시련의 혼 — 「' + t.name + '」 열림 (' + t.short + ')', 'success');
+      if (typeof announceInscription === 'function') setTimeout(() => announceInscription(t.name, t.effect), 600);
     });
     bumpStat('wayReached');
     grantEternity();  // v225 무극 — 도 검 전당도 영겁 +1
@@ -17031,7 +17224,10 @@
     { key: 't5', need: 20, name: '검선의 길',  effect: '모든 새 검의 시작 강화 +1',     short: '시작 +1' }
   ];
   function trialCount() {
-    return Array.isArray(state.sealedSwords) ? state.sealedSwords.length : 0;
+    // v396 감사 [12] — 전당(enshrined) 검도 집계: enshrine은 봉인의 한 형태 (v350 규율 —
+    // getFormCounts·eraSnapshot·progressScore 모두 통합 집계). sealedSwords만 세던 잔존
+    // outlier가 시련의 혼(영구 패시브) 진척에서 전당 진열 검을 누락시키던 결함.
+    return allSealedSwords().length;
   }
   function trialUnlocked(k) {
     const t = TRIALS.find(x => x.key === k);
@@ -17110,6 +17306,9 @@
     if (startLv > MAX_LEVEL - 1) startLv = MAX_LEVEL - 1;
     state.level = startLv;
     failStreak = 0; adversityReady = false; clearOmen(); clearStreak();
+    // v397 리뷰 — 점복 굴림 잠금은 강화도로만 키가 걸려 있어, 같은 강화도로 시작하는
+    // 새 검(유산 시작 보너스)에 이전 검의 좋은 괘가 그대로 재사용됐다. 검이 바뀌면 괘도 새로.
+    clearDivinationLock();
     clearSlayStreak();  // v125 연참 — 새 검 시 리셋
     clearMood();  // v127 기 — 새 검 시 平静
     enhanceEcho = null;  // v114 여향: 잔향은 검 단위로 휘발
@@ -17246,7 +17445,10 @@
   function forgeLeavesStuck(cost) {
     let lv = startBonus() + trialStartLevelBonus();
     if (lv > MAX_LEVEL - 1) lv = MAX_LEVEL - 1;
-    if (lv < 1 || lv >= SEAL_MIN_LEVEL) return false;  // +0 시작은 첫 강화 무료, +3+는 팔 수 있다
+    // v396 감사 — 갓 빚은 검은 시작 단계에서 팔 수 없다 (minSealLevel = startLevel+1):
+    // 기존 「+3+는 팔 수 있다」 면제가 유산 시작 +3~+7 검의 함정을 놓치고 있었다.
+    // +0 시작만 첫 강화 무료라 예외.
+    if (lv < 1) return false;
     const t = TABLE[lv];
     if (!t) return false;
     return (state.shards - cost) < enhanceCost(lv, { floor: true });
@@ -17300,6 +17502,20 @@
       if (state.guardianIdx === hi || state.guardianIdx === lo) state.guardianIdx = null;
       else { let g = state.guardianIdx; if (g > hi) g--; if (g > lo) g--; state.guardianIdx = g; }
     }
+    // v396 감사 [10] — duelWins 키(allSealedSwords 위치 인덱스)도 guardianIdx와 동일 규칙으로
+    // 재매핑: 안 하면 뒤 인덱스 검들의 승수·투장(챔피언)이 앞 검으로 밀려 다른 검에 귀속된다.
+    // 융합된 두 검의 승수는 검과 함께 사라진다.
+    if (state.duelWins && typeof state.duelWins === 'object') {
+      const remapped = {};
+      Object.keys(state.duelWins).forEach(k => {
+        let i = parseInt(k, 10);
+        if (isNaN(i) || i === hi || i === lo) return;
+        if (i > hi) i--;
+        if (i > lo) i--;
+        remapped[i] = (remapped[i] || 0) + (state.duelWins[k] || 0);
+      });
+      state.duelWins = remapped;
+    }
     state.shards -= FUSION_COST;
     // 새 검 (startBonus는 감소한 legacy로 재계산)
     newSword();
@@ -17323,6 +17539,9 @@
       setTimeout(() => announceInscription(p.inscription, '두 검의 유산이 깃들었다'), 500);
     }
     save();
+    // v396 감사 — sealedSwords 감소 액션은 반드시 push: 융검은 progressScore를 즉시 낮추므로
+    // push 없이는 다음 autoPull이 구본 클라우드를 우위로 판정, 융합·이후 진행 전체를 무경고 롤백.
+    schedulePush();
     render();
   }
   function renderFusion() {
@@ -17457,7 +17676,14 @@
       if ((state.fallenSwords || []).some(f => f && !f.reforged && shardsNum >= reforgeCost(f.level || 0))) return false;  // 재련의 길
       return true;
     }
-    // 케이스 2: 검 보유 +1~+2 (판매 불가) + 다음 강화 비용 부족
+    // 케이스 2: 검 보유 + 판매 불가 단계 + 다음 강화 비용 부족.
+    // v396 감사 — 하한은 SEAL_MIN_LEVEL이 아니라 minSealLevel(): 유산 시작 검(startLevel+1 미만
+    // 판매 불가)이 +3~+7에서 조각이 마르면 수입 경로 0인데도 감지가 영원히 놓치던 소프트락.
+    // v397 리뷰 — 하한을 minSealLevel()로 넓혔던 v396 [11]을 되돌린다. 유산 시작 +3~+7 검이
+    // 조각이 마른 순간을 「길의 끝」으로 선언했는데, 이 게임엔 조각이 드는 행동 없이도 들어오는
+    // 수입(첨 추첨·천시 보상·정진)이 매일 있으므로 조각 고갈은 결코 영구 사망이 아니다.
+    // 회복 가능한 판을 끝내는 오탐(파괴적)보다, 감지를 놓치는 미탐(무해)이 낫다 —
+    // 함정 경고는 지출 *전*의 forgeLeavesStuck confirm이 담당한다.
     if (state.level >= 1 && state.level < SEAL_MIN_LEVEL) {
       const t = TABLE[state.level];
       if (!t) return false;
@@ -17542,7 +17768,9 @@
   function sealSword() {
     if (challenge || rescueWindow) return;
     if (voidPending) return;  // v388 감사
+    if (sealTransition) return;  // v396 감사 — dissolve 800ms 창의 이중 매각 (중복 계보 + 보상 2회) 차단
     if (!state.hasSword || state.level < minSealLevel()) return;
+    cancelCharge();  // v396 감사 — 충전(刹那) 중 팔기 진입 시 잔여 enhance 타이머 제거 (모달 관통 차단)
     // v376 서약 일도 파계는 doSeal(매각 *확정* 시점)로 이동 — askName 취소 시 파계가
     // 기록되던 결함 수정 (v388 감사). 여기선 아무 상태도 바꾸지 않는다.
     const lv = state.level;
@@ -17564,6 +17792,11 @@
   }
 
   function doSeal(form, ins, lv, isWay, swordName, userMemo, userKigen) {
+    // v396 감사 — 명명 모달 확정이 늦게 와도 그 사이 검이 파괴/변경되었으면 매각 무효
+    // (충전 잔여 enhance 등으로 스냅샷과 실제가 어긋난 경우 — 부러진 검의 이중 존재 차단)
+    if (sealTransition) return;
+    if (!state.hasSword || state.level !== lv) { log('매각 무산 — 검의 상태가 변했다', 'fail'); return; }
+    armSealTransition();
     // v388 감사 — 일도 파계는 매각 *확정* 시점에 (sealSword에 있던 것을 이동:
     // askName 취소로 빠져나와도 파계가 영구 기록되던 결함). 새겨진 파계를 봉인 기록(ins)에도 반영.
     if (lv < MAX_LEVEL) {
@@ -17733,6 +17966,7 @@
       }
       // 도 봉인은 의식 컷씬(5.5초)이 가려줘서 swap 자연스러움
       newSword();
+      sealTransition = false;  // v396 — 새 검 준비 완료
       save();
       render();
       updateForgeButtons();
@@ -17752,6 +17986,7 @@
       setTimeout(() => {
         swordWrap.classList.remove('dissolve');
         newSword();
+        sealTransition = false;  // v396 — dissolve 종료, 새 검 준비 완료
         render();
         updateForgeButtons();
         // 새 검 등장 모션
@@ -18795,13 +19030,14 @@
     $('login-email').value = '';
     $('login-otp-code').value = '';
   }
-  // v122 점복 체크박스 — 체크 해제 시 잠긴 롤 무효화
+  // v122 점복 체크박스 — v396 감사: 체크 해제로는 잠긴 롤을 무효화하지 않는다.
+  // 해제(무효화)→재체크(새 롤)를 반복해 '서' 전조가 나올 때까지 리롤하면 임의 단계 확정
+  // 성공이 되는 경제 붕괴 exploit이었다. 잠금은 강화 소모/레벨 변경 시에만 풀린다.
   const _divCheck = $('divination-check');
   if (_divCheck) {
     _divCheck.addEventListener('change', (e) => {
-      if (!e.target.checked) clearDivinationLock();
-      else {
-        // 체크 시 즉시 omen 재계산 — 잠긴 롤이 omen에 반영됨
+      if (e.target.checked) {
+        // 체크 시 즉시 omen 재계산 — 기존 잠금이 있으면 같은 롤이 그대로 반영됨
         if (typeof showOmen === 'function' && typeof rollOmen === 'function') {
           showOmen(rollOmen());
         }
@@ -18946,23 +19182,17 @@
 
   // 클라우드 복원
   $('btn-cloud-pull').addEventListener('click', async () => {
+    // v396 감사 [26] — 회수창/도전/파괴 갭 중 복원 시 살아있는 endVoid 타이머가 복원된 세이브를
+    // 오염(rescueFailed 오적립·남의 일생 무덤 rescued=false 영구화·慰 재생)하던 결함 — 진입 차단.
+    if (challenge || rescueWindow || voidPending) { log('도전/회수 중에는 복원할 수 없다', 'fail'); return; }
     if (!confirm('현재 진행도를 클라우드 데이터로 덮어씁니다. 진행할까요?')) return;
     const r = await sbPullState();
     if (r.error) { log('클라우드 복원 실패: ' + r.error, 'destroy'); return; }
     if (typeof r.data !== 'object' || r.data === null) { log('데이터 형식 오류', 'destroy'); return; }
-    state = Object.assign({}, state, r.data);
-    // load 보정 재실행
-    if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
-    if (!state.currentSword || typeof state.currentSword !== 'object') {
-      state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: null, soul: 0, startLevel: 0, levelHistory: [0], scars: 0, protectsUsed: 0, stars: {}, naturePathSeen: false };
-    }
-    if (!Array.isArray(state.currentSword.inscriptions)) state.currentSword.inscriptions = [];
-    if (typeof state.currentSword.startLevel !== 'number') state.currentSword.startLevel = 0;
-    if (!Array.isArray(state.currentSword.levelHistory)) state.currentSword.levelHistory = [state.level || 0];
-    save();
-    gameOverShown = false;
-    $('gameover-overlay').classList.remove('active');
-    render();
+    if (challenge || rescueWindow || voidPending) { log('도전/회수 중에는 복원할 수 없다', 'fail'); return; }  // await 사이 상태 변화 재검사
+    // v396 감사 [24] — v245 이전의 부분 보정 4줄이 normalizeState(v370m 태그 제거·v370o 숫자
+    // clamp·한자 마이그레이션)를 우회하던 결함 — applyCloudState 단일 진원으로 교체.
+    applyCloudState(r.data);
     log('클라우드에서 복원됨', 'success');
     SFX.forge();
   });
@@ -19137,6 +19367,9 @@
       try {
         const loaded = JSON.parse(e.target.result);
         if (typeof loaded !== 'object' || loaded === null) throw new Error('잘못된 형식');
+        // v396 감사 [26] — 회수창/도전/파괴 갭 중 복원 차단: 살아있는 endVoid/도전 타이머가
+        // 복원된 세이브를 오염(rescueFailed 오적립·남의 무덤 rescued=false 영구화)하던 결함.
+        if (challenge || rescueWindow || voidPending) { log('도전/회수 중에는 복원할 수 없다', 'fail'); return; }
         if (!confirm('현재 진행도를 백업 파일로 덮어씁니다. 진행할까요?')) return;
         // 기본 state에 병합 — 누락 필드 안전
         state = Object.assign({}, state, loaded);
@@ -20052,6 +20285,17 @@
       (s.yakshaSlain > 0 ? row('야차', fmtNum(s.yakshaSlain) + ' 회', '#a896c8') : '') +
       row('도망 그림자에게 놓침', fmtNum(s.evaded || 0) + ' 회', 'var(--dim)') +
       ((s.defeats || 0) > 0 ? row('검이 꺾임 (베기 실패)', fmtNum(s.defeats) + ' 회', 'var(--danger)') : '') +  // v383
+      // v397 敵手 — 벤 판 / (벤 판 + 꺾인 판). 물러남·대치·놓침은 싸움이 아니므로 분모 밖.
+      (function() {
+        // v397 리뷰 — 유형별 카운터 합은 名(이름 있는 적) 처치를 빠뜨려 승률이 낮게 표시됐다
+        // (분모의 꺾임에는 名 패배가 포함). 처치는 권위 카운터 totalSlain 단일 진원으로.
+        const won = state.totalSlain || 0;
+        const fought = won + (s.defeats || 0);
+        if (fought < 3) return '';
+        const pct = Math.round(won / fought * 100);
+        const col = pct >= 70 ? 'var(--safe)' : pct >= 45 ? 'var(--accent)' : 'var(--danger)';
+        return row('도전 승률', pct + '% (' + fmtNum(won) + ' / ' + fmtNum(fought) + ')', col);
+      })() +
       row('도전에서 도망', fmtNum(s.fled || 0) + ' 회', 'var(--dim)') +
       (s.stalemate > 0 ? row('대치 (평화의 길)', fmtNum(s.stalemate) + ' 회', '#5878b8') : '') +
       // v372 숙적 — 현재 원한 + 설욕 누적 (이름은 고정 팔레트 생성 + normalizeState 태그 제거라 innerHTML 안전)
@@ -20170,6 +20414,18 @@
   }
 
   // === 강화 / 봉인 / 새 검 버튼 ===
+  // v396 감사 — 충전(刹那) 지연 enhance를 모듈 핸들로 추적: 익명 setTimeout이 팔기·명명 모달·
+  // 회수창을 관통해 모달 아래에서 굴림을 실행하던 결함 (파괴 검 이중 존재·이중 보상의 진원).
+  let chargeTimer = null;
+  let chargeOmenTimer = null;
+  function cancelCharge() {
+    if (!chargeTimer && !chargeOmenTimer) return;
+    if (chargeTimer) { clearTimeout(chargeTimer); chargeTimer = null; }
+    if (chargeOmenTimer) { clearTimeout(chargeOmenTimer); chargeOmenTimer = null; }
+    clearOmen();
+    swordWrap.classList.remove('charging');
+    btnEnhance.disabled = false;
+  }
   btnEnhance.addEventListener('click', () => {
     if (btnEnhance.disabled) return;
     if (voidPending || rescueWindow) return;  // v388 감사 — 파괴~회수창 350ms 갭에 새 검 구매·강화 유출 차단
@@ -20192,12 +20448,14 @@
     playChargeSound(delay);
     spawnQiGathering(delay);  // v161 氣陣
     // 前兆: 충전 시작 200ms 후 전조 표시
-    const omenTimeout = setTimeout(() => {
+    chargeOmenTimer = setTimeout(() => {
+      chargeOmenTimer = null;
       const omen = rollOmen();
       showOmen(omen);
     }, Math.min(200, delay * 0.25));
-    setTimeout(() => {
-      clearTimeout(omenTimeout);
+    chargeTimer = setTimeout(() => {
+      chargeTimer = null;
+      if (chargeOmenTimer) { clearTimeout(chargeOmenTimer); chargeOmenTimer = null; }
       clearOmen();
       swordWrap.classList.remove('charging');
       btnEnhance.disabled = false;
@@ -20284,6 +20542,9 @@
       }
     }
     if (e.key === 'Escape') {
+      // v396 감사 [29] — 형 선택 모달은 필수 선택: Esc가 아래(가려진) 도전의 flee로 새지 않게 차단
+      const fsOpen = document.querySelector('#form-select-modal.active');
+      if (fsOpen) { e.preventDefault(); return; }
       // 열린 일반 모달이 있으면 가장 위(마지막)부터 닫기 — name/form-select는 자체 처리/필수 선택이라 제외
       const open = [].filter.call(document.querySelectorAll('.modal.active'),
         m => m.id !== 'name-modal' && m.id !== 'form-select-modal');
@@ -20596,6 +20857,11 @@
     syncInert();  // 시작 상태 동기
   })();
 
+  // v396 감사 [16] — 부재 간격은 어떤 save()보다 먼저 포착: 아래 checkDailyStreak/checkFestival/
+  // checkWeeklyReport(그리고 ensureDailyTrial)의 save()가 lastPlayedTime을 스탬프해, 자정을 넘긴
+  // 부재(여명의 핵심 사용 사례)에서 checkDawn(600ms 후)의 gap이 0.6초로 붕괴하던 결함.
+  const bootGapMs = (typeof state.lastPlayedTime === 'number' && state.lastPlayedTime > 0)
+    ? (Date.now() - state.lastPlayedTime) : null;
   ensureDailyTrial();  // v94 천시 — 오늘의 도전 초기화/갱신
   applyVisualTheme(state.visualTheme || '');  // v201 配 — 저장된 테마 복원
   applySettings();  // v228 設 — 접근성 설정 복원
@@ -20623,7 +20889,9 @@
   setInterval(checkSessionMilestones, 60 * 1000);  // v207 정진 — 매분 세션 마일스톤 체크
   renderWeekendMark();  // v212 휴 — 주말 표식
   checkWeekendGreeting();  // 주말 인사
-  setInterval(() => { renderWeekendMark(); checkWeekendGreeting(); }, 60 * 60 * 1000);  // 매시간 재확인
+  // v396 감사 [17] — checkDailyStreak가 부트 1회뿐이라, 탭을 유지한 채 자정을 넘겨 플레이한
+  // 날이 출석에서 누락되고 다음 부트에서 연속이 리셋되던 결함: 매시간 재확인 (같은 날은 no-op).
+  setInterval(() => { renderWeekendMark(); checkWeekendGreeting(); checkDailyStreak(); renderStreakMark(); }, 60 * 60 * 1000);  // 매시간 재확인
   if (!state.seenHelp) {
     // v61 첫 진입 인트로 — 큰 한자 페이드 후 도움말
     inscribeQueue.push({ key: '검', label: '검의 길이 열린다' });
@@ -20640,7 +20908,7 @@
   checkGameOver();
   // v126 여명 — 4시간+ 부재 시 새벽 의식 (도움말 모달 없을 때만)
   if (state.seenHelp) {
-    setTimeout(() => checkDawn(), 600);
+    setTimeout(() => checkDawn(bootGapMs), 600);  // v396 [16] — 부트 직후 포착한 gap 전달
     // v175 回憶 — 게임 로드 후 5초 + 5+ 봉인 검 있으면 첫 검 회상
     if ((state.sealedSwords || []).length >= 5) setTimeout(() => showFirstSwordMemory(), 5000);
   }

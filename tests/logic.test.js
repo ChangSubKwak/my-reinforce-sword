@@ -798,7 +798,8 @@ test('generatePlayerTitle: 무성취도 항상 칭호 반환 (빈 문자열 아�
   function trials(n) {
     const sealedSwords = new Array(n).fill({ level: 1 });
     return loadFunctions(
-      ['trialCount', 'trialUnlocked', 'trialSuccessBonus', 'trialStartSoulBonus', 'trialStartLevelBonus'],
+      // v396 [12] — trialCount가 전당 포함 단일 진원(allSealedSwords)을 쓰므로 함께 로드
+      ['trialCount', 'trialUnlocked', 'trialSuccessBonus', 'trialStartSoulBonus', 'trialStartLevelBonus', 'allSealedSwords'],
       { state: { sealedSwords }, TRIALS }
     );
   }
@@ -817,6 +818,14 @@ test('generatePlayerTitle: 무성취도 항상 칭호 반환 (빈 문자열 아�
     assert.strictEqual(trials(2).trialStartSoulBonus(), 0);
     assert.strictEqual(trials(20).trialStartLevelBonus(), 1, '20봉인 → 시작+1');
     assert.strictEqual(trials(19).trialStartLevelBonus(), 0);
+  });
+  test('v396 [12]: trialCount — 전당(enshrined) 검도 집계 (v350 규율: enshrine은 봉인의 한 형태)', () => {
+    const fns = loadFunctions(
+      ['trialCount', 'trialUnlocked', 'allSealedSwords'],
+      { state: { sealedSwords: new Array(18).fill({ level: 1 }), enshrined: new Array(3).fill({ level: 15 }) }, TRIALS }
+    );
+    assert.strictEqual(fns.trialCount(), 21, '봉인 18 + 전당 3 = 21');
+    assert.strictEqual(fns.trialUnlocked('t5'), true, '전당 포함 20+ → 검선의 길 해제');
   });
 })();
 
@@ -2089,4 +2098,46 @@ test('v386 만가/一代記: 터럭 차 생환의 기억 — 보존 검·무기�
   const base = { form: '중', level: 11, inscriptions: [], slainCount: 0, soul: 0, scars: 0, stars: {}, name: '중검' };
   assert.match(fnsB.generateBiography({ ...base, closestCall: 0.01 }), /죽음이 터럭 하나 차이로 비껴갔다/, '一代記 — 생환 기억');
   assert.ok(!/터럭 하나 차이/.test(fnsB.generateBiography(base)), '무기록 검 불변');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v397 敵手 — 도전 승률의 동역학 잠금 (값이 아니라 「싸울 만한가」를 잠근다)
+// 판정은 주사위 없는 단판(state.level >= strength)이므로, 난이도를 굴리는 축이
+// 판정 축과 어긋나면 승률이 통째로 0이 된다 — 이전 앵커는 최고 기록이었다.
+// ─────────────────────────────────────────────────────────────
+test('v397 敵手: 도전 강도는 「지금 검」 앵커 — 전 구간에서 5판 중 4판 승산', () => {
+  const st = { level: 1, bestLevel: 15 };
+  let rnd = 0;
+  const fakeMath = Object.create(Math);
+  fakeMath.random = () => rnd;
+  const roll = loadFunctions(['rollChallengeStrength'], { state: st, Math: fakeMath }).rollChallengeStrength;
+  const RS = [0, 0.2, 0.4, 0.6, 0.8];   // floor(r * 5) = 0..4 전수
+  for (let lv = 1; lv <= 15; lv++) {
+    st.level = lv;
+    const out = RS.map(r => { rnd = r; return roll(); });
+    assert.ok(out.every(s => s >= 1), '강도 하한 1 (+' + lv + ')');
+    assert.ok(Math.max.apply(null, out) <= lv + 1, '강도 상한은 강화도 +1 (+' + lv + ')');
+    const wins = out.filter(s => lv >= s).length;
+    assert.strictEqual(wins, 4, '+' + lv + ' 에서 5판 중 4판 승산 (실제 ' + wins + ')');
+  }
+});
+
+test('v397 敵手: 최고 기록은 도전 강도에 관여하지 않는다 (재건 전패 회귀 차단)', () => {
+  const st = { level: 4, bestLevel: 0 };
+  let rnd = 0.6;
+  const fakeMath = Object.create(Math);
+  fakeMath.random = () => rnd;
+  const roll = loadFunctions(['rollChallengeStrength'], { state: st, Math: fakeMath }).rollChallengeStrength;
+  const low = roll();
+  st.bestLevel = 15;
+  assert.strictEqual(roll(), low, '최고 기록 0 vs 15 에서 강도 동일');
+});
+
+test('v397 敵手: 名 보스는 전부 도달 가능한 강도 (MAX_LEVEL 이하)', () => {
+  const MAX_LEVEL = extractConst('TABLE').length;
+  extractConst('NAMED_FOES').forEach(f => {
+    assert.ok(f.strength <= MAX_LEVEL,
+      f.name + ' 강도 ' + f.strength + ' — MAX_LEVEL(' + MAX_LEVEL + ') 이하여야 벨 수 있다');
+    assert.ok(f.strength >= f.trigger, f.name + ' 강도는 해금 기록(trigger) 이상');
+  });
 });

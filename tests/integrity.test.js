@@ -687,14 +687,21 @@ test('v343: 실제 강화 굴림(effectiveDestroy)이 표시 헬퍼(effectiveDes
   // 헬퍼 직접 호출은 불가(헬퍼가 state.spiritstones를 live 재계산 → useSpirit 차감 후 회귀).
   // 그래서 두 공식은 분리 유지하되, 감소항 집합은 반드시 일치해야 함. (v263이 헬퍼엔 solar를
   // 넣었으나 이 인라인 굴림 사본을 못 고쳐 冬至 -2%가 표시·約束만 되고 실제론 무시됐던 버그.)
+  // v396 — 유수(流水)는 consumeWishEnhance(charges 1→0) *전에* 캡처한 wishDR을 굴림에 사용:
+  // 마지막 충전이 파괴 굴림에 적용되도록. 캡처 상수명이 감소항 커버리지를 대신 증명한다.
   const reduceTerms = ['schoolDestroyReduce(', 'guardianBonus(', 'getScarDestroyReduce(',
-    'weatherDestroyReduce(', 'wishDestroyReduce(', 'solarDestroyReduce('];
+    'weatherDestroyReduce(', 'wishDR', 'solarDestroyReduce('];
   // omen 경로(effectiveDestroyChance(lv) 직접 호출)와 구분 — 인라인 공식 굴림은 (useSpirit 로 시작.
   const rollLine = (js.match(/const effectiveDestroy = \(useSpirit[^\n]*/) || [''])[0];
   assert.ok(rollLine, 'enhance의 인라인 effectiveDestroy 할당을 찾아야 함');
   for (const term of reduceTerms) {
-    assert.ok(rollLine.includes(term), '실제 굴림에 ' + term + ') 감소항 누락 — 표시와 드리프트');
+    assert.ok(rollLine.includes(term), '실제 굴림에 ' + term + ' 감소항 누락 — 표시와 드리프트');
   }
+  // 캡처는 consume보다 앞서야 함 (뒤면 charges 0으로 감소항이 0이 됨 — v396 [2])
+  const capIdx = js.indexOf('const wishDR = wishDestroyReduce()');
+  const consumeIdx = js.indexOf('consumeWishEnhance();');
+  assert.ok(capIdx >= 0, 'wishDR 캡처 라인 존재');
+  assert.ok(consumeIdx > capIdx, 'wishDR 캡처는 consumeWishEnhance 전');
 });
 
 test('v347: rollOmen(占卜 예측)이 실제 굴림과 동일 파괴 임계 사용 — 이중변환 division 재발 방지', () => {
@@ -1591,7 +1598,10 @@ test('v389: 게임오버 도구 초기화 완전성 + 안내 문구 현행화', 
 test('v390: 함정 경계 경고 — 정확히-소진 지출이 클릭 한 번 뒤 길의 끝이 되지 않게', () => {
   const fb = afterDecl('function forgeLeavesStuck(', 700);
   assert.match(fb, /startBonus\(\) \+ trialStartLevelBonus\(\)/, '예상 시작 강화 — newSword와 동일 공식');
-  assert.match(fb, /lv < 1 \|\| lv >= SEAL_MIN_LEVEL\) return false/, '+0(첫 강화 무료)·+3+(팔 수 있음)는 함정 아님');
+  // v396 [11] — 갓 빚은 검의 판매 하한은 startLevel+1 (minSealLevel): 「+3+는 팔 수 있다」 면제가
+  // 유산 시작 +3~+7 검의 함정을 놓치던 결함. +0 시작만 첫 강화 무료라 예외.
+  assert.match(fb, /if \(lv < 1\) return false/, '+0(첫 강화 무료)만 함정 아님');
+  assert.doesNotMatch(fb, /lv >= SEAL_MIN_LEVEL\) return false/, '유산 시작 +3+ 면제 재유입 금지 (v396 [11])');
   assert.match(fb, /enhanceCost\(lv, \{ floor: true \}\)/, '강화비 단일 진원 비교');
   const warns = (js.match(/forgeLeavesStuck\(\w+(?:\.\w+)*\) && !confirm\(FORGE_TRAP_WARN\)/g) || []).length
     + (js.match(/forgeLeavesStuck\(NEWSWORD_COST\) && !confirm\(FORGE_TRAP_WARN\)/g) || []).length
@@ -1701,4 +1711,168 @@ test('v387 간결: menu-core 태깅 — 필수만, 과잉 태깅 금지', () => 
     .forEach(id => assert.match(html, new RegExp('id="' + id + '" class="menu-core"'), id + '는 핵심 (기록/안내/설정/소리/초기화/백업/클라우드)'));
   // 설정 진입로가 간결 모드에서 살아있어야 전체 복귀 가능 — btn-settings는 반드시 core
   assert.match(html, /id="btn-settings" class="menu-core"/, '설정 진입로 보존 (전체 모드 복귀 경로)');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v396 大監査 — 레거시 전 계층(v1~v371) 감사 30건 수정 잠금
+// ─────────────────────────────────────────────────────────────
+test('v396 [0]: 점복 잠금 — 체크 토글 무한 재롤(확정 강화) exploit 차단', () => {
+  const hStart = js.indexOf("const _divCheck = $('divination-check')");
+  assert.ok(hStart >= 0, '점복 체크박스 핸들러 존재');
+  const handler = js.slice(hStart, hStart + 600);
+  assert.doesNotMatch(handler, /clearDivinationLock/, '체크 해제로 잠긴 롤 무효화 금지');
+  const omen = afterDecl('function rollOmen() {', 1800);
+  assert.match(omen, /divinationLockedLevel !== null && divinationLockedLevel !== lv\) clearDivinationLock\(\)/, '잠금은 레벨 단위');
+  const clears = (js.match(/clearDivinationLock\(\);/g) || []).length;
+  assert.ok(clears >= 3, 'enhance 소모 지점(성공/실패/열반) 잠금 해제 유지 (현재 ' + clears + ')');
+});
+
+test('v396 [1][2][13]: enhance 굴림 정합 — 결계/유수 사전 캡처·방지권 counterfactual 통일', () => {
+  const dIdx = js.indexOf('state.shards -= actualCost');
+  const rIdx = js.indexOf('recordLuck(successChance', dIdx);
+  assert.ok(dIdx > 0 && rIdx > dIdx, 'enhance 차감·굴림 마커 존재');
+  const capS = js.indexOf('const sanctumArmed = sanctumBlocksDestroy()');
+  assert.ok(capS >= 0 && capS < dIdx, '결계 상태는 ×3 비용 차감 전에 캡처 (이중 과금 차단)');
+  const capW = js.indexOf('const wishDR = wishDestroyReduce()');
+  assert.ok(capW >= 0 && capW < dIdx, '유수 감소항은 consume 전에 캡처');
+  assert.ok(!js.slice(dIdx, rIdx).includes('maybeForceSanctumOff()'), '차감~굴림 사이 결계 강제 해제 금지');
+  const offCount = (js.match(/maybeForceSanctumOff\(\);/g) || []).length;
+  assert.ok(offCount >= 3, '결계 자동 해제는 굴림 이후 각 exit에 (현재 ' + offCount + ')');
+  assert.match(js, /const protectedFromDestroy = useProtect && failRoll < effectiveDestroy;/, '각흔 counterfactual = 실제 굴림값 (축약 재계산 금지)');
+});
+
+test('v396 [5][6]: 멸마·뇌신 charge — spawn이 아닌 slay 성공 시 소모 (「다음 슬레이」 이행)', () => {
+  const mtc = afterDecl('function maybeTriggerChallenge(forced) {', 8000);
+  assert.ok(!mtc.includes('state.metsumaoCharges--'), 'spawn 시 멸마 차감 금지');
+  assert.ok(!mtc.includes('consumeWishSlay()'), 'spawn 시 뇌신 소모 금지');
+  assert.match(mtc, /usedMetsumao = true/, '멸마 배율 표식 (배율은 spawn에 — 표시 일치)');
+  const tnf = afterDecl('function triggerNamedFoe(foe) {', 2800);
+  assert.match(tnf, /usedMetsumao = true/, '名 보스도 멸마·뇌신 적용');
+  assert.ok(!tnf.includes('state.metsumaoCharges--'), '名 spawn 차감 금지');
+  const sb = afterDecl('function slay() {', 4200);
+  assert.match(sb, /c\.usedMetsumao\) state\.metsumaoCharges = Math\.max/, 'slay 성공 시 멸마 소모');
+  assert.match(sb, /c\.usedWishSlay\) consumeWishSlay\(\)/, 'slay 성공 시 뇌신 소모');
+});
+
+test('v396 [7][27]: 봉인 전이·충전 타이머 — 이중 매각·명명 모달 관통 차단', () => {
+  assert.match(js, /let sealTransition = false/, '전이 플래그 존재');
+  const sealB = afterDecl('function sealSword() {', 900);
+  assert.match(sealB, /if \(sealTransition\) return/, 'sealSword 전이 가드');
+  assert.match(sealB, /cancelCharge\(\)/, 'sealSword 진입 시 충전 취소');
+  const dsB = afterDecl('function doSeal(', 1200);
+  assert.match(dsB, /if \(sealTransition\) return/, 'doSeal 재진입 가드');
+  assert.match(dsB, /state\.level !== lv\)/, 'doSeal 스냅샷 재검증 (파괴 검 이중 존재 차단)');
+  // v397 리뷰 — set은 안전망 타이머와 한 몸(armSealTransition): 정상 해제 사이의 어떤 예외라도
+  // 플래그가 영구 잠기면 강화·매각이 동시에 막혀 새로고침 외엔 복구 불가였다.
+  assert.match(dsB, /armSealTransition\(\)/, 'doSeal 진입 시 arm (안전망 포함)');
+  assert.match(js, /function armSealTransition\(\)/, '안전망 헬퍼 존재');
+  const armB = afterDecl('function armSealTransition() {', 300);
+  assert.match(armB, /sealTransition = true/, 'arm이 플래그를 세운다');
+  assert.match(armB, /setTimeout\(\(\) => \{ sealTransition = false/, '안전망 타이머가 반드시 해제');
+  const clearCount = (js.match(/sealTransition = false/g) || []).length;
+  assert.ok(clearCount >= 4, '해제 지점(선언 + 안전망 + 도/일반 exit) (현재 ' + clearCount + ')');
+  const eb2 = afterDecl('function enhance() {', 1300);
+  assert.match(eb2, /if \(sealTransition\) return/, 'enhance 전이 가드');
+  assert.match(eb2, /name-modal/, 'enhance 명명 모달 가드');
+  assert.match(js, /let chargeTimer = null/, '충전 타이머 모듈 핸들');
+  assert.match(js, /chargeTimer = setTimeout\(/, '충전 타이머 추적 배선');
+});
+
+test('v396 [4][29]: 지연 endChallenge 취소 · 형 선택 중 도전 보류', () => {
+  const sc = afterDecl('function showChallenge() {', 900);
+  assert.match(sc, /clearTimeout\(pendingEndTimer\)/, '새 도전이 직전 지연 정리 타이머를 취소');
+  assert.match(js, /pendingEndTimer = setTimeout/, '지연 endChallenge 모듈 핸들 추적');
+  const mtcTop = afterDecl('function maybeTriggerChallenge(forced) {', 900);
+  assert.match(mtcTop, /formDeferredChallenge = \{ forced/, '형 선택 모달 중 도전 보류');
+  const afc = afterDecl('function applyFormChoice(form) {', 1000);
+  assert.match(afc, /formDeferredChallenge/, '형 확정 후 보류 도전 발화');
+});
+
+test('v396 [8][15][25][28]: import 소독 커버리지 — 봉인 검 서사 필드·첨·도호', () => {
+  const sw = afterDecl('const sanitizeSword = (sw) => {', 2800);
+  assert.match(sw, /sw\.inscriptions = sw\.inscriptions\.map\(stripTags\)/, '명문 원소 소독 (무덤과 대칭)');
+  assert.match(sw, /sw\.verse = sw\.verse\.slice\(0, 8\)\.map\(stripTags\)/, '일생시 원소 소독');
+  assert.match(sw, /birthStatement/, '탄생 문장 소독');
+  assert.match(sw, /bornTod/, '時生 화이트리스트');
+  assert.match(js, /SEN_REWARDS\.find\(r => r\.kanji === lr\.kanji/, '첨 결과 화이트리스트 (원본 객체 치환)');
+  assert.match(js, /dt\.title = \(typeof dt\.title === 'string'\) \? stripTags/, 'daoTitle 소독');
+});
+
+test('v396 [11][23][10]: 소프트락 하한·융검 push·대국 승수 재매핑', () => {
+  const body = afterDecl('function isStuck() {', 2200);
+  // v397 리뷰 — 케이스 2 하한은 다시 SEAL_MIN_LEVEL. 일일 수입(첨·천시·정진)이 있는 한
+  // 조각 고갈은 영구 사망이 아니므로, 유산 시작 검까지 「길의 끝」으로 선언하면
+  // 회복 가능한 판을 파괴한다. 감지 확대는 지출 전 경고(forgeLeavesStuck)가 대신한다.
+  assert.match(body, /state\.level < SEAL_MIN_LEVEL/, '케이스 2 하한 = SEAL_MIN_LEVEL (오탐 방지)');
+  assert.doesNotMatch(body, /state\.level < minSealLevel\(\)/, '게임오버 하한 확대 재유입 금지 (v397)');
+  const fb = afterDecl('function fuseSwords() {', 4500);
+  assert.match(fb, /schedulePush\(\)/, '융검(점수 감소 액션) 후 자동 push — 구본 클라우드 롤백 차단');
+  assert.match(fb, /state\.duelWins = remapped/, '대국 승수 키 재매핑 (guardianIdx와 동일 규칙)');
+});
+
+test('v396 [12][18][24][26]: 전당 집계 통일·주보 단조·클라우드 복원 단일 진원', () => {
+  const tc = afterDecl('function trialCount() {', 700);
+  assert.match(tc, /allSealedSwords\(\)\.length/, 'trialCount — 전당 포함 (v350 규율)');
+  const en = afterDecl('function enshrineSeal(', 1500);
+  // v397 리뷰 — 진열은 매각이 아니다 (조각 0). sealed에 합치면 記錄 「검 판매」·페르소나·
+  // 칭호 임계가 과대 집계되므로 별도 카운터로 세고, 주보 단조 누적에서만 합산한다.
+  assert.match(en, /bumpStat\('enshrined'\)/, '전당 진열은 별도 카운터');
+  assert.doesNotMatch(en, /bumpStat\('sealed'\)/, '매각 카운터 혼입 금지 (v397)');
+  assert.match(js, /sealedCum: \(stats\.sealed \|\| 0\) \+ \(stats\.enshrined \|\| 0\)/, '주보 스냅샷 — 단조 카운터(매각+진열)');
+  const pIdx = js.indexOf("$('btn-cloud-pull').addEventListener");
+  assert.ok(pIdx >= 0, '수동 클라우드 복원 핸들러 존재');
+  const pull = js.slice(pIdx, pIdx + 1600);
+  assert.match(pull, /applyCloudState\(r\.data\)/, '복원 — normalizeState 경유 (부분 보정 우회 금지)');
+  assert.match(pull, /challenge \|\| rescueWindow \|\| voidPending/, '복원 — 회수/도전 중 차단');
+});
+
+test('v396 [14][16][17][19][20][21][22][9]: 타이머·오디오·모션·시그니처 배선', () => {
+  assert.match(js, /void ringCircle\.getBoundingClientRect\(\)/, '회수 ring 강제 reflow (진행 표시 소생)');
+  assert.match(js, /checkDawn\(bootGapMs\)/, '여명 — 부트 직후 포착한 gap 전달');
+  assert.match(js, /const bootGapMs = /, '여명 — 어떤 save보다 먼저 gap 포착');
+  assert.match(js, /checkWeekendGreeting\(\); checkDailyStreak\(\)/, '練日 — 매시간 자정 경계 재확인');
+  assert.match(js, /audioCtx\.resume\(\)/, '오디오 suspended 복구 (무음 고착 해소)');
+  const hiddenGuards = (js.match(/if \(document\.hidden\) return;/g) || []).length;
+  assert.ok(hiddenGuards >= 5, '숨은 탭 오디오/명상 가드 5+ (현재 ' + hiddenGuards + ')');
+  assert.match(js, /function motionReduced\(\)/, '모션 감소 공통 게이트');
+  const gates = (js.match(/if \(motionReduced\(\)\) return;/g) || []).length;
+  assert.strictEqual(gates, 5, 'WAAPI spawner 게이트 5곳 (버스트/파편/보상/유산/합류)');
+  const sp = afterDecl('function spawnSeasonParticle() {', 1000);
+  assert.match(sp, /getSetting\('particles'\)/, '계절 입자 — 설정 존중');
+  assert.match(sp, /challenge \|\| rescueWindow \|\| moonGazing/, '계절 입자 — 오버레이 차단');
+  assert.match(js, /showSwordDetail\(state\.sealedSwords\[idx\], idx \+ 1\)/, '별자리·계보 — 올바른 시그니처');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v397 敵手 — 판정 축과 난이도 축의 단일성 (구조 잠금)
+// 규율: 승부를 판정하는 값(지금 검)과 난이도를 굴리는 값은 같은 축이어야 한다.
+// ─────────────────────────────────────────────────────────────
+test('v397 敵手: 강도 앵커 단일성 — 도전 강도에 최고 기록 부재', () => {
+  const { extractFunction } = require('./harness');
+  const fn = extractFunction(js, 'rollChallengeStrength');
+  assert.match(fn, /state\.level/, 'rollChallengeStrength는 지금 검을 앵커로');
+  assert.ok(!/bestLevel/.test(fn), '최고 기록 참조 없음 (재건 구간 전패 회귀 차단)');
+  const demonIdx = js.indexOf('if (type.isDemon)');
+  assert.ok(demonIdx > 0, '劍鬼 분기 존재');
+  const demonBlock = js.slice(demonIdx, demonIdx + 800);
+  assert.ok(!/state\.bestLevel \+ 5/.test(demonBlock), '劍鬼 강도에 도달 불가 공식 재유입 금지');
+  assert.match(demonBlock, /strength = Math\.max\(1, state\.level/, '劍鬼도 지금 검 기준');
+});
+
+test('v397 敵手: 名 대면 조건 — 이길 수 있는 강화도에서만 등장', () => {
+  const { extractFunction } = require('./harness');
+  const fn = extractFunction(js, 'pendingNamedFoe');
+  assert.match(fn, /state\.level >= f\.strength/, '대면 조건 — 지금 검이 보스 강도 이상');
+  assert.match(fn, /state\.bestLevel >= f\.trigger/, '해금 조건 — 최고 기록 유지');
+});
+
+test('v397 敵手: 記錄 모달 도전 승률 행 (확률 정직성)', () => {
+  const idx = js.indexOf("row('도전 승률'");
+  assert.ok(idx > 0, '記錄에 도전 승률 행');
+  // 산식 블록(행 선언 *앞*)만 검사 — 뒤쪽에는 별개의 물러남 행이 이어진다
+  const block = js.slice(Math.max(0, idx - 700), idx);
+  assert.match(block, /s\.defeats/, '분모에 꺾인 판 포함');
+  // v397 리뷰 — 분자는 권위 카운터 단일 진원 (유형별 합산은 名 처치를 빠뜨려 승률이 낮게 나왔다)
+  assert.match(block, /state\.totalSlain/, '분자는 totalSlain 단일 진원');
+  assert.ok(!/s\.fled/.test(block), '물러남은 싸움이 아니므로 분모 밖');
 });
