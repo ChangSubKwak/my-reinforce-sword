@@ -780,3 +780,104 @@ test('융검: 「도」는 계승되지 않는다 — +3 검이 道 검의 대�
   assert.match(way.listText, /도/, '융검 후보 목록에서 도 표시가 사라졌다');
   assert.strictEqual(way.p.env.errors.length, 0, firstErrors(way.p.env, 3));
 });
+
+// ---------------------------------------------------------------------------
+test('길의 끝: 래치되지 않는다 — 길이 다시 열리면 오버레이도 걷힌다', () => {
+  // isStuck() 의 설계 근거는 「조각이 드는 행동 없이도 들어오는 수입이 매일 있으므로 조각
+  // 고갈은 영구 사망이 아니다」인데, 오버레이가 래치되어 그 수입을 영영 몰랐다. 실측: 조각 10에
+  // 죽고 3시간 뒤 55(새 검 비용 50 초과)가 됐는데도 오버레이는 그대로였고, 유일하게 보이는
+  // 탈출구인 「다시 검을 들다」가 그 수입(55→50)과 도구(영석 1→0)를 없앴다.
+  const stuckSave = {
+    hasSword: false, level: 0, shards: 10, sealedSwords: [], enshrined: [], fallenSwords: [],
+    swordGeneration: 3, seenHelp: true, stats: {},
+    protections: 0, whetstones: 0, spiritstones: 0, divinationStones: 0,
+  };
+  const p = createPlayer({ seed: 5, storage: { [SAVE_KEY]: JSON.stringify(stuckSave) } });
+  p.tick(6000);   // 관문 자동 처리 없이 — resolveGates 는 게임오버를 눌러 버린다
+  assert.ok(p.active('gameover-overlay'), '갇힌 판인데 길의 끝이 뜨지 않았다');
+
+  // 시간 수입이 들어오는 동안: 비용 미만이면 유지, 넘으면 걷힌다 — 시각이 아니라 *관계*를 잠근다
+  let lifted = false;
+  for (let i = 0; i < 24 && !lifted; i++) {     // 최대 12시간 (30분 단위)
+    p.tick(1800000);
+    const s = p.state();
+    if (p.active('gameover-overlay')) {
+      assert.ok(s.shards < 50,
+        '새 검 비용(50)을 넘겼는데 길의 끝이 그대로다 (래치): 조각 ' + s.shards);
+    } else {
+      lifted = true;
+      assert.ok(s.shards >= 50, '아직 갇혔는데 길의 끝이 걷혔다: 조각 ' + s.shards);
+    }
+  }
+  assert.ok(lifted, '12시간 동안 시간 수입이 전혀 들어오지 않았다 — isStuck 의 설계 전제가 깨졌다');
+
+  // 얼어 있던 표시가 되살아나야 한다 (오버레이 동안 render 가 돌지 않는다)
+  const btn = p.$('btn-enhance');
+  assert.strictEqual(btn.dataset.mode, 'newsword', '검없음 모드로 돌아오지 않았다');
+  assert.strictEqual(btn.disabled, false, '조각이 충분한데 새 검 빚기가 잠겨 있다');
+  assert.doesNotMatch(btn.textContent, /보유 10/, '버튼 라벨이 옛 조각 수에 얼어붙어 있다: ' + btn.textContent);
+
+  // 실제로 이어져야 한다
+  const before = p.state();
+  btn.click();
+  p.tick(1200);
+  closeModals(p);
+  const after = p.state();
+  assert.strictEqual(after.hasSword, true, '걷힌 뒤 새 검을 빚지 못했다');
+  assert.ok(after.shards < before.shards, '새 검이 조각을 소모하지 않았다');
+  assert.strictEqual(p.env.errors.length, 0, firstErrors(p.env, 3));
+});
+
+// ---------------------------------------------------------------------------
+test('길의 끝: 진짜 막힌 판은 걷히지 않는다 (오탐 방지)', () => {
+  const p = createPlayer({ seed: 5, storage: { [SAVE_KEY]: JSON.stringify({
+    hasSword: false, level: 0, shards: 0, sealedSwords: [], enshrined: [], fallenSwords: [],
+    swordGeneration: 3, seenHelp: true, stats: {},
+    protections: 0, whetstones: 0, spiritstones: 0, divinationStones: 0,
+  }) } });
+  p.tick(6000);
+  assert.ok(p.active('gameover-overlay'), '길의 끝이 뜨지 않았다');
+  p.tick(120000);
+  assert.ok(p.active('gameover-overlay'), '아직 갇혔는데 길의 끝이 걷혔다');
+
+  // 재시작 경로는 그대로여야 한다
+  p.click('gameover-restart', 'restart');
+  p.tick(1500);
+  assert.ok(!p.active('gameover-overlay'), '재시작 후에도 길의 끝이 남았다');
+  assert.strictEqual(p.state().hasSword, true, '재시작이 새 검을 주지 않았다');
+  assert.strictEqual(p.env.errors.length, 0, firstErrors(p.env, 3));
+});
+
+// ---------------------------------------------------------------------------
+test('중앙 페이드: 명문이 아닌 알림에 「명문이 새겨졌다」가 붙지 않는다', () => {
+  // 이 연출은 명문 전용이 아니다 — 구사일생·검 파괴·방하·베기·보호권·예지·인트로·길 재개가
+  // 같은 큐를 쓰는데 정적 부제가 전부에 붙어 매번 사실과 어긋났다.
+  const p = createPlayer({ seed: 3, policy: { sellAt: 5 } });
+  p.tick(4000);
+  closeModals(p);
+  p.tick(300);
+
+  // 실제 명문 — 부제가 보여야 한다 (명문 사전 미리보기가 진짜 명문 키를 쓴다)
+  p.click('btn-codex', 'codex');
+  p.tick(400);
+  const kanji = p.doc.querySelectorAll('.codex-kanji');
+  assert.ok(kanji.length > 0, '명문 사전이 비어 있다');
+  kanji[0].click();
+  p.tick(300);
+  assert.strictEqual(p.$('inscribe-sub').style.display, '', '실제 명문인데 부제가 숨겨졌다');
+  closeModals(p);
+  p.tick(1600);
+
+  // 명문이 아닌 알림 — 부제가 숨어야 한다 (길 재개 페이드로 확인)
+  const q = createPlayer({ seed: 5, storage: { [SAVE_KEY]: JSON.stringify({
+    hasSword: false, level: 0, shards: 10, sealedSwords: [], enshrined: [], fallenSwords: [],
+    swordGeneration: 3, seenHelp: true, stats: {},
+    protections: 0, whetstones: 0, spiritstones: 0, divinationStones: 0,
+  }) } });
+  q.tick(6000);
+  for (let i = 0; i < 400 && q.active('gameover-overlay'); i++) q.tick(30000);
+  assert.ok(!q.active('gameover-overlay'), '길이 다시 열리지 않았다');
+  assert.strictEqual(q.$('inscribe-sub').style.display, 'none',
+    '명문이 아닌 알림에 「검에 명문이 새겨졌다」가 붙었다');
+  assert.match(q.$('inscribe-label').textContent, /길이 다시 열렸다/, '길 재개 안내가 뜨지 않았다');
+});

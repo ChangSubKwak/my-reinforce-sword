@@ -2138,3 +2138,23 @@ test('v400 實戰: 융검이 「도」를 계승하지 않는다 (성취 표식 
   assert.match(afterDecl('function fuseSwords(', 900), /const p = fusionPreview\(\);/,
     '실제 융합이 미리보기와 같은 계산을 쓴다 (표시≠실제 불가)');
 });
+
+test('v400 實戰: 「길의 끝」이 래치되지 않는다 — 길이 다시 열리면 걷힌다', () => {
+  const cb = afterDecl('function checkGameOver() {', 900);
+  assert.match(cb, /if \(gameOverShown\) \{/, '래치 상태에서도 분기가 있다');
+  assert.match(cb, /if \(!isStuck\(\)\) hideGameOver\(\);/, '해제를 감지해 오버레이를 걷는다');
+  assert.doesNotMatch(cb, /if \(gameOverShown\) return;\s*\n\s*if \(isStuck/, '무조건 조기 반환 재유입 금지');
+  // showGameOver 의 역연산이 갖춰져야 한다 (플래그·오버레이·드론·표시)
+  const hb = afterDecl('function hideGameOver() {', 900);
+  assert.match(hb, /gameOverShown = false/, '플래그 해제');
+  assert.match(hb, /classList\.remove\('active'\)/, '오버레이 내림');
+  assert.match(hb, /startAmbient/, '배경 드론 복원 (showGameOver 가 stopAmbient 했다)');
+  assert.match(hb, /render\(\)/, '오버레이 동안 얼어 있던 표시 갱신');
+});
+
+test('v400 實戰: 중앙 페이드의 부제가 실제 명문일 때만 붙는다', () => {
+  const rq = afterDecl('function runInscribeQueue() {', 1600);
+  assert.match(rq, /inscribeSub\.style\.display = def \? '' : 'none'/,
+    '명문 정의(def)가 있을 때만 「검에 명문이 새겨졌다」');
+  assert.match(js, /const inscribeSub = \$\('inscribe-sub'\);/, '부제 요소 참조');
+});
