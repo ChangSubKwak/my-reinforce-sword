@@ -289,18 +289,21 @@ test('누수 없음: 장기 실행 후 DOM 노드와 타이머가 유계로 유�
     return n;
   };
 
+  // 액션 직후의 스냅샷은 연출 입자·컷씬의 단명 타이머로 크게 튄다 (시각대에 따라 활성 연출이
+  // 달라 KST 88 vs UTC 269 까지 벌어졌다). 누수는 *가라앉은 뒤에도 남는 것*이므로 정지 후 잰다.
+  const settle = () => { p.tick(8000); return { nodes: countNodes(), timers: p.env.clock.pending() }; };
+
   p.run(120);
-  const baseNodes = countNodes();
-  const baseTimers = p.env.clock.pending();
+  const base = settle();
 
   p.run(400);
-  const nodes = countNodes();
-  const timers = p.env.clock.pending();
+  const now = settle();
 
   assert.strictEqual(p.env.errors.length, 0, firstErrors(p.env, 3));
-  // 연출 입자·오버레이는 자동 정리되어야 한다. 3배 이상 불어나면 누수다.
-  assert.ok(nodes < baseNodes * 3, 'DOM 노드가 누적된다: ' + baseNodes + ' → ' + nodes);
-  assert.ok(timers < baseTimers * 3 + 40, '타이머가 누적된다: ' + baseTimers + ' → ' + timers);
+  // 연출 입자·오버레이는 자동 정리되어야 한다. 안정 상태가 불어나면 누수다.
+  assert.ok(now.nodes < base.nodes * 2, 'DOM 노드가 누적된다: ' + base.nodes + ' → ' + now.nodes);
+  assert.ok(now.timers < base.timers * 2 + 20,
+    '타이머가 누적된다 (정지 후 기준): ' + base.timers + ' → ' + now.timers);
 });
 
 // ---------------------------------------------------------------------------

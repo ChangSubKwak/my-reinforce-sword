@@ -9,7 +9,10 @@
 //   - 실제 마크업을 파싱한 최소 DOM 트리 (id 색인 · 클래스 · data-* · 부모자식 · 이벤트 버블링)
 //   - 가상 시계 (setTimeout/setInterval/rAF/Date/performance/AudioContext.currentTime 전부 동일 시각축)
 //   - 시드 고정 난수 (mulberry32 — simulation.test.js와 같은 규율)
-// 따라서 실행이 완전히 결정적이다.
+// 따라서 실행이 결정적이다 — 단 **시간대는 예외**다: 게임은 new Date() 로 *로컬* 시각을 읽어
+// 계절·절기·시진·명절 분기를 타므로, 같은 시드라도 머신 TZ 가 다르면 활성 연출이 달라진다.
+// (실측: 같은 플레이의 대기 타이머가 KST 88 · UTC 269.) 새 관문을 쓸 때는 시각대에 따라
+// 달라지는 값을 단언하지 말 것 — CI 는 UTC 다. `TZ=UTC npm test` 로 확인하면 된다.
 
 const fs = require('fs');
 const path = require('path');
