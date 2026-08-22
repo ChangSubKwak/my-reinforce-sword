@@ -658,3 +658,42 @@ test('확률 표시: 무장 토글이 화면의 숫자를 즉시 바꾼다 (표�
 
   assert.strictEqual(p.env.errors.length, 0, firstErrors(p.env, 3));
 });
+
+// ---------------------------------------------------------------------------
+test('招影 × 매각: 이미 판 검이 도전 판정의 근거가 되지 않는다', () => {
+  // 초영은 조합소를 닫고 450ms 뒤에 발화한다. 그 사이 검을 팔면 매각 전환 창(dissolve 800ms ·
+  // 명명 모달 대기) 동안 state.hasSword/level 이 판 검의 값을 그대로 들고 있어, 계보에 들어가고
+  // 대금까지 받은 검이 판정(level >= strength)의 근거가 됐다 — 名 보스는 검 1자루당 1회 소모라
+  // 그 검으로 벤 보스가 명문 없이 영구 소멸했다. (v400 이 초영을 되살리며 함께 살아난 경로.)
+  const p = createPlayer({ seed: 4, storage: { [SAVE_KEY]: JSON.stringify({
+    level: 6, bestLevel: 6, shards: 3000, hasSword: true, seenHelp: true,
+    currentSword: { enhanceAttempts: 0, slainCount: 0, inscriptions: [], form: '직', soul: 0 },
+    sealedSwords: [],
+  }) } });
+  p.tick(4000);
+  closeModals(p);
+
+  p.click('btn-forge', 'forge');
+  p.tick(50);
+  const summon = p.doc.querySelector('[data-recipe="summon"]');
+  assert.ok(summon && !summon.disabled, '초영을 부를 수 없다');
+  summon.click();                       // 450ms 타이머 예약
+  const paid = p.state().shards;
+
+  p.click('btn-seal-direct', 'sell');    // 예약된 채로 매각
+  p.tick(50);
+  if (p.active('name-modal')) p.click('name-confirm', 'name-confirm');
+  p.tick(600);                           // 450ms 발화 시점 통과
+
+  assert.ok(!p.active('challenge'), '이미 판 검으로 도전이 열렸다');
+  assert.ok(p.state().shards > paid, '어긋난 부름의 조각이 환급되지 않았다');
+
+  p.tick(4000);
+  closeModals(p);
+  p.tick(1000);
+  const s = p.state();
+  assert.strictEqual(s.totalSlain, 0, '판 검으로 그림자를 베었다');
+  assert.deepStrictEqual(s.foesSlain || {}, {}, '판 검으로 名 보스가 영구 소멸했다');
+  assert.strictEqual(s.sealedSwords.length, 1, '매각 자체는 정상이어야 한다');
+  assert.strictEqual(p.env.errors.length, 0, firstErrors(p.env, 3));
+});

@@ -2112,3 +2112,17 @@ test('v400 實戰: 무장 토글이 확률 표시를 갱신한다', () => {
   assert.match(js, /\['whet-check', 'spirit-check', 'divination-check', 'protect-check'\]\.forEach\(id => \{\s*\n\s*const el = \$\(id\);\s*\n\s*if \(el\) el\.addEventListener\('change', \(\) => render\(\)\);/,
     '네 토글 모두 change → render 배선');
 });
+
+test('v400 實戰: 매각 전환 창에는 도전이 스폰되지도 판정되지도 않는다', () => {
+  // 지연 발화 경로(초영 450ms · 형 선택 보류)가 dissolve 800ms / 명명 모달 대기와 겹치면
+  // 이미 계보에 들어간 검이 판정 근거가 된다. v396 규율 ③의 一閃 축 미적용 지점이었다.
+  const mb = afterDecl('function maybeTriggerChallenge(forced) {', 700);
+  assert.match(mb, /if \(sealTransition\) return;/, '스폰 가드');
+  const sb = afterDecl('function slay() {', 220);
+  assert.match(sb, /if \(sealTransition\) return;/, '판정 가드');
+  const si = js.indexOf('    summon: {');
+  assert.ok(si > 0, '초영 레시피');
+  assert.match(js.slice(si, si + 900),
+    /challenge \|\| rescueWindow \|\| voidPending \|\| sealTransition \|\| !state\.hasSword/,
+    '초영 450ms 재검사에도 매각 전환 포함 (어긋나면 환급)');
+});

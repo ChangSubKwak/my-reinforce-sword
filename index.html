@@ -13625,6 +13625,11 @@
     if (!state.hasSword) return;
     if (state.level < CHALLENGE_MIN_LEVEL) return;
     if (challenge) return;
+    // v400 實戰 — 매각 전환 창(dissolve 800ms · 명명 모달 대기)에는 스폰하지 않는다.
+    // 그 사이 state.hasSword/level 은 이미 판 검의 값을 그대로 들고 있어, 계보에 들어가고
+    // 대금까지 받은 검이 도전 판정(level >= strength)의 근거가 된다. 지연 발화 경로
+    // (초영 450ms · 형 선택 보류)가 이 창과 겹칠 수 있다.
+    if (sealTransition) return;
     // v396 감사 [29] — 형 선택 모달(필수 선택, z100)이 열려 있으면 도전을 보류하고
     // 형 확정(applyFormChoice) 후 발화 — 완전히 가려진 도전에 Space/Esc가 몰래 작동하던 결함.
     const fsModal = $('form-select-modal');
@@ -14829,6 +14834,7 @@
 
   function slay() {
     if (!challenge) return;
+    if (sealTransition) return;  // v400 實戰 — 매각 전환 창의 검으로는 베지 않는다 (위 스폰 가드와 짝)
     const c = challenge;
     challenge = null;
     if (state.level >= c.strength) {
@@ -18320,7 +18326,7 @@
         setTimeout(() => {
           // v388 감사 — 450ms 사이 상태가 어긋나면(파괴/매각/자연 도전 선점) 환급.
           // 기존엔 조각만 소실되고 아무 일도 없었다 (무고지 손실).
-          if (challenge || rescueWindow || voidPending || !state.hasSword || state.level < CHALLENGE_MIN_LEVEL) {
+          if (challenge || rescueWindow || voidPending || sealTransition || !state.hasSword || state.level < CHALLENGE_MIN_LEVEL) {
             state.shards += recipes.summon.cost;
             log('초영 — 부름이 어긋났다 · 조각 ' + recipes.summon.cost + ' 환급', 'info');
             save(); render();
