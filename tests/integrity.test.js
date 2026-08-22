@@ -2158,3 +2158,20 @@ test('v400 實戰: 중앙 페이드의 부제가 실제 명문일 때만 붙는�
     '명문 정의(def)가 있을 때만 「검에 명문이 새겨졌다」');
   assert.match(js, /const inscribeSub = \$\('inscribe-sub'\);/, '부제 요소 참조');
 });
+
+test('v400 實戰: 표시 지연 안전망 — 저장된 상태는 반드시 화면에 닿는다', () => {
+  // 렌더 모델은 save() → render() 인데 타이머 경로 다섯 곳이 save()로 끝났다.
+  // 개별 호출부를 늘리는 대신(그렇게 다섯이 쌓였다) 진원에서 누락을 감지한다.
+  assert.match(js, /let stateSeq = 0, renderedSeq = 0;/, '버전 카운터 선언');
+  const sb = afterDecl('function save() {', 300);
+  assert.match(sb, /stateSeq\+\+;/, 'save() 가 상태 버전을 올린다');
+  const rEnd = js.indexOf('renderedSeq = stateSeq;');
+  assert.ok(rEnd > 0, 'render() 말미에서 표시 버전 기록');
+  assert.match(js, /setInterval\(\(\) => \{ if \(renderedSeq !== stateSeq\) render\(\); \}, 1000\);/,
+    '1초 안전망 — 아직 그려지지 않은 상태를 그린다');
+  // render() 가 save() 를 부르면 무한 순환이 된다 — 부르지 않아야 한다
+  const rIdx = js.indexOf('\n  function render() {');
+  assert.ok(rIdx > 0, 'render 본문');
+  const rBody = js.slice(rIdx, js.indexOf('renderedSeq = stateSeq;', rIdx));
+  assert.doesNotMatch(rBody, /\n\s*save\(\);/, 'render() 안에서 save() 호출 금지 (안전망 순환)');
+});

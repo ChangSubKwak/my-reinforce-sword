@@ -4472,7 +4472,15 @@
   };
 
   let saveFailedWarned = false;  // v370p — 저장 실패(주로 quota 초과) 1회 경고 플래그
+  // v400 實戰 — 표시 지연 안전망의 버전 카운터.
+  // 이 게임의 렌더 모델은 「매 액션 후 save() → render() 풀 리렌더」인데, *타이머가* 상태를
+  // 바꾸는 경로(연일 마일스톤·정진·명절·첨·삼례)는 save()로 끝나 화면이 낡은 값에 고착됐다.
+  // 실측: 자정을 넘기며 조각 +30 이 들어와 state=1030 인데 상단 카운터는 1000 에 멈춘 채,
+  // 하필 그 보상이 강화 비용을 넘겨준 경우 버튼이 「조각 부족」으로 disabled 인 채 굳었다.
+  // 개별 호출부를 늘리는 대신(그렇게 다섯 곳이 쌓였다) 진원에서 표시 누락을 감지한다.
+  let stateSeq = 0, renderedSeq = 0;
   function save() {
+    stateSeq++;
     state.lastPlayedTime = Date.now();  // v126 여명 — 마지막 저장 시각
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(state));
@@ -6374,6 +6382,7 @@
     // 덮으므로 그 아래 #actions 의 강화·팔기·융검이 평소 라벨 그대로 활성으로 남아 있었고,
     // 누르면 enhance()/sealSword()/fuseSwords()가 조용히 return 했다 (아무 피드백 없음).
     if (challenge || rescueWindow || voidPending) lockActionButtons();
+    renderedSeq = stateSeq;   // v400 實戰 — 이 시점의 상태가 화면에 닿았다
   }
 
   // 도전·회수창·파괴 전환 갭 동안 주 행동 버튼을 잠근다. 해제는 render() 가 각 버튼의
@@ -17874,11 +17883,14 @@
     log('길이 다시 열렸다 — 검을 빚을 수 있다', 'success');
     inscribeQueue.push({ key: '개', label: '길이 다시 열렸다 · 새 검을 빚어라' });
     if (!inscribeRunning) runInscribeQueue();
-    render();   // 오버레이 동안 얼어 있던 표시(조각·버튼 라벨)를 되살린다
     save();
+    render();   // 오버레이 동안 얼어 있던 표시(조각·버튼 라벨)를 되살린다
   }
   // 안전장치: 1초마다 자동 체크 — render 누락 / 외부 에러에도 대응
   setInterval(checkGameOver, 1000);
+  // v400 實戰 — 화면이 상태를 못 따라간 채로 남지 않게. 저장된 상태가 아직 그려지지 않았으면
+  // 그린다 (보통은 save()→render() 가 짝을 이루므로 아무 일도 하지 않는다).
+  setInterval(() => { if (renderedSeq !== stateSeq) render(); }, 1000);
   function showGameOver() {
     gameOverShown = true;
     if (typeof stopAutoEnhance === 'function') stopAutoEnhance();

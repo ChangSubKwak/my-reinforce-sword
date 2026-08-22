@@ -881,3 +881,55 @@ test('중앙 페이드: 명문이 아닌 알림에 「명문이 새겨졌다」�
     '명문이 아닌 알림에 「검에 명문이 새겨졌다」가 붙었다');
   assert.match(q.$('inscribe-label').textContent, /길이 다시 열렸다/, '길 재개 안내가 뜨지 않았다');
 });
+
+// ---------------------------------------------------------------------------
+test('시간 보상: 타이머가 바꾼 상태가 화면에 닿는다 (조각을 쥐고도 잠기지 않는다)', () => {
+  // 이 게임의 렌더 모델은 「매 액션 후 save() → render() 풀 리렌더」인데, *타이머가* 상태를
+  // 바꾸는 경로(연일 마일스톤·정진·명절·첨·삼례)는 save()로 끝나 화면이 낡은 값에 고착됐다.
+  // 최악의 증상: 보상이 강화 비용을 넘겨줬는데도 버튼이 disabled 인 채 굳어, 실제로는 조각을
+  // 쥐고 있으면서 마우스·스페이스·엔터 어느 것도 먹지 않았다.
+  // 게임은 *로컬* 시각으로 날짜 경계를 판정한다 — UTC 절대값을 박으면 CI(UTC)에서 자정을
+  // 넘지 않는다 (v400 이 이미 한 번 겪은 함정). 벽시계 23:30 을 어느 시간대에서든 만든다.
+  const T = new Date(2026, 4, 12, 23, 30, 0).getTime();
+
+  // 실제 부팅이 만든 세이브를 바탕으로 삼는다 (손으로 지어낸 상태가 아니라)
+  const seedP = createPlayer({ seed: 5, startTime: T });
+  seedP.tick(5000);
+  const base = Object.fromEntries(seedP.env.localStorage._store);
+  const s = JSON.parse(base[SAVE_KEY]);
+  Object.assign(s, {
+    seenHelp: true, hasSword: true, level: 5, shards: 5,     // +5→+6 비용은 8 — 모자란다
+    playStreak: 6, lastPlayDate: '2026-05-12', streakMilestonesShown: {},
+  });
+  s.currentSword = Object.assign({}, s.currentSword,
+    { form: '직', startLevel: 0, inscriptions: [], soul: 5 });
+
+  const p = createPlayer({ seed: 5, startTime: T,
+    storage: Object.assign({}, base, { [SAVE_KEY]: JSON.stringify(s) }) });
+  p.tick(5000);
+  closeModals(p);
+
+  const shown = () => (p.$('stat-shards').textContent || '').replace(/,/g, '').trim();
+  assert.strictEqual(shown(), String(p.state().shards), '시작부터 표시가 어긋난다');
+  assert.strictEqual(p.$('btn-enhance').disabled, true, '조각이 모자란데 강화가 열려 있다');
+
+  p.tick(90 * 60 * 1000);   // 자정 통과 — 사용자 조작 0회
+
+  const after = p.state();
+  assert.ok(after.shards > 5, '자정 보상이 들어오지 않았다 — 이 검증의 전제가 깨졌다');
+  assert.strictEqual(shown(), String(after.shards),
+    '타이머 보상이 화면에 닿지 않았다 (표시 ' + shown() + ' vs 실제 ' + after.shards + ')');
+
+  const eb = p.$('btn-enhance');
+  assert.strictEqual(eb.disabled, false,
+    '조각이 비용을 넘겼는데 강화가 잠긴 채다: ' + eb.textContent);
+  assert.doesNotMatch(eb.textContent, /조 각 부 족/, '버튼 라벨이 낡은 값에 얼어붙어 있다');
+
+  // 실제로 눌러진다
+  const before = p.state();
+  eb.click();
+  p.tick(1200);
+  closeModals(p);
+  assert.notStrictEqual(p.state().shards, before.shards, '풀린 버튼이 실제로는 동작하지 않는다');
+  assert.strictEqual(p.env.errors.length, 0, firstErrors(p.env, 3));
+});
