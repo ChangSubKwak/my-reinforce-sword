@@ -144,6 +144,40 @@
   #corner-stack .corner-row { display: flex; gap: 12px; align-items: baseline; }
   /* 내용 없는 마커는 자리·gap도 차지하지 않게 (스택 자동 압축) */
   #corner-stack .corner-row > :empty, #corner-stack > div:empty { display: none; }
+  /* v398 掌中 — 스택으로 옮긴 표식들의 활자 (이전엔 JS 인라인 style에 좌표와 뒤섞여 있었다) */
+  #sidin-mark { font-size: 13px; letter-spacing: 3px; font-family: 'Noto Serif KR', serif; pointer-events: auto; cursor: help; transition: color 1.5s; }
+  #weekend-mark { font-size: 12px; letter-spacing: 3px; color: rgba(232, 184, 120, 0.8); font-family: 'Noto Serif KR', serif; text-shadow: 0 0 10px rgba(232, 184, 120, 0.5); }
+  #streak-mark { font-size: 10px; letter-spacing: 3px; color: rgba(212, 175, 55, 0.7); font-family: 'Noto Serif KR', serif; pointer-events: auto; cursor: help; }
+  #festival-mark { font-size: 13px; letter-spacing: 3px; font-family: 'Noto Serif KR', serif; text-shadow: 0 0 12px currentColor; }
+  #eternity-mark { font-size: 10px; letter-spacing: 2px; color: rgba(200, 184, 240, 0.8); font-family: 'Noto Serif KR', serif; text-shadow: 0 0 10px rgba(180, 160, 232, 0.5); }
+  /* v398 — 일언(日言)은 흐름 요소로 이동. 고정 좌표(bottom:54px) 시절엔 팔기 버튼 위에 얹혔다 */
+  #daily-saying {
+    text-align: center; font-size: 10px; letter-spacing: 3px;
+    color: rgba(168, 168, 168, 0.45); font-family: 'Noto Serif KR', serif;
+    font-style: italic; cursor: pointer; padding: 2px 12px 0;
+    transition: opacity 0.4s, color 0.4s;
+  }
+  /* v398 — 명상 중엔 호흡 안내가 명상 표식(좌)과 겹친다. 명상 자체가 호흡이므로 표식이 대신한다 */
+  body.meditation #advice-line { opacity: 0; }
+  /* v398 掌中 — 도사 안내: 이전 top:90px 인라인 좌표는 마커 스택(최대 다섯 줄)과 같은 띠였다.
+     선대의 속삭임(150px)보다 아래로 내려 어느 쪽과도 겹치지 않게 한다 */
+  .advisor-msg {
+    position: fixed; top: 210px; right: 18px;
+    font-size: 11px; letter-spacing: 2px; color: #a8c0d8;
+    text-shadow: 0 0 6px rgba(168, 192, 216, 0.4);
+    background: rgba(20, 30, 45, 0.85); border-left: 2px solid #a8c0d8;
+    padding: 8px 14px; pointer-events: none; z-index: 1300;
+    max-width: 280px; line-height: 1.7; opacity: 0;
+    font-family: 'Noto Serif KR', serif; border-radius: 2px;
+  }
+  /* v398 掌中 — 손가락 치수. 실측(390px 실기 뷰포트): 하단 3버튼 34px · 메뉴 30px ·
+     보호권 행 16px 로 권장 44px 미달이었다. 폰 폭에서만 키워 데스크톱 여백은 그대로 둔다 */
+  @media (max-width: 480px) {
+    #footer .footer-btn { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+    #menu-toggle { min-width: 44px; min-height: 44px; }
+    #protect-row, #auto-row { min-height: 40px; align-items: center; }
+    #protect-check, #auto-check { width: 18px; height: 18px; }
+  }
   #way-counter {
     font-size: 11px;
     color: var(--accent);
@@ -2187,7 +2221,6 @@
      !important: destiny-banner 등은 렌더 함수가 inline display를 쓰므로 필요. */
   body.simple-mode #resolve-row,
   body.simple-mode #resolve-desc,
-  body.simple-mode #stone-row,
   body.simple-mode #auto-row,
   body.simple-mode #sanctum-row,
   body.simple-mode #btn-oath,
@@ -2202,6 +2235,12 @@
   body.simple-mode #corner-stack .corner-row,
   body.simple-mode #way-counter,
   body.simple-mode #path-progress { display: none !important; }
+  /* v400 實戰 — 가진 도구는 쓸 수 있다.
+     간결 모드가 무장 토글을 항상 숨기는 동안에도 조합소는 숫돌·영석·점복석을 팔았다:
+     기본 모드(간결 ON)의 신규 플레이어가 조각을 주고 산 물건을 영영 쓸 수 없던 함정.
+     0개일 때는 그대로 숨기고, 하나라도 지니면 그때 도구가 드러난다 —
+     화면은 여전히 깨끗하고, 구매가 곧 그 기능의 발견이 된다. */
+  body.simple-mode:not(.has-stones) #stone-row { display: none !important; }
   /* 메뉴 — 핵심(.menu-core: 기록/안내/설정/소리/초기화/백업·복원/클라우드)만 노출 */
   body.simple-mode #menu-drop button:not(.menu-core),
   body.simple-mode #menu-drop .menu-section,
@@ -2879,10 +2918,18 @@
     <div id="weather-mark"></div>
     <div id="tod-mark"></div>
     <div id="season-mark"></div>
+    <!-- v398 掌中 — 시진·주말·연일: JS 인라인 고정 좌표로 만들어져 v380 스택 규율을 우회하던
+         표식들. 시진은 메뉴 버튼(≡)과 정확히 같은 좌표(top:14px/left:18px)에 겹쳐 있었고,
+         주말·연일은 좁은 화면에서 제목을 덮었다 → 스택 소속으로 (겹침 구조적 불가) -->
+    <div id="sidin-mark" title="시진"></div>
+    <div id="weekend-mark"></div>
+    <div id="streak-mark"></div>
+    <div id="festival-mark"></div>
   </div>
   <div class="corner-row">
     <div id="era-mark"></div>
     <div id="gen-mark"></div>
+    <div id="eternity-mark"></div>
   </div>
   <div id="way-counter"></div>
   <div id="path-progress" title="행 — 검의 길 진행도"></div>
@@ -3441,6 +3488,9 @@
     <button id="btn-oath" style="display:none" title="이 검의 일생에 계율 하나를 건다 — 강화 3회 전까지만 · 어기면 파계가 기록된다"></button>
   </div>
 
+  <!-- v398 掌中 — 일언: 고정 좌표(bottom:54px) 시절엔 팔기 버튼 위에 얹혔다. 흐름 요소로 -->
+  <div id="daily-saying"></div>
+
   <div id="key-hint" style="text-align:center;font-size:9px;color:var(--dim);letter-spacing:2px;opacity:0.5;padding:4px 0">
     <span class="key-chip">␣ Enter</span> 강화/베기/줍기 ·
     <span class="key-chip">Esc</span> 닫기/도망 ·
@@ -3462,7 +3512,7 @@
 <div class="modal" id="forge-modal">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mtitle-0">
     <h2 id="mtitle-0">조 합 소</h2>
-    <p>모은 조각으로 도구와 검을 만듭니다</p>
+    <p>모은 조각으로 도구를 만듭니다 — 도구 빚기는 +0 검 단계에서만</p>
     <div class="recipe">
       <div class="recipe-text">보호권 1개<small>조각 15 · 실패해도 검 유지</small></div>
       <button class="recipe-btn" data-recipe="protection">만 들 기</button>
@@ -4556,6 +4606,18 @@
   function normalizeState() {
     try {
       if (!Array.isArray(state.sealedSwords)) state.sealedSwords = [];
+      // v400 實戰 — 객체 배열의 비객체 항목 제거 (손상 import 방어의 단일 진원).
+      // 실행 하니스가 잡은 결함: sealedSwords/enshrined 에 null 하나가 섞이면 v117 四道의
+      // getWayFormCounts 가 부팅 중 던져 게임 전체가 죽었다 (강화·메뉴 전부 무반응, 유일한
+      // 복구가 전 진행도 삭제). rubbings/userDiary/guestSwords 는 해당 모달이 죽었다.
+      // 항목을 객체로 전제하는 소비처가 수십 곳이므로 진입점에서 한 번에 걸러낸다.
+      // 대상 아님: userSeal(문자 배열) · hourActivity(수 배열).
+      ['sealedSwords', 'enshrined', 'fallenSwords', 'nemesesArchive', 'eras',
+        'rubbings', 'userDiary', 'guestSwords', 'recentLog'].forEach(k => {
+        if (Array.isArray(state[k])) {
+          state[k] = state[k].filter(v => v && typeof v === 'object' && !Array.isArray(v));
+        }
+      });
       if (!state.currentSword || typeof state.currentSword !== 'object') {
         state.currentSword = { enhanceAttempts: 0, slainCount: 0, inscriptions: [] };
       }
@@ -4685,6 +4747,10 @@
         // v370o 봉인 검 level도 범위 강제 — 손상 import의 level=999가 계보 SVG·"가장 강한 검"
         // 표시를 깨고 sealReward 표시를 폭주시키는 것 방지 (표시 전용이라 검 필드 sanitize에 동봉).
         if (sw.level != null) sw.level = clampInt(sw.level, 0, MAX_LEVEL);
+        // v400 實戰 — soul 범위 강제. v388이 무덤(fallenSwords)의 soul을 SOUL_MAX로 조인 것과
+        // 같은 비대칭이 검 쪽에 남아 있었다: 손상 import의 soul=99999는 soulEffects를 영구 本
+        // 단계로 고정(강화 +4% · 도전 보상 ×1.15)하고, 봉인 → 융검(평균) · 재련(절반)으로 번진다.
+        if (sw.soul != null) sw.soul = clampInt(sw.soul, 0, 100);
         // 봉인 검·전당 검의 inscriptions 배열 강제 — 손상/구버전/import 검이 비배열이면
         // renderInscriptions/makeSwordName 등의 .includes/.join이 크래시 (currentSword만 4365에서 보정됐음).
         if (!Array.isArray(sw.inscriptions)) sw.inscriptions = [];
@@ -4704,6 +4770,30 @@
       state.sealedSwords.forEach(sanitizeSword);
       state.enshrined.forEach(sanitizeSword);
       sanitizeSword(state.currentSword);
+      // v400 實戰 — 나중에 붙은 두 컬렉션이 소독 대칭에서 빠져 있었다 (v396 규율의 잔여):
+      // 탁본(v136)은 기정·탁본 모달에서, 최근 일지(v75)는 記錄 모달에서 항목 문자열이
+      // innerHTML 로 그대로 흘렀다 (記錄 은 menu-core — 간결 모드에서도 열린다).
+      // 유입 경로는 실재한다: 파일 복원 · 클라우드 복원 · 공유 검코드(객검).
+      // 필드를 열거하지 않고 항목의 *모든* 문자열을 훑는다 — 열거 방식이 애초에 이 둘을 빠뜨린 원인이다.
+      const scrubStrings = (o, depth) => {
+        if (!o || typeof o !== 'object' || depth > 3) return;
+        Object.keys(o).forEach(k => {
+          const v = o[k];
+          if (typeof v === 'string') o[k] = stripTags(v).slice(0, 500);
+          else if (Array.isArray(v)) o[k] = v.map(x => (typeof x === 'string' ? stripTags(x).slice(0, 500) : x));
+          else if (v && typeof v === 'object') scrubStrings(v, depth + 1);
+        });
+      };
+      // 주의: normalizeState 전체가 하나의 try 로 감싸여 있다 — 여기서 던지면 *이후 정규화가
+      // 통째로 건너뛰어진다*. 배열이 아닌 오염값(문자열 등)에 forEach 를 부르지 않도록 확인한다.
+      if (Array.isArray(state.rubbings)) state.rubbings.forEach(r => scrubStrings(r, 0));
+      if (Array.isArray(state.recentLog)) state.recentLog.forEach(r => scrubStrings(r, 0));
+      // 주보 스냅샷의 week — ISO 주차 형식만 허용 (형식 밖이면 표시하지 않는다)
+      if (state.lastReportSnapshot && typeof state.lastReportSnapshot === 'object') {
+        const wk = state.lastReportSnapshot.week;
+        if (typeof wk !== 'string' || !/^\d{4}-W\d{1,2}$/.test(wk)) state.lastReportSnapshot.week = '';
+      } else if (state.lastReportSnapshot != null) state.lastReportSnapshot = null;
+      if (typeof state.lastReportWeek === 'string' && !/^\d{4}-W\d{1,2}$/.test(state.lastReportWeek)) state.lastReportWeek = '';
       // userSeal(印, v187): buildSealSVG가 각 글자를 <text>에 raw 삽입 → innerHTML.
       // 배열 가드만으론 원소 문자열이 import로 오염될 수 있어 태그문자 제거.
       if (Array.isArray(state.userSeal)) state.userSeal = state.userSeal.map(stripTags);
@@ -6276,6 +6366,25 @@
       divLabel.textContent = '점 ×' + (state.divinationStones || 0) + ' (전조 정확)';
       divLabel.style.color = (state.divinationStones || 0) > 0 ? '#a0c0d8' : 'var(--dim)';
     }
+    // v400 實戰 — 하나라도 지니면 간결 모드에서도 무장 행이 드러난다 (위 CSS 참조).
+    document.body.classList.toggle('has-stones',
+      (state.whetstones || 0) + (state.spiritstones || 0) + (state.divinationStones || 0) > 0);
+    // v400 實戰 — 결정이 잠긴 동안에는 버튼도 잠긴 것처럼 보여야 한다. #challenge 는 stage 만
+    // 덮으므로 그 아래 #actions 의 강화·팔기·융검이 평소 라벨 그대로 활성으로 남아 있었고,
+    // 누르면 enhance()/sealSword()/fuseSwords()가 조용히 return 했다 (아무 피드백 없음).
+    if (challenge || rescueWindow || voidPending) lockActionButtons();
+  }
+
+  // 도전·회수창·파괴 전환 갭 동안 주 행동 버튼을 잠근다. 해제는 render() 가 각 버튼의
+  // 진짜 조건을 다시 계산하는 것으로 이뤄진다 (여기서 되살리지 않는다 — 조건을 덮어쓸 위험).
+  function lockActionButtons() {
+    const why = challenge ? '그림자와 대치 중에는 할 수 없다'
+      : '부러진 검을 수습하는 동안에는 할 수 없다';
+    [btnEnhance, $('btn-seal-direct'), $('btn-fusion')].forEach(b => {
+      if (!b) return;
+      b.disabled = true;
+      b.title = why;
+    });
   }
 
   // === 로그 ===
@@ -7026,14 +7135,10 @@
     log('절 ' + f.name + ' — ' + f.verse + ' · ' + f.reward.label, 'success');
   }
   function renderFestivalMark(f) {
-    let el = document.getElementById('festival-mark');
-    if (!f) { if (el) el.remove(); return; }
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'festival-mark';
-      el.style.cssText = 'position:fixed;top:14px;right:215px;font-size:13px;letter-spacing:3px;font-family:"Noto Serif KR",serif;pointer-events:none;z-index:25;text-shadow:0 0 12px currentColor';
-      document.body.appendChild(el);
-    }
+    // v398 掌中 — corner-stack 소속 (이전 right:215px 손배치는 좁은 화면에서 제목을 덮었다)
+    const el = document.getElementById('festival-mark');
+    if (!el) return;
+    if (!f) { el.textContent = ''; el.title = ''; return; }
     el.style.color = f.color;
     el.textContent = f.kanji;
     el.title = f.name + ' — ' + f.verse;
@@ -7184,7 +7289,9 @@
     else summary = '검의 길은 계속된다';
     let html = '<div style="text-align:center;font-family:\'Noto Serif KR\',serif">';
     html += '<div style="font-size:10px;letter-spacing:8px;color:rgba(212,175,55,0.7);margin-bottom:6px">주  보</div>';
-    html += '<div style="font-size:11px;letter-spacing:3px;color:#888;margin-bottom:18px">' + prevWeek + '</div>';
+    // v400 實戰 — 스냅샷의 week 는 세이브에서 온 문자열이다 (파일/클라우드 복원으로 오염 가능).
+    // 사용자 조작 0회 · 부팅 3초 후 자동으로 열리는 화면이라 관통 시 대가가 가장 크다.
+    html += '<div style="font-size:11px;letter-spacing:3px;color:#888;margin-bottom:18px">' + escapeHtml(String(prevWeek == null ? '' : prevWeek)) + '</div>';
     html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0;text-align:left">';
     const row = (label, val, color) => '<div style="padding:8px 14px;background:rgba(20,20,28,0.5);border-left:2px solid ' + (color || '#444') + ';font-size:11px;letter-spacing:2px;color:#a8a098"><span style="color:' + (color || '#e8e6dd') + ';font-size:18px;font-weight:200;display:block;letter-spacing:0">' + val + '</span>' + label + '</div>';
     html += row('강화 시도', diff.enhanceAttempts, '#d4af37');
@@ -7436,15 +7543,11 @@
     log('무극 ' + title + ' — 영겁 ' + points + ' (글로벌 강화 +' + (eternityBonus()*100).toFixed(1) + '%)', 'success');
   }
   function renderEternityMark() {
-    let el = document.getElementById('eternity-mark');
+    // v398 掌中 — corner-stack 소속 (이전 top:32px/right:18px는 스택 둘째 줄과 같은 자리였다)
+    const el = document.getElementById('eternity-mark');
+    if (!el) return;
     const p = state.eternityPoints || 0;
-    if (p === 0) { if (el) el.remove(); return; }
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'eternity-mark';
-      el.style.cssText = 'position:fixed;top:32px;right:18px;font-size:10px;letter-spacing:2px;color:rgba(200,184,240,0.8);font-family:"Noto Serif KR",serif;pointer-events:none;z-index:25;text-shadow:0 0 10px rgba(180,160,232,0.5)';
-      document.body.appendChild(el);
-    }
+    if (p === 0) { el.textContent = ''; el.title = ''; return; }
     el.textContent = '영겁 ' + p;
     el.title = '무극 — 영겁 ' + p + ' (글로벌 강화 +' + (eternityBonus()*100).toFixed(1) + '%)';
   }
@@ -8307,14 +8410,10 @@
   function renderWeekendMark() {
     const we = isWeekend();
     document.body.classList.toggle('weekend', we);
-    let el = document.getElementById('weekend-mark');
-    if (!we) { if (el) el.remove(); return; }
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'weekend-mark';
-      el.style.cssText = 'position:fixed;top:14px;right:265px;font-size:12px;letter-spacing:3px;color:rgba(232,184,120,0.8);font-family:"Noto Serif KR",serif;pointer-events:none;z-index:25;text-shadow:0 0 10px rgba(232,184,120,0.5)';
-      document.body.appendChild(el);
-    }
+    // v398 掌中 — corner-stack 소속 (빈 내용이면 :empty 규칙이 자리까지 지운다)
+    const el = document.getElementById('weekend-mark');
+    if (!el) return;
+    if (!we) { el.textContent = ''; el.title = ''; return; }
     el.textContent = '휴';
     el.title = '휴 — 주말 (강화 비용 -5%, 도전 보상 +5%)';
   }
@@ -8733,14 +8832,11 @@
     }) || SIDIN_HOURS[0];
   }
   function renderSidinMark() {
-    let el = document.getElementById('sidin-mark');
+    // v398 掌中 — corner-stack 소속. 이전 인라인 좌표(top:14px/left:18px)는 메뉴 버튼과
+    // 정확히 같은 자리라 모든 화면 폭에서 ≡ 위에 글자가 겹쳐 있었다.
+    const el = document.getElementById('sidin-mark');
+    if (!el) return;
     const s = getCurrentSidin();
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'sidin-mark';
-      el.style.cssText = 'position:fixed;top:14px;left:18px;font-size:13px;letter-spacing:3px;font-family:"Noto Serif KR",serif;pointer-events:auto;z-index:25;cursor:help;transition:color 1.5s';
-      document.body.appendChild(el);
-    }
     el.style.color = s.color;
     el.style.textShadow = '0 0 10px ' + s.color + '55';
     el.textContent = s.kanji;
@@ -9096,7 +9192,11 @@
       try {
         if (typeof resolveMode !== 'undefined' && resolveMode !== 'normal') resolveMode = 'normal';
         if (typeof sanctumActive !== 'undefined' && sanctumActive && typeof setSanctum === 'function') setSanctum(false);
-        ['whet-check', 'spirit-check', 'divination-check', 'auto-check'].forEach(id => { const el = $(id); if (el) el.checked = false; });
+        // v400 實戰 — 숫돌·영석·점복은 보유 시 간결 모드에서도 노출되므로 그때는 해제하지 않는다.
+        // (보이지 않는 배율만 중화한다는 v388 의 취지 그대로 — 보이는 도구는 사용자의 것이다.)
+        const ownsStones = (state.whetstones || 0) + (state.spiritstones || 0) + (state.divinationStones || 0) > 0;
+        (ownsStones ? ['auto-check'] : ['whet-check', 'spirit-check', 'divination-check', 'auto-check'])
+          .forEach(id => { const el = $(id); if (el) el.checked = false; });
         if (typeof stopAutoEnhance === 'function') stopAutoEnhance();
       } catch (e) {}
     }
@@ -9307,16 +9407,15 @@
     return DAILY_SAYINGS[dailySayingIdx()];
   }
   function renderDailySaying() {
-    let el = document.getElementById('daily-saying');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'daily-saying';
-      el.style.cssText = 'position:fixed;bottom:54px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;color:rgba(168,168,168,0.45);font-family:"Noto Serif KR",serif;font-style:italic;pointer-events:auto;z-index:8;cursor:pointer;transition:opacity 0.4s,color 0.4s;max-width:80%;text-align:center';
+    // v398 掌中 — 흐름 요소(문서 순서상 팔기 버튼 아래). 배선은 최초 1회만.
+    const el = document.getElementById('daily-saying');
+    if (!el) return;
+    if (!el.dataset.wired) {
+      el.dataset.wired = '1';
       el.title = '일언 — 클릭하여 큰 글로 본다';
       el.addEventListener('mouseenter', () => { el.style.opacity = '0.9'; el.style.color = 'var(--accent)'; });
       el.addEventListener('mouseleave', () => { el.style.opacity = ''; el.style.color = ''; });
       el.addEventListener('click', showDailySayingFade);
-      document.body.appendChild(el);
     }
     el.textContent = getDailySaying();
   }
@@ -9424,15 +9523,11 @@
     log('연일 ' + m.label + ' — 조각 +' + fmtNum(m.reward), 'success');
   }
   function renderStreakMark() {
-    let el = document.getElementById('streak-mark');
+    // v398 掌中 — corner-stack 소속
+    const el = document.getElementById('streak-mark');
+    if (!el) return;
     const n = state.playStreak || 0;
-    if (n === 0) { if (el) el.remove(); return; }
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'streak-mark';
-      el.style.cssText = 'position:fixed;top:14px;right:170px;font-size:10px;letter-spacing:3px;color:rgba(212,175,55,0.7);pointer-events:none;z-index:25;font-family:"Noto Serif KR",serif;cursor:help';
-      document.body.appendChild(el);
-    }
+    if (n === 0) { el.textContent = ''; el.title = ''; return; }
     el.textContent = '련 ' + n;
     el.title = '연속 ' + n + '일 (최고 ' + (state.bestStreak || n) + '일)';
   }
@@ -9574,9 +9669,11 @@
       bonusKey: 'successBonus', bonusVal: 0.01,
       verse: '남방의 화염이 검의 길을 비춘다' },
     { key:'seiryu', name:'청룡', dir:'동', dirKr:'동', element:'목', color:'#4a9a6a',
-      condition: () => ((state.sealedSwords || []).length) >= 10,
+      // v399 遺失 — allSealedSwords() 단일 진원 (전당 진열 검이 빠져 도 검을 진열할수록
+      // 청룡 진척이 되레 줄던 잔존 outlier — v350/v396이 통합한 것과 같은 계열)
+      condition: () => allSealedSwords().length >= 10,
       conditionDesc: '봉인 10자루',
-      progress: () => ({ cur: (state.sealedSwords || []).length, max: 10 }),
+      progress: () => ({ cur: allSealedSwords().length, max: 10 }),
       bonusDesc: '봉인 보상 +3%',
       bonusKey: 'sealRewardMul', bonusVal: 1.03,
       verse: '동방의 용이 봉인의 길에 깃들었다' },
@@ -10730,7 +10827,7 @@
   function showAdvisorMessage(msg) {
     const el = document.createElement('div');
     el.textContent = '도사 — ' + msg;
-    el.style.cssText = 'position:fixed;top:90px;right:18px;font-size:11px;letter-spacing:2px;color:#a8c0d8;text-shadow:0 0 6px rgba(168,192,216,0.4);background:rgba(20,30,45,0.85);border-left:2px solid #a8c0d8;padding:8px 14px;pointer-events:none;z-index:1300;max-width:280px;line-height:1.7;opacity:0;font-family:"Noto Serif KR", serif;border-radius:2px;';
+    el.className = 'advisor-msg';  // v398 掌中 — 좌표는 CSS로 (인라인 손배치 금지 규율)
     document.body.appendChild(el);
     el.animate([
       { opacity: 0, transform: 'translateY(-8px)' },
@@ -12583,7 +12680,9 @@
     recordLuck(successChance, roll < successChance);  // v382 천칭 — 기대와 실제를 함께 적는다
     if (roll < successChance) {
       // 성공 (v107 連)
-      if (adversityReady) { adversityReady = false; announceInscription('역전', '역경을 넘어 강화에 성공했다'); }
+      // v399 遺失 — 페이드 안내만 하고 검에는 새기지 않아, 다섯 시스템이 참조하는 역전이
+      // 실제로는 어떤 검에도 존재할 수 없었다. grantInscription이 중복·안내·칠성 갱신까지 처리.
+      if (adversityReady) { adversityReady = false; grantInscription('역전'); }
       failStreak = 0;
       successStreak++;
       applyStreak();
@@ -12771,6 +12870,7 @@
         // v134: showVoid을 살짝 지연시켜 산산조각 비주얼이 먼저 보이게 (검집 동시 등장 시 시각 충돌 회피)
         voidPending = true;  // v368 — 350ms 갭 동안 game-over 보류 (회수창 우선 표시)
         setTimeout(() => showVoid(destroyedLevel), 350);
+        lockActionButtons();  // v400 實戰 — 갭 동안에도 버튼이 살아 보이지 않게
         setTimeout(() => showConsolation('destroy'), 1500);  // v143 慰
         // v144 招魂 — 봉인 5자루+ 시 선대 검들이 목격
         if ((state.sealedSwords || []).length >= 5 || (state.enshrined || []).length >= 1) {
@@ -12866,6 +12966,7 @@
     // 방금 매장된 무덤(v373 recordFallenSword가 showVoid보다 먼저 실행됨)에서 일생 조각을 읽는다.
     const flashGrave = (state.fallenSwords || [])[(state.fallenSwords || []).length - 1];
     const shardReward = rescueShards(destroyedLevel);
+    lockActionButtons();  // v400 實戰
     voidEl.classList.add('active');
     swordWrap.style.opacity = 0;
     setRescueBodyClass(true);  // v182 水鏡 hide
@@ -14605,6 +14706,7 @@
     // enhance 경로의 save가 이미 수행 — 여기서 별도 save 불필요.)
     if (pendingEndTimer) { clearTimeout(pendingEndTimer); pendingEndTimer = null; }
     const t = challenge.type;
+    lockActionButtons();  // v400 實戰 — 아래 행동 버튼이 살아 보이지 않게
     setChallengeBodyClass(true);  // v182 水鏡 hide
     updateStalemateButton();  // v183 대치
     applyAmbientMode('crisis');
@@ -14722,6 +14824,7 @@
     challengeDeadline = 0;
     renderChallengeTimer();
     if (ambientMode !== 'way') applyAmbientMode('idle');
+    render();  // v400 實戰 — 잠금 해제: 각 버튼의 진짜 조건 재계산
   }
 
   function slay() {
@@ -15046,6 +15149,19 @@
     if (before < SOUL_TRUE && after >= SOUL_TRUE) { grantInscription('본'); setTimeout(() => joyAt('soul-bar', '#c8a0e8'), 300); }
     checkDestiny();  // v93 혼 기반 천명
     checkStars();  // v116 칠성 — 심 별 (본 도달)
+    syncSoulInscriptions();  // v399 — 직접 대입 경로도 함께 정합
+  }
+
+  // v399 遺失 — 혼 단계 명문은 addSoul의 *상승 엣지*로만 부여됐다. 그런데 새 검의 시작 혼은
+  // soul에 직접 대입된다 (시련 t2 +20 · 신사 d3 +5 · 쌍명 +20 · 사도 50). 그래서 사도(四道)를
+  // 이룬 뒤에는 모든 새 검이 혼 50으로 태어나 「34 미만 → 34 이상」 엣지가 영영 발생하지 않고,
+  // 각성 명문이 획득 불가가 됐다 (신무 축복만 수동 push로 우회하고 있었다).
+  // 임계를 이미 넘긴 상태를 사실대로 반영한다 — grantInscription이 중복을 막는다.
+  function syncSoulInscriptions() {
+    if (!state.hasSword || !state.currentSword) return;
+    const s = state.currentSword.soul || 0;
+    if (s >= SOUL_AWAKEN) grantInscription('각성');
+    if (s >= SOUL_TRUE) grantInscription('본');
   }
 
   // === v93 천명 — 검의 운명 (검 한 자루의 일생 목표) ===
@@ -16835,15 +16951,19 @@
   // === 銘名 — 봉인 시 검의 비명 ===
   // 우선순위: 도 > 鬼斬 > 本 > 剛體 > 覺 > 강화도 숫자
   // 형이 있으면 prefix, 없으면 無
+  // v399 遺失 — 나이(고/구)를 혼 단계(본/각성) 위로 올린다. 강화 시도 1회마다 혼이 +1씩
+  // 붙으므로(enhance의 addSoul(1)), 구(시도 50)에 이르면 이미 각성(혼 34)을, 고(시도 100)에
+  // 이르면 이미 본(혼 67)을 가진다 — 나이가 아래에 있던 기존 순서로는 첫 매칭이 언제나
+  // 혼 쪽이라 「형고」·「형구」 여덟 칸이 영원히 비어 있었다 (검명 컬렉션 32칸 중 8칸).
   const NAME_SUFFIX = [
     { key: '도',   word: '도' },
     { key: '귀참', word: '마' },
     { key: '야차참', word: '야' },
+    { key: '고',   word: '고' },
     { key: '본',   word: '본' },
+    { key: '구',   word: '구' },
     { key: '강체', word: '강' },
     { key: '각성',   word: '각' },
-    { key: '고',   word: '고' },
-    { key: '구',   word: '구' },
   ];
   const NUM_KANJI = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구', '십', '십일', '십이', '십삼', '십사', '십오'];
 
@@ -16887,6 +17007,17 @@
     { key: '도',   label: '최고 단계 +15 도달',            verse: '검과 사람이 하나의 길이 되었다',     trigger: () => state.level >= MAX_LEVEL },
     { key: '귀참', label: '검귀를 베어냈다',               verse: '검귀의 피가 칼끝에 묻었다',         trigger: () => false },
     { key: '야차참', label: '밤의 야차를 베어냈다',          verse: '달빛 아래 검이 그림자를 갈랐다',     trigger: () => false },
+    // v399 遺失 — 名(NAMED_FOES) 처치 명문 5종은 실제로 새겨지는데 이 목록에 없었다.
+    // 그래서 명문 사전에 영영 나타나지 않고, 진척 표시의 분모(INSCRIPTIONS.length)에서도
+    // 빠져 「41 / 36」 같은 초과가 가능했다. 부여는 기존대로 처치 시점의 직접 push.
+    { key: '풍참', label: '흑풍을 베어냈다',                verse: '검은 바람이 칼끝에서 멎었다',       trigger: () => false },
+    { key: '월참', label: '은월을 베어냈다',                verse: '달의 한기가 칼날에 서렸다',         trigger: () => false },
+    { key: '인참', label: '천인을 베어냈다',                verse: '천 개의 칼날을 하나로 갈랐다',       trigger: () => false },
+    { key: '제참', label: '귀제를 베어냈다',                verse: '귀신을 다스리던 자가 무릎 꿇었다',   trigger: () => false },
+    { key: '용참', label: '용을 베어냈다',                  verse: '하늘의 그림자마저 갈라졌다',         trigger: () => false },
+    // v399 遺失 — 역전은 다섯 시스템(융검 우선순위·전수 순서·명예 뱃지·칠성 메타 제외 집합·
+    // 한자 마이그레이션)이 존재를 전제하는데 정작 검에 새겨지는 경로가 없었다 (페이드 안내만).
+    { key: '역전', label: '역경을 넘어 강화에 성공했다',      verse: '다섯 번 무너지고 여섯 번째에 일어섰다', trigger: () => false },
     { key: '월식',  label: '월식의 순간에 검을 쥐었다',       verse: '달이 가려진 30초의 천문이 검에 깃들었다', trigger: () => false },
     { key: '삭',   label: '연속 강화 성공 36회',              verse: '새 달이 시작된다',                  trigger: () => false },
     { key: '반',   label: '연속 강화 성공 72회',              verse: '달이 반쯤 차올랐다',                trigger: () => false },
@@ -16939,6 +17070,7 @@
         announceInscription(def.key, def.label);
       }
     }
+    syncSoulInscriptions();  // v399 — 시작 혼 직접 대입(새 검·융검·재련) 경로 정합
     checkNaturePath();  // v371 — 명문과 같은 행동 cadence에서 천성 인식 순간 점검
   }
 
@@ -17359,7 +17491,7 @@
       state.heritageInscription = null;
     }
     if (state.level > state.bestLevel) state.bestLevel = state.level;
-    checkInscriptions();
+    checkInscriptions();  // v399 — 안에서 syncSoulInscriptions까지 (시작 혼이 임계를 넘긴 경우)
     // v66 선대 강기 빛 모임 — 始祖/달인/聖 보유자에게 시각적 의식
     const newIns = state.currentSword.inscriptions || [];
     let rayCount = 0;
@@ -17742,6 +17874,9 @@
   }
   function restartFromGameOver() {
     // '처음부터' 재시작 — 현재 자원 초기화, 메타 진행(계보/통계/유파/始祖)은 영구 보존
+    // v400 實戰 — 저문 시대의 그림자를 새 겁으로 데려가지 않는다. 정리하지 않으면 challenge 가
+    // 살아남아 새 검이 잠긴 채 시작하고, 옛 그림자가 새 시대의 무대를 덮은 채 남는다.
+    if (challenge) endChallenge();
     archiveEra();  // v384 劫 — 저문 시대를 연대기에 매장, 새 겁 개막 (newSword 전 — 첫 검은 새 겁의 것)
     state.shards = NEWSWORD_COST;
     state.protections = 0;
@@ -18169,11 +18304,11 @@
 
   // === 조합소 ===
   const recipes = {
-    protection: { cost: 15, run: () => { state.protections++; } },
-    protection10: { cost: 130, run: () => { state.protections += 10; } },
-    whetstone: { cost: 8, run: () => { state.whetstones++; } },
-    spiritstone: { cost: 25, run: () => { state.spiritstones++; } },
-    divinationstone: { cost: 15, run: () => { state.divinationStones++; } },  // v122 점복
+    protection: { cost: 15, check: () => state.level === 0, gateMsg: '도구는 +0 검 단계에서만 빚을 수 있다', run: () => { state.protections++; } },
+    protection10: { cost: 130, check: () => state.level === 0, gateMsg: '도구는 +0 검 단계에서만 빚을 수 있다', run: () => { state.protections += 10; } },
+    whetstone: { cost: 8, check: () => state.level === 0, gateMsg: '도구는 +0 검 단계에서만 빚을 수 있다', run: () => { state.whetstones++; } },
+    spiritstone: { cost: 25, check: () => state.level === 0, gateMsg: '도구는 +0 검 단계에서만 빚을 수 있다', run: () => { state.spiritstones++; } },
+    divinationstone: { cost: 15, check: () => state.level === 0, gateMsg: '도구는 +0 검 단계에서만 빚을 수 있다', run: () => { state.divinationStones++; } },  // v122 점복
     // (v390 감사 — newsword 레시피 제거: 조합소 입장 자체가 검없음에서 차단되어 어떤 상태에서도
     //  도달 불가능한 죽은 UI였음. 새 검 빚기는 메인 화면 강화 버튼(newsword 모드)이 단일 진입점.)
     summon: {  // v375 초영 — 그림자를 부른다 (100% 수동적이던 도전 차원에 첫 능동 결정)
@@ -18206,6 +18341,8 @@
       const enough = r.isSpecial ? true : state.shards >= r.cost;
       const ok = r.check ? r.check() : true;
       btn.disabled = !(enough && ok);
+      // v400 實戰 — 왜 못 누르는지 말해 준다 (조용히 회색인 버튼은 결함처럼 보인다)
+      btn.title = ok ? (enough ? '' : '조각이 부족하다 (' + r.cost + ' 필요)') : (r.gateMsg || '지금은 할 수 없다');
     });
   }
 
@@ -18848,13 +18985,12 @@
 
   // === 모달 ===
   $('btn-forge').addEventListener('click', () => {
-    // 조합소는 +0 검 단계에서만 입장 가능 (사용자 강화 시작 전 전략 준비)
+    // v400 實戰 — 입장 게이트(+0 에서만)를 *항목* 게이트로 옮겼다.
+    // 옛 구조에서는 초영(v375)의 조건(level >= CHALLENGE_MIN_LEVEL)과 입장 조건(level === 0)이
+    // 상호 배타라 그 레시피를 누를 수 있는 상태가 존재하지 않았다 — 기능 전체가 사문(死文).
+    // 「도구 빚기는 +0 에서만」이라는 설계 의도는 각 도구 레시피의 check 로 그대로 보존된다.
     if (!state.hasSword) {
       log('새 검을 먼저 만드세요', 'fail');
-      return;
-    }
-    if (state.level > 0) {
-      log('조합소는 +0 검 단계에서만 들어갈 수 있습니다', 'fail');
       return;
     }
     $('forge-modal').classList.add('active');
@@ -19953,12 +20089,18 @@
     $('foes-progress').textContent = '베어낸 적 ' + slainCount + ' / ' + NAMED_FOES.length;
     const rows = NAMED_FOES.map(f => {
       const slain = !!state.foesSlain[f.key];
-      const reachable = state.bestLevel >= f.trigger;
+      // v397 敵手 — 해금(기록)과 대면(지금 검)은 다른 조건이다. 정보 공개는 기록 기준을
+      // 유지하되, 등장 안내는 실제 조건(pendingNamedFoe)과 같은 식으로 말해야 한다.
+      const unlocked = state.bestLevel >= f.trigger;
+      const canMeet = unlocked && state.hasSword && state.level >= f.strength;
+      const reachable = unlocked;
       const stateLabel = slain
         ? '<span style="color:var(--accent);font-size:10px;letter-spacing:3px">베어냄</span>'
-        : (reachable
-           ? '<span style="color:var(--danger);font-size:10px;letter-spacing:3px">출현 가능</span>'
-           : '<span style="color:var(--dim);font-size:10px;letter-spacing:2px">+' + f.trigger + ' 도달 시</span>');
+        : (canMeet
+           ? '<span style="color:var(--danger);font-size:10px;letter-spacing:3px">대면 가능</span>'
+           : unlocked
+             ? '<span style="color:#c8a060;font-size:10px;letter-spacing:2px">+' + f.strength + ' 에서 대면</span>'
+             : '<span style="color:var(--dim);font-size:10px;letter-spacing:2px">+' + f.trigger + ' 도달 시</span>');
       const nameDisplay = slain || reachable ? f.name : '???';
       const descDisplay = slain ? f.desc : (reachable ? f.desc : '미발견');
       const color = slain ? 'var(--accent)' : (reachable ? 'var(--danger)' : 'var(--dim)');
@@ -19967,13 +20109,15 @@
       const insLine = slain
         ? '<div style="color:var(--accent);font-size:10px;letter-spacing:3px;margin-top:4px">명문 「' + f.inscription + '」 새김</div>'
         : '<div style="color:var(--dim);font-size:10px;letter-spacing:2px;margin-top:4px">보상: 조각 +' + fmtNum(f.reward) + ' · 명문 「' + (reachable || slain ? f.inscription : '???') + '」</div>';
-      const barLine = (!slain && !reachable)
+      // v397 — 해금 전엔 기록으로, 해금 후엔 지금 검으로 남은 거리를 보여준다
+      const barLine = (!slain)
         ? (function() {
-            const cur = Math.min(state.bestLevel || 0, f.trigger);
-            const pct = Math.round(cur / f.trigger * 100);
+            const goal = unlocked ? f.strength : f.trigger;
+            const cur = Math.min((unlocked ? (state.level || 0) : (state.bestLevel || 0)), goal);
+            const pct = Math.round(cur / goal * 100);
             return '<div style="display:flex;align-items:center;gap:8px;margin-top:5px">'
               + '<div style="flex:1;height:4px;background:#1a1a22;border-radius:2px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:var(--danger);opacity:0.6;transition:width 0.5s"></div></div>'
-              + '<div style="font-size:9px;letter-spacing:1px;color:#a8a098;min-width:52px;text-align:right">+' + cur + ' / +' + f.trigger + '</div>'
+              + '<div style="font-size:9px;letter-spacing:1px;color:#a8a098;min-width:52px;text-align:right">+' + cur + ' / +' + goal + '</div>'
               + '</div>';
           })()
         : '';
@@ -20219,7 +20363,7 @@
 
     // v72 검명 컬렉션 — 4 form × 7 suffix
     const forms = ['직', '곡', '중', '속'];
-    const suffixes = NAME_SUFFIX.map(s => s.word); // 도/마/본/剛/覺/고/구
+    const suffixes = NAME_SUFFIX.map(s => s.word);  // 도/마/야/고/본/구/강/각 (8종 — 단일 진원)
     const collectedNames = new Set();
     allSealedSwords().forEach(s => {  // v351 — 전당 검명도 컬렉션 집계
       // 자동 검명 재계산 (form + 정점 명문)
@@ -20232,9 +20376,11 @@
         }
       }
     });
-    const totalSlots = forms.length * suffixes.length; // 28
+    // v399 遺失 — 열 수를 접미 수에 묶는다. 7열 고정이라 8접미 × 4형이 어긋나 흘러
+    // 형별로 줄이 맞지 않았고, 주석의 28도 실제 32와 달랐다 (접미 상수와 표시의 drift).
+    const totalSlots = forms.length * suffixes.length;
     const collectionGrid = '<div style="color:var(--accent);letter-spacing:4px;font-size:11px;padding:14px 0 6px">검 명  컬 렉 션 (' + collectedNames.size + ' / ' + totalSlots + ')</div>' +
-      '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:4px 0">' +
+      '<div style="display:grid;grid-template-columns:repeat(' + suffixes.length + ',1fr);gap:3px;padding:4px 0">' +
         forms.map(f => suffixes.map(suf => {
           const name = f + suf;
           const got = collectedNames.has(name);
@@ -20426,6 +20572,16 @@
     swordWrap.classList.remove('charging');
     btnEnhance.disabled = false;
   }
+  // v400 實戰 — 무장 토글이 확률 표시를 갱신하게 한다.
+  // 표시 계산(render)은 armed 숫돌·영석·점복·방지권을 이미 반영하는데, 토글에 리스너가 없어
+  // 켜도 화면이 그대로였다: 영석 25조각을 쓰고도 「실패 시 파괴 10%」가 남아 위험이 사라진 줄
+  // 모르고, 숫돌을 켜도 표시 63% vs 실제 굴림 88% 가 무기한 어긋났다. 이 게임에서 가장 중요한
+  // 숫자다 — 표시와 실제가 갈리면 도박의 결정 자체가 거짓이 된다.
+  ['whet-check', 'spirit-check', 'divination-check', 'protect-check'].forEach(id => {
+    const el = $(id);
+    if (el) el.addEventListener('change', () => render());
+  });
+
   btnEnhance.addEventListener('click', () => {
     if (btnEnhance.disabled) return;
     if (voidPending || rescueWindow) return;  // v388 감사 — 파괴~회수창 350ms 갭에 새 검 구매·강화 유출 차단
@@ -20527,13 +20683,22 @@
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     if (e.key === ' ' || e.key === 'Enter') {
+      // v400 實戰 — 눌러 두고 있는 손가락(브라우저 auto-repeat, ~33ms 간격)이 결정을 대신
+      // 내리지 않게 한다. 실측: 회수창에서 Space 를 1.3초 홀드하면 「파괴 후 5초의 침묵」이
+      // 통째로 태워지고 조각 회수 → 새 검 구매(-50) → +7 강화까지 한 번의 홀드로 연쇄했다.
+      // 이 게임의 본질이 그 침묵이다. 반복 이벤트만 막는다 — 또박또박 누르면 그대로 동작한다.
+      // (연속 강화가 필요하면 수련(자동 강화) 토글이 그 용도다.)
+      if (e.repeat) { e.preventDefault(); return; }
       // v370r — 모달(계보/회고/조합소/詩集/記錄/이름 등) 열림 중 Space/Enter가 enhance()를
-      // 백그라운드로 발동해 의도치 않게 조각 소모·검 파괴되던 버그 차단. 도전(slay)/회수(rescue)는
-      // #challenge/#void(.modal 아님)라 영향 없음 — 오버레이 중 의도된 Space 동작 유지.
+      // 백그라운드로 발동해 의도치 않게 조각 소모·검 파괴되던 버그 차단.
+      // v400 實戰 — 모달이 도전/회수창을 *덮고 있을 때* 도 막는다. v370r 이 enhance 만 막고
+      // slay/rescue 를 예외로 둔 탓에, 記錄 을 열어 둔 채 Space 한 번이 보이지 않는 베기를
+      // 확정하고(실측 totalSlain +1) 숙적이 화면 밖에서 태어날 수 있었다.
       const modalOpen = !!document.querySelector('.modal.active');
+      if (modalOpen) return;
       if (challenge) { e.preventDefault(); slay(); }
       else if (rescueWindow) { e.preventDefault(); rescueWindow.rescue(); }
-      else if (!btnEnhance.disabled && !modalOpen) {
+      else if (!btnEnhance.disabled) {
         e.preventDefault();
         // v390 감사 — 검없음(newsword 모드)에선 enhance() 직접 호출이 가드로 무시되어
         // 키보드로 새 검을 못 빚던 결함 (key-hint 약속 위반) → 버튼 클릭 경유로 두 모드 통일

@@ -1494,8 +1494,11 @@ test('v387 간결: 결정 표면은 숨기되 드라마·본질은 남긴다', (
   assert.ok(cssM, '간결 모드 CSS 블록 존재');
   const css = cssM[0];
   // 고급 결정 UI 숨김 (inline display 이기려면 !important)
-  ['#resolve-row', '#stone-row', '#btn-oath', '#destiny-banner', '#guardian-display', '#current-chart']
+  ['#resolve-row', '#btn-oath', '#destiny-banner', '#guardian-display', '#current-chart']
     .forEach(sel => assert.ok(css.includes('body.simple-mode ' + sel), sel + ' 숨김'));
+  // #stone-row 는 v400 에서 조건부로 이관 — 기본(도구 0개)은 여전히 숨김이되,
+  // 조합소가 파는 물건을 지니면 드러난다 (「살 수는 있는데 쓸 수 없는」 함정 차단).
+  assert.ok(css.includes('body.simple-mode:not(.has-stones) #stone-row'), '#stone-row 조건부 숨김');
   assert.match(css, /display: none !important/, 'inline display를 이기는 !important');
   // 본질·드라마는 절대 숨기지 않는다 — 강화/팔기/회수/도전/컷씬/의식
   ['#btn-enhance', '#btn-seal-direct', '#void', '#challenge', '#rescue-circle', '#rescue-release',
@@ -1866,6 +1869,12 @@ test('v397 敵手: 名 대면 조건 — 이길 수 있는 강화도에서만 �
   assert.match(fn, /state\.bestLevel >= f\.trigger/, '해금 조건 — 최고 기록 유지');
 });
 
+test('v397 敵手: 처치 보고서의 대면 안내가 실제 등장 조건과 일치 (표시≠실제 차단)', () => {
+  const rf = afterDecl('function renderFoes() {', 1600);
+  assert.match(rf, /state\.level >= f\.strength/, '대면 조건 — pendingNamedFoe와 같은 식');
+  assert.doesNotMatch(rf, /출현 가능/, '해금만으로 등장한다는 옛 문구 재유입 금지');
+});
+
 test('v397 敵手: 記錄 모달 도전 승률 행 (확률 정직성)', () => {
   const idx = js.indexOf("row('도전 승률'");
   assert.ok(idx > 0, '記錄에 도전 승률 행');
@@ -1875,4 +1884,231 @@ test('v397 敵手: 記錄 모달 도전 승률 행 (확률 정직성)', () => {
   // v397 리뷰 — 분자는 권위 카운터 단일 진원 (유형별 합산은 名 처치를 빠뜨려 승률이 낮게 나왔다)
   assert.match(block, /state\.totalSlain/, '분자는 totalSlain 단일 진원');
   assert.ok(!/s\.fled/.test(block), '물러남은 싸움이 아니므로 분모 밖');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v398 掌中 — 상시 표식은 corner-stack 소속 (좌표 손배치 금지의 JS 경로 봉쇄)
+// v380이 CSS 좌표 손배치를 금지했지만, JS에서 style.cssText로 만들어진 표식들이
+// 그 규율을 통째로 우회했다 (실측: 시진이 메뉴 버튼과 정확히 같은 좌표에 겹침).
+// ─────────────────────────────────────────────────────────────
+test('v398 掌中: 상시 표식 5종이 corner-stack 소속 (JS 인라인 좌표 우회 차단)', () => {
+  const stackIdx = html.indexOf('<div id="corner-stack">');
+  assert.ok(stackIdx > 0, 'corner-stack 존재');
+  const stackEnd = html.indexOf('<div id="meditation-mark">', stackIdx);
+  assert.ok(stackEnd > stackIdx, 'corner-stack 종료 지점');
+  const stackHtml = html.slice(stackIdx, stackEnd);
+  ['sidin-mark', 'weekend-mark', 'streak-mark', 'festival-mark', 'eternity-mark'].forEach(id => {
+    assert.ok(stackHtml.includes('id="' + id + '"'), id + ' 는 corner-stack 소속 (정적 선언)');
+  });
+  const inlineCorner = (js.match(/cssText = 'position:fixed;top:\d+px;(?:left|right):\d+px/g) || []);
+  assert.strictEqual(inlineCorner.length, 0,
+    '상시 표식의 JS 인라인 픽셀 좌표 0 (현재 ' + inlineCorner.length + ' — corner-stack에 넣을 것)');
+});
+
+test('v398 掌中: 일언은 흐름 요소 · 명상 중 호흡 안내 은폐', () => {
+  const dsIdx = html.indexOf('<div id="daily-saying"></div>');
+  assert.ok(dsIdx > 0, '일언 정적 선언 (흐름)');
+  const sealIdx = html.indexOf('id="btn-seal-direct"');
+  const footIdx = html.indexOf('<div id="footer">');
+  assert.ok(dsIdx > sealIdx && dsIdx < footIdx, '일언은 팔기 버튼 아래·하단 버튼 위 (겹침 불가)');
+  const rd = afterDecl('function renderDailySaying() {', 800);
+  assert.doesNotMatch(rd, /position:fixed/, '일언 고정 좌표 재유입 금지');
+  assert.match(rd, /dataset\.wired/, '배선 1회 가드 (정적 요소)');
+  assert.match(html, /body\.meditation #advice-line/, '명상 중 호흡 안내 은폐 (표식과 겹침)');
+});
+
+// ─────────────────────────────────────────────────────────────
+// v399 遺失 — 도달할 수 없는 콘텐츠 차단
+// v397에서 「판정식이 참이 될 수 없는 적」을 발견한 것과 같은 계열: 임계가 상한을 넘거나,
+// 우선순위·엣지 조건 때문에 영원히 선택되지 않는 콘텐츠를 구조적으로 막는다.
+// ─────────────────────────────────────────────────────────────
+test('v399 遺失: 검명 접미 8종이 모두 도달 가능 (나이가 혼 단계보다 위)', () => {
+  const NS = extractConst('NAME_SUFFIX');
+  const at = k => NS.findIndex(s => s.key === k);
+  assert.strictEqual(NS.length, 8, '접미 8종');
+  // 강화 시도 1회마다 혼 +1이 붙으므로 시도 50회엔 이미 각성(34), 100회엔 이미 본(67)을 가진다.
+  // 나이 접미가 혼 접미보다 아래면 첫 매칭이 언제나 혼 쪽이라 그 슬롯은 영원히 빈다.
+  assert.ok(at('구') < at('각성'), '구는 각성보다 위 (시도 50 시점엔 이미 각성 보유)');
+  assert.ok(at('고') < at('본'), '고는 본보다 위 (시도 100 시점엔 이미 본 보유)');
+  assert.ok(at('고') < at('구'), '고가 구보다 위 (더 오랜 검이 우선)');
+});
+
+test('v399 遺失: 명문 사전이 실제 새겨지는 키를 전부 담는다', () => {
+  const INS = extractConst('INSCRIPTIONS');
+  const keys = new Set(INS.map(i => i.key));
+  // 名 처치 명문은 처치 시점에 직접 push된다 — 사전에 없으면 도감에서 영영 안 보이고
+  // 진척 표시의 분모(INSCRIPTIONS.length)에서도 빠져 초과 표시가 가능했다.
+  extractConst('NAMED_FOES').forEach(f => {
+    assert.ok(keys.has(f.inscription), '名 명문 ' + f.inscription + ' 이 사전에 등재');
+  });
+  assert.ok(keys.has('역전'), '역전이 사전에 등재');
+  // 접미 우선순위가 참조하는 키도 전부 실재해야 한다
+  extractConst('NAME_SUFFIX').forEach(s => {
+    assert.ok(keys.has(s.key), '접미가 참조하는 명문 ' + s.key + ' 실재');
+  });
+});
+
+test('v399 遺失: 역전은 안내가 아니라 실제로 새겨진다', () => {
+  assert.match(js, /adversityReady = false; grantInscription\('역전'\)/, '역경 역전 시 명문 부여');
+  const inscribeOnly = (js.match(/announceInscription\('역전'/g) || []).length;
+  assert.strictEqual(inscribeOnly, 0, '페이드 안내만 하고 새기지 않던 경로 재유입 금지');
+});
+
+test('v399 遺失: 혼 단계 명문이 직접 대입 경로에서도 정합', () => {
+  assert.match(js, /function syncSoulInscriptions\(\)/, '혼 단계 정합 헬퍼 존재');
+  const sync = afterDecl('function syncSoulInscriptions() {', 400);
+  assert.match(sync, /s >= SOUL_AWAKEN/, '각성 임계 — 상수 단일 진원');
+  assert.match(sync, /s >= SOUL_TRUE/, '본 임계 — 상수 단일 진원');
+  const ci = afterDecl('function checkInscriptions() {', 700);
+  assert.match(ci, /syncSoulInscriptions\(\)/, '새 검·융검·재련이 거치는 지점에서 호출');
+});
+
+test('v399 遺失: 청룡 조건도 allSealedSwords 단일 진원 (전당 누락 차단)', () => {
+  const idx = js.indexOf("key:'seiryu'");
+  assert.ok(idx > 0, '청룡 정의 존재');
+  const block = js.slice(idx, idx + 600);
+  assert.match(block, /allSealedSwords\(\)\.length >= 10/, '조건 — 봉인+전당 합산');
+  assert.doesNotMatch(block, /state\.sealedSwords \|\| \[\]\)\.length/, '배열 직접 참조 재유입 금지');
+});
+
+test('v398 掌中: 손가락 치수 — 폰 폭에서 44px 확보', () => {
+  const mIdx = html.indexOf('@media (max-width: 480px)');
+  assert.ok(mIdx > 0, '폰 폭 미디어 쿼리');
+  const block = html.slice(mIdx, mIdx + 420);
+  assert.match(block, /#footer \.footer-btn \{ min-height: 44px/, '하단 버튼 44px');
+  assert.match(block, /#menu-toggle \{ min-width: 44px; min-height: 44px/, '메뉴 버튼 44px');
+  assert.match(block, /#protect-row/, '보호권 행 터치 영역 확대');
+});
+
+test('v400 實戰: 객체 배열의 비객체 항목이 진입점에서 제거된다 (부팅 사망 차단)', () => {
+  // 실행 하니스가 잡은 결함: sealedSwords/enshrined 에 null 하나가 섞이면 v117 四道의
+  // getWayFormCounts 가 부팅 중 던져 게임 전체가 죽었다 (강화·메뉴 전부 무반응).
+  const nm = js.match(/function normalizeState\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(nm, 'normalizeState 본문');
+  const body = nm[1];
+  const fm = body.match(/\[([^\]]*?)\]\.forEach\(k => \{\s*if \(Array\.isArray\(state\[k\]\)\) \{/);
+  assert.ok(fm, '객체 배열 일괄 필터가 normalizeState 안에 존재');
+  assert.match(body, /typeof v === 'object'/, '항목이 객체인지 검사');
+  assert.match(body, /!Array\.isArray\(v\)/, '배열 항목도 배제');
+  // 항목을 객체로 전제해 순회하는 컬렉션이 전부 목록에 있어야 한다
+  ['sealedSwords', 'enshrined', 'fallenSwords', 'nemesesArchive', 'eras',
+    'rubbings', 'userDiary', 'guestSwords', 'recentLog'].forEach(k => {
+    assert.ok(fm[1].includes("'" + k + "'"), '객체 배열 필터 대상 누락: ' + k);
+  });
+  // 문자/수 배열은 대상이 아니다 (필터가 내용을 지워버린다)
+  assert.ok(!fm[1].includes("'userSeal'"), 'userSeal(문자 배열)은 필터 대상이 아니다');
+  assert.ok(!fm[1].includes("'hourActivity'"), 'hourActivity(수 배열)는 필터 대상이 아니다');
+});
+
+test('v400 實戰: sanitizeSword 가 soul 범위도 강제 (무덤과의 비대칭 해소)', () => {
+  const idx = js.indexOf('const sanitizeSword = (sw) => {');
+  assert.ok(idx > 0, 'sanitizeSword 존재');
+  const block = js.slice(idx, idx + 2600);
+  assert.match(block, /if \(sw\.soul != null\) sw\.soul = clampInt\(sw\.soul, 0, 100\)/,
+    'soul 범위 강제 — 봉인·전당·현재 검 공통');
+  // v388 이 무덤에 건 같은 클램프가 여전히 살아 있어야 한다 (한쪽만 남는 재발 방지)
+  assert.match(js, /f\.soul = clampInt\(f\.soul, 0, 100\)/, '무덤 soul 클램프 유지');
+});
+
+test('v400 實戰: 간결 모드가 「살 수는 있는데 쓸 수 없는」 도구를 만들지 않는다', () => {
+  // 조합소는 간결 모드에서도 숫돌·영석·점복석을 판다. 그러므로 무장 토글은
+  // 「하나라도 지녔을 때」 반드시 드러나야 한다 (0개일 때만 숨긴다).
+  assert.match(html, /body\.simple-mode:not\(\.has-stones\) #stone-row \{ display: none !important; \}/,
+    '조건부 은폐 규칙');
+  assert.doesNotMatch(html, /body\.simple-mode #stone-row,/, '무조건 은폐 재유입 금지');
+  assert.match(js, /classList\.toggle\('has-stones',/, '보유 여부를 body 클래스로 반영');
+  const ap = js.match(/function applySettings\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(ap, 'applySettings 본문');
+  assert.match(ap[1], /ownsStones \? \['auto-check'\]/,
+    '보유 중일 땐 숫돌·영석·점복 무장을 해제하지 않는다 (보이는 도구는 사용자의 것)');
+});
+
+test('v400 實戰: 실행 관문이 테스트 열거에 등록되어 있다', () => {
+  const pkg = JSON.parse(fs.readFileSync(require('node:path').join(__dirname, '..', 'package.json'), 'utf8'));
+  assert.ok(pkg.scripts.test.includes('tests/play.test.js'), 'play.test.js 가 npm test 에 열거되어야 한다');
+  ['domshim.js', 'player.js'].forEach(f => {
+    assert.ok(fs.existsSync(require('node:path').join(__dirname, f)), '하니스 파일 존재: ' + f);
+  });
+  // 하니스는 의존성 0 규율을 지켜야 한다 (게임과 동일)
+  ['domshim.js', 'player.js'].forEach(f => {
+    const src = fs.readFileSync(require('node:path').join(__dirname, f), 'utf8');
+    const reqs = [...src.matchAll(/require\('([^']+)'\)/g)].map(m => m[1]);
+    const external = reqs.filter(r => !r.startsWith('.') && !['fs', 'path', 'vm', 'node:test', 'node:assert'].includes(r));
+    assert.deepStrictEqual(external, [], f + ' 가 외부 의존성을 끌어들였다: ' + external.join(', '));
+  });
+});
+
+test('v400 實戰: 결정이 잠긴 동안 주 행동 버튼도 잠긴다 (조용한 무반응 차단)', () => {
+  // #challenge 는 #stage 만 덮으므로 그 아래 #actions 의 버튼들은 화면에 남는다.
+  // 잠그지 않으면 평소 라벨 그대로 활성인데 enhance()/sealSword()/fuseSwords() 가 조용히 return 한다.
+  assert.match(js, /function lockActionButtons\(\)/, '잠금 헬퍼 존재');
+  const lb = afterDecl('function lockActionButtons() {', 500);
+  ['btnEnhance', "btn-seal-direct", "btn-fusion"].forEach(t =>
+    assert.ok(lb.includes(t), '잠금 대상 누락: ' + t));
+  assert.match(lb, /b\.disabled = true/, '실제로 비활성화');
+  assert.match(lb, /b\.title = why/, '잠긴 사유 제공');
+  // 세 전이 지점 + render 말미에서 호출 (해제는 render 가 진짜 조건을 재계산)
+  assert.match(afterDecl('function showChallenge() {', 700), /lockActionButtons\(\)/, '도전 등장 시 잠금');
+  assert.match(afterDecl('function showVoid(', 900), /lockActionButtons\(\)/, '회수창 진입 시 잠금');
+  assert.match(js, /setTimeout\(\(\) => showVoid\(destroyedLevel\), 350\);\s*\n\s*lockActionButtons\(\)/,
+    '파괴~회수창 갭에서도 잠금');
+  assert.match(js, /if \(challenge \|\| rescueWindow \|\| voidPending\) lockActionButtons\(\)/,
+    'render 말미에서 잠금 유지 (렌더가 되살리지 않게)');
+  assert.match(afterDecl('function endChallenge() {', 600), /render\(\)/,
+    '도전 종료 시 render 로 잠금 해제 (영구 잠금 방지)');
+});
+
+test('v400 實戰: 소독 대칭 — 나중에 붙은 컬렉션도 정규화에서 문자열이 훑인다', () => {
+  const nm = js.match(/function normalizeState\(\)\s*\{([\s\S]*?)\n  \}/);
+  assert.ok(nm, 'normalizeState 본문');
+  const body = nm[1];
+  assert.match(body, /const scrubStrings = \(o, depth\) =>/, '항목 전수 소독 헬퍼');
+  assert.match(body, /o\[k\] = stripTags\(v\)/, '문자열 값 태그 제거');
+  assert.match(body, /if \(Array\.isArray\(state\.rubbings\)\) state\.rubbings\.forEach/,
+    '탁본 — 배열 확인 후 소독 (normalizeState는 단일 try — 여기서 던지면 이후 정규화가 통째로 건너뛴다)');
+  assert.match(body, /if \(Array\.isArray\(state\.recentLog\)\) state\.recentLog\.forEach/, '최근 일지 소독');
+  assert.match(body, /lastReportSnapshot\.week = ''/, '주보 스냅샷 week 형식 강제');
+  // 주보는 사용자 조작 0회로 부팅 3초 후 자동으로 열린다 — 삽입 지점 escape 필수
+  assert.match(js, /escapeHtml\(String\(prevWeek == null \? '' : prevWeek\)\)/, '주보 표시 시 escape');
+});
+
+test('v400 實戰: auto-repeat 가 결정을 대신 내리지 않는다 (5초 침묵 보호)', () => {
+  const idx = js.indexOf("if (e.key === ' ' || e.key === 'Enter') {");
+  assert.ok(idx > 0, 'Space/Enter 핸들러');
+  const block = js.slice(idx, idx + 1500);
+  assert.match(block, /if \(e\.repeat\) \{ e\.preventDefault\(\); return; \}/, 'auto-repeat 차단');
+  // 모달이 도전/회수창을 덮고 있으면 베기·회수도 막는다 (v370r 이 enhance 만 막던 것 확장)
+  assert.match(block, /if \(modalOpen\) return;\s*\n\s*if \(challenge\)/,
+    '모달 은폐 중 slay/rescue 차단 — modalOpen 검사가 challenge 분기보다 앞');
+  assert.doesNotMatch(block, /!btnEnhance\.disabled && !modalOpen/, '구 조건 재유입 금지');
+});
+
+test('v400 實戰: 겁이 바뀔 때 옛 도전을 데려가지 않는다', () => {
+  const rb = afterDecl('function restartFromGameOver() {', 500);
+  assert.match(rb, /if \(challenge\) endChallenge\(\);/, '재시작 시 활성 도전 정리');
+  assert.ok(rb.indexOf('endChallenge()') < rb.indexOf('archiveEra()'),
+    '도전 정리가 겁 아카이브·새 검보다 먼저');
+});
+
+test('v400 實戰: 조합소 게이트 — 초영이 누를 수 있는 상태가 존재한다', () => {
+  // 옛 구조: 입장 조건(level === 0)과 초영 조건(level >= CHALLENGE_MIN_LEVEL)이 상호 배타 →
+  // v375 기능 전체가 사문. 입장 게이트를 항목 게이트로 옮겨 두 조건이 공존 가능해졌다.
+  const idx = js.indexOf("$('btn-forge').addEventListener('click'");
+  assert.ok(idx > 0, '조합소 버튼 핸들러');
+  const block = js.slice(idx, idx + 700);
+  assert.match(block, /if \(!state\.hasSword\)/, '검 없음은 여전히 입장 차단');
+  assert.doesNotMatch(block, /if \(state\.level > 0\) \{/, '입장 레벨 게이트 재유입 금지 (초영이 다시 사문이 된다)');
+  // 「도구는 +0 에서만」 의도는 각 도구 레시피의 check 로 보존
+  ['protection', 'protection10', 'whetstone', 'spiritstone', 'divinationstone'].forEach(k => {
+    const ri = js.indexOf('    ' + k + ': {');
+    assert.ok(ri > 0, k + ' 레시피 존재');
+    assert.match(js.slice(ri, ri + 260), /check: \(\) => state\.level === 0/, k + ' 에 +0 게이트 없음');
+  });
+  assert.match(js, /btn\.title = ok \? \(enough \? '' :/, '비활성 사유를 title 로 노출');
+});
+
+test('v400 實戰: 무장 토글이 확률 표시를 갱신한다', () => {
+  // 표시 계산은 armed 상태를 반영하는데 토글에 리스너가 없어 화면이 굳어 있었다.
+  assert.match(js, /\['whet-check', 'spirit-check', 'divination-check', 'protect-check'\]\.forEach\(id => \{\s*\n\s*const el = \$\(id\);\s*\n\s*if \(el\) el\.addEventListener\('change', \(\) => render\(\)\);/,
+    '네 토글 모두 change → render 배선');
 });
