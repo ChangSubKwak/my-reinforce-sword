@@ -697,3 +697,86 @@ test('招影 × 매각: 이미 판 검이 도전 판정의 근거가 되지 않�
   assert.strictEqual(s.sealedSwords.length, 1, '매각 자체는 정상이어야 한다');
   assert.strictEqual(p.env.errors.length, 0, firstErrors(p.env, 3));
 });
+
+// ---------------------------------------------------------------------------
+test('융검: 「도」는 계승되지 않는다 — +3 검이 道 검의 대우를 받지 않는다', () => {
+  // 도는 성질이 아니라 성취 표식(level >= MAX_LEVEL)이다. 융합검은 +0 언저리에서 시작하는데
+  // 이것을 물려받으면 그 자리에서 道 검이 됐다 — 보상 ×1.5 · wayReached++ · 검명 · 일생시 · 의식.
+  // 봉인 때 한 번 세어진 도가 융합으로 재생산되는 루프였다.
+  function fuseAndSell(topIns) {
+    const p = createPlayer({ seed: 4, storage: { [SAVE_KEY]: JSON.stringify({
+      hasSword: false, level: 0, shards: 5000, swordGeneration: 9,
+      stats: { wayReached: 1 }, firstWayReached: true,
+      sealedSwords: [
+        { level: 15, form: '직', inscriptions: topIns, soul: 80, name: '직도',
+          verse: ['a', 'b', 'c', 'd'], slainCount: 5, enhanceAttempts: 60 },
+        { level: 4, form: '곡', inscriptions: ['초인'], soul: 20, name: '곡사',
+          slainCount: 1, enhanceAttempts: 6 },
+      ],
+    }) } });
+    p.tick(4000);
+    closeModals(p);
+    p.tick(300);
+
+    p.click('btn-fusion', 'fusion');
+    p.tick(400);
+    // 후보 목록은 매 선택마다 다시 그려진다 — 클릭할 때마다 다시 조회해야 한다
+    [0, 1].forEach(i => {
+      const el = p.doc.querySelector('[data-fusion-idx="' + i + '"]');
+      assert.ok(el, '융검 후보 ' + i + ' 를 찾지 못했다');
+      el.click();
+      p.tick(100);
+    });
+    const listText = p.doc.querySelectorAll('.fusion-item').map(x => x.textContent).join(' ');
+    p.click('fusion-confirm', 'fuse');
+    p.tick(1500);
+    if (p.active('name-modal')) { p.click('name-confirm', 'name'); p.tick(1500); }
+    closeModals(p);
+    p.tick(800);
+
+    // +3 까지 올린다 (팔 수 있는 최소 강화도)
+    for (let i = 0; i < 150; i++) {
+      const s = p.state();
+      if (!s.hasSword || s.level >= 3) break;
+      if (p.active('challenge')) { p.click('btn-flee', 'flee'); p.tick(1200); continue; }
+      const eb = p.$('btn-enhance');
+      if (eb && !eb.disabled) eb.click();
+      p.tick(900);
+      closeModals(p);
+    }
+    for (let i = 0; i < 25 && p.active('challenge'); i++) { p.click('btn-flee', 'flee'); p.tick(1200); }
+
+    const mid = p.state();
+    const before = { shards: mid.shards, way: mid.stats.wayReached };
+    const sealBtn = p.$('btn-seal-direct');
+    if (sealBtn.disabled) return { skipped: true, p };
+    sealBtn.click();
+    p.tick(800);
+    if (p.active('name-modal')) { p.click('name-confirm', 'name'); p.tick(1500); }
+    p.tick(10000);
+    closeModals(p);
+    p.tick(1000);
+    const after = p.state();
+    const rec = after.sealedSwords[after.sealedSwords.length - 1];
+    return {
+      p, listText, fusedIns: mid.currentSword.inscriptions || [], level: mid.level,
+      gain: after.shards - before.shards, wayDelta: after.stats.wayReached - before.way,
+      verseLines: rec ? (rec.verse || []).length : -1,
+    };
+  }
+
+  const way = fuseAndSell(['도', '백련', '강체']);
+  const control = fuseAndSell(['용참', '백련', '강체']);
+  assert.ok(!way.skipped && !control.skipped, '융합검을 +3 까지 올리지 못했다');
+
+  assert.ok(!way.fusedIns.includes('도'), '융합검이 도를 물려받았다: ' + way.fusedIns.join(','));
+  assert.ok(way.level < 15, '이 검증은 MAX 미만 융합검을 전제한다: +' + way.level);
+  assert.strictEqual(way.wayDelta, 0, '도를 물려받은 융합검 매각이 道 도달로 집계됐다');
+  assert.strictEqual(way.verseLines, 0, '道 전용 일생시가 생성됐다: ' + way.verseLines + '행');
+  assert.strictEqual(way.gain, control.gain,
+    '도 계승 검의 매각 보상이 대조군과 다르다 (×1.5 배수 잔존): ' + way.gain + ' vs ' + control.gain);
+
+  // 과잉 수정 방지: 후보 목록에서는 여전히 「도」가 보여야 한다 (어느 검이 道 검인지 알아야 고른다)
+  assert.match(way.listText, /도/, '융검 후보 목록에서 도 표시가 사라졌다');
+  assert.strictEqual(way.p.env.errors.length, 0, firstErrors(way.p.env, 3));
+});

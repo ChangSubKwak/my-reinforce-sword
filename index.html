@@ -17599,6 +17599,8 @@
   // 야차참(특수 그림자 처치, 귀참과 동등 희귀) + 역전(逆轉, 厄運轉機 마스터)이 누락되어
   // 융합 시 이 두 prestige 명문이 silently 사라지던 narrative drop을 차단.
   const FUSION_PRIORITY = ['도','용참','제참','귀참','야차참','인참','월참','풍참','단마','역전','본','각성','강체','백련','회마','초인','고','구'];
+  // v400 實戰 — 계승 대상 외 (성취 표식은 물려받지 않는다). 위 계승 루프 주석 참조.
+  const FUSION_NO_INHERIT = ['도'];
   let fusionSelected = [];
   function fusionPreview() {
     // 현재 선택된 2검으로 생성될 검의 미리보기 — { form, inscription, soul, startLevel } 또는 null
@@ -17609,7 +17611,19 @@
     const strong = (a.level || 0) >= (b.level || 0) ? a : b;
     const allIns = [].concat(a.inscriptions || [], b.inscriptions || []);
     let inheritIns = null;
-    for (const k of FUSION_PRIORITY) { if (allIns.includes(k)) { inheritIns = k; break; } }
+    // v400 實戰 — 「도」는 계승하지 않는다.
+    // 도는 성질이 아니라 **성취 표식**이다 (trigger: level >= MAX_LEVEL). 융합검은 +0 언저리에서
+    // 시작하는데 이것을 물려받으면 그 자리에서 道 검의 대우를 전부 받았다 — 실측: +3 검이
+    // 매각 보상 ×1.5(21 → 31조각) · wayReached++ · 검명 「도」 접미 · 일생시 4행 · 의식 컷씬.
+    // 봉인 때 한 번 세어진 도가 융합으로 재생산되는 루프라 점수 인플레이션 회피 규율에 정면으로
+    // 어긋난다. v33 傳授가 도를 전수 목록에서 제외하고 始祖/達人/聖을 「메타라 전수 대상 외」로
+    // 둔 것과 같은 규율 — 두 계승 체계가 어긋나 있던 것을 맞춘다.
+    // (FUSION_PRIORITY 자체는 건드리지 않는다 — 융검 후보 목록의 명문 *표시* 필터로도 쓰여,
+    //  빼면 어느 검이 道 검인지 화면에서 사라진다. 혈통은 fusedFrom 이 계속 기록한다.)
+    for (const k of FUSION_PRIORITY) {
+      if (FUSION_NO_INHERIT.indexOf(k) >= 0) continue;
+      if (allIns.includes(k)) { inheritIns = k; break; }
+    }
     const inheritSoul = Math.floor(((a.soul || 0) + (b.soul || 0)) / 2);
     // 두 검 제거 후의 startBonus 추정 (legacyStrength 감소 반영)
     const lostLegacy = (a.level || 0) + (b.level || 0);

@@ -2126,3 +2126,15 @@ test('v400 實戰: 매각 전환 창에는 도전이 스폰되지도 판정되�
     /challenge \|\| rescueWindow \|\| voidPending \|\| sealTransition \|\| !state\.hasSword/,
     '초영 450ms 재검사에도 매각 전환 포함 (어긋나면 환급)');
 });
+
+test('v400 實戰: 융검이 「도」를 계승하지 않는다 (성취 표식 재생산 차단)', () => {
+  const prio = extractConst('FUSION_PRIORITY');
+  assert.ok(prio.includes('도'), 'FUSION_PRIORITY 는 도를 유지해야 한다 — 후보 목록의 명문 표시 필터로도 쓰인다');
+  const noInherit = extractConst('FUSION_NO_INHERIT');
+  assert.ok(noInherit.includes('도'), '계승 대상 외 목록에 도가 있어야 한다');
+  const fp = afterDecl('function fusionPreview() {', 1800);
+  assert.match(fp, /FUSION_NO_INHERIT\.indexOf\(k\) >= 0\) continue;/, '계승 루프가 대상 외를 건너뛴다');
+  // fuseSwords 는 미리보기를 그대로 쓴다 — 표시와 실제가 갈릴 수 없다 (단일 진원)
+  assert.match(afterDecl('function fuseSwords(', 900), /const p = fusionPreview\(\);/,
+    '실제 융합이 미리보기와 같은 계산을 쓴다 (표시≠실제 불가)');
+});

@@ -417,10 +417,11 @@ test('successChanceNow: [0,1] 클램프', () => {
 // ─────────────────────────────────────────────────────────────
 (function () {
   const FUSION_PRIORITY = extractConst('FUSION_PRIORITY');
+  const FUSION_NO_INHERIT = extractConst('FUSION_NO_INHERIT');
   function preview(swords, selected, legacyTotal) {
     return loadFunctions(['fusionPreview'], {
       fusionSelected: selected, state: { sealedSwords: swords },
-      FUSION_PRIORITY, legacyStrength: () => legacyTotal,
+      FUSION_PRIORITY, FUSION_NO_INHERIT, legacyStrength: () => legacyTotal,
       START_BONUS_CAP: 6, START_BONUS_DIVISOR: 25, trialStartLevelBonus: () => 0, MAX_LEVEL: 15,
     }).fusionPreview();
   }
@@ -430,8 +431,15 @@ test('successChanceNow: [0,1] 클램프', () => {
   test('fusionPreview: 강한 검(높은 강화도)의 형 계승', () => {
     assert.strictEqual(preview([A, B], [0, 1], 100).form, '곡', 'B(+10)가 A(+5)보다 강함');
   });
-  test('fusionPreview: 최우선 명문 계승 (道 > 本)', () => {
-    assert.strictEqual(preview([A, B], [0, 1], 100).inscription, '도', 'FUSION_PRIORITY 순서');
+  // v400 — 도는 성취 표식(level >= MAX_LEVEL)이라 계승 대상 외. 물려받으면 +0 언저리의
+  // 융합검이 그 자리에서 道 검의 대우(보상 ×1.5 · wayReached · 검명 · 일생시 · 의식)를 받았다.
+  test('fusionPreview: 「도」는 계승되지 않고 다음 명문이 내려온다', () => {
+    assert.strictEqual(preview([A, B], [0, 1], 100).inscription, '본', '도를 건너뛰고 본');
+  });
+  test('fusionPreview: 도만 가진 두 검이면 계승 명문 없음', () => {
+    const O1 = { level: 15, form: '직', soul: 0, inscriptions: ['도'] };
+    const O2 = { level: 15, form: '곡', soul: 0, inscriptions: ['도'] };
+    assert.strictEqual(preview([O1, O2], [0, 1], 50).inscription, null, '계승할 것이 없다');
   });
   test('fusionPreview: 혼 평균 floor', () => {
     assert.strictEqual(preview([A, B], [0, 1], 100).soul, 12, 'floor((10+15)/2)');
